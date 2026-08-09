@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-09T12:30:00Z",
+  "title": "Design System: RedCRM (HAZON)",
+  "extensions": {
+    "colorMeta": {
+      "hazon-night":         { "role": "neutral", "displayName": "Night",        "canonical": "#0b2029", "tonalRamp": ["#07151b", "#0b2029", "#0e2a35", "#123340", "#1a4453", "#235862", "#2d6c75", "#3a8088"] },
+      "hazon-abyss":         { "role": "neutral", "displayName": "Abyss",        "canonical": "#072026", "tonalRamp": ["#041318", "#072026", "#0a2c34", "#0e3842", "#144652", "#1b5562", "#246472", "#2f7483"] },
+      "hazon-deep":          { "role": "neutral", "displayName": "Deep",         "canonical": "#0e3a44", "tonalRamp": ["#08222a", "#0e3a44", "#144956", "#1b5a68", "#246b7a", "#2f7d8c", "#3b909e", "#49a4b0"] },
+      "hazon-surface":       { "role": "neutral", "displayName": "Surface",      "canonical": "#0d2a33", "tonalRamp": ["#071820", "#0d2a33", "#123540", "#18414d", "#1f4e5b", "#275c69", "#316a77", "#3c7986"] },
+      "hazon-mid":           { "role": "neutral", "displayName": "Mid",          "canonical": "#112530", "tonalRamp": ["#0a131a", "#112530", "#162f3b", "#1c3947", "#234453", "#2b5060", "#345d6c", "#3e6a79"] },
+      "hazon-primary":       { "role": "primary", "displayName": "Primary Teal", "canonical": "#0b6f74", "tonalRamp": ["#063336", "#0b6f74", "#0d8086", "#109199", "#15a3ab", "#1cb5bd", "#25c7ce", "#31d9df"] },
+      "hazon-primary-dark":  { "role": "primary", "displayName": "Primary Dark", "canonical": "#075b60", "tonalRamp": ["#042a2d", "#075b60", "#096b70", "#0b7c81", "#0e8d92", "#129ea3", "#18b0b4", "#1fc2c5"] },
+      "hazon-accent":        { "role": "primary", "displayName": "Accent Teal",  "canonical": "#74b3c6", "tonalRamp": ["#3d6271", "#528291", "#679fb1", "#74b3c6", "#8cc1d1", "#a4cfdb", "#bddde6", "#d6eaf0"] },
+      "hazon-text":          { "role": "neutral", "displayName": "Text White",   "canonical": "#f4fafb", "tonalRamp": ["#9aa9ad", "#b3c0c4", "#ccd6d9", "#e0e7e9", "#eef3f4", "#f4fafb", "#f8fcfd", "#ffffff"] },
+      "hazon-muted":         { "role": "neutral", "displayName": "Muted",        "canonical": "#bcd3da", "tonalRamp": ["#6a797f", "#7e8e94", "#92a3aa", "#a6b8bf", "#bbcdd4", "#bcd3da", "#d0dde2", "#e3eaf0"] },
+      "hazon-dim":           { "role": "neutral", "displayName": "Dim",          "canonical": "#6f8a93", "tonalRamp": ["#3a494f", "#476169", "#567680", "#6f8a93", "#869da5", "#9fb1b8", "#b7c5cb", "#cfd9de"] },
+      "hazon-success":       { "role": "semantic", "displayName": "Success",     "canonical": "#7fe3c4", "tonalRamp": ["#3d705c", "#4c8a70", "#5ca585", "#7fe3c4", "#97e7cf", "#b0ebda", "#c8f0e5", "#def5ee"] },
+      "hazon-success-bright":{ "role": "semantic", "displayName": "Success Bright", "canonical": "#4ade80", "tonalRamp": ["#246b3c", "#2c8a4c", "#34a85b", "#4ade80", "#6ce598", "#8becb0", "#a9f2c5", "#c4f7d6"] },
+      "hazon-warn":          { "role": "semantic", "displayName": "Warn",        "canonical": "#fbbf24", "tonalRamp": ["#7d5f12", "#a07c16", "#c5991b", "#fbbf24", "#fbcb4f", "#fcd676", "#fde29c", "#feeebd"] },
+      "hazon-danger":        { "role": "semantic", "displayName": "Danger",      "canonical": "#fca5a5", "tonalRamp": ["#7d3838", "#a04848", "#c45959", "#fca5a5", "#fdb8b8", "#fdcaca", "#fedcdc", "#feedee"] },
+      "hazon-danger-solid":  { "role": "semantic", "displayName": "Danger Solid","canonical": "#ef4444", "tonalRamp": ["#7a1f1f", "#a02a2a", "#c63535", "#ef4444", "#f26262", "#f48181", "#f6a0a0", "#f9c0c0"] },
+      "hazon-info":          { "role": "categorical", "displayName": "Info Purple", "canonical": "#c084fc", "tonalRamp": ["#5e3f7d", "#7a52a0", "#9764c6", "#c084fc", "#ce9dfd", "#dab6fe", "#e4ccfe", "#eedffe"] },
+      "hazon-orange":        { "role": "categorical", "displayName": "Orange",   "canonical": "#fb923c", "tonalRamp": ["#7d481e", "#a05d27", "#c4722f", "#fb923c", "#fca75c", "#fdbb7d", "#fece9d", "#fddcbb"] },
+      "hazon-blue":          { "role": "categorical", "displayName": "Blue",     "canonical": "#60a5fa", "tonalRamp": ["#2f527d", "#3d68a0", "#4a7ec6", "#60a5fa", "#7eb6fb", "#9cc7fc", "#bad7fd", "#d4e6fe"] },
+      "hazon-slate":         { "role": "categorical", "displayName": "Slate",    "canonical": "#94a3b8", "tonalRamp": ["#4a525c", "#5e6772", "#737e8b", "#94a3b8", "#a9b5c6", "#bcc7d4", "#cfd8e2", "#e0e6ee"] },
+      "hazon-pink":          { "role": "categorical", "displayName": "Pink",     "canonical": "#f472b6", "tonalRamp": ["#7d3963", "#a0487f", "#c4569b", "#f472b6", "#f68ec4", "#f8aad2", "#fac5df", "#fcdcec"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display (Fraunces)", "purpose": "Títulos de página, logo, avatares. Único uso de serif." },
+      "title":   { "displayName": "Title (Manrope)",   "purpose": "Nomes em cards, itens de nav, texto de botões, labels de seção." },
+      "body":    { "displayName": "Body (Manrope)",    "purpose": "Texto corrido, células de tabela, descrições." },
+      "label":   { "displayName": "Label (Manrope)",   "purpose": "Rótulos micro UPPERCASE, headers de tabela, captions de KPI, chips." },
+      "mono":    { "displayName": "Mono (system)",     "purpose": "Todo valor numérico de negócio — KPIs, somas, scores, contagens, %." }
+    },
+    "shadows": [
+      { "name": "glow-accent", "value": "0 0 8px rgba(116,179,198,0.44)", "purpose": "Foco/destaque accent em elementos interativos." },
+      { "name": "accent-lg", "value": "0 10px 30px -12px rgba(116,179,198,0.35)", "purpose": "Sombra accent para elevações primárias." },
+      { "name": "brand-mark", "value": "0 10px 30px -12px rgba(116,179,198,0.30) (shadow-lg shadow-accent/30)", "purpose": "Reservada ao logo e avatar — reforço de marca." },
+      { "name": "soft", "value": "0 8px 30px -12px rgba(0,0,0,0.40)", "purpose": "Cartões elevados / drawers quando blur não basta." },
+      { "name": "kanban-over", "value": "inset 0 0 0 2px rgba(116,179,198,0.45)", "purpose": "Coluna kanban sob dragover (anel accent + bg accent 8%)." }
+    ],
+    "motion": [
+      { "name": "quick", "value": "all 0.15s ease", "purpose": "Transição padrão de estado (cor/borda/bg de botões, inputs, chips)." },
+      { "name": "kanban-drop", "value": "all 0.2s ease", "purpose": "Reordenamento de colunas kanban." },
+      { "name": "card-entrou", "value": "transform 0.35s ease, opacity 0.35s ease (scale 0.92→1, opacity 0→1)", "purpose": "Card kanban ao entrar numa coluna via drag." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação primária. Gradiente teal, borda accent 50%, hover brightness.",
+      "html": "<button class=\"ds-btn-primary\">Salvar</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; border-radius: 0.75rem; padding: 0.5rem 1rem; font-family: 'Manrope','Segoe UI',sans-serif; font-size: 13px; font-weight: 600; line-height: 1.25; color: #ffffff; border: 1px solid rgba(116,179,198,0.5); background: linear-gradient(to bottom right, #0b6f74, #075b60); cursor: pointer; transition: all 0.15s; } .ds-btn-primary:hover { filter: brightness(1.1); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 8px rgba(116,179,198,0.44); }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Ação secundária/terciária. Vidro translúcido, hover clareia.",
+      "html": "<button class=\"ds-btn-ghost\">Cancelar</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; gap: 0.5rem; border-radius: 0.75rem; padding: 0.5rem 1rem; font-family: 'Manrope','Segoe UI',sans-serif; font-size: 13px; font-weight: 600; line-height: 1.25; color: #bcd3da; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); cursor: pointer; transition: all 0.15s; } .ds-btn-ghost:hover { background: rgba(255,255,255,0.10); color: #ffffff; } .ds-btn-ghost:focus-visible { outline: none; border-color: rgba(116,179,198,0.4); }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Exclusão/destrutivo contorno. Tinte danger.",
+      "html": "<button class=\"ds-btn-danger\">Excluir</button>",
+      "css": ".ds-btn-danger { display: inline-flex; align-items: center; gap: 0.5rem; border-radius: 0.75rem; padding: 0.5rem 1rem; font-family: 'Manrope','Segoe UI',sans-serif; font-size: 13px; font-weight: 600; line-height: 1.25; color: #fca5a5; border: 1px solid rgba(252,165,165,0.30); background: rgba(252,165,165,0.10); cursor: pointer; transition: all 0.15s; } .ds-btn-danger:hover { background: rgba(252,165,165,0.20); color: #ffffff; } .ds-btn-danger:focus-visible { outline: none; box-shadow: 0 0 8px rgba(252,165,165,0.35); }"
+    },
+    {
+      "name": "KPI Card",
+      "kind": "card",
+      "refersTo": "card-sm",
+      "description": "Card de KPI do dashboard. Ícone em caixa accent, número mono 34px, hover sobe.",
+      "html": "<div class=\"ds-kpi-card\"><div class=\"ds-kpi-top\"><span class=\"ds-kpi-icon\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"#74b3c6\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 3v18h18\"/><path d=\"M7 14l4-4 3 3 5-6\"/></svg></span><span class=\"ds-kpi-badge\">+12 no mês</span></div><div class=\"ds-kpi-label\">PACIENTES ATIVOS</div><div class=\"ds-kpi-value\">128</div><div class=\"ds-kpi-caption\">no funil agora</div></div>",
+      "css": ".ds-kpi-card { border-radius: 1rem; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05); backdrop-filter: blur(24px); padding: 1.5rem; transition: all 0.15s; color: #f4fafb; } .ds-kpi-card:hover { transform: translateY(-4px); border-color: rgba(116,179,198,0.40); } .ds-kpi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; } .ds-kpi-icon { display: inline-flex; align-items: center; justify-content: center; height: 2.25rem; width: 2.25rem; border-radius: 11px; border: 1px solid rgba(116,179,198,0.35); background: rgba(116,179,198,0.10); } .ds-kpi-badge { border-radius: 9999px; border: 1px solid rgba(127,227,196,0.20); background: rgba(127,227,196,0.10); padding: 0.25rem 0.625rem; font-family: ui-monospace,SFMono-Regular,Menlo,monospace; font-size: 11px; font-weight: 600; color: #7fe3c4; } .ds-kpi-label { margin-bottom: 0.625rem; font-family: 'Manrope','Segoe UI',sans-serif; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #6f8a93; } .ds-kpi-value { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; font-size: 34px; font-weight: 700; line-height: 1; color: #ffffff; } .ds-kpi-caption { margin-top: 0.5rem; font-size: 12px; color: #6f8a93; }"
+    },
+    {
+      "name": "Kanban Card",
+      "kind": "card",
+      "refersTo": "card-sm",
+      "description": "Card de negócio no funil. Nome, empresa, chips de segmento/score, valor accent. Draggable.",
+      "html": "<div class=\"ds-kanban-card\" draggable=\"true\"><div class=\"ds-kbc-name\">Maria Oliveira</div><div class=\"ds-kbc-sub\">Clínica Aurora</div><div class=\"ds-kbc-row\"><span class=\"ds-chip ds-chip-seg\">Estética</span><span class=\"ds-chip ds-chip-score\">87</span></div><div class=\"ds-kbc-foot\"><span class=\"ds-kbc-level\">QUENTE</span><span class=\"ds-kbc-value\">R$ 4.200</span></div></div>",
+      "css": ".ds-kanban-card { border-radius: 1rem; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05); padding: 0.875rem; transition: all 0.15s; color: #f4fafb; cursor: grab; } .ds-kanban-card:active { cursor: grabbing; } .ds-kanban-card:hover { border-color: rgba(116,179,198,0.40); background: rgba(255,255,255,0.10); } .ds-kanban-card.dragging { opacity: 0.35; } .ds-kbc-name { margin-bottom: 0.375rem; font-family: 'Manrope','Segoe UI',sans-serif; font-size: 13.5px; font-weight: 600; color: #ffffff; } .ds-kbc-sub { margin-bottom: 0.625rem; font-size: 11.5px; color: #6f8a93; } .ds-kbc-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem; } .ds-kbc-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; } .ds-kbc-level { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #4ade80; } .ds-kbc-value { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; font-size: 13.5px; font-weight: 700; color: #74b3c6; } .ds-chip { display: inline-flex; align-items: center; border-radius: 9999px; padding: 0.125rem 0.5rem; font-family: 'Manrope','Segoe UI',sans-serif; font-size: 10px; font-weight: 700; white-space: nowrap; } .ds-chip-seg { color: #4ade80; background: rgba(74,222,128,0.10); } .ds-chip-score { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; color: #4ade80; background: rgba(74,222,128,0.15); }"
+    },
+    {
+      "name": "Form Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo de formulário HAZON. Translúcido, raio 8px, foco accent.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Nome do paciente\" />",
+      "css": ".ds-input { width: 100%; height: 34px; padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); font-family: 'Manrope','Segoe UI',sans-serif; font-size: 12.5px; line-height: 1.4; color: #f4fafb; outline: none; transition: border-color 0.15s, background 0.15s; box-sizing: border-box; } .ds-input::placeholder { color: #6f8a93; } .ds-input:focus { border-color: rgba(116,179,198,0.4); background: rgba(255,255,255,0.10); }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "search",
+      "description": "Busca com ícone à esquerda. Raio sm, largura fixa.",
+      "html": "<div class=\"ds-search\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"#6f8a93\" stroke-width=\"1.8\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg><input type=\"text\" placeholder=\"Buscar por nome ou empresa...\" /></div>",
+      "css": ".ds-search { position: relative; display: inline-flex; align-items: center; } .ds-search svg { position: absolute; left: 14px; pointer-events: none; } .ds-search input { width: 18rem; border-radius: 0.75rem; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05); padding: 0.625rem 1rem 0.625rem 2.5rem; font-family: 'Manrope','Segoe UI',sans-serif; font-size: 13.5px; color: #f4fafb; outline: none; transition: all 0.15s; box-sizing: border-box; } .ds-search input::placeholder { color: #6f8a93; } .ds-search input:focus { border-color: rgba(116,179,198,0.4); background: rgba(255,255,255,0.10); }"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Etiqueta pill. Cor sempre tinte (hue + 10% alpha). Variantes: segmento, score, etapa.",
+      "html": "<span class=\"ds-chip-generic\">Interessado</span>",
+      "css": ".ds-chip-generic { display: inline-flex; align-items: center; border-radius: 9999px; padding: 0.125rem 0.625rem; font-family: 'Manrope','Segoe UI',sans-serif; font-size: 10px; font-weight: 700; white-space: nowrap; color: #74b3c6; background: rgba(116,179,198,0.22); }"
+    },
+    {
+      "name": "Nav Item",
+      "kind": "nav",
+      "refersTo": "button-ghost",
+      "description": "Item do header. Ativo = bg accent 15% + texto accent; inativo = muted com hover.",
+      "html": "<a class=\"ds-nav-item ds-nav-active\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><path d=\"M3 12l9-9 9 9\"/><path d=\"M5 10v10h14V10\"/></svg>Dashboard</a>",
+      "css": ".ds-nav-item { display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap; border-radius: 11px; padding: 0.625rem 1rem; font-family: 'Manrope','Segoe UI',sans-serif; font-size: 13.5px; font-weight: 500; color: #bcd3da; text-decoration: none; transition: all 0.15s; } .ds-nav-item:hover { background: rgba(255,255,255,0.10); color: #ffffff; } .ds-nav-active { background: rgba(116,179,198,0.15); color: #74b3c6; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "O Vidro Jateado",
+    "overview": "O HAZON é um painel escuro onde toda superfície é vidro fosco flutuando sobre um gradiente teal profundo. A profundidade vem da translucidez (rgba(255,255,255,0.05–0.15) + backdrop-filter: blur(24px)), não de sombras; o silêncio visual é a marca. O acento hazon-accent (#74b3c6) aparece com parcimônia para sinalizar interatividade, etapa ativa e valores em destaque.\n\nÉ um sistema Operate (painel de trabalho diário): escaneabilidade, consistência e expectativas familiares vêm antes de expressão. Os números — dinheiro, contagens, scores — são sempre monoespaçados e gordos, para leitura rápida de KPI. Os títulos de página são os únicos momentos serif (Fraunces), ancorando cada tela.\n\nA confiança tátil mora nos detalhes: botões primários em gradiente teal, cartões KPI que sobem (-translate-y-1) e ganham borda accent no hover, coluna kanban que acende um anel accent ao receber um card. Tudo o resto é contido.",
+    "keyCharacteristics": [
+      "Superfícies translúcidas com backdrop-blur sobre gradiente teal/night — nunca painéis opacos sólidos.",
+      "Um único acento interativo: hazon-accent (#74b3c6); raridade é o ponto.",
+      "Tipografia binária: Fraunces (display, só títulos/logo/avatars) + Manrope (todo o resto).",
+      "Valores numéricos sempre em font-mono bold — KPIs, somas, scores, contadores.",
+      "Hierarquia por opacidade do branco (text → muted → dim), não por novas cores.",
+      "Cores semânticas e categóricas aplicadas como tintes (cor + 1a = 10% alpha), nunca como blocos saturados.",
+      "Tema claro opcional (data-tema=claro) inverte o sistema mantendo os mesmos tokens."
+    ],
+    "rules": [
+      { "name": "A Regra do Vidro", "body": "Toda superfície de conteúdo é branco translúcido sobre o gradiente, com backdrop-filter: blur(24px) e borda rgba(255,255,255,0.10). Nunca use um painel opaco sólido (exceto hazon-surface quando a legibilidade exigir).", "section": "colors" },
+      { "name": "A Regra do Acento Único", "body": "hazon-accent é o único sinal de interatividade/destaque. Não introduza um segundo acento; use opacity/tinte do próprio accent.", "section": "colors" },
+      { "name": "A Regra do Tinte", "body": "Cores categóricas (stage/segment/score) entram como color: <hue>; background: <hue>1a (10% alpha). Nunca como bloco saturado de fundo.", "section": "colors" },
+      { "name": "A Regra do Título Serif", "body": "Fraunces aparece somente em títulos de página, logo e avatares. Qualquer texto de interface, dado ou rótulo é Manrope ou mono.", "section": "typography" },
+      { "name": "A Regra do Número Mono", "body": "Todo valor numérico de negócio (dinheiro, contagem, soma de coluna, score, percentual) é font-mono bold. Número em Manrope é erro.", "section": "typography" },
+      { "name": "A Regra das Camadas, não Sombras", "body": "Superfícies são planas em repouso. Sombras aparecem só em marca (logo/avatar) ou como resposta de estado (hover com lift, drop-target com anel inset). Nunca sombreie um cartão parado.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do construir superfícies com branco translúcido + backdrop-blur(24px) sobre o gradiente (a Regra do Vidro).",
+      "Do usar hazon-accent (#74b3c6) como único sinal de interatividade, etapa ativa e valor em destaque.",
+      "Do render números de negócio (R$, contagens, scores, somas, %) em font-mono bold.",
+      "Do aplicar cores categóricas como tinte (color: X; background: X1a), nunca como bloco sólido.",
+      "Do dar feedback tátil: hover com brightness(1.1) no primário, -translate-y-1 em KPI cards, anel inset na coluna kanban alvo.",
+      "Do prefixar novas classes de sistema com hazon- e registrá-las em theme/static_src/src/styles.css.",
+      "Do manter o tema claro via body[data-tema=claro] usando os mesmos tokens invertidos."
+    ],
+    "donts": [
+      "Don't introduza um segundo acento — variações vêm de opacity/tinte do próprio hazon-accent.",
+      "Don't use Fraunces fora de títulos de página, logo e avatares.",
+      "Don't sombreie cartões em repouso para destacar; profundidade vem de camadas tonais.",
+      "Don't invente hex novos — a paleta hazon-* é fechada; estenda core/dominio.py para cores categóricas.",
+      "Don't use blocos de cor saturada de fundo para stages/segments/scores — sempre tinte 10%.",
+      "Don't troque Manrope por outra sans sem trocar em tailwind.config.js, styles.css e no <link> do base/basic.html juntos."
+    ]
+  }
+}
