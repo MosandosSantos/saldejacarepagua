@@ -1,0 +1,124 @@
+{% extends 'base/basic.html' %}
+{% load static %}
+
+{% block titulo %}HAZON CRM — Configure seu funil{% endblock %}
+
+{% block cabecalho %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  html, body { height: 100%; }
+  body { overflow-y: auto; }
+
+  .login-bg { position: fixed; inset: 0; z-index: 0; }
+  .login-bg-gradient {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(11,111,116,0.35) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 85% 90%, rgba(17,37,48,0.55) 0%, transparent 55%),
+      linear-gradient(150deg,#0e3a44 0%,#112530 55%,#0b2029 100%);
+  }
+  .login-bg-photo {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: saturate(0.85) brightness(0.9);
+    animation: loginFade 1.2s ease both;
+  }
+  .login-bg-scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(115deg, rgba(7,32,38,0.82) 0%, rgba(7,32,38,0.45) 45%, rgba(7,32,38,0.72) 100%);
+  }
+  @keyframes loginFade { from { opacity: 0 } to { opacity: 1 } }
+
+  .onb-wrap { position: relative; z-index: 1; width: 100%; max-width: 880px; }
+  .onb-card {
+    position: relative;
+    border-radius: 24px;
+    padding: 40px 42px 36px;
+    background: rgba(255,255,255,0.13);
+    border: 1px solid rgba(255,255,255,0.45);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow: 0 30px 60px -20px rgba(5,20,26,0.55), inset 0 1px 0 rgba(255,255,255,0.35);
+    color: #f4fafb;
+  }
+  .onb-option {
+    display: block;
+    cursor: pointer;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.08);
+    padding: 18px 20px;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  }
+  .onb-option:hover { border-color: rgba(116,179,198,0.7); background: rgba(255,255,255,0.13); transform: translateY(-2px); }
+  .onb-option input:checked ~ .onb-option-box { border-color: #74b3c6; background: rgba(116,179,198,0.18); }
+  .onb-option input { position: absolute; opacity: 0; pointer-events: none; }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="login-bg" aria-hidden="true">
+  <div class="login-bg-gradient"></div>
+  <img class="login-bg-photo" src="{% static 'img/bg-login.png' %}" alt="" onerror="this.remove()">
+  <div class="login-bg-scrim"></div>
+</div>
+
+<div class="flex min-h-screen items-center justify-center py-10" style="position:relative;z-index:1">
+  <div class="onb-wrap">
+    <section class="onb-card">
+      <div class="mb-5 flex items-center gap-3">
+        <div class="flex h-11 w-11 items-center justify-center rounded-[13px] bg-gradient-to-br from-[#2aa1a8] to-[#075b60] shadow-lg shadow-[#0b6f74]/70">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" class="h-6 w-6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.6" fill="#fff"/>
+          </svg>
+        </div>
+        <span class="font-display text-[1.35rem] font-semibold tracking-tight text-white">HAZON<span class="text-[#74b3c6]"> CRM</span></span>
+      </div>
+
+      <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.3em] text-white/90">
+        <span class="h-1.5 w-1.5 rounded-full bg-[#7fe3c4] shadow-[0_0_8px_#7fe3c4]"></span>
+        Boas-vindas, {{ tenant.nome }}
+      </div>
+
+      <h1 class="font-display mb-2.5 text-[2rem] font-medium leading-[1.12] tracking-tight text-white">Qual é o seu negócio?</h1>
+      <p class="mb-7 max-w-xl text-[15px] leading-relaxed text-white/70">
+        Escolha o ramo da sua empresa. As etapas do seu funil de vendas serão adaptadas automaticamente — você pode ajustar depois quando quiser.
+      </p>
+
+      {% if erro %}
+        <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ erro }}</div>
+      {% endif %}
+
+      <form method="post" action="{% url 'acesso:onboarding' %}" novalidate>
+        {% csrf_token %}
+        <div class="grid gap-3.5 sm:grid-cols-2">
+          {% for opcao in opcoes %}
+          <label class="onb-option relative">
+            <input type="radio" name="nicho" value="{{ opcao.key }}" {% if forloop.first %}checked{% endif %}>
+            <div class="onb-option-box rounded-2xl border border-transparent p-0.5 transition">
+              <div class="flex items-center gap-3">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#74b3c6]/60 bg-[#74b3c6]/15 text-[12.5px] font-bold text-[#74b3c6]">{{ forloop.counter }}</span>
+                <span class="text-[14.5px] font-semibold text-white">{{ opcao.label }}</span>
+              </div>
+              <div class="mt-2.5 flex flex-wrap gap-1.5 pl-11">
+                {% for st in opcao.stages %}
+                <span class="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/55">{{ st }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+
+        <button type="submit"
+                class="mt-7 flex w-full items-center justify-center gap-2.5 rounded-2xl border border-[#74b3c6]/50 bg-gradient-to-br from-[#0b6f74] to-[#075b60] py-4 text-[15px] font-bold text-white shadow-[0_14px_28px_-10px_rgba(5,40,46,0.65)] transition hover:brightness-110">
+          Continuar para o painel
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="h-4.5 w-4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </button>
+      </form>
+    </section>
+  </div>
+</div>
+{% endblock %}

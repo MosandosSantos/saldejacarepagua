@@ -1,0 +1,81 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — Pacientes & contatos{% endblock %}
+
+{% block conteudo %}
+<div class="mb-7">
+  <h1 class="hazon-titulo">Pacientes & contatos</h1>
+  <p class="hazon-sub mt-2">Todos os pacientes e seus respectivos tratamentos.</p>
+</div>
+
+<div class="mb-6 flex flex-wrap items-center gap-4">
+  <form method="get" action="{% url 'contatos:lista' %}" class="relative">
+    <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="#6f8a93" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" name="q" value="{{ q }}" placeholder="Buscar contatos..."
+           class="hazon-search w-72">
+  </form>
+  <form method="get" action="{% url 'contatos:lista' %}" class="flex items-center gap-2">
+    {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+    <select name="tag" onchange="this.form.submit()"
+            class="rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40">
+      <option value="">Todas as tags</option>
+      {% for t in tags_filtro %}
+        <option value="{{ t.id }}" {% if tag_ativa == t.id %}selected{% endif %}>{{ t.nome }}</option>
+      {% endfor %}
+    </select>
+    <select name="carteira" onchange="this.form.submit()"
+            class="rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40">
+      <option value="">Todas as carteiras</option>
+      {% for c in carteiras_filtro %}
+        <option value="{{ c.id }}" {% if carteira_ativa == c.id %}selected{% endif %}>{{ c.nome }}</option>
+      {% endfor %}
+    </select>
+    <select name="ord" onchange="this.form.submit()"
+            class="rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40"
+            title="Ordenar por prioridade (lead scoring)">
+      <option value="" {% if not ord %}selected{% endif %}>Ordem de cadastro</option>
+      <option value="score" {% if ord == 'score' %}selected{% endif %}>🔥 Prioridade (score)</option>
+    </select>
+    {% if tag_ativa or carteira_ativa %}
+      <a href="{% url 'contatos:lista' %}{% if q %}?q={{ q }}{% endif %}{% if ord %}{% if q %}&{% else %}?{% endif %}ord={{ ord }}{% endif %}" class="text-[12px] font-semibold text-[#74b3c6] transition hover:underline">✕ limpar</a>
+    {% endif %}
+  </form>
+  <span class="text-[13px] text-[#6f8a93]"><b class="font-mono text-white">{{ mostrados }}</b> de <b class="font-mono text-white">{{ total }}</b> contatos</span>
+  {% if web_pode_editar %}
+  <a href="{% url 'contatos:importar' %}" class="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-2.5 text-[13.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Importar
+  </a>
+  <a href="{% url 'contatos:exportar' %}" class="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-2.5 text-[13.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white" title="Baixar CSV dos contatos">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Exportar
+  </a>
+  <a href="{% url 'contatos:novo' %}" class="hazon-btn hazon-btn-primary ml-auto px-5 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Novo contato
+  </a>
+  {% endif %}
+</div>
+
+<div class="overflow-x-auto hazon-card">
+  <table class="w-full min-w-[1000px] border-collapse">
+    <thead>
+      <tr class="border-b border-white/10 text-left">
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Contato</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Empresa</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Telefone</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">E-mail</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Etapa</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Segmento</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]" title="Lead scoring: quanto maior, mais quente">Score</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Tags</th>
+        <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Valor</th>
+        <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% include 'contatos/partials/_linha.html' %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

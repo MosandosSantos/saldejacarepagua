@@ -1,0 +1,233 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — {{ titulo }}{% endblock %}
+
+{% block conteudo %}
+<div class="mx-auto max-w-3xl">
+  <div class="mb-5">
+    <h1 class="hazon-titulo text-[28px]">{{ titulo }}</h1>
+    <p class="hazon-sub">Preencha os dados do contato abaixo.</p>
+  </div>
+
+  <form method="post" class="hazon-card-lg p-6 hazon-form"
+        action="{% if editando %}{% url 'contatos:editar' contato.id %}{% else %}{% url 'contatos:novo' %}{% endif %}">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13px] text-red-200">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {% for field in form %}
+        {% if field.name not in campos_fora_do_loop %}
+          <div class="{% if field.name == 'nome' or field.name == 'observacoes' %}sm:col-span-2 lg:col-span-3{% elif field.name == 'procedimento' or field.name == 'cidade' %}sm:col-span-2 lg:col-span-2{% endif %}">
+            <label for="{{ field.id_for_label }}" class="hazon-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+              <p class="mt-1 text-[11px] text-red-300">{{ field.errors|striptags }}</p>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      <!-- Dados da empresa (CNPJ preenche automaticamente) -->
+      <div class="sm:col-span-2 lg:col-span-3 hazon-card-sm p-4">
+        <span class="mb-3 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Dados da empresa</span>
+        <div class="mb-3 flex flex-wrap items-end gap-2">
+          <div class="min-w-[200px] flex-1">
+            <label for="{{ form.cnpj.id_for_label }}" class="hazon-label">{{ form.cnpj.label }}</label>
+            {{ form.cnpj }}
+            {% if form.cnpj.errors %}
+              <p class="mt-1 text-[11px] text-red-300">{{ form.cnpj.errors|striptags }}</p>
+            {% endif %}
+          </div>
+          <button type="button" id="btn-buscar-cnpj"
+                  class="hazon-btn hazon-btn-primary h-[34px] items-center gap-1.5 px-3.5 text-[12px] font-semibold text-white transition hover:brightness-110">
+            <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Buscar CNPJ
+          </button>
+        </div>
+        <p id="cnpj-status" class="mb-3 hidden text-[12px]" aria-live="polite"></p>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div class="sm:col-span-2">
+            <label for="{{ form.razao_social.id_for_label }}" class="hazon-label">{{ form.razao_social.label }}</label>
+            {{ form.razao_social }}
+          </div>
+          <div>
+            <label for="{{ form.cnae.id_for_label }}" class="hazon-label">{{ form.cnae.label }}</label>
+            {{ form.cnae }}
+          </div>
+          <div>
+            <label for="{{ form.responsavel.id_for_label }}" class="hazon-label">{{ form.responsavel.label }}</label>
+            {{ form.responsavel }}
+          </div>
+          <div class="sm:col-span-2">
+            <label for="{{ form.endereco.id_for_label }}" class="hazon-label">{{ form.endereco.label }}</label>
+            {{ form.endereco }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Campos personalizados (definidos pelo tenant) -->
+      <div class="sm:col-span-2 lg:col-span-3 hazon-card-sm p-4">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Campos personalizados</span>
+          {% if web_eh_admin %}
+            <a href="{% url 'contatos:campos' %}" class="text-[11px] font-semibold text-[#74b3c6] transition hover:underline">gerenciar campos</a>
+          {% endif %}
+        </div>
+        {% if campos_personalizados %}
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {% for c in campos_personalizados %}
+              <div>
+                <label for="campo_{{ c.id }}" class="hazon-label">{{ c.nome }}{% if c.obrigatorio %} <span class="text-red-300">*</span>{% endif %}</label>
+                {% if c.tipo == 'sim_nao' %}
+                  <select id="campo_{{ c.id }}" name="campo_{{ c.id }}">
+                    <option value="">—</option>
+                    <option value="sim" {% if c.valor == 'sim' %}selected{% endif %}>Sim</option>
+                    <option value="nao" {% if c.valor == 'nao' %}selected{% endif %}>Não</option>
+                  </select>
+                {% elif c.tipo == 'lista' %}
+                  <select id="campo_{{ c.id }}" name="campo_{{ c.id }}">
+                    <option value="">—</option>
+                    {% for o in c.opcoes %}<option value="{{ o }}" {% if c.valor == o %}selected{% endif %}>{{ o }}</option>{% endfor %}
+                  </select>
+                {% elif c.tipo == 'numero' %}
+                  <input type="number" step="any" id="campo_{{ c.id }}" name="campo_{{ c.id }}" value="{{ c.valor }}" placeholder="0">
+                {% elif c.tipo == 'data' %}
+                  <input type="date" id="campo_{{ c.id }}" name="campo_{{ c.id }}" value="{{ c.valor }}">
+                {% elif c.tipo == 'telefone' %}
+                  <input type="text" id="campo_{{ c.id }}" name="campo_{{ c.id }}" value="{{ c.valor }}" placeholder="(00) 00000-0000">
+                {% elif c.tipo == 'email' %}
+                  <input type="email" id="campo_{{ c.id }}" name="campo_{{ c.id }}" value="{{ c.valor }}" placeholder="email@exemplo.com">
+                {% else %}
+                  <input type="text" id="campo_{{ c.id }}" name="campo_{{ c.id }}" value="{{ c.valor }}">
+                {% endif %}
+                {% if c.erro %}<p class="mt-1 text-[11px] text-red-300">{{ c.erro }}</p>{% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-[12.5px] text-[#6f8a93]">Nenhum campo extra definido.
+            {% if web_eh_admin %}
+              <a href="{% url 'contatos:campos' %}" class="text-[#74b3c6] hover:underline">Crie o primeiro aqui</a>
+              — ex.: plano de saúde, nº do convênio, CRM do médico.
+            {% else %}
+              Peça ao admin da empresa para criar campos extras (ex.: plano de saúde, nº do convênio).
+            {% endif %}
+          </p>
+        {% endif %}
+      </div>
+
+      <!-- Tags: checkboxes em chips coloridos -->
+      <div class="sm:col-span-2 lg:col-span-3 hazon-card-sm p-4">
+        <span class="mb-3 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Tags</span>
+        <div class="flex flex-wrap gap-2" id="tags-opcoes">
+          {% for tag_id, tag_nome in form.tags.field.choices %}
+            <label class="cursor-pointer">
+              <input type="checkbox" name="tags" value="{{ tag_id }}"
+                     class="tag-check sr-only"
+                     {% if tag_id|stringformat:'s' in tags_marcadas %}checked{% endif %}>
+              <span class="tag-chip inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-[#bcd3da] border border-white/15 bg-white/5 transition">{{ tag_nome }}</span>
+            </label>
+          {% empty %}
+            <span class="text-[12.5px] text-[#6f8a93]">Nenhuma tag criada ainda. Crie uma abaixo ou na ficha do contato.</span>
+          {% endfor %}
+        </div>
+        <p class="mt-3 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Nova tag (opcional)</p>
+        {{ form.nova_tag }}
+      </div>
+    </div>
+
+    <div class="mt-6 flex flex-wrap gap-3">
+      <button type="submit" class="hazon-btn hazon-btn-primary px-6 py-2 text-[13px] font-semibold text-white transition hover:brightness-110">
+        {% if editando %}Salvar alterações{% else %}Criar contato{% endif %}
+      </button>
+      <a href="{% url 'contatos:lista' %}" class="hazon-btn hazon-btn-ghost">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var cnpjInput = document.getElementById('id_cnpj');
+  var btn = document.getElementById('btn-buscar-cnpj');
+  var status = document.getElementById('cnpj-status');
+  if (!cnpjInput || !btn) return;
+
+  function soDigitos(v) { return (v || '').replace(/\D/g, ''); }
+
+  function mascaraCnpj(v) {
+    var d = soDigitos(v).slice(0, 14);
+    if (d.length <= 2) return d;
+    if (d.length <= 5) return d.slice(0, 2) + '.' + d.slice(2);
+    if (d.length <= 8) return d.slice(0, 2) + '.' + d.slice(2, 5) + '.' + d.slice(5);
+    if (d.length <= 12) return d.slice(0, 2) + '.' + d.slice(2, 5) + '.' + d.slice(5, 8) + '/' + d.slice(8);
+    return d.slice(0, 2) + '.' + d.slice(2, 5) + '.' + d.slice(5, 8) + '/' + d.slice(8, 12) + '-' + d.slice(12);
+  }
+
+  cnpjInput.addEventListener('input', function () {
+    cnpjInput.value = mascaraCnpj(cnpjInput.value);
+  });
+
+  // Só preenche se o campo estiver vazio (mantém tudo editável depois)
+  function preencherSeVazio(campoId, valor) {
+    var el = document.getElementById(campoId);
+    if (el && valor && !el.value.trim()) el.value = valor;
+  }
+  function preencherSempre(campoId, valor) {
+    var el = document.getElementById(campoId);
+    if (el && valor) el.value = valor;
+  }
+
+  function mostrar(msg, erro) {
+    status.textContent = msg;
+    status.classList.toggle('hidden', !msg);
+    status.style.color = erro ? '#fca5a5' : '#7fe3c4';
+  }
+
+  function buscar() {
+    var digitos = soDigitos(cnpjInput.value);
+    if (digitos.length !== 14) { mostrar('Informe um CNPJ com 14 dígitos.', true); return; }
+    mostrar('Consultando...', false);
+    btn.disabled = true;
+    fetch('https://brasilapi.com.br/api/cnpj/v1/' + digitos)
+      .then(function (r) {
+        if (r.status === 404) throw new Error('nao encontrado');
+        if (!r.ok) throw new Error('erro api');
+        return r.json();
+      })
+      .then(function (dados) {
+        if (soDigitos(cnpjInput.value) !== digitos) return; // ignora resposta de CNPJ antigo
+        preencherSempre('id_razao_social', dados.razao_social || '');
+        preencherSeVazio('id_empresa', dados.nome_fantasia || dados.razao_social || '');
+        preencherSempre('id_cnae', dados.cnae_fiscal_descricao || '');
+        preencherSempre('id_endereco',
+          [dados.logradouro, dados.numero, dados.complemento].filter(Boolean).join(', ') || '');
+        preencherSeVazio('id_bairro', dados.bairro);
+        preencherSeVazio('id_cidade', (dados.municipio || '') + (dados.uf ? ' / ' + dados.uf : ''));
+        if (dados.ddd && dados.telefone1) preencherSeVazio('id_tel', '(' + dados.ddd + ') ' + dados.telefone1);
+        preencherSeVazio('id_email', dados.email);
+        var socio = dados.qsa && dados.qsa[0] ? dados.qsa[0].nome_socio : '';
+        preencherSempre('id_responsavel', socio || '');
+        mostrar('Empresa encontrada! Revise os campos preenchidos.', false);
+      })
+      .catch(function (e) {
+        if (soDigitos(cnpjInput.value) !== digitos) return;
+        var msg = (e && e.message === 'nao encontrado')
+          ? 'CNPJ não encontrado. Preencha os dados manualmente.'
+          : 'Falha na consulta. Verifique sua conexão e tente novamente.';
+        mostrar(msg, true);
+      })
+      .finally(function () { btn.disabled = false; });
+  }
+
+  btn.addEventListener('click', buscar);
+  cnpjInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); buscar(); }
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+# Python / Django
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Node (front antigo + Tailwind)
+node_modules/
+theme/static_src/node_modules/
+*.log
+
+# Artefatos de build / coletados
+staticfiles/
+theme/static/css/dist/
+
+# Ambiente
+.env
+.env.txt
+.env.*
+pg_hba.conf.bak
+
+# Virtualenvs
+venv/
+env/
+.venv/
+
+# Banco de dados local
+*.sqlite3
+db.sqlite3
+
+# Segredos / chaves / credenciais
+*.pem
+*.key
+*.ppk
+id_rsa*
+*.p12
+*.pfx
+.env
+
+# Senhas em documentos
+*enha*.pdf
+*enha*.docx
+*enha*.txt
+
+# Logs
+runserver.log
+*.log
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Cache / testes
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/

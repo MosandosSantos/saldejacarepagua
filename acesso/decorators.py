@@ -1,0 +1,83 @@
+"""Decorators da camada web (sessao, nao JWT)."""
+
+from functools import wraps
+
+from django.shortcuts import redirect
+
+from core.dominio import NICHO_PADRAO
+from acesso.models import ROLES_QUE_EDITAM
+
+ROLES_ADMIN = ('admin_company', 'admin_saas')
+
+
+def e_admin_do_tenant(request):
+    """True quando o usuario da sessao e admin (da clinica ou da plataforma)."""
+    return request.session.get('usuario', {}).get('role') in ROLES_ADMIN
+
+
+def pode_editar(request):
+    """True quando o usuario da sessao pode criar/editar dados (viewer nao pode)."""
+    return request.session.get('usuario', {}).get('role') in ROLES_QUE_EDITAM
+
+
+def web_requer_edicao(view_func):
+    """Exige permissao de edicao (admin_company/operacional); viewer volta para a origem."""
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        if not pode_editar(request):
+            voltar = request.META.get('HTTP_REFERER') or '/dashboard/'
+            if voltar.startswith('/') and not voltar.startswith('//'):
+                return redirect(voltar)
+            return redirect('dashboard:index')
+        return view_func(request, *args, **kwargs)
+    return _wrapped
+
+
+def web_requer_admin(view_func):
+    """Exige admin (da clinica ou da plataforma); operacional volta para o dashboard."""
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        if not e_admin_do_tenant(request):
+            return redirect('dashboard:index')
+        return view_func(request, *args, **kwargs)
+    return _wrapped
+
+
+def web_login_required(view_func):
+    """Exige sessao iniciada; redireciona para o login quando nao houver."""
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        if not request.session.get('usuario_id'):
+            return redirect('acesso:login')
+        return view_func(request, *args, **kwargs)
+    return _wrapped
+
+
+def tenant_id_da_sessao(request):
+    """Tenant da sessao; admin_saas (sem tenant) devolve None."""
+    return request.session.get('usuario', {}).get('tenant_id')
+
+
+def filtro_tenant(request, qs):
+    """Escopa um queryset para o tenant da sessao; admin_saas (None) ve tudo."""
+    tid = tenant_id_da_sessao(request)
+    if tid is not None:
+        return qs.filter(tenant_id=tid)
+    return qs
+
+
+def nicho_da_sessao(request):
+    """Nicho do tenant da sessao (ramo do negocio); admin_saas usa o padrao."""
+    if tenant_id_da_sessao(request) is None:
+        return NICHO_PADRAO
+    return request.session.get('nicho') or NICHO_PADRAO
+
+
+def tenant_scope(view_func):
+    """Injeta `request.scope` (dict) com o escopo do usuario logado."""
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        usuario = request.session.get('usuario', {})
+        request.scope = {'tenant_id': usuario.get('tenant_id'), 'role': usuario.get('role')}
+        return view_func(request, *args, **kwargs)
+    return _wrapped

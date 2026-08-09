@@ -1,0 +1,179 @@
+{% extends 'base/basic.html' %}
+{% load static %}
+
+{% block titulo %}HAZON CRM — Entrar{% endblock %}
+
+{% block cabecalho %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  html, body { height: 100%; }
+  body { overflow: hidden; }
+
+  .login-bg { position: fixed; inset: 0; z-index: 0; }
+  .login-bg-gradient {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(11,111,116,0.35) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 85% 90%, rgba(17,37,48,0.55) 0%, transparent 55%),
+      linear-gradient(150deg,#0e3a44 0%,#112530 55%,#0b2029 100%);
+  }
+  .login-bg-photo {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: saturate(0.85) brightness(0.9);
+    animation: loginFade 1.2s ease both;
+  }
+  .login-bg-scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(115deg, rgba(7,32,38,0.82) 0%, rgba(7,32,38,0.45) 45%, rgba(7,32,38,0.72) 100%);
+  }
+  @keyframes loginFade { from { opacity: 0 } to { opacity: 1 } }
+
+  .login-wrap { position: relative; z-index: 1; width: 100%; max-width: 420px; }
+  .login-card {
+    position: relative;
+    cursor: grab;
+    touch-action: none;
+    will-change: transform;
+    border-radius: 24px;
+    padding: 44px 40px 36px;
+    background: rgba(255,255,255,0.13);
+    border: 1px solid rgba(255,255,255,0.45);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    box-shadow: 0 30px 60px -20px rgba(5,20,26,0.55), inset 0 1px 0 rgba(255,255,255,0.35);
+    color: #f4fafb;
+  }
+  .login-card.dragging { cursor: grabbing; user-select: none; }
+  .login-card input, .login-card button, .login-card label, .login-card a, .login-card .footer { cursor: auto; }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="login-bg" aria-hidden="true">
+  <div class="login-bg-gradient"></div>
+  <img class="login-bg-photo" src="{% static 'img/bg-login.png' %}" alt="" onerror="this.remove()">
+  <div class="login-bg-scrim"></div>
+</div>
+
+<div class="flex min-h-[calc(100vh-4rem)] items-center justify-center" style="position:relative;z-index:1">
+  <div class="login-wrap">
+    <section class="login-card" id="loginCard" title="Arraste para posicionar · duplo-clique para centralizar">
+      <div class="mb-7 flex items-center gap-3">
+        <div class="flex h-11 w-11 items-center justify-center rounded-[13px] bg-gradient-to-br from-[#2aa1a8] to-[#075b60] shadow-lg shadow-[#0b6f74]/70">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" class="h-6 w-6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.6" fill="#fff"/>
+          </svg>
+        </div>
+        <span class="font-display text-[1.35rem] font-semibold tracking-tight text-white">HAZON<span class="text-[#74b3c6]"> CRM</span></span>
+      </div>
+
+      <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.3em] text-white/90">
+        <span class="h-1.5 w-1.5 rounded-full bg-[#7fe3c4] shadow-[0_0_8px_#7fe3c4]"></span>
+        Acesso restrito
+      </div>
+
+      <h1 class="font-display mb-2.5 text-[2.1rem] font-medium leading-[1.12] tracking-tight text-white">Bem-vindo(a) de volta</h1>
+      <p class="mb-7 text-[15px] leading-relaxed text-white/70">Entre com o seu e-mail e senha para acessar o painel de pacientes &amp; contatos.</p>
+
+      {% if erro %}
+        <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ erro }}</div>
+      {% endif %}
+
+      <form method="post" action="{% url 'acesso:login' %}" novalidate>
+        {% csrf_token %}
+        <div class="mb-[18px]">
+          <label for="email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-white/60">E-mail</label>
+          <div class="relative">
+            <svg viewBox="0 0 24 24" fill="none" stroke="rgba(244,250,251,0.5)" stroke-width="2" class="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/>
+            </svg>
+            <input id="email" name="email" type="email" placeholder="voce@empresa.com" autocomplete="email" required
+                   class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-4 text-[15px] text-white outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#74b3c6]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#74b3c6]/20">
+          </div>
+        </div>
+
+        <div class="mb-[18px]">
+          <label for="senha" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-white/60">Senha</label>
+          <div class="relative">
+            <svg viewBox="0 0 24 24" fill="none" stroke="rgba(244,250,251,0.5)" stroke-width="2" class="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+            </svg>
+            <input id="senha" name="senha" type="password" placeholder="••••••••" autocomplete="current-password" required
+                   class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-4 text-[15px] text-white outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#74b3c6]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#74b3c6]/20">
+          </div>
+        </div>
+
+        <button type="submit"
+                class="mt-1.5 flex w-full items-center justify-center gap-2.5 rounded-2xl border border-[#74b3c6]/50 bg-gradient-to-br from-[#0b6f74] to-[#075b60] py-4 text-[15px] font-bold text-white shadow-[0_14px_28px_-10px_rgba(5,40,46,0.65)] transition hover:brightness-110">
+          Entrar no painel
+        </button>
+      </form>
+
+      <p class="footer mt-6 text-center text-[12.5px] leading-relaxed text-white/50">
+        Demonstração — usuários de exemplo com senha <code class="rounded-md bg-white/10 px-1.5 py-0.5 text-white/75">senha123</code><br>
+        admin@esferacrm.com · dona@aurora.com · ana@aurora.com
+      </p>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+(function () {
+  var card = document.getElementById('loginCard');
+  if (!card) return;
+
+  var STORE = 'esferacrm_card_pos';
+  var tx = 0, ty = 0;
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORE) || 'null');
+    if (saved && typeof saved.x === 'number') { tx = saved.x; ty = saved.y; }
+  } catch (e) {}
+  apply(tx, ty);
+
+  var dragging = false, sx = 0, sy = 0, ox = 0, oy = 0, pid = null;
+
+  card.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('input, button, a, .footer, label')) return;
+    dragging = true;
+    pid = e.pointerId;
+    card.setPointerCapture(pid);
+    card.classList.add('dragging');
+    sx = e.clientX; sy = e.clientY;
+    ox = tx; oy = ty;
+  });
+
+  card.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    var nx = ox + (e.clientX - sx);
+    var ny = oy + (e.clientY - sy);
+    nx = clamp(nx, -window.innerWidth / 2 + 60, window.innerWidth / 2 - 60);
+    ny = clamp(ny, -window.innerHeight / 2 + 60, window.innerHeight / 2 - 60);
+    apply(nx, ny);
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    try { card.releasePointerCapture(pid); } catch (err) {}
+    pid = null;
+    card.classList.remove('dragging');
+    try { localStorage.setItem(STORE, JSON.stringify({ x: tx, y: ty })); } catch (err) {}
+  }
+  card.addEventListener('pointerup', endDrag);
+  card.addEventListener('pointercancel', endDrag);
+
+  card.addEventListener('dblclick', function () {
+    apply(0, 0);
+    try { localStorage.setItem(STORE, JSON.stringify({ x: 0, y: 0 })); } catch (err) {}
+  });
+
+  function apply(x, y) { tx = x; ty = y; card.style.transform = 'translate(' + x + 'px,' + y + 'px)'; }
+  function clamp(v, min, max) { return v < min ? min : (v > max ? max : v); }
+})();
+</script>
+{% endblock %}

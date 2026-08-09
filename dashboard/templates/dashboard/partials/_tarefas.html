@@ -1,0 +1,27 @@
+{% if tarefas_alerta %}
+<div class="mb-5 rounded-2xl border border-[#fbbf24]/30 bg-[#fbbf24]/10 p-6 backdrop-blur-xl">
+  <div class="mb-3 flex flex-wrap items-center gap-3">
+    <span class="text-[13.5px] font-semibold text-[#fbbf24]">📌 Tarefas &amp; lembretes ({{ tarefas_alerta|length }})</span>
+    <a href="{% url 'tarefas:lista' %}"
+       class="ml-auto rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[11.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Ver todas</a>
+  </div>
+  <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+    {% for t in tarefas_alerta %}
+      <div class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-[#fbbf24]/40 hover:bg-white/10">
+        {% if t.contato_id %}<a href="{% url 'contatos:detalhe' t.contato_id %}">{% endif %}
+        <div class="flex items-center justify-between gap-2">
+          <span class="truncate text-[13px] font-semibold text-white">{{ t.titulo }}</span>
+          <span class="shrink-0 hazon-chip px-2 {% if t.atrasada %}bg-red-400/15 text-red-300{% else %}bg-[#fbbf24]/15 text-[#fbbf24]{% endif %}">
+            {% if t.atrasada %}atrasada{% else %}hoje{% endif %}
+          </span>
+        </div>
+        <div class="mt-1.5 flex items-center justify-between gap-2">
+          <span class="truncate text-[11.5px] text-[#6f8a93]">{{ t.contato_nome|default:"sem contato" }}</span>
+          <span class="font-mono text-[11.5px] text-[#bcd3da]">{{ t.vencimento|date:"d/m" }}</span>
+        </div>
+        {% if t.contato_id %}</a>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

@@ -1,0 +1,12 @@
+<div class="mb-4 mt-5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">
+  <span class="h-3 w-[3px] rounded bg-[#74b3c6]"></span>
+  Conversão por etapa
+</div>
+<div class="grid grid-cols-2 gap-2 lg:grid-cols-4">
+  {% for c in conversao %}
+    <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+      <div class="mb-2 min-h-[34px] text-[9.5px] font-semibold uppercase leading-snug tracking-tight text-[#6f8a93]">{{ c.de }} &rarr; {{ c.para }}</div>
+      <div class="font-mono text-[21px] font-bold leading-none" style="color:{{ c.cor }}">{{ c.pct }}%</div>
+    </div>
+  {% endfor %}
+</div>

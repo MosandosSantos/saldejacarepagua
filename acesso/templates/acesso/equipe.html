@@ -1,0 +1,93 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — Equipe{% endblock %}
+
+{% block conteudo %}
+<div class="mx-auto max-w-4xl space-y-6">
+  <div class="mb-2">
+    <h1 class="hazon-titulo">Equipe</h1>
+    <p class="hazon-sub mt-2">Convide pessoas para acessar o sistema da sua empresa — cada membro entra com o próprio e-mail e senha.</p>
+  </div>
+
+  {% for e in erros %}
+    <div class="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ e }}</div>
+  {% endfor %}
+  {% if sucesso %}
+    <div class="rounded-xl border border-[#7fe3c4]/30 bg-[#7fe3c4]/10 px-4 py-3 text-[13px] text-[#7fe3c4]">{{ sucesso }}</div>
+  {% endif %}
+
+  <!-- Convidar membro -->
+  <div class="hazon-card-sm p-6 backdrop-blur-xl">
+    <h2 class="mb-4 text-[15px] font-semibold text-white">Convidar membro</h2>
+    <form method="post" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6 hazon-form">
+      {% csrf_token %}
+      <div class="lg:col-span-2">
+        <label for="nome" class="hazon-label">Nome</label>
+        <input type="text" id="nome" name="nome" placeholder="ex.: Ana Souza" value="{{ request.POST.nome }}" required>
+      </div>
+      <div class="lg:col-span-2">
+        <label for="email" class="hazon-label">E-mail</label>
+        <input type="email" id="email" name="email" placeholder="email@empresa.com" value="{{ request.POST.email }}" required>
+      </div>
+      <div class="lg:col-span-1">
+        <label for="senha" class="hazon-label">Senha</label>
+        <input type="text" id="senha" name="senha" placeholder="mín. 6 caracteres" value="{{ request.POST.senha }}" required>
+      </div>
+      <div class="lg:col-span-1">
+        <label for="papel" class="hazon-label">Papel</label>
+        <select id="papel" name="papel">
+          <option value="operacional" {% if request.POST.papel == 'operacional' or not request.POST.papel %}selected{% endif %}>Operacional</option>
+          <option value="admin_company" {% if request.POST.papel == 'admin_company' %}selected{% endif %}>Admin da empresa</option>
+          <option value="viewer" {% if request.POST.papel == 'viewer' %}selected{% endif %}>Somente leitura</option>
+        </select>
+      </div>
+      <div class="flex items-end lg:col-span-6">
+        <button type="submit" class="hazon-btn hazon-btn-primary px-6 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">Convidar</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Membros -->
+  <div class="overflow-hidden hazon-card">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-white/10 text-left">
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Membro</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Papel</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Entrou em</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in membros %}
+          <tr class="border-b border-white/5 transition last:border-0 hover:bg-white/5">
+            <td class="px-5 py-3.5">
+              <div class="flex items-center gap-3">
+                <span class="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#2aa1a8] to-[#075b60] text-[12px] font-bold text-white">{{ m.nome|slice:":1"|upper }}</span>
+                <div>
+                  <div class="text-[13.5px] font-semibold text-white">{{ m.nome }}</div>
+                  <div class="text-[11.5px] text-[#6f8a93]">{{ m.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-5 py-3.5">
+              <span class="rounded-full px-2.5 py-1 text-[10.5px] font-semibold {% if m.eh_admin %}text-[#74b3c6] bg-[#74b3c6]/15{% else %}text-[#7fe3c4] bg-[#7fe3c4]/15{% endif %}">{{ m.papel_label }}</span>
+            </td>
+            <td class="px-5 py-3.5 text-[12.5px] text-[#bcd3da]">{{ m.created_at|date:"d/m/Y" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="3" class="px-5 py-12 text-center text-[13px] text-[#6f8a93]">Nenhum membro ainda — convide a primeira pessoa acima.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="text-[12px] text-[#6f8a93]">
+    💡 <b class="text-[#bcd3da]">Papéis:</b> <b class="text-[#7fe3c4]">Operacional</b> vê e edita contatos, agenda e funil, mas não exclui nem mexe em configurações. <b class="text-[#74b3c6]">Admin da empresa</b> tem acesso completo.
+  </p>
+</div>
+{% endblock %}
+
+{% block js %}
+{% endblock %}

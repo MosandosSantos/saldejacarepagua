@@ -1,0 +1,13 @@
+<section class="hazon-card-lg p-6">
+  <div class="mb-4 flex items-center justify-between gap-3">
+    <h2 class="font-display text-lg font-semibold text-white">{{ titulo }}</h2>
+    <span class="rounded-full px-2.5 py-0.5 font-mono text-xs font-bold" style="color:{{ cor }};background:{{ cor }}1a">{{ lista|length }}</span>
+  </div>
+  <div class="space-y-2.5">
+    {% for t in lista %}
+      {% include 'tarefas/partials/_linha.html' %}
+    {% empty %}
+      <p class="text-[13px] text-[#6f8a93]">{{ vazio }}</p>
+    {% endfor %}
+  </div>
+</section>

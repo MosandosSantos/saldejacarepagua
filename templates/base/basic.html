@@ -1,0 +1,147 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block titulo %}HAZON CRM{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+  {% block extra_head %}{% endblock %}
+  <style>
+    body { font-family: 'Manrope', 'Segoe UI', sans-serif; }
+    .font-display { font-family: 'Fraunces', Georgia, serif; }
+
+    /* ===== Tema claro (só para páginas com sessão — público segue escuro) ===== */
+    {% if web_logado %}
+    body[data-tema="claro"] {
+      background: #e9f1f4 !important;
+      color: #0b2029 !important;
+    }
+    body[data-tema="claro"] #bg-fundo {
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(11,111,116,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 85% 90%, rgba(17,37,48,0.08) 0%, transparent 55%),
+        linear-gradient(150deg,#f5fafc 0%,#e4eef2 55%,#e9f1f4 100%) !important;
+    }
+    body[data-tema="claro"] header {
+      background: rgba(255,255,255,0.80) !important;
+      border-color: rgba(11,32,41,0.12) !important;
+    }
+    body[data-tema="claro"] .bg-white\/5  { background-color: rgba(255,255,255,0.80) !important; }
+    body[data-tema="claro"] .bg-white\/10 { background-color: rgba(11,32,41,0.06) !important; }
+    body[data-tema="claro"] .bg-white\/15 { background-color: rgba(11,32,41,0.10) !important; }
+    body[data-tema="claro"] .border-white\/5  { border-color: rgba(11,32,41,0.08) !important; }
+    body[data-tema="claro"] .border-white\/10 { border-color: rgba(11,32,41,0.12) !important; }
+    body[data-tema="claro"] .border-white\/15 { border-color: rgba(11,32,41,0.16) !important; }
+    body[data-tema="claro"] .text-white       { color: #0b2029 !important; }
+    body[data-tema="claro"] .text-\[#f4fafb\] { color: #0b2029 !important; }
+    body[data-tema="claro"] .text-\[#bcd3da\] { color: #33545e !important; }
+    body[data-tema="claro"] .text-\[#6f8a93\] { color: #5c7a84 !important; }
+    body[data-tema="claro"] .text-\[#d5e4e9\] { color: #33545e !important; }
+    body[data-tema="claro"] .text-\[#74b3c6\] { color: #0b6f74 !important; }
+    /* superfícies escuras usadas como cartões -> viram claras */
+    body[data-tema="claro"] .bg-\[#0b2029\],
+    body[data-tema="claro"] .bg-\[#0d2a33\],
+    body[data-tema="claro"] .bg-\[#072026\] {
+      background-color: rgba(255,255,255,0.80) !important;
+    }
+    /* textos brancos sobre gradientes (botões/avatares) permanecem brancos */
+    body[data-tema="claro"] .bg-gradient-to-br { color: #ffffff !important; }
+    body[data-tema="claro"] .bg-\[#0b2029\].text-white,
+    body[data-tema="claro"] .bg-\[#0d2a33\].text-white { color: #0b2029 !important; }
+    /* inputs, selects e textareas */
+    body[data-tema="claro"] form input,
+    body[data-tema="claro"] form select,
+    body[data-tema="claro"] form textarea {
+      color: #0b2029 !important;
+      background: #ffffff !important;
+      border-color: rgba(11,32,41,0.18) !important;
+    }
+    body[data-tema="claro"] form input::placeholder,
+    body[data-tema="claro"] form textarea::placeholder { color: #8aa2ab !important; }
+    body[data-tema="claro"] form select option { background: #ffffff; color: #0b2029; }
+    {% endif %}
+  </style>
+</head>
+<body class="min-h-screen bg-[#0b2029] text-[#f4fafb] antialiased" data-tema="{% if web_logado %}{{ web_tema }}{% else %}escuro{% endif %}">
+  <div id="bg-fundo" class="fixed inset-0 -z-10"
+       style="background:
+         radial-gradient(ellipse 80% 60% at 20% 10%, rgba(11,111,116,0.30) 0%, transparent 60%),
+         radial-gradient(ellipse 60% 50% at 85% 90%, rgba(17,37,48,0.50) 0%, transparent 55%),
+         linear-gradient(150deg,#0e3a44 0%,#112530 55%,#0b2029 100%);"></div>
+
+  {% block cabecalho %}
+  <header class="sticky top-0 z-40 border-b border-white/15 bg-[#072026]/70 backdrop-blur-xl">
+    <div class="mx-auto flex h-16 max-w-[1640px] items-center gap-7 px-4 sm:px-8">
+      <a href="{% url 'dashboard:index' %}" class="flex shrink-0 items-center gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded-[11px] bg-gradient-to-br from-[#2aa1a8] to-[#075b60] shadow-lg shadow-[#74b3c6]/30">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" class="h-[22px] w-[22px]" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.6" fill="#fff"/>
+          </svg>
+        </span>
+        <span class="leading-none">
+          <span class="font-display block text-[22px] font-semibold tracking-tight text-white">HAZON<span class="text-[#74b3c6]"> CRM</span></span>
+          <span class="mt-1 block text-[8.5px] font-bold tracking-[0.12em] text-[#74b3c6]">EsferaDataSci</span>
+        </span>
+      </a>
+
+      <nav class="mx-auto flex gap-1">
+        {% for item in NAV_ITENS %}
+          <a href="{{ item.url }}"
+             class="flex items-center gap-2 whitespace-nowrap rounded-[11px] px-4 py-2.5 text-[13.5px] font-medium transition
+                    {% if item.ativa %}bg-[#74b3c6]/15 text-[#74b3c6]{% else %}text-[#bcd3da] hover:bg-white/10 hover:text-white{% endif %}">
+            {{ item.icone|safe }}
+            {{ item.label }}
+            {% if item.badge %}
+              <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-400/90 px-1.5 font-mono text-[10px] font-bold text-white" title="{{ item.badge }} tarefa(s) atrasada(s)">{{ item.badge }}</span>
+            {% endif %}
+          </a>
+        {% endfor %}
+      </nav>
+
+      <div class="flex shrink-0 items-center gap-3">
+        <form method="post" action="{% url 'alternar_tema' %}" class="shrink-0">
+          {% csrf_token %}
+          <input type="hidden" name="voltar" value="{{ request.path }}">
+          {% if web_tema == 'claro' %}
+            <input type="hidden" name="tema" value="escuro">
+            <button type="submit" title="Ativar tema escuro"
+                    class="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-[#bcd3da] transition hover:bg-white/10 hover:text-white">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-[18px] w-[18px]" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+          {% else %}
+            <input type="hidden" name="tema" value="claro">
+            <button type="submit" title="Ativar tema claro"
+                    class="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-[#bcd3da] transition hover:bg-white/10 hover:text-white">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-[18px] w-[18px]" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            </button>
+          {% endif %}
+        </form>
+        <div class="hidden items-center gap-3 md:flex">
+          <span class="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#2aa1a8] to-[#075b60] font-display text-sm font-semibold text-white shadow-md shadow-[#74b3c6]/30">
+            {{ web_usuario.iniciais|default:"A" }}
+          </span>
+          <span class="leading-tight">
+            <span class="block text-[13px] font-semibold text-white">{{ web_usuario.nome|default:"—" }}</span>
+            <span class="block text-[11px] text-[#6f8a93]">{{ web_usuario.role_label|default:"" }}</span>
+          </span>
+        </div>
+        <a href="{% url 'acesso:logout' %}"
+           class="hazon-btn hazon-btn-ghost">
+          Sair
+        </a>
+      </div>
+    </div>
+  </header>
+{% endblock %}
+
+  <main class="mx-auto max-w-[1640px] px-4 py-8 sm:px-8">
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  {% block js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,78 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — {{ titulo_form }}{% endblock %}
+
+{% block conteudo %}
+<div class="mx-auto max-w-2xl">
+  <div class="mb-6">
+    <h1 class="hazon-titulo">{{ titulo_form }}</h1>
+    <p class="mt-2 text-sm font-medium text-[#74b3c6]">
+      {% if confirmar_exclusao %}Esta ação não pode ser desfeita.{% else %}A fila alimenta a tela do operador com os contatos (que tenham telefone) da carteira escolhida.{% endif %}
+    </p>
+  </div>
+
+  {% for e in erros %}
+    <div class="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ e }}</div>
+  {% endfor %}
+
+  {% if confirmar_exclusao %}
+    <div class="hazon-card-lg p-8 text-center">
+      <p class="mb-6 text-[14px] text-[#bcd3da]">Excluir a fila <b class="text-white">"{{ nome }}"</b>? As chamadas registradas serão removidas junto.</p>
+      <form method="post" class="flex justify-center gap-3">
+        {% csrf_token %}
+        <a href="{% url 'discador:filas' %}" class="rounded-xl border border-white/15 bg-white/5 px-6 py-2.5 text-[13px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Cancelar</a>
+        <button type="submit" class="hazon-btn hazon-btn-danger-solid px-6 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">Sim, excluir</button>
+      </form>
+    </div>
+  {% else %}
+  <form method="post" class="hazon-card-lg p-8 hazon-form">
+    {% csrf_token %}
+    <div class="grid grid-cols-1 gap-5">
+      <div>
+        <label for="nome" class="hazon-label">Nome da fila</label>
+        <input type="text" id="nome" name="nome" value="{{ nome }}" placeholder="ex.: Cobrança — carteira A" required>
+      </div>
+      <div>
+        <label for="descricao" class="hazon-label">Descrição (opcional)</label>
+        <input type="text" id="descricao" name="descricao" value="{{ descricao }}" placeholder="ex.: Devedores do mês">
+      </div>
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <div>
+          <label for="carteira_id" class="hazon-label">Carteira (fonte dos contatos)</label>
+          <select id="carteira_id" name="carteira_id">
+            <option value="">Todos os contatos com telefone</option>
+            {% for c in carteiras %}
+              <option value="{{ c.id }}" {% if c.id|stringformat:"s" == carteira_selecionada %}selected{% endif %}>{{ c.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="ordem" class="hazon-label">Ordem dos contatos</label>
+          <select id="ordem" name="ordem">
+            {% for k, label in ordens %}
+              <option value="{{ k }}" {% if k == ordem %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div>
+        <label for="script_id" class="hazon-label">Script de atendimento (exibido durante a chamada)</label>
+        <select id="script_id" name="script_id">
+          <option value="">Sem script</option>
+          {% for s in scripts %}
+            <option value="{{ s.id }}" {% if s.id|stringformat:"s" == script_selecionado %}selected{% endif %}>{{ s.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <label class="flex items-center gap-2 text-[12.5px] text-[#bcd3da]">
+        <input type="checkbox" name="ativa" {% if ativa %}checked{% endif %} class="h-4 w-4 accent-[#74b3c6]"> Fila ativa
+      </label>
+      <div class="flex gap-3">
+        <a href="{% url 'discador:filas' %}" class="rounded-xl border border-white/15 bg-white/5 px-6 py-2.5 text-[13px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Cancelar</a>
+        <button type="submit" class="hazon-btn hazon-btn-primary px-6 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">Salvar fila</button>
+      </div>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

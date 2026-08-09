@@ -1,0 +1,48 @@
+{% if itens %}
+  {% for c in itens %}
+    <tr class="cursor-pointer border-b border-white/10 transition last:border-0 hover:bg-white/5">
+      <td class="px-5 py-4"><a class="font-semibold text-white hover:text-[#74b3c6]" href="{% url 'contatos:detalhe' c.id %}">{{ c.nome }}</a></td>
+      <td class="px-5 py-4 text-[13.5px] text-[#bcd3da]">{{ c.empresa }}{% if c.cargo %}<span class="block text-[11px] text-[#6f8a93]">{{ c.cargo }}</span>{% endif %}</td>
+      <td class="px-5 py-4 font-mono text-[12.5px] text-[#bcd3da]">{{ c.tel }}</td>
+      <td class="px-5 py-4 text-[12.5px] text-[#bcd3da]">{{ c.email }}</td>
+      <td class="px-5 py-4"><span class="rounded-full px-2.5 py-1 text-[10px] font-semibold" style="color:{{ c.stage.color }};background:{{ c.stage.color }}1a">{{ c.stage.name }}</span></td>
+      <td class="px-5 py-4"><span class="rounded-full px-2.5 py-1 text-[10px] font-semibold" style="color:{{ c.seg.color }};background:{{ c.seg.color }}1a">{{ c.seg.label }}</span></td>
+      <td class="px-5 py-4">
+        <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10.5px] font-bold"
+              style="color:{{ c.score_cor }};background:{{ c.score_cor }}1a"
+              title="Lead scoring: {{ c.score_label }}">{{ c.score }}</span>
+      </td>
+      <td class="px-5 py-4">
+        {% for t in c.tags|slice:":2" %}
+          <span class="mr-1 inline-block hazon-chip px-2 font-semibold" style="color:{{ t.cor }};background:{{ t.cor }}1a">{{ t.nome }}</span>
+        {% empty %}
+          <span class="text-[12px] text-[#6f8a93]">—</span>
+        {% endfor %}
+        {% if c.tags|length > 2 %}<span class="text-[10px] text-[#6f8a93]">+{{ c.tags|length|add:"-2" }}</span>{% endif %}
+      </td>
+      <td class="px-5 py-4 text-right font-mono font-bold text-[#74b3c6]">{{ c.valor }}</td>
+      <td class="px-5 py-4">
+        <div class="flex items-center justify-end gap-1.5">
+          <a href="{% url 'contatos:detalhe' c.id %}" title="Consultar"
+             class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#bcd3da] transition hover:border-[#74b3c6]/40 hover:bg-[#74b3c6]/15 hover:text-[#74b3c6]">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </a>
+          {% if web_pode_editar %}
+          <a href="{% url 'contatos:editar' c.id %}" title="Editar"
+             class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#bcd3da] transition hover:border-[#7fe3c4]/40 hover:bg-[#7fe3c4]/15 hover:text-[#7fe3c4]">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          </a>
+          {% endif %}
+          {% if web_eh_admin %}
+          <a href="{% url 'contatos:excluir' c.id %}" title="Excluir"
+             class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#bcd3da] transition hover:border-red-400/40 hover:bg-red-500/15 hover:text-red-300">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </a>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+  {% endfor %}
+{% else %}
+  <tr><td colspan="10" class="px-5 py-12 text-center text-sm text-[#6f8a93]">Nenhum contato encontrado.</td></tr>
+{% endif %}

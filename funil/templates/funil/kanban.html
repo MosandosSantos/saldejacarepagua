@@ -1,0 +1,256 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — Funil{% endblock %}
+
+{% block conteudo %}
+<div class="mb-7">
+  <h1 class="hazon-titulo">Funil de pacientes</h1>
+  <p class="mt-2 text-sm font-medium text-[#74b3c6]">{% if web_pode_editar %}Arraste os cards entre as etapas para atualizar cada paciente.{% else %}Modo somente leitura — peça ao admin da empresa para mover os pacientes.{% endif %}</p>
+</div>
+
+<div class="mb-6 flex flex-wrap items-center gap-4">
+  <form method="get" action="{% url 'funil:kanban' %}" class="relative">
+    <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="#6f8a93" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nome ou empresa..."
+           class="hazon-search w-72">
+  </form>
+  {% if web_eh_admin %}
+  <a href="/config/#etapas" class="hazon-btn hazon-btn-ghost" title="Configurar as etapas do funil (nome, cor, ordem e probabilidade)">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Etapas
+  </a>
+  {% endif %}
+  <a href="{% url 'contatos:exportar_negocios' %}" class="ml-auto hazon-btn hazon-btn-ghost" title="Baixar CSV dos negócios">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Exportar
+  </a>
+  <div class="flex items-center gap-2.5 rounded-xl border border-[#74b3c6]/35 bg-[#74b3c6]/10 px-4 py-2.5">
+    <span class="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#bcd3da]">Total no funil</span>
+    <span id="total-funil" class="font-mono text-[17px] font-bold text-[#74b3c6]">{{ total_funil }}</span>
+  </div>
+</div>
+
+{% if estagnados %}
+<div class="mb-6 rounded-2xl border border-[#fbbf24]/30 bg-[#fbbf24]/10 p-5 backdrop-blur-xl">
+  <div class="mb-3 flex flex-wrap items-center gap-3">
+    <span class="text-[13.5px] font-semibold text-[#fbbf24]">⏳ Negócios parados há mais de {{ dias }} dias ({{ estagnados|length }})</span>
+    <form method="get" class="ml-auto flex items-center gap-2">
+      {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+      <label class="text-[11px] text-[#bcd3da]">Mostrar parados há +</label>
+      <select name="dias" onchange="this.form.submit()"
+              class="rounded-lg border border-white/10 bg-[#0b2029] px-2 py-1.5 text-[11.5px] text-white outline-none">
+        {% for d in '3,7,15,30'|make_list %}
+          <option value="{{ d }}" {% if dias == d|add:0 %}selected{% endif %}>{{ d }} dias</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+  <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+    {% for n in estagnados %}
+      <a href="{% url 'contatos:detalhe' n.contato_id %}"
+         class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-[#fbbf24]/40 hover:bg-white/10">
+        <div class="flex items-center justify-between gap-2">
+          <span class="truncate text-[13px] font-semibold text-white">{{ n.nome }}</span>
+          <span class="shrink-0 hazon-chip px-2" style="color:{{ n.stage.color }};background:{{ n.stage.color }}1a">{{ n.stage.name }}</span>
+        </div>
+        <div class="mt-1.5 flex items-center justify-between gap-2">
+          <span class="font-mono text-[12.5px] font-bold text-[#fbbf24]">{{ n.valor }}</span>
+          <span class="text-[11px] text-[#6f8a93]">parado há {{ n.dias }} dia{{ n.dias|pluralize }}</span>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="flex items-stretch gap-3 overflow-x-auto pb-2">
+  {% for col in colunas %}
+  <div class="kanban-col flex w-[290px] shrink-0 flex-col overflow-hidden hazon-card transition-all duration-200"
+       data-stage="{{ col.key }}">
+    <div class="flex items-center gap-2.5 border-b border-white/10 px-4 py-3.5">
+      <span class="h-2.5 w-2.5 shrink-0 rounded" style="background:{{ col.color }};box-shadow:0 0 8px {{ col.color }}70"></span>
+      <span class="flex-1 truncate text-[12.5px] font-semibold text-[#bcd3da]">{{ col.name }}</span>
+      <span data-contador="{{ col.key }}" class="rounded-full bg-white/5 px-2.5 py-0.5 font-mono text-xs font-bold text-white">{{ col.count }}</span>
+    </div>
+    <div class="cards flex flex-1 flex-col gap-2.5 p-3">
+      {% for card in col.cards %}
+      <div class="kanban-card group relative hazon-card-sm p-3.5 transition hover:border-[#74b3c6]/40 hover:bg-white/10"
+           {% if web_pode_editar %}draggable="true"{% endif %} data-id="{{ card.id }}">
+        <div class="mb-1.5 flex items-start justify-between gap-2">
+          <a href="{% url 'contatos:detalhe' card.contato_id %}" class="text-[13.5px] font-semibold text-white hover:text-[#74b3c6]">{{ card.nome }}</a>
+        </div>
+        <div class="mb-2.5 text-[11.5px] text-[#6f8a93]">{{ card.empresa }}</div>
+        <div class="mb-2 flex items-center justify-between gap-2">
+          <span class="hazon-chip px-2 font-semibold" style="color:{{ card.seg_color }};background:{{ card.seg_color }}1a">{{ card.seg_label }}</span>
+          <span class="hazon-chip px-2 font-mono {% if card.score_nivel == 'quente' %}text-[#4ade80] bg-[#4ade80]/15{% elif card.score_nivel == 'morno' %}text-[#fbbf24] bg-[#fbbf24]/15{% else %}text-[#94a3b8] bg-white/10{% endif %}" title="Lead scoring">{{ card.score }}</span>
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10px] font-bold uppercase tracking-wide {% if card.score_nivel == 'quente' %}text-[#4ade80]{% elif card.score_nivel == 'morno' %}text-[#fbbf24]{% else %}text-[#6f8a93]{% endif %}">{{ card.score_nivel }}</span>
+          <span class="font-mono text-[13.5px] font-bold text-[#74b3c6]">{{ card.valor }}</span>
+        </div>
+        {% if web_pode_editar %}
+        <div class="mt-2 hidden border-t border-white/10 pt-2 group-hover:block">
+          <form method="post" action="{% url 'funil:mover' card.id %}">
+            {% csrf_token %}
+            <select name="stage" onchange="this.form.submit()"
+                    class="w-full rounded-lg border border-white/10 bg-[#0b2029] px-2 py-1.5 text-[11.5px] text-white outline-none">
+              {% for st in stages %}
+                <option value="{{ st.key }}" {% if st.key == col.key %}selected{% endif %}>{{ st.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+      {% empty %}
+      <p class="vazio-msg px-2 py-1 text-xs text-[#6f8a93]">Vazio</p>
+      {% endfor %}
+      {% if col.ocultos %}
+      <p class="ocultos-msg px-2 py-1 text-[11px] font-medium text-[#6f8a93]">+{{ col.ocultos }} não exibido{{ col.ocultos|pluralize }}</p>
+      {% endif %}
+    </div>
+    <div class="border-t border-white/10 px-4 py-3 font-mono text-[12.5px] font-semibold text-[#6f8a93]">
+      Soma: <b data-soma="{{ col.key }}" class="text-white">{{ col.soma_label }}</b>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block js %}
+<style>
+  {% if web_pode_editar %}
+  .kanban-card { cursor: grab; }
+  .kanban-card:active { cursor: grabbing; }
+  {% endif %}
+  .kanban-card.dragging { opacity: 0.35; }
+  .kanban-col.is-over {
+    border-color: rgba(116,179,198,0.55);
+    background: rgba(116,179,198,0.08);
+    box-shadow: inset 0 0 0 2px rgba(116,179,198,0.45);
+  }
+  .kanban-card.card-entrou { animation: cardEntrou 0.35s ease; }
+  @keyframes cardEntrou {
+    from { transform: scale(0.92); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+</style>
+{% if web_pode_editar %}
+<script>
+function csrftoken() {
+  var el = document.querySelector('[name=csrfmiddlewaretoken]');
+  return el ? el.value : '';
+}
+
+function manterVazio(col) {
+  var cards = col.querySelector('.cards');
+  if (cards && !cards.querySelector('.vazio-msg') && !cards.querySelector('[data-id]')) {
+    var p = document.createElement('p');
+    p.className = 'vazio-msg px-2 py-1 text-xs text-[#6f8a93]';
+    p.textContent = 'Vazio';
+    cards.appendChild(p);
+  }
+}
+
+// Aviso "+N não exibidos" acompanha o contador real (máx. 30 cards na tela)
+function atualizarOcultos(col, count) {
+  var cards = col.querySelector('.cards');
+  if (!cards) return;
+  var msg = cards.querySelector('.ocultos-msg');
+  var exibidos = cards.querySelectorAll('.kanban-card[data-id]').length;
+  var ocultos = count - exibidos;
+  if (ocultos > 0) {
+    var texto = '+' + ocultos + ' não exibido' + (ocultos > 1 ? 's' : '');
+    if (!msg) {
+      msg = document.createElement('p');
+      msg.className = 'ocultos-msg px-2 py-1 text-[11px] font-medium text-[#6f8a93]';
+      cards.appendChild(msg);
+    }
+    msg.textContent = texto;
+  } else if (msg) {
+    msg.remove();
+  }
+}
+
+document.querySelectorAll('.kanban-card').forEach(function (card) {
+  card.addEventListener('dragstart', function (e) {
+    e.dataTransfer.setData('text/plain', card.getAttribute('data-id'));
+    e.dataTransfer.effectAllowed = 'move';
+    card.classList.add('dragging');
+  });
+  card.addEventListener('dragend', function () {
+    card.classList.remove('dragging');
+    document.querySelectorAll('.is-over').forEach(function (c) { c.classList.remove('is-over'); });
+  });
+});
+
+document.querySelectorAll('.kanban-col').forEach(function (col) {
+  col.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    col.classList.add('is-over');
+  });
+  col.addEventListener('dragleave', function (e) {
+    if (!col.contains(e.relatedTarget)) col.classList.remove('is-over');
+  });
+  col.addEventListener('drop', function (e) {
+    e.preventDefault();
+    col.classList.remove('is-over');
+    var id = e.dataTransfer.getData('text/plain');
+    var stage = col.getAttribute('data-stage');
+    if (!id || !stage) return;
+    var origem = document.querySelector('.kanban-card[data-id="' + id + '"]');
+    if (origem && origem.closest('.kanban-col').getAttribute('data-stage') === stage) return; // mesma coluna
+    var fd = new FormData();
+    fd.append('stage', stage);
+    // mantém o filtro de busca ativo no recálculo do board (contador/ocultos)
+    var busca = document.querySelector('input[name=q]');
+    if (busca && busca.value) fd.append('q', busca.value);
+    fetch('/funil/' + id + '/mover/', {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-CSRFToken': csrftoken(), 'X-Requested-With': 'XMLHttpRequest' },
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error('falha');
+        return r.json();
+      })
+      .then(function (dados) {
+        if (!dados.ok || !origem) return;
+        // move o cartão para a coluna de destino
+        var vazio = col.querySelector('.vazio-msg');
+        if (vazio) vazio.remove();
+        col.querySelector('.cards').appendChild(origem);
+        origem.classList.remove('dragging');
+        origem.classList.add('card-entrou');
+        setTimeout(function () { origem.classList.remove('card-entrou'); }, 350);
+        // mantém no máximo 30 cards visíveis por coluna (descarta os mais antigos)
+        var cartoes = col.querySelectorAll('.kanban-card[data-id]');
+        while (cartoes.length > 30) {
+          cartoes[0].remove();
+          cartoes = col.querySelectorAll('.kanban-card[data-id]');
+        }
+        var ocultos = col.querySelector('.ocultos-msg');
+        if (ocultos) ocultos.remove();
+        // (o aviso correto volta no loop abaixo via atualizarOcultos)
+        // atualiza contadores, somas, aviso de ocultos e total
+        dados.colunas.forEach(function (c) {
+          var colEl = document.querySelector('.kanban-col[data-stage="' + c.key + '"]');
+          if (!colEl) return;
+          var contador = colEl.querySelector('[data-contador]');
+          if (contador) contador.textContent = c.count;
+          var soma = colEl.querySelector('[data-soma]');
+          if (soma) soma.textContent = c.soma;
+          atualizarOcultos(colEl, c.count);
+          manterVazio(colEl);
+        });
+        var total = document.getElementById('total-funil');
+        if (total) total.textContent = dados.total_funil;
+        manterVazio(col);
+      })
+      .catch(function () { window.location.reload(); });
+  });
+});
+</script>
+{% endif %}
+{% endblock %}

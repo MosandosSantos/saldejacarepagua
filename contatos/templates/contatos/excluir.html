@@ -1,0 +1,23 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — Excluir contato{% endblock %}
+
+{% block conteudo %}
+<div class="mx-auto max-w-lg pt-16 text-center">
+  <div class="rounded-3xl border border-red-400/25 bg-red-500/5 p-10 backdrop-blur-xl">
+    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10">
+      <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="#ef4444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    </div>
+    <h1 class="font-display text-2xl font-semibold text-white">Excluir contato</h1>
+    <p class="mt-3 text-sm leading-relaxed text-[#bcd3da]">
+      Tem certeza que deseja excluir <b class="text-white">{{ contato.nome }}</b> ({{ contato.empresa }})?<br>
+      Esta ação <b class="text-red-300">não pode ser desfeita</b>.
+    </p>
+    <form method="post" action="{% url 'contatos:excluir' contato.id %}" class="mt-8 flex justify-center gap-3">
+      {% csrf_token %}
+      <a href="{% url 'contatos:detalhe' contato.id %}" class="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-[13.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10">Cancelar</a>
+      <button type="submit" class="hazon-btn hazon-btn-danger-solid px-6 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">Sim, excluir</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

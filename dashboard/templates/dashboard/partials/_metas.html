@@ -1,0 +1,38 @@
+{% if metas_dashboard %}
+<div class="mt-5 hazon-card-sm p-7 backdrop-blur-xl">
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h2 class="font-display text-lg font-semibold text-white">Metas dos vendedores</h2>
+      <p class="mt-1 text-[12.5px] text-[#6f8a93]">Fechados no mês × meta definida na <a href="/config/#metas-vendedores" class="text-[#74b3c6] transition hover:underline">configuração</a>.</p>
+    </div>
+    <span class="text-xs text-[#6f8a93]">mês atual</span>
+  </div>
+  <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    {% for m in metas_dashboard %}
+    <div class="rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-white/20 hover:bg-white/10">
+      <div class="mb-3 flex items-center gap-3">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2aa1a8] to-[#075b60] text-[12px] font-bold text-white">{{ m.iniciais }}</span>
+        <div class="min-w-0 flex-1">
+          <div class="truncate text-[13.5px] font-semibold text-white">{{ m.nome }}</div>
+          <div class="text-[11px] text-[#6f8a93]">{{ m.qtd_fechados }} fechado{{ m.qtd_fechados|pluralize }} · <b class="text-[#bcd3da]">{{ m.vendido_label }}</b></div>
+        </div>
+        {% if m.atingiu %}
+          <span class="rounded-full bg-[#7fe3c4]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#7fe3c4]">✓ meta batida</span>
+        {% endif %}
+      </div>
+      {% if m.tem_meta %}
+        <div class="mb-1.5 flex items-baseline justify-between">
+          <span class="font-mono text-[15px] font-bold" style="color:{{ m.cor }}">{{ m.pct }}%</span>
+          <span class="text-[11px] text-[#6f8a93]">meta {{ m.meta_label }}</span>
+        </div>
+        <div class="h-2 overflow-hidden rounded-full bg-white/10">
+          <div class="h-full rounded-full transition-all duration-700" style="width:{{ m.pct }}%;background:linear-gradient(90deg,{{ m.cor }}88,{{ m.cor }})"></div>
+        </div>
+      {% else %}
+        <p class="text-[11.5px] text-[#6f8a93]">Sem meta definida para este mês.</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

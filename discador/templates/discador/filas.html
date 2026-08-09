@@ -1,0 +1,54 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — Filas{% endblock %}
+
+{% block conteudo %}
+<div class="mb-7 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="hazon-titulo">Filas de discagem</h1>
+    <p class="mt-2 text-sm font-medium text-[#74b3c6]">Organize os contatos telefônicos da operação — cada fila vira a tela de trabalho do operador.</p>
+  </div>
+  <a href="{% url 'discador:fila_nova' %}" class="hazon-btn hazon-btn-primary px-6 py-2 text-[13px] font-semibold text-white transition hover:brightness-110">+ Nova fila</a>
+</div>
+
+{% for e in erros %}{% endfor %}
+
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {% for f in itens %}
+  <div class="hazon-card-lg p-5 transition hover:border-[#74b3c6]/40">
+    <div class="mb-1 flex items-start justify-between gap-2">
+      <h2 class="font-display text-[15px] font-semibold text-white">{{ f.nome }}</h2>
+      {% if not f.ativa %}
+        <span class="hazon-chip px-2 text-[10px] font-bold uppercase tracking-wide text-[#6f8a93] bg-white/10">inativa</span>
+      {% endif %}
+    </div>
+    {% if f.descricao %}<p class="mb-3 text-[12px] text-[#6f8a93]">{{ f.descricao }}</p>{% endif %}
+    <div class="mb-4 space-y-1.5 text-[12px] text-[#bcd3da]">
+      <div>🗂️ <b>{{ f.carteira }}</b></div>
+      <div>↕️ {{ f.ordem }}</div>
+      {% if f.script %}<div>📜 {{ f.script }}</div>{% endif %}
+    </div>
+    <div class="mb-4 flex gap-4 border-t border-white/10 pt-3">
+      <div>
+        <div class="font-mono text-[18px] font-bold text-[#74b3c6]">{{ f.total_contatos }}</div>
+        <div class="text-[10.5px] uppercase tracking-wide text-[#6f8a93]">contatos</div>
+      </div>
+      <div>
+        <div class="font-mono text-[18px] font-bold text-[#7fe3c4]">{{ f.total_chamadas }}</div>
+        <div class="text-[10.5px] uppercase tracking-wide text-[#6f8a93]">chamadas</div>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <a href="{% url 'discador:operador' %}?fila={{ f.id }}" class="hazon-btn hazon-btn-primary flex-1 justify-center px-3 py-2 text-[12px] font-semibold text-white transition hover:brightness-110">Abrir operador</a>
+      <a href="{% url 'discador:fila_editar' f.id %}" class="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-[12px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Editar</a>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-span-full hazon-card-lg p-10 text-center">
+    <div class="mb-2 text-3xl">📞</div>
+    <p class="mb-4 text-[13px] text-[#6f8a93]">Nenhuma fila ainda — crie a primeira para começar a discar.</p>
+    <a href="{% url 'discador:fila_nova' %}" class="inline-block hazon-btn hazon-btn-primary px-6 py-2 text-[13px] font-semibold text-white transition hover:brightness-110">+ Criar fila</a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

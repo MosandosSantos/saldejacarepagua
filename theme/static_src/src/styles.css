@@ -1,0 +1,229 @@
+/* ============================================================
+   Design system HAZON (S2 do PRD)
+   Tokens de cor/tipografia (CSS variables) + componentes base.
+   Os valores batem 1:1 com os hex usados historicamente nos
+   templates — o visual não muda, apenas passa a ser centralizado.
+   ============================================================ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Cores */
+    --hazon-night: #0b2029;
+    --hazon-abyss: #072026;
+    --hazon-deep: #0e3a44;
+    --hazon-surface: #0d2a33;
+    --hazon-mid: #112530;
+    --hazon-primary: #0b6f74;
+    --hazon-primary-dark: #075b60;
+    --hazon-accent: #74b3c6;
+    --hazon-text: #f4fafb;
+    --hazon-muted: #bcd3da;
+    --hazon-dim: #6f8a93;
+    --hazon-success: #7fe3c4;
+    --hazon-success-bright: #4ade80;
+    --hazon-warn: #fbbf24;
+    --hazon-danger: #fca5a5;
+    --hazon-info: #c084fc;
+    --hazon-orange: #fb923c;
+    --hazon-blue: #60a5fa;
+    --hazon-slate: #94a3b8;
+    --hazon-pink: #f472b6;
+    /* Superfícies translúcidas (branco com opacidade) */
+    --hazon-white-05: rgba(255, 255, 255, 0.05);
+    --hazon-white-10: rgba(255, 255, 255, 0.10);
+    --hazon-white-15: rgba(255, 255, 255, 0.15);
+    /* Tipografia */
+    --hazon-font-sans: 'Manrope', 'Segoe UI', sans-serif;
+    --hazon-font-display: 'Fraunces', Georgia, serif;
+    /* Geometria */
+    --hazon-radius-sm: 0.75rem;
+    --hazon-radius-md: 1rem;
+    --hazon-radius-lg: 1.5rem;
+    --hazon-radius-full: 9999px;
+    --hazon-glow-accent: 0 0 8px rgba(116, 179, 198, 0.44);
+  }
+}
+
+@layer components {
+  /* ---------- Cartões ---------- */
+  .hazon-card {
+    border-radius: var(--hazon-radius-md);
+    border: 1px solid var(--hazon-white-10);
+    background: var(--hazon-white-05);
+    backdrop-filter: blur(24px);
+  }
+  .hazon-card-lg {
+    border-radius: var(--hazon-radius-lg);
+    border: 1px solid var(--hazon-white-10);
+    background: var(--hazon-white-05);
+    backdrop-filter: blur(24px);
+  }
+  .hazon-card-sm {
+    border-radius: var(--hazon-radius-md);
+    border: 1px solid var(--hazon-white-10);
+    background: var(--hazon-white-05);
+  }
+
+  /* ---------- Títulos de página ---------- */
+  .hazon-titulo {
+    font-family: var(--hazon-font-display);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--hazon-text);
+  }
+  .hazon-sub {
+    margin-top: 0.375rem;
+    font-size: 14px;
+    color: var(--hazon-dim);
+  }
+
+  /* ---------- Rótulos micro (uppercase) ---------- */
+  .hazon-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--hazon-dim);
+  }
+
+  /* ---------- Botões ---------- */
+  .hazon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: var(--hazon-radius-sm);
+    padding: 0.5rem 1rem;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.25;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .hazon-btn-primary {
+    border: 1px solid rgba(116, 179, 198, 0.5);
+    background: linear-gradient(to bottom right, var(--hazon-primary), var(--hazon-primary-dark));
+    color: #ffffff;
+  }
+  .hazon-btn-primary:hover { filter: brightness(1.1); }
+  .hazon-btn-ghost {
+    border: 1px solid var(--hazon-white-15);
+    background: var(--hazon-white-05);
+    color: var(--hazon-muted);
+  }
+  .hazon-btn-ghost:hover {
+    background: var(--hazon-white-10);
+    color: #ffffff;
+  }
+  /* Perigo (exclusões) — S8: padroniza os botões vermelhos do sistema */
+  .hazon-btn-danger {
+    border: 1px solid rgba(252, 165, 165, 0.30);
+    background: rgba(252, 165, 165, 0.10);
+    color: #fca5a5;
+  }
+  .hazon-btn-danger:hover {
+    background: rgba(252, 165, 165, 0.20);
+    color: #ffffff;
+  }
+  .hazon-btn-danger-solid {
+    border: 1px solid rgba(252, 165, 165, 0.40);
+    background: rgba(239, 68, 68, 0.90);
+    color: #ffffff;
+  }
+  .hazon-btn-danger-solid:hover { filter: brightness(1.1); }
+
+  /* ---------- Campos de formulário (dentro de um form marcado) ----------
+     Centraliza o CSS que antes era repetido num bloco <style> por template. */
+  form.hazon-form input,
+  form.hazon-form select,
+  form.hazon-form textarea {
+    width: 100%;
+    padding: 6px 10px;
+    border-radius: 8px;
+    /* Paridade exata com o CSS legado dos forms (0.12 / 0.06) */
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--hazon-text);
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  form.hazon-form input,
+  form.hazon-form select { height: 34px; }
+  form.hazon-form textarea {
+    height: auto;
+    min-height: 34px;
+    resize: vertical;
+  }
+  form.hazon-form input::placeholder,
+  form.hazon-form textarea::placeholder { color: var(--hazon-dim); }
+  form.hazon-form input:focus,
+  form.hazon-form select:focus,
+  form.hazon-form textarea:focus {
+    border-color: rgba(116, 179, 198, 0.4);
+    background: rgba(255, 255, 255, 0.10);
+  }
+  form.hazon-form select option { background: var(--hazon-night); }
+
+  /* ---------- Busca com ícone ---------- */
+  .hazon-search {
+    width: 18rem;
+    border-radius: var(--hazon-radius-sm);
+    border: 1px solid var(--hazon-white-10);
+    background: var(--hazon-white-05);
+    padding: 0.625rem 1rem 0.625rem 2.5rem;
+    font-size: 13.5px;
+    color: var(--hazon-text);
+    outline: none;
+    transition: all 0.15s;
+  }
+  .hazon-search::placeholder { color: var(--hazon-dim); }
+  .hazon-search:focus {
+    border-color: rgba(116, 179, 198, 0.4);
+    background: var(--hazon-white-10);
+  }
+
+  /* ---------- Chip (etiqueta pequena) ---------- */
+  .hazon-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--hazon-radius-full);
+    padding: 0.125rem 0.625rem;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* ---------- Tabelas ---------- */
+  .hazon-th {
+    padding: 0.875rem 1.25rem;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--hazon-dim);
+    text-align: left;
+    white-space: nowrap;
+  }
+  .hazon-td {
+    padding: 0.875rem 1.25rem;
+    font-size: 12.5px;
+    color: var(--hazon-muted);
+    vertical-align: middle;
+  }
+
+  /* ---------- Chips de tags de formulário (marcada/não) ---------- */
+  .tag-check:checked + .tag-chip {
+    border-color: rgba(116, 179, 198, 0.55);
+    background: rgba(116, 179, 198, 0.22);
+    color: var(--hazon-accent);
+  }
+  .tag-chip:hover { background: var(--hazon-white-10); }
+}

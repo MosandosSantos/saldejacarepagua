@@ -1,0 +1,184 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — Importar contatos{% endblock %}
+
+{% block conteudo %}
+<div class="mb-7 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="hazon-titulo">Importar contatos</h1>
+    <p class="hazon-sub mt-2">Envie uma planilha CSV, mapeie as colunas e confira o relatório — duplicados por telefone/e-mail são pulados.</p>
+  </div>
+  <a href="{% url 'contatos:lista' %}" class="text-[13px] font-semibold text-[#74b3c6] transition hover:underline">← voltar para a lista</a>
+</div>
+
+{% for a in avisos %}
+  <div class="mb-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-[13px] text-amber-200">{{ a }}</div>
+{% endfor %}
+
+{% if etapa == 'upload' %}
+  <div class="mx-auto max-w-2xl">
+    <div class="hazon-card-sm p-8 backdrop-blur-xl">
+      <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+        <input type="hidden" name="etapa" value="upload">
+        <label for="arquivo" class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-white/15 bg-white/5 px-6 py-12 text-center transition hover:border-[#74b3c6]/50 hover:bg-white/10">
+          <svg viewBox="0 0 24 24" class="h-10 w-10" fill="none" stroke="#74b3c6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span class="text-[15px] font-semibold text-white">Clique para escolher o arquivo</span>
+          <span class="text-[12.5px] text-[#6f8a93]" id="nome_arquivo">CSV de até 5 MB — aceita separador ; ou , e codificação UTF-8 / Latin-1</span>
+        </label>
+        <input id="arquivo" name="arquivo" type="file" accept=".csv,text/csv" class="sr-only">
+        {% if erro_upload %}
+          <p class="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ erro_upload }}</p>
+        {% endif %}
+        <label class="flex items-center gap-2.5 text-[13px] text-[#bcd3da]">
+          <input type="checkbox" name="tem_cabecalho" checked class="h-4 w-4 rounded border-white/20 bg-white/10 accent-[#74b3c6]">
+          A primeira linha do arquivo é o cabeçalho
+        </label>
+        {% if carteiras %}
+        <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+          <label for="id_carteira" class="mb-1.5 block text-[12px] font-semibold text-[#bcd3da]">Carteira de destino (opcional)</label>
+          <select id="id_carteira" name="carteira_id" class="w-full rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40">
+            <option value="">— sem carteira —</option>
+            {% for c in carteiras %}
+              <option value="{{ c.id }}">{{ c.nome }}</option>
+            {% endfor %}
+          </select>
+          <p class="mt-1.5 text-[11.5px] text-[#6f8a93]">Os contatos importados serão associados a esta carteira (Sprint 3 do PRD).</p>
+        </div>
+        {% endif %}
+        <div class="flex items-center justify-between gap-4">
+          <a href="{% url 'contatos:modelo' %}" class="text-[13px] font-semibold text-[#74b3c6] transition hover:underline">⬇ Baixar modelo CSV</a>
+          <button type="submit" class="hazon-btn hazon-btn-primary px-6 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">Continuar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="mt-6 grid grid-cols-1 gap-3 text-[12.5px] text-[#6f8a93] sm:grid-cols-3">
+      <div class="rounded-xl border border-white/10 bg-white/5 p-4"><b class="mb-1 block text-white">1 · Envie</b>Envie o CSV com seus contatos.</div>
+      <div class="rounded-xl border border-white/10 bg-white/5 p-4"><b class="mb-1 block text-white">2 · Mapeie</b>Ligue as colunas do arquivo aos campos do sistema.</div>
+      <div class="rounded-xl border border-white/10 bg-white/5 p-4"><b class="mb-1 block text-white">3 · Confira</b>Relatório de importados, duplicados e erros.</div>
+    </div>
+  </div>
+{% endif %}
+
+{% if etapa == 'mapear' %}
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+    <input type="hidden" name="etapa" value="importar">
+
+    <div class="hazon-card-sm p-6 backdrop-blur-xl">
+      <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-[15px] font-semibold text-white">Mapeie as colunas</h2>
+          <p class="mt-1 text-[12.5px] text-[#6f8a93]"><b class="text-white">{{ nome_arquivo }}</b> · <b class="text-white">{{ total_linhas }}</b> linhas para importar</p>
+        </div>
+        <button type="submit" class="hazon-btn hazon-btn-primary px-6 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">Importar {{ total_linhas }} contatos</button>
+      </div>
+      {% if erro_mapeamento %}
+        <p class="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ erro_mapeamento }}</p>
+      {% endif %}
+
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {% for campo in campos_mapeamento %}
+        <div>
+          <label class="hazon-label">{{ campo.rotulo }}</label>
+          <select name="col_{{ campo.campo }}" class="w-full rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40">
+            <option value="">— não importar —</option>
+            {% for cab in cabecalhos %}
+              <option value="{{ forloop.counter0 }}" {% if campo.sugerido == forloop.counter0 %}selected{% endif %}>{{ cab }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div class="hazon-card-sm p-6 backdrop-blur-xl">
+        {% if carteiras %}
+        <div class="mb-4 flex items-center gap-2 text-[12.5px] text-[#6f8a93]">
+          📁 Carteira de destino:
+          <b class="text-white">{% if carteira_escolhida %}{% for c in carteiras %}{% if c.id|stringformat:'s' == carteira_escolhida %}{{ c.nome }}{% endif %}{% endfor %}{% else %}sem carteira{% endif %}</b>
+        </div>
+        {% endif %}
+        <h3 class="mb-4 text-[13px] font-semibold text-white">Prévia (primeiras {{ linhas_preview|length }} linhas)</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse text-[12px]">
+            <thead>
+              <tr class="border-b border-white/10 text-left">
+                {% for cab in cabecalhos %}<th class="px-2.5 py-2 font-bold text-[#6f8a93]">{{ cab }}</th>{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for linha in linhas_preview %}
+              <tr class="border-b border-white/5">
+                {% for cel in linha %}<td class="px-2.5 py-2 text-[#bcd3da]">{{ cel|default:"—" }}</td>{% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="hazon-card-sm p-6 backdrop-blur-xl">
+        <h3 class="mb-4 text-[13px] font-semibold text-white">Duplicados</h3>
+        <label class="mb-2 flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3.5 text-[13px] text-[#bcd3da]">
+          <input type="radio" name="pular_duplicadas" value="sim" checked class="mt-0.5 accent-[#74b3c6]">
+          <span><b class="text-white">Pular duplicados</b> — contatos com o mesmo telefone ou e-mail já existentes (ou repetidos no arquivo) não são gravados.</span>
+        </label>
+        <label class="flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3.5 text-[13px] text-[#bcd3da]">
+          <input type="radio" name="pular_duplicadas" value="nao" class="mt-0.5 accent-[#74b3c6]">
+          <span><b class="text-white">Importar mesmo assim</b> — grava todos, inclusive quem já existe.</span>
+        </label>
+      </div>
+    </div>
+  </form>
+{% endif %}
+
+{% if etapa == 'relatorio' %}
+  <div class="mx-auto max-w-3xl">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div class="hazon-card-sm p-6 text-center backdrop-blur-xl">
+        <div class="text-[34px] font-bold text-[#7fe3c4]">{{ relatorio.importados }}</div>
+        <div class="mt-1 text-[12px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Importados</div>
+      </div>
+      <div class="hazon-card-sm p-6 text-center backdrop-blur-xl">
+        <div class="text-[34px] font-bold text-amber-300">{{ relatorio.duplicados }}</div>
+        <div class="mt-1 text-[12px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Duplicados pulados</div>
+      </div>
+      <div class="hazon-card-sm p-6 text-center backdrop-blur-xl">
+        <div class="text-[34px] font-bold text-red-300">{{ relatorio.erros }}</div>
+        <div class="mt-1 text-[12px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Com erro</div>
+      </div>
+    </div>
+
+    {% if relatorio.detalhes_erros %}
+      <div class="mt-6 rounded-2xl border border-red-400/20 bg-red-400/5 p-5">
+        <h3 class="mb-3 text-[13px] font-semibold text-red-200">Linhas ignoradas</h3>
+        <ul class="space-y-1 text-[12.5px] text-[#bcd3da]">
+          {% for n, motivo in relatorio.detalhes_erros|slice:":10" %}
+            <li><span class="font-mono text-red-200">linha {{ n }}</span> — {{ motivo }}</li>
+          {% endfor %}
+          {% if relatorio.detalhes_erros|length > 10 %}
+            <li class="text-[#6f8a93]">… e mais {{ relatorio.detalhes_erros|length|add:"-10" }} linhas.</li>
+          {% endif %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <div class="mt-8 flex justify-center gap-3">
+      <a href="{% url 'contatos:lista' %}" class="hazon-btn hazon-btn-primary px-6 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">Ver contatos</a>
+      <a href="{% url 'contatos:importar' %}" class="rounded-xl border border-white/15 bg-white/5 px-6 py-2.5 text-[13.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Importar outro arquivo</a>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block js %}
+<script>
+  document.getElementById('arquivo') && document.getElementById('arquivo').addEventListener('change', function () {
+    var el = document.getElementById('nome_arquivo');
+    if (el && this.files.length) el.textContent = '📄 ' + this.files[0].name;
+  });
+</script>
+{% endblock %}

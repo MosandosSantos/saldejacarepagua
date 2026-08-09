@@ -1,0 +1,68 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — Acordos{% endblock %}
+
+{% block conteudo %}
+<div class="mb-7 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="hazon-titulo">Acordos</h1>
+    <p class="mt-2 text-sm font-medium text-[#74b3c6]">Simule, registre e acompanhe os acordos até o pagamento via PIX.</p>
+  </div>
+  {% if web_pode_editar %}
+  <a href="{% url 'acordos:simular' %}" class="hazon-btn hazon-btn-primary px-6 py-2 text-[13px] font-semibold text-white transition hover:brightness-110">+ Simular acordo</a>
+  {% endif %}
+</div>
+
+<div class="mb-6 flex flex-wrap gap-2">
+  <a href="{% url 'acordos:lista' %}"
+     class="rounded-full border px-4 py-1.5 text-[12px] font-semibold transition {% if not status_atual %}border-[#74b3c6]/60 bg-[#74b3c6]/15 text-[#74b3c6]{% else %}border-white/15 bg-white/5 text-[#bcd3da] hover:bg-white/10 hover:text-white{% endif %}">
+    Todos ({{ itens|length }}+)
+  </a>
+  {% for key, label in status_opcoes %}
+    <a href="?status={{ key }}"
+       class="rounded-full border px-4 py-1.5 text-[12px] font-semibold transition {% if status_atual == key %}border-[#74b3c6]/60 bg-[#74b3c6]/15 text-[#74b3c6]{% else %}border-white/15 bg-white/5 text-[#bcd3da] hover:bg-white/10 hover:text-white{% endif %}">
+      {{ label }} ({{ contagem|default:"" }})
+    </a>
+  {% endfor %}
+</div>
+
+<div class="overflow-hidden rounded-2xl border border-white/10">
+  <table class="w-full border-collapse">
+    <thead>
+      <tr class="border-b border-white/10 text-left">
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Contato</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Original</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Modalidade</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Desconto</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Valor final</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in itens %}
+      <tr class="border-b border-white/5 transition last:border-0 hover:bg-white/5">
+        <td class="px-5 py-4">
+          <a href="{% url 'contatos:detalhe' a.contato_id %}" class="text-[13.5px] font-semibold text-white hover:text-[#74b3c6]">{{ a.contato_nome }}</a>
+        </td>
+        <td class="px-5 py-4 font-mono text-[12.5px] text-[#bcd3da]">{{ a.valor_original }}</td>
+        <td class="px-5 py-4 text-[12.5px] text-[#bcd3da]">{{ a.modalidade }}{% if a.parcelas > 1 %} · {{ a.parcelas }}x de {{ a.valor_parcela }}{% endif %}</td>
+        <td class="px-5 py-4 text-[12.5px] text-[#7fe3c4]">{{ a.percentual }}% · {{ a.desconto }}</td>
+        <td class="px-5 py-4 font-mono text-[13.5px] font-bold text-[#74b3c6]">{{ a.valor_final }}</td>
+        <td class="px-5 py-4">
+          <a href="{% url 'acordos:detalhe' a.id %}">
+            <span class="hazon-chip px-2 text-[10.5px] {% if a.status == 'pago' %}text-[#7fe3c4] bg-[#7fe3c4]/15{% elif a.status == 'recusado' %}text-red-300 bg-red-400/15{% elif a.status == 'aceito' or a.status == 'pix_gerado' or a.status == 'enviado' %}text-[#fbbf24] bg-[#fbbf24]/15{% else %}text-[#74b3c6] bg-[#74b3c6]/15{% endif %}">{{ a.status_label }}</span>
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="px-5 py-12 text-center text-[13px] text-[#6f8a93]">
+          Nenhum acordo{% if status_atual %} com este status{% endif %} ainda.
+          {% if web_pode_editar %}<a href="{% url 'acordos:simular' %}" class="text-[#74b3c6] hover:text-white">Simule o primeiro →</a>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

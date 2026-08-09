@@ -1,0 +1,71 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — Editar tarefa{% endblock %}
+
+{% block conteudo %}
+<div class="mx-auto max-w-2xl space-y-5">
+  <div>
+    <h1 class="hazon-titulo text-[28px]">Editar tarefa</h1>
+    <p class="hazon-sub mt-2">Ajuste o título, o responsável e o vencimento do follow-up.</p>
+  </div>
+
+  {% for e in erros %}
+    <div class="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ e }}</div>
+  {% endfor %}
+
+  <form method="post" class="space-y-5 hazon-card-lg p-8">
+    {% csrf_token %}
+    <div>
+      <label for="titulo" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Título *</label>
+      <input type="text" id="titulo" name="titulo" value="{{ tarefa.titulo }}" required
+             class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#74b3c6]/40">
+    </div>
+    <div>
+      <label for="descricao" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Descrição</label>
+      <textarea id="descricao" name="descricao" rows="3" placeholder="Detalhes do follow-up (opcional)"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition placeholder:text-[#6f8a93] focus:border-[#74b3c6]/40">{{ tarefa.descricao }}</textarea>
+    </div>
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div>
+        <label for="contato_id" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Contato</label>
+        <select id="contato_id" name="contato_id"
+                class="w-full rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40">
+          <option value="">— sem contato —</option>
+          {% for c in contatos %}
+            <option value="{{ c.id }}" {% if c.id == tarefa.contato_id %}selected{% endif %}>{{ c.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="responsavel_id" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Responsável</label>
+        <select id="responsavel_id" name="responsavel_id"
+                class="w-full rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40">
+          <option value="">— sem responsável —</option>
+          {% for m in membros %}
+            <option value="{{ m.id }}" {% if m.id == tarefa.responsavel_id %}selected{% endif %}>{{ m.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="prioridade" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Prioridade</label>
+        <select id="prioridade" name="prioridade"
+                class="w-full rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40">
+          <option value="baixa" {% if tarefa.prioridade == 'baixa' %}selected{% endif %}>Baixa</option>
+          <option value="media" {% if tarefa.prioridade == 'media' %}selected{% endif %}>Média</option>
+          <option value="alta" {% if tarefa.prioridade == 'alta' %}selected{% endif %}>Alta</option>
+        </select>
+      </div>
+      <div>
+        <label for="vencimento" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Vencimento</label>
+        <input type="date" id="vencimento" name="vencimento" value="{{ tarefa.vencimento|date:'Y-m-d'|default:'' }}"
+               class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#74b3c6]/40">
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button type="submit"
+              class="hazon-btn hazon-btn-primary px-6 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">Salvar</button>
+      <a href="{% url 'tarefas:lista' %}" class="rounded-xl border border-white/15 bg-white/5 px-5 py-2.5 text-[13px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

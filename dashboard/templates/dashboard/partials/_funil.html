@@ -1,0 +1,13 @@
+<div class="flex items-center gap-6">
+  <div class="w-[42%] min-w-0 shrink-0">{{ funil_svg|safe }}</div>
+  <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+    {% for f in funil %}
+      <div class="flex items-center gap-3 rounded-[11px] border border-white/10 bg-white/5 px-3 py-2.5 transition hover:border-[#74b3c6]/40 hover:bg-[#74b3c6]/10">
+        <span class="h-2.5 w-2.5 shrink-0 rounded" style="background:{{ f.color }};box-shadow:0 0 8px {{ f.color }}70"></span>
+        <span class="flex-1 truncate text-[12.5px] font-medium text-[#bcd3da]">{{ f.name }}</span>
+        <span class="font-mono text-[13.5px] font-bold text-white">{{ f.count }}</span>
+        <span class="w-12 shrink-0 text-right font-mono text-[11px] text-[#74b3c6]">{{ f.pct }}%</span>
+      </div>
+    {% endfor %}
+  </div>
+</div>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAZON CRM — Entrar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#112530;
+  --muted:#5b7282;
+  --primary:#0b6f74;
+  --primary-strong:#075b60;
+  --accent:#74b3c6;
+  --border:rgba(255,255,255,0.45);
+  --font-display:'Fraunces',Georgia,serif;
+  --font-ui:'Manrope','Segoe UI',sans-serif;
+}
+html,body{height:100%}
+body{
+  min-height:100vh;
+  font-family:var(--font-ui);
+  color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+}
+
+/* ===== FUNDO: escritorio de marketing + fallback petroleo ===== */
+.bg{position:fixed;inset:0;z-index:0}
+.bg-gradient{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(11,111,116,0.35) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 85% 90%, rgba(17,37,48,0.55) 0%, transparent 55%),
+    linear-gradient(150deg,#0e3a44 0%,#112530 55%,#0b2029 100%);
+}
+.bg-photo{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  filter:saturate(0.85) brightness(0.9);
+  animation:fadeIn 1.2s ease both;
+}
+.bg-scrim{
+  position:absolute;inset:0;
+  background:linear-gradient(115deg, rgba(7,32,38,0.82) 0%, rgba(7,32,38,0.45) 45%, rgba(7,32,38,0.72) 100%);
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ===== CARD GLASSMORPHISM ===== */
+.login-wrap{position:relative;z-index:1;width:100%;max-width:420px}
+.glass-card{
+  position:relative;
+  border-radius:24px;
+  padding:44px 40px 36px;
+  background:rgba(255,255,255,0.13);
+  border:1px solid var(--border);
+  backdrop-filter:blur(22px) saturate(160%);
+  -webkit-backdrop-filter:blur(22px) saturate(160%);
+  box-shadow:0 30px 60px -20px rgba(5,20,26,0.55), inset 0 1px 0 rgba(255,255,255,0.35);
+  color:#f4fafb;
+  cursor:grab;
+  touch-action:none;
+  will-change:transform;
+}
+.glass-card.dragging{cursor:grabbing;user-select:none}
+.glass-card input,
+.glass-card button,
+.glass-card label,
+.glass-card .footer,
+.glass-card a{cursor:auto}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:26px}
+.brand-seal{
+  width:44px;height:44px;border-radius:13px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(145deg,#2aa1a8,#075b60);
+  box-shadow:0 10px 22px -8px rgba(11,111,116,0.7), inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.brand-seal svg{width:24px;height:24px;stroke:#ffffff}
+.brand-name{
+  font-family:var(--font-display);
+  font-size:1.35rem;font-weight:600;letter-spacing:-0.01em;
+}
+.brand-name span{color:var(--accent)}
+
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:0.68rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.3em;
+  padding:7px 14px;border-radius:999px;
+  background:rgba(255,255,255,0.14);
+  border:1px solid rgba(255,255,255,0.28);
+  margin-bottom:18px;
+}
+.badge .dot{width:6px;height:6px;border-radius:50%;background:#7fe3c4;box-shadow:0 0 8px #7fe3c4}
+
+h1{
+  font-family:var(--font-display);
+  font-size:2.1rem;font-weight:500;
+  line-height:1.12;letter-spacing:-0.02em;
+  margin-bottom:10px;
+}
+.sub{color:rgba(244,250,251,0.72);font-size:0.95rem;margin-bottom:30px;line-height:1.55}
+
+.field{margin-bottom:18px}
+.field label{
+  display:block;font-size:0.74rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.16em;
+  color:rgba(244,250,251,0.6);margin-bottom:8px;
+}
+.input-wrap{position:relative}
+.input-wrap svg{
+  position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  width:18px;height:18px;stroke:rgba(244,250,251,0.5);
+  pointer-events:none;
+}
+input{
+  width:100%;
+  font-family:var(--font-ui);font-size:0.95rem;
+  color:#f4fafb;
+  background:rgba(255,255,255,0.10);
+  border:1px solid rgba(255,255,255,0.26);
+  border-radius:14px;
+  padding:14px 16px 14px 46px;
+  outline:none;
+  backdrop-filter:blur(8px);
+  transition:border-color .2s, background .2s, box-shadow .2s;
+}
+input::placeholder{color:rgba(244,250,251,0.4)}
+input:focus{
+  border-color:rgba(116,179,198,0.85);
+  background:rgba(255,255,255,0.16);
+  box-shadow:0 0 0 4px rgba(116,179,198,0.22);
+}
+
+.btn{
+  width:100%;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  font-family:var(--font-ui);font-size:0.95rem;font-weight:700;
+  color:#ffffff;letter-spacing:0.02em;
+  background:linear-gradient(145deg,#0b6f74,#075b60);
+  border:1px solid rgba(116,179,198,0.5);
+  border-radius:14px;
+  padding:15px;
+  cursor:pointer;
+  transition:transform .15s, box-shadow .2s, filter .2s;
+  box-shadow:0 14px 28px -10px rgba(5,40,46,0.65);
+  margin-top:6px;
+}
+.btn:hover{filter:brightness(1.1);box-shadow:0 18px 34px -10px rgba(5,40,46,0.8)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:0.65;cursor:wait}
+.btn .spinner{
+  width:16px;height:16px;border-radius:50%;
+  border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;
+  animation:spin .7s linear infinite;display:none;
+}
+.btn.loading .spinner{display:block}
+.btn.loading .btn-text{opacity:0.85}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.error{
+  display:none;
+  margin-top:16px;
+  font-size:0.85rem;font-weight:600;
+  color:#ffd9d9;
+  background:rgba(239,68,68,0.18);
+  border:1px solid rgba(239,68,68,0.4);
+  border-radius:12px;
+  padding:11px 14px;
+}
+.error.show{display:block}
+
+.footer{
+  margin-top:26px;
+  font-size:0.78rem;
+  color:rgba(244,250,251,0.5);
+  text-align:center;line-height:1.6;
+}
+.footer code{
+  font-family:'JetBrains Mono',monospace;
+  color:rgba(244,250,251,0.75);
+  background:rgba(255,255,255,0.1);
+  padding:2px 7px;border-radius:6px;
+}
+@media (max-width:480px){
+  .glass-card{padding:36px 26px 30px}
+  h1{font-size:1.75rem}
+}
+</style>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true">
+  <div class="bg-gradient"></div>
+  <img class="bg-photo" src="assets/bg-login.png"
+       alt="" onerror="this.remove()">
+  <div class="bg-scrim"></div>
+</div>
+
+<main class="login-wrap">
+  <section class="glass-card" id="card" title="Arraste para posicionar · duplo-clique para centralizar">
+    <div class="brand">
+      <div class="brand-seal">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <circle cx="12" cy="12" r="4.5"/>
+          <circle cx="12" cy="12" r="0.6" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="brand-name">HAZON<span> CRM</span></div>
+    </div>
+
+    <div class="badge"><span class="dot"></span> Acesso restrito</div>
+    <h1>Bem-vindo(a) de volta</h1>
+    <p class="sub">Entre com o seu e-mail e senha para acessar o painel de pacientes &amp; contatos.</p>
+
+    <form id="loginForm" novalidate>
+      <div class="field">
+        <label for="email">E-mail</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="3"/>
+            <path d="m3 7 9 6 9-6"/>
+          </svg>
+          <input id="email" type="email" placeholder="voce@empresa.com" autocomplete="email" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="senha">Senha</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="10" width="16" height="11" rx="3"/>
+            <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+          </svg>
+          <input id="senha" type="password" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+      </div>
+      <button class="btn" id="btnEntrar" type="submit">
+        <span class="spinner"></span>
+        <span class="btn-text">Entrar no painel</span>
+      </button>
+      <p class="error" id="erro"></p>
+    </form>
+
+    <p class="footer">
+      Demonstração — usuários de exemplo com senha <code>senha123</code><br>
+      admin@esferacrm.com · dona@aurora.com · ana@aurora.com
+    </p>
+  </section>
+</main>
+
+<script>
+(function () {
+  var API = 'http://localhost:8000/api/v1';
+  var form = document.getElementById('loginForm');
+  var emailEl = document.getElementById('email');
+  var senhaEl = document.getElementById('senha');
+  var btn = document.getElementById('btnEntrar');
+  var erro = document.getElementById('erro');
+
+  form.addEventListener('submit', async function (event) {
+    event.preventDefault();
+    erro.classList.remove('show');
+    erro.textContent = '';
+    if (!emailEl.value.trim() || !senhaEl.value) {
+      mostrarErro('Informe e-mail e senha.');
+      return;
+    }
+    btn.disabled = true;
+    btn.classList.add('loading');
+    try {
+      var resp = await fetch(API + '/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailEl.value.trim(), senha: senhaEl.value })
+      });
+      if (!resp.ok) {
+        throw new Error(resp.status === 401 ? 'E-mail ou senha inválidos.' : 'Falha na comunicação com o servidor.');
+      }
+      var dados = await resp.json();
+      localStorage.setItem('cronoscrm_token', dados.access_token);
+      localStorage.setItem('cronoscrm_usuario', JSON.stringify(dados.usuario));
+      window.location.href = 'index.html';
+    } catch (erroFetch) {
+      if (!navigator.onLine) {
+        mostrarErro('Sem conexão. Verifique a internet e o servidor na porta 8000.');
+      } else {
+        mostrarErro(erroFetch.message);
+      }
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
+  });
+
+  function mostrarErro(mensagem) {
+    erro.textContent = mensagem;
+    erro.classList.add('show');
+  }
+})();
+
+/* ===================== CARD ARRASTÁVEL ===================== */
+(function () {
+  var card = document.getElementById('card');
+  if (!card) return;
+
+  var STORE = 'cronoscrm_card_pos';
+  var tx = 0, ty = 0;
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORE) || 'null');
+    if (saved && typeof saved.x === 'number') { tx = saved.x; ty = saved.y; }
+  } catch (e) {}
+  apply(tx, ty);
+
+  var dragging = false, sx = 0, sy = 0, ox = 0, oy = 0, pid = null;
+
+  card.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('input, button, a, .footer, label')) return;
+    dragging = true;
+    pid = e.pointerId;
+    card.setPointerCapture(pid);
+    card.classList.add('dragging');
+    sx = e.clientX; sy = e.clientY;
+    ox = tx; oy = ty;
+  });
+
+  card.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    var nx = ox + (e.clientX - sx);
+    var ny = oy + (e.clientY - sy);
+    nx = clamp(nx, -window.innerWidth / 2 + 60, window.innerWidth / 2 - 60);
+    ny = clamp(ny, -window.innerHeight / 2 + 60, window.innerHeight / 2 - 60);
+    apply(nx, ny);
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    try { card.releasePointerCapture(pid); } catch (err) {}
+    pid = null;
+    card.classList.remove('dragging');
+    try { localStorage.setItem(STORE, JSON.stringify({ x: tx, y: ty })); } catch (err) {}
+  }
+  card.addEventListener('pointerup', endDrag);
+  card.addEventListener('pointercancel', endDrag);
+
+  card.addEventListener('dblclick', function () {
+    apply(0, 0);
+    try { localStorage.setItem(STORE, JSON.stringify({ x: 0, y: 0 })); } catch (err) {}
+  });
+
+  function apply(x, y) { tx = x; ty = y; card.style.transform = 'translate(' + x + 'px,' + y + 'px)'; }
+  function clamp(v, min, max) { return v < min ? min : (v > max ? max : v); }
+})();
+</script>
+</body>
+</html>

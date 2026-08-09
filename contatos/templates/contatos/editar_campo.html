@@ -1,0 +1,53 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — Editar campo{% endblock %}
+
+{% block conteudo %}
+<div class="mx-auto max-w-2xl">
+  <div class="mb-5">
+    <h1 class="hazon-titulo text-[28px]">Editar campo</h1>
+    <p class="hazon-sub">Ajuste as configurações do campo personalizado.</p>
+  </div>
+
+  {% for e in erros %}
+    <div class="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ e }}</div>
+  {% endfor %}
+
+  <form method="post" class="hazon-card-lg space-y-4 p-6 hazon-form">
+    {% csrf_token %}
+    <div>
+      <label for="id_nome" class="hazon-label">Nome do campo</label>
+      {{ form.nome }}
+    </div>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div>
+        <label for="id_tipo" class="hazon-label">Tipo</label>
+        {{ form.tipo }}
+      </div>
+      <div>
+        <label for="id_ordem" class="hazon-label">Ordem</label>
+        {{ form.ordem }}
+      </div>
+      <div class="flex items-end">
+        <label for="id_obrigatorio" class="flex items-center gap-2 pb-[7px] text-[13px] text-[#bcd3da]">
+          <input type="checkbox" name="obrigatorio" id="id_obrigatorio" class="h-4 w-4 accent-[#74b3c6]"
+                 {% if form.obrigatorio.value %}checked{% endif %}>
+          Obrigatório
+        </label>
+      </div>
+    </div>
+    <div>
+      <label for="id_opcoes" class="hazon-label">Opções (tipo Lista)</label>
+      {{ form.opcoes }}
+      <p class="mt-1 text-[11px] text-[#6f8a93]">Separadas por vírgula — ex.: Bronze, Prata, Ouro</p>
+    </div>
+    <div class="flex flex-wrap gap-3 pt-2">
+      <button type="submit" class="hazon-btn hazon-btn-primary px-6 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">Salvar alterações</button>
+      <a href="{% url 'contatos:campos' %}" class="rounded-xl border border-white/10 bg-white/5 px-6 py-2.5 text-[13px] font-semibold text-[#bcd3da] transition hover:bg-white/10">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block js %}
+{% endblock %}

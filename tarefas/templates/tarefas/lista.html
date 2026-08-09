@@ -1,0 +1,72 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — Tarefas{% endblock %}
+
+{% block conteudo %}
+<div class="mx-auto max-w-5xl space-y-5">
+  <div class="mb-2">
+    <h1 class="hazon-titulo">Tarefas & lembretes</h1>
+    <p class="hazon-sub mt-2">Follow-ups do time: ligar de volta, reenviar proposta, confirmar horário… O vencimento vira lembrete no header e no dashboard.</p>
+  </div>
+
+  {% for e in erros %}
+    <div class="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ e }}</div>
+  {% endfor %}
+  {% if msg %}
+    <div class="rounded-xl border border-[#7fe3c4]/30 bg-[#7fe3c4]/10 px-4 py-3 text-[13px] text-[#7fe3c4]">{{ msg }}</div>
+  {% endif %}
+
+  <!-- Resumo + busca -->
+  <div class="flex flex-wrap items-center gap-3">
+    <span class="rounded-full border border-red-400/30 bg-red-400/10 px-3 py-1 text-[12px] font-semibold text-red-300">{{ atrasadas|length }} atrasada{{ atrasadas|length|pluralize }}</span>
+    <span class="rounded-full border border-[#fbbf24]/30 bg-[#fbbf24]/10 px-3 py-1 text-[12px] font-semibold text-[#fbbf24]">{{ hoje|length }} para hoje</span>
+    <span class="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[12px] font-semibold text-[#bcd3da]">{{ total_abertas }} em aberto</span>
+    <form method="get" class="relative ml-auto">
+      <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="#6f8a93" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" name="q" value="{{ q }}" placeholder="Buscar tarefa ou contato..."
+             class="hazon-search w-72">
+    </form>
+  </div>
+
+  {% if web_pode_editar %}
+  <!-- Criar tarefa (captura rápida) -->
+  <form method="post" class="hazon-card-lg p-6">
+    {% csrf_token %}
+    <input type="hidden" name="acao" value="criar">
+    <div class="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#6f8a93]">+ Nova tarefa</div>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <input type="text" name="titulo" placeholder="ex.: Ligar pra retornar o orçamento" required
+             class="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition placeholder:text-[#6f8a93] focus:border-[#74b3c6]/40 lg:col-span-2">
+      <select name="contato_id"
+              class="rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40">
+        <option value="">Contato (opcional)</option>
+        {% for c in contatos %}<option value="{{ c.id }}">{{ c.nome }}</option>{% endfor %}
+      </select>
+      <select name="responsavel_id"
+              class="rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40">
+        <option value="">Responsável (opcional)</option>
+        {% for m in membros %}<option value="{{ m.id }}">{{ m.nome }}</option>{% endfor %}
+      </select>
+      <select name="prioridade"
+              class="rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40">
+        <option value="baixa">Prioridade: baixa</option>
+        <option value="media" selected>Prioridade: média</option>
+        <option value="alta">Prioridade: alta</option>
+      </select>
+      <input type="date" name="vencimento"
+             class="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#74b3c6]/40">
+      <button type="submit"
+              class="hazon-btn hazon-btn-primary px-6 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">+ Criar tarefa</button>
+    </div>
+  </form>
+  {% endif %}
+
+  {% include 'tarefas/partials/_secao.html' with titulo='⏰ Atrasadas' lista=atrasadas cor='#f87171' vazio='Nenhuma tarefa atrasada — tudo em dia! 🎉' %}
+  {% include 'tarefas/partials/_secao.html' with titulo='📌 Para hoje' lista=hoje cor='#fbbf24' vazio='Nada marcado para hoje.' %}
+  {% include 'tarefas/partials/_secao.html' with titulo='🗓️ Próximas' lista=proximas cor='#74b3c6' vazio='Nenhuma tarefa futura.' %}
+  {% include 'tarefas/partials/_secao.html' with titulo='Sem data' lista=sem_data cor='#94a3b8' vazio='Nenhuma tarefa sem vencimento.' %}
+  {% if concluidas %}
+    {% include 'tarefas/partials/_secao.html' with titulo='✅ Concluídas' lista=concluidas cor='#7fe3c4' vazio='' %}
+  {% endif %}
+</div>
+{% endblock %}

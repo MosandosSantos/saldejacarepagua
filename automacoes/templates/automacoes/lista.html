@@ -1,0 +1,151 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — Automações{% endblock %}
+
+{% block conteudo %}
+<div class="mx-auto max-w-6xl space-y-5">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="hazon-titulo">Automações</h1>
+      <p class="mt-2 max-w-2xl text-sm text-[#6f8a93]">
+        Regras sem código: quando algo acontece (contato novo, negócio movido, negócio parado),
+        o sistema faz por você — cria tarefa, anota, etiqueta ou dispara um e-mail.
+      </p>
+    </div>
+    {% if pode_gerenciar and tem_tenant %}
+      <div class="flex items-center gap-3">
+        <form method="post" action="{% url 'automacoes:estagnadas' %}">
+          {% csrf_token %}
+          <button type="submit" title="Varre os negócios abertos parados e dispara as automações de estagnação"
+                  class="rounded-xl border border-[#f87171]/40 bg-[#f87171]/10 px-4 py-2.5 text-[13px] font-semibold text-red-200 transition hover:bg-[#f87171]/20">
+            ⏳ Verificar estagnados agora
+          </button>
+        </form>
+        <a href="{% url 'automacoes:nova' %}"
+           class="hazon-btn hazon-btn-primary px-5 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">
+          + Nova automação
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if msg %}
+    <div class="rounded-xl border border-[#7fe3c4]/30 bg-[#7fe3c4]/10 px-4 py-3 text-[13px] text-[#7fe3c4]">
+      {% if msg == 'testado' %}✅ Automação executada com o contato mais recente — confira as ações nas execuções abaixo.
+      {% elif msg == 'sem-contato' %}Ainda não há contatos neste tenant para testar a automação.
+      {% elif msg == 'estagnados-0' %}Nenhum negócio parado encontrado no momento. 🎉
+      {% elif msg|slice:":11" == 'estagnados-' %}{{ msg|slice:"11:" }} execução(ões) de estagnação disparada(s).
+      {% else %}{{ msg }}{% endif %}
+    </div>
+  {% endif %}
+
+  {% if not tem_tenant %}
+    <div class="rounded-3xl border border-white/10 bg-white/5 p-10 text-center backdrop-blur-xl">
+      <p class="text-[15px] text-[#bcd3da]">Automações são configuradas por empresa. Entre com um usuário de uma empresa para ver esta tela.</p>
+    </div>
+  {% elif not itens %}
+    <div class="rounded-3xl border border-white/10 bg-white/5 p-10 text-center backdrop-blur-xl">
+      <div class="mb-3 text-3xl">⚡</div>
+      <p class="text-[15px] font-semibold text-white">Nenhuma automação criada ainda.</p>
+      {% if pode_gerenciar %}
+        <p class="mt-1 text-[13px] text-[#6f8a93]">Crie a primeira regra: um gatilho (ex.: “negócio movido para Orçamento”) + uma ou mais ações (ex.: criar tarefa).</p>
+        <a href="{% url 'automacoes:nova' %}" class="mt-5 inline-block hazon-btn hazon-btn-primary px-6 py-2.5 text-[13.5px] font-semibold text-white transition hover:brightness-110">+ Criar automação</a>
+      {% else %}
+        <p class="mt-1 text-[13px] text-[#6f8a93]">Fale com o admin da empresa para criar regras automáticas.</p>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {% for a in itens %}
+        <div class="flex flex-col rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl transition hover:border-[#74b3c6]/30">
+          <div class="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <h2 class="text-[15.5px] font-semibold leading-snug text-white">{{ a.nome }}</h2>
+              <p class="mt-1 text-[12px] leading-relaxed text-[#6f8a93]">{{ a.descricao }}</p>
+            </div>
+            {% if pode_gerenciar %}
+              <form method="post" action="{% url 'automacoes:ativar' a.id %}" class="shrink-0">
+                {% csrf_token %}
+                <button type="submit" title="{% if a.ativa %}Desativar{% else %}Ativar{% endif %}"
+                        class="relative inline-flex h-6 w-11 items-center rounded-full transition {% if a.ativa %}bg-[#7fe3c4]/90{% else %}bg-white/15{% endif %}">
+                  <span class="absolute h-[18px] w-[18px] rounded-full bg-white shadow transition-all {% if a.ativa %}left-[22px]{% else %}left-[3px]{% endif %}"></span>
+                </button>
+              </form>
+            {% else %}
+              <span class="rounded-full px-2.5 py-1 text-[10.5px] font-bold" style="color:{{ a.trigger_cor }}; background:{{ a.trigger_cor }}18">{{ a.trigger_label }}</span>
+            {% endif %}
+          </div>
+
+          <div class="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Gatilho</div>
+          <div class="mb-4 flex items-center gap-2">
+            <span class="h-2 w-2 rounded-full" style="background:{{ a.trigger_cor }}"></span>
+            <span class="text-[13px] font-medium text-[#bcd3da]">{{ a.trigger_label }}</span>
+          </div>
+
+          <div class="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Ações (em ordem)</div>
+          <div class="mb-4 flex flex-wrap gap-2">
+            {% for p in a.passos %}
+              <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11.5px] text-[#bcd3da]">{{ p.emoji }} {{ p.label }}</span>
+            {% endfor %}
+          </div>
+
+          <div class="mt-auto flex items-center justify-between border-t border-white/10 pt-3">
+            <span class="text-[11.5px] font-mono text-[#6f8a93]">
+              {{ a.qtd_exec }} execução{{ a.qtd_exec|pluralize }}
+              {% if a.ultima_execucao %}· {{ a.ultima_execucao|date:'d/m H:i' }}{% endif %}
+            </span>
+            {% if pode_gerenciar %}
+              <div class="flex items-center gap-1.5">
+                {% if a.trigger != 'negocio_estagnado' %}
+                  <form method="post" action="{% url 'automacoes:testar' a.id %}">
+                    {% csrf_token %}
+                    <button type="submit" title="Executar uma vez com o contato mais recente"
+                            class="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">▶ Testar</button>
+                  </form>
+                {% endif %}
+                <a href="{% url 'automacoes:editar' a.id %}"
+                   class="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Editar</a>
+                <form method="post" action="{% url 'automacoes:duplicar' a.id %}">
+                  {% csrf_token %}
+                  <button type="submit" title="Criar uma cópia desativada"
+                          class="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">⧉</button>
+                </form>
+                <form method="post" action="{% url 'automacoes:excluir' a.id %}"
+                      onsubmit="return confirm('Excluir a automação “{{ a.nome }}”? O histórico de execuções será removido.');">
+                  {% csrf_token %}
+                  <button type="submit" title="Excluir"
+                          class="rounded-lg border border-red-400/20 bg-red-400/10 px-2.5 py-1.5 text-[11.5px] font-semibold text-red-300 transition hover:bg-red-400/20">✕</button>
+                </form>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
+      <div class="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#6f8a93]">🕘 Execuções recentes</div>
+      {% if execucoes %}
+        <ul class="divide-y divide-white/5">
+          {% for e in execucoes %}
+            <li class="flex items-center gap-3 py-2.5 text-[12.5px]">
+              <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full {% if e.status == 'ok' %}bg-[#7fe3c4]/15 text-[#7fe3c4]{% else %}bg-red-400/15 text-red-300{% endif %}">
+                {% if e.status == 'ok' %}✓{% else %}✕{% endif %}
+              </span>
+              <div class="min-w-0 flex-1">
+                <div class="truncate font-semibold text-[#d5e4e9]">{{ e.automacao.nome }}</div>
+                <div class="truncate text-[11.5px] text-[#6f8a93]">
+                  {{ e.mensagem }}{% if e.contato %} · {{ e.contato.nome }}{% endif %}
+                </div>
+              </div>
+              <span class="shrink-0 font-mono text-[11px] text-[#6f8a93]">{{ e.created_at|date:'d/m H:i' }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="py-2 text-[13px] text-[#6f8a93]">Nenhuma execução registrada ainda — crie uma regra e teste pelo botão ▶.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
