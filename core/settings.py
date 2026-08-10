@@ -218,12 +218,16 @@ CACHES = {
     }
 }
 
+# Deploy atras de proxy que termina o TLS (Railway/nginx/caddy): o Django
+# precisa saber que a requisicao original e HTTPS (request.is_secure()). Fica
+# FORA do bloco `if not DEBUG` de proposito: no Django 5.2 o CSRF compara o
+# header Origin com scheme://host (is_secure), entao sem isto o login quebra
+# atras do proxy mesmo com DEBUG=1 por engano.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # HSTS + redirect SSL so em producao (DEBUG=0). O navegador ignora HSTS em
 # localhost, mas evitamos surpresas no dev definindo os valores condicionalmente.
 if not DEBUG:
-    # Deploy atras de proxy que termina o TLS (Railway/nginx/caddy): o Django
-    # precisa saber que a requisicao original e HTTPS (cookies Secure, redirect).
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_HSTS_SECONDS', '31536000'))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
