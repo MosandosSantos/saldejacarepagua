@@ -2,6 +2,7 @@
 from pathlib import Path
 
 from dotenv import load_dotenv
+import dj_database_url
 import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -77,14 +78,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 ASGI_APPLICATION = 'core.asgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('PGDATABASE', 'esferacrm'),
-        'USER': os.getenv('PGUSER', 'postgres'),
-        'PASSWORD': os.getenv('PGPASSWORD', ''),
-        'HOST': os.getenv('PGHOST', 'localhost'),
-        'PORT': os.getenv('PGPORT', '5432'),
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL', 'postgresql://postgres:@localhost:5432/esferacrm'),
+        conn_max_age=600,
+    )
 }
 
 # ---------------------------------------------------------------------------
