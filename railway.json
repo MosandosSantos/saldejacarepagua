@@ -4,7 +4,7 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "uvicorn core.asgi:application --host 0.0.0.0 --port $PORT --workers 2",
+    "startCommand": "/bin/sh -c \"uvicorn core.asgi:application --host 0.0.0.0 --port $PORT --workers 2\"",
     "healthcheckPath": "/healthz/",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
