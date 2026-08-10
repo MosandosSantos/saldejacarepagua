@@ -127,10 +127,11 @@ DATABASES = {
 }
 
 # Deploy (Railway/Render/Heroku): o Postgres costuma ser fornecido via
-# DATABASE_URL (inclui sslmode). Usamos quando presente E nao houver PGHOST
-# explicito — assim o .env local (variaveis PG*) continua mandando em dev.
+# DATABASE_URL (inclui sslmode). DATABASE_URL tem PRIORIDADE sempre que
+# estiver definida — isso evita que PGHOST local sobrescreva a config do
+# Railway. Em dev, se DATABASE_URL não existir, usa as variáveis PG*.
 _URL_BANCO = os.getenv('DATABASE_URL', '')
-if _URL_BANCO and not os.getenv('PGHOST'):
+if _URL_BANCO:
     DATABASES['default'] = dj_database_url.parse(_URL_BANCO, conn_max_age=60)
 
 # Fail-fast claro em producao: sem DATABASE_URL/PGHOST o app tentaria conectar
