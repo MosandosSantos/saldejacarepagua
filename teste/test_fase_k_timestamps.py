@@ -33,7 +33,7 @@ def _sessao_web(client, usuario):
 @pytest.mark.django_db
 def test_todos_os_modelos_tem_created_at_e_updated_at():
     apps_do_projeto = {
-        'acesso', 'agendamentos', 'automacoes', 'contatos', 'emails', 'funil', 'tarefas',
+        'acesso', 'automacoes', 'contatos', 'emails', 'funil', 'tarefas',
     }
     modelos = [m for m in apps.get_models() if m._meta.app_label in apps_do_projeto]
     assert len(modelos) >= 18  # garantia de que a varredura pegou o projeto inteiro

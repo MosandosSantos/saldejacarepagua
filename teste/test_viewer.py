@@ -33,7 +33,7 @@ def _contato_com_negocio(nome, tenant, stage='interessado', valor=100):
 def test_viewer_ve_paginas_de_leitura(tenant_aurora, usuario_viewer):
     contato = _contato_com_negocio('Ana', tenant_aurora)
     c = _cliente_web(usuario_viewer)
-    for url in ['/dashboard/', '/funil/', '/contatos/', '/agenda/',
+    for url in ['/dashboard/', '/funil/', '/contatos/', '/tarefas/',
                 f'/contatos/{contato.id}/']:
         assert c.get(url).status_code == 200, url
 
@@ -173,9 +173,9 @@ def test_viewer_altera_perfil_senha_e_tema(tenant_aurora, usuario_viewer):
     assert r.status_code == 200
     assert 'Perfil atualizado'.encode() in r.content
     r = c.post('/config/', {'acao': 'senha', 'senha_atual': 'senha123',
-                            'nova_senha': 'nova456', 'confirma_senha': 'nova456'})
+                            'nova_senha': 'nova4567', 'confirma_senha': 'nova4567'})
     assert 'Senha alterada'.encode() in r.content
-    assert check_password('nova456', Usuario.objects.get(pk=usuario_viewer.id).senha)
+    assert check_password('nova4567', Usuario.objects.get(pk=usuario_viewer.id).senha)
     c.post('/config/tema/', {'tema': 'claro', 'voltar': '/config/'})
     assert c.session['tema'] == 'claro'
 

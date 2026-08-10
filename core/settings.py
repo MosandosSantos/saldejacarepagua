@@ -1,25 +1,61 @@
 """Configuracao central do projeto Django (core)."""
+import os
 from pathlib import Path
 
-from dotenv import load_dotenv
 import dj_database_url
-import os
+from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'chave-dev-nao-usar-em-producao')
-DEBUG = os.getenv('DJANGO_DEBUG', '1') == '1'
-# S8 — restringe os hosts aceitos (anti host-header spoofing). Em produção,
-# defina DJANGO_ALLOWED_HOSTS no .env com a lista separada por vírgula
-# (ex.: 'app.empresa.com.br,www.empresa.com.br'). Sem a variável: no dev
-# (DEBUG=1) tudo liberado; em produção (DEBUG=0) falha fechado (só localhost)
-# para não abrir mão silenciosamente da proteção.
+def _env_bool(name: str, default: str = '0') -> bool:
+    """Lê uma env var como booleana — aceita 1/true/yes/on (case-insensitive)."""
+    return os.getenv(name, default).strip().lower() in ('1', 'true', 'yes', 'on', 't')
+
+
+# --- Fail-closed: DEBUG so e True se explicitamente pedido ---------------
+# S8/C1 — padrão seguro. Deploy que esquecer DJANGO_DEBUG=1 roda em modo
+# production, nunca o contrario. Aceita `DEBUG` como alias do .env legado.
+DEBUG = _env_bool('DJANGO_DEBUG') or _env_bool('DEBUG', '0')
+
+# --- Secrets fail-fast em producao ---------------------------------------
+# S8/C2 —fallback so em DEBUG=1; em producao a ausencia das env vars aborta
+# o boot em vez de rodar com chave publica/estatica forjavel.
+_DEV_SECRET = 'chave-dev-nao-usar-em-producao'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY') or os.getenv('SECRET_KEY') or _DEV_SECRET
+if not DEBUG and SECRET_KEY == _DEV_SECRET:
+    raise ImproperlyConfigured('DJANGO_SECRET_KEY e obrigatoria em producao (DEBUG=0).')
 _DJANGO_ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '')
 ALLOWED_HOSTS = [h.strip() for h in _DJANGO_ALLOWED_HOSTS.split(',') if h.strip()]
 if not ALLOWED_HOSTS:
-    ALLOWED_HOSTS = ['*'] if DEBUG else ['localhost', '127.0.0.1']
+    if DEBUG:
+        ALLOWED_HOSTS = ['*']
+    else:
+        # Producao sem DJANGO_ALLOWED_HOSTS explicito: aceita os dominios gerados
+        # automaticamente pelo Railway (*.up.railway.app) + localhost/testserver.
+        # Para dominio proprio, defina DJANGO_ALLOWED_HOSTS
+        # (ex.: 'meusite.com.br,www.meusite.com.br').
+        ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver', '.up.railway.app', '.railway.app']
+
+# Origem permitida no check de CSRF via header Origin (deploy atras de proxy
+# HTTPS — Railway). Aceita coringa de subdominio (*.) no padrao.
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
+if not CSRF_TRUSTED_ORIGINS and not DEBUG:
+    CSRF_TRUSTED_ORIGINS = ['https://*.up.railway.app', 'https://*.railway.app']
+
+# --- Password validators (aplicados via validate_password nas views) -----
+# A2 — politica minima de senha. Mensagens em pt-br (acesso.validators).
+# Nao usa o User model nativo do Django, portanto nao sao acionados
+# automaticamente — views chamam validate_password().
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'acesso.validators.AtributoSimilarValidator'},
+    {'NAME': 'acesso.validators.TamanhoMinimoValidator',
+     'OPTIONS': {'min_length': 8}},
+    {'NAME': 'acesso.validators.SenhaComumValidator'},
+    {'NAME': 'acesso.validators.SenhaNumericaValidator'},
+]
 
 INSTALLED_APPS = [
     # Framework web (templates DTL)
@@ -30,7 +66,6 @@ INSTALLED_APPS = [
     # Apps de negocio
     'acesso',
     'contatos',
-    'agendamentos',
     'dashboard',
     'funil',
     'emails',
@@ -38,7 +73,6 @@ INSTALLED_APPS = [
     'automacoes',
     'campanhas',
     'discador',
-    'acordos',
     'relatorios',
     # Tailwind (gera o CSS com classes utilitarias)
     'tailwind',
@@ -47,6 +81,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -54,6 +89,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Fase D — headers de seguranca (CSP) em todas as respostas web
     'core.middleware.SecurityHeadersMiddleware',
+    # S8/C3 — valida o usuario da sessao contra o DB a cada request autenticada
+    # (revoga acesso quando usuario e deletado/demovido/mudou de tenant).
+    'core.middleware.ValidarSessaoMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -78,11 +116,33 @@ WSGI_APPLICATION = 'core.wsgi.application'
 ASGI_APPLICATION = 'core.asgi.application'
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL', 'postgresql://postgres:@localhost:5432/esferacrm'),
-        conn_max_age=600,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('PGDATABASE', 'esferacrm'),
+        'USER': os.getenv('PGUSER', 'postgres'),
+        'PASSWORD': os.getenv('PGPASSWORD', ''),
+        'HOST': os.getenv('PGHOST', 'localhost'),
+        'PORT': os.getenv('PGPORT', '5432'),
+    }
 }
+
+# Deploy (Railway/Render/Heroku): o Postgres costuma ser fornecido via
+# DATABASE_URL (inclui sslmode). Usamos quando presente E nao houver PGHOST
+# explicito — assim o .env local (variaveis PG*) continua mandando em dev.
+_URL_BANCO = os.getenv('DATABASE_URL', '')
+if _URL_BANCO and not os.getenv('PGHOST'):
+    DATABASES['default'] = dj_database_url.parse(_URL_BANCO, conn_max_age=60)
+
+# Fail-fast claro em producao: sem DATABASE_URL/PGHOST o app tentaria conectar
+# em localhost (erro confuso de "connection refused"). Exigimos a configuracao
+# do banco — no Railway: DATABASE_URL=${{Postgres.DATABASE_URL}} (ou PG*).
+if not DEBUG and not _URL_BANCO and not os.getenv('PGHOST'):
+    raise ImproperlyConfigured(
+        'Banco de dados nao configurado. No Railway, adicione no servico web a '
+        'variavel DATABASE_URL apontando para o Postgres '
+        '(ex.: ${{Postgres.DATABASE_URL}}) - ou defina PGHOST/PGPORT/'
+        'PGDATABASE/PGUSER/PGPASSWORD.'
+    )
 
 # ---------------------------------------------------------------------------
 # Arquivos estaticos + Tailwind
@@ -90,8 +150,18 @@ DATABASES = {
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+# WhiteNoise serve os estaticos em producao (sem servidor externo/CDN).
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
 TAILWIND_APP_NAME = 'theme'
-NPM_BIN_PATH = r'C:\Program Files\nodejs\npm.cmd'
+# NPM do Tailwind: no Windows usa o caminho fixo do npm.cmd; no Linux
+# (Docker/Railway) usa o `npm` do PATH do container (override via NPM_BIN_PATH).
+if os.name == 'nt':
+    NPM_BIN_PATH = os.getenv('NPM_BIN_PATH', r'C:\Program Files\nodejs\npm.cmd')
+else:
+    NPM_BIN_PATH = os.getenv('NPM_BIN_PATH', 'npm')
 
 LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
@@ -105,6 +175,8 @@ DEFAULT_PORT = os.getenv('DJANGO_PORT', '8000')
 
 # Autenticacao JWT (camada REST/FastAPI)
 JWT_SECRET = os.getenv('JWT_SECRET', 'jwt-dev-secret-nao-usar-em-producao')
+if not DEBUG and JWT_SECRET == 'jwt-dev-secret-nao-usar-em-producao':
+    raise ImproperlyConfigured('JWT_SECRET e obrigatoria em producao (DEBUG=0).')
 TOKEN_TTL_DIAS = int(os.getenv('TOKEN_TTL_DIAS', '7'))
 
 # ---------------------------------------------------------------------------
@@ -122,24 +194,44 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = True  # o JS le o token do DOM (<input name=csrfmiddlewaretoken>), nao do cookie
 CSRF_COOKIE_SAMESITE = 'Lax'
+# A3 — cookies só via HTTPS em produção (evita sequestro de sessão por MITM)
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # Rate limiting da API (Fase D): **fail-safe** — ativo por padrao
 # (`DJANGO_RATE_LIMIT` default '1'). Para desativar (ex.: testes), defina
 # `DJANGO_RATE_LIMIT=0` — o `teste/conftest.py` faz isso automaticamente.
-# Leitura ocorre no momento do request (ver api/v1/rate_limit.py), entao o
-# valor do .env vale em producao e o do conftest vale na suite de testes.
-# Com `DJANGO_TRUST_PROXY=1`, a chave de limitacao usa o X-Forwarded-For
-# (use somente atras de proxy que voce controla).
+# Controla tambem o rate limit do login WEB (acesso/views.py::login_web),
+# mantendo um unico botao para a suite de testes.
+RATE_LIMIT_ATIVO = os.getenv('DJANGO_RATE_LIMIT', '1') != '0'
+LOGIN_RATE_LIMITE = int(os.getenv('LOGIN_RATE_LIMITE', '10'))   # tentativas
+LOGIN_RATE_JANELA = int(os.getenv('LOGIN_RATE_JANELA', '300'))  # segundos
+
+# Cache em memoria (usado pelo rate limit do login web e invalidacao de
+# sessao). Em producao, troque por Redis/BMemcached para ser compartilhado
+# entre processos/workers.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'redcrm-default',
+    }
+}
 
 # HSTS + redirect SSL so em producao (DEBUG=0). O navegador ignora HSTS em
 # localhost, mas evitamos surpresas no dev definindo os valores condicionalmente.
 if not DEBUG:
+    # Deploy atras de proxy que termina o TLS (Railway/nginx/caddy): o Django
+    # precisa saber que a requisicao original e HTTPS (cookies Secure, redirect).
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_HSTS_SECONDS', '31536000'))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    # Redirect http -> https fica OFF por padrao: o edge do Railway ja termina o
+    # TLS e o HSTS acima cobre o restante; o healthcheck interno nem sempre traz
+    # X-Forwarded-Proto, entao um 301 poderia derrubar o deploy. Para exigir o
+    # redirect, defina DJANGO_SSL_REDIRECT=1.
     SECURE_SSL_REDIRECT = os.getenv('DJANGO_SSL_REDIRECT', '0') == '1'
-    # Se o Django estiver atras de um proxy (nginx/caddy) que termina o TLS:
-    # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Content-Security-Policy (aplicado pelo core/middleware.SecurityHeadersMiddleware)
 # Nota: mantemos 'unsafe-inline' em script-src porque o app usa scripts inline

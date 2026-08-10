@@ -75,18 +75,18 @@ def test_perfil_email_duplicado_rejeitado(usuario_operacional, admin_company):
 def test_altera_senha_com_atual_correta(usuario_operacional):
     c = _cliente_web(usuario_operacional)
     r = c.post('/config/', {'acao': 'senha', 'senha_atual': 'senha123',
-                            'nova_senha': 'nova456', 'confirma_senha': 'nova456'})
+                            'nova_senha': 'nova4567', 'confirma_senha': 'nova4567'})
     assert r.status_code == 200
     assert 'Senha alterada'.encode() in r.content
     u = Usuario.objects.get(pk=usuario_operacional.id)
-    assert check_password('nova456', u.senha)
+    assert check_password('nova4567', u.senha)
 
 
 @pytest.mark.django_db
 def test_altera_senha_atual_errada_rejeitada(usuario_operacional):
     c = _cliente_web(usuario_operacional)
     r = c.post('/config/', {'acao': 'senha', 'senha_atual': 'errada',
-                            'nova_senha': 'nova456', 'confirma_senha': 'nova456'})
+                            'nova_senha': 'nova4567', 'confirma_senha': 'nova4567'})
     assert 'incorreta'.encode() in r.content
     assert check_password('senha123', Usuario.objects.get(pk=usuario_operacional.id).senha)
 
@@ -96,7 +96,7 @@ def test_altera_senha_curta_rejeitada(usuario_operacional):
     c = _cliente_web(usuario_operacional)
     r = c.post('/config/', {'acao': 'senha', 'senha_atual': 'senha123',
                             'nova_senha': '123', 'confirma_senha': '123'})
-    assert 'pelo menos 6 caracteres'.encode() in r.content
+    assert 'pelo menos 8 caracteres'.encode() in r.content
 
 
 # --- Sessões ativas ---

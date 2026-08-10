@@ -54,19 +54,6 @@ em `http://localhost:8000/docs`.
 | POST | `/discador/chamadas/{id}/resultado` | Registrar resultado da chamada |
 | GET | `/discador/scripts` | Listar scripts |
 
-### acordos
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/acordos` | Listar acordos |
-| POST | `/acordos/simular` | Simular opções de pagamento/desconto |
-| POST | `/acordos` | Criar acordo (gera PIX se aplicável) |
-| POST | `/acordos/{id}/resultado` | Registrar resultado (pago/recusado) |
-
-### agendamentos
-| Método | Rota | Descrição |
-|---|---|---|
-| GET | `/agendamentos` | Listar agendamentos |
-
 ### usuarios (admin)
 | Método | Rota | Descrição |
 |---|---|---|
@@ -84,7 +71,7 @@ em `http://localhost:8000/docs`.
 - **Repositories**: isolam o ORM (`repositories/*_repository.py`), recebendo o
   `tenant_id` para escopar consultas.
 - **Services**: regras de negócio (ex.: `auth_service` gera/valida JWT,
-  `contato_service` normaliza telefone, `agendamento_service` calcula dia útil).
+  `contato_service` normaliza telefone).
 - **Erros**: 401 (não autenticado), 403 (sem papel), 404 (não encontrado/não do
   tenant), 409 (conflito), 422 (validação pydantic).
 - **CORS**: liberado (`allow_origins=['*']`) — API pública para integrações.

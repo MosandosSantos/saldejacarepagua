@@ -6,6 +6,7 @@ app_name = 'contatos'
 
 urlpatterns = [
     path('', views.lista, name='lista'),
+    path('leads-pobres/', views.leads_pobres, name='leads_pobres'),
     path('importar/', views.importar, name='importar'),
     path('importar/modelo/', views.baixar_modelo, name='modelo'),
     path('exportar/', views.exportar_csv, name='exportar'),

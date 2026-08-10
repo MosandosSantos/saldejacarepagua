@@ -3,6 +3,10 @@
 {% block titulo %}HAZON CRM — Funil{% endblock %}
 
 {% block conteudo %}
+{% if web_pode_editar %}
+<!-- Token CSRF próprio do kanban — os POSTs AJAX (mover lead / novo lead) leem o DOM -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+{% endif %}
 <div class="mb-7">
   <h1 class="hazon-titulo">Funil de pacientes</h1>
   <p class="mt-2 text-sm font-medium text-[#74b3c6]">{% if web_pode_editar %}Arraste os cards entre as etapas para atualizar cada paciente.{% else %}Modo somente leitura — peça ao admin da empresa para mover os pacientes.{% endif %}</p>
@@ -14,6 +18,13 @@
     <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nome ou empresa..."
            class="hazon-search w-72">
   </form>
+  {% if web_pode_editar %}
+  <button type="button" id="btn-novo-lead"
+          class="hazon-btn hazon-btn-primary px-5 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Novo lead
+  </button>
+  {% endif %}
   {% if web_eh_admin %}
   <a href="/config/#etapas" class="hazon-btn hazon-btn-ghost" title="Configurar as etapas do funil (nome, cor, ordem e probabilidade)">
     <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -71,37 +82,16 @@
       <span class="h-2.5 w-2.5 shrink-0 rounded" style="background:{{ col.color }};box-shadow:0 0 8px {{ col.color }}70"></span>
       <span class="flex-1 truncate text-[12.5px] font-semibold text-[#bcd3da]">{{ col.name }}</span>
       <span data-contador="{{ col.key }}" class="rounded-full bg-white/5 px-2.5 py-0.5 font-mono text-xs font-bold text-white">{{ col.count }}</span>
+      {% if web_pode_editar %}
+      <button type="button" data-etapa="{{ col.key }}" aria-label="Novo lead em {{ col.name }}" title="Novo lead nesta etapa"
+              class="btn-lead-coluna flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#bcd3da] transition hover:border-[#74b3c6]/40 hover:bg-[#74b3c6]/15 hover:text-[#74b3c6]">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      {% endif %}
     </div>
     <div class="cards flex flex-1 flex-col gap-2.5 p-3">
       {% for card in col.cards %}
-      <div class="kanban-card group relative hazon-card-sm p-3.5 transition hover:border-[#74b3c6]/40 hover:bg-white/10"
-           {% if web_pode_editar %}draggable="true"{% endif %} data-id="{{ card.id }}">
-        <div class="mb-1.5 flex items-start justify-between gap-2">
-          <a href="{% url 'contatos:detalhe' card.contato_id %}" class="text-[13.5px] font-semibold text-white hover:text-[#74b3c6]">{{ card.nome }}</a>
-        </div>
-        <div class="mb-2.5 text-[11.5px] text-[#6f8a93]">{{ card.empresa }}</div>
-        <div class="mb-2 flex items-center justify-between gap-2">
-          <span class="hazon-chip px-2 font-semibold" style="color:{{ card.seg_color }};background:{{ card.seg_color }}1a">{{ card.seg_label }}</span>
-          <span class="hazon-chip px-2 font-mono {% if card.score_nivel == 'quente' %}text-[#4ade80] bg-[#4ade80]/15{% elif card.score_nivel == 'morno' %}text-[#fbbf24] bg-[#fbbf24]/15{% else %}text-[#94a3b8] bg-white/10{% endif %}" title="Lead scoring">{{ card.score }}</span>
-        </div>
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-[10px] font-bold uppercase tracking-wide {% if card.score_nivel == 'quente' %}text-[#4ade80]{% elif card.score_nivel == 'morno' %}text-[#fbbf24]{% else %}text-[#6f8a93]{% endif %}">{{ card.score_nivel }}</span>
-          <span class="font-mono text-[13.5px] font-bold text-[#74b3c6]">{{ card.valor }}</span>
-        </div>
-        {% if web_pode_editar %}
-        <div class="mt-2 hidden border-t border-white/10 pt-2 group-hover:block">
-          <form method="post" action="{% url 'funil:mover' card.id %}">
-            {% csrf_token %}
-            <select name="stage" onchange="this.form.submit()"
-                    class="w-full rounded-lg border border-white/10 bg-[#0b2029] px-2 py-1.5 text-[11.5px] text-white outline-none">
-              {% for st in stages %}
-                <option value="{{ st.key }}" {% if st.key == col.key %}selected{% endif %}>{{ st.name }}</option>
-              {% endfor %}
-            </select>
-          </form>
-        </div>
-        {% endif %}
-      </div>
+      {% include 'funil/_card.html' %}
       {% empty %}
       <p class="vazio-msg px-2 py-1 text-xs text-[#6f8a93]">Vazio</p>
       {% endfor %}
@@ -115,6 +105,62 @@
   </div>
   {% endfor %}
 </div>
+
+{% if web_pode_editar %}
+<!-- Cadastro rápido de lead (perfil nasce básico — contato pobre) -->
+<div id="modal-novo-lead" class="lead-modal fixed inset-0 z-40 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="novo-lead-titulo">
+  <div class="absolute inset-0" style="background:rgba(0,0,0,.62);backdrop-filter:blur(4px)" data-fechar-lead></div>
+  <div class="lead-modal-painel relative w-full max-w-md hazon-card-lg p-6">
+    <div class="mb-5 flex items-center justify-between gap-3">
+      <h2 id="novo-lead-titulo" class="font-display text-lg font-semibold text-white">⚡ Novo lead</h2>
+      <button type="button" data-fechar-lead aria-label="Fechar"
+              class="flex h-9 w-9 items-center justify-center rounded-lg text-[#6f8a93] transition hover:bg-white/10 hover:text-white">✕</button>
+    </div>
+    <p class="-mt-2 mb-5 text-[12.5px] leading-relaxed text-[#6f8a93]">Só o essencial — o perfil nasce <b class="text-[#fb923c]">básico</b> e enriquece quando você completar a ficha do contato.</p>
+    <form id="form-novo-lead" class="space-y-4" novalidate>
+      {% csrf_token %}
+      <div>
+        <label for="lead-nome" class="hazon-label">Nome *</label>
+        <input id="lead-nome" name="nome" required autocomplete="name" placeholder="Nome do lead" class="lead-input">
+      </div>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label for="lead-tel" class="hazon-label">Telefone</label>
+          <input id="lead-tel" name="tel" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000" class="lead-input">
+        </div>
+        <div>
+          <label for="lead-email" class="hazon-label">E-mail</label>
+          <input id="lead-email" name="email" type="email" autocomplete="email" placeholder="email@exemplo.com" class="lead-input">
+        </div>
+      </div>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label for="lead-stage" class="hazon-label">Etapa do funil</label>
+          <select id="lead-stage" name="stage" class="lead-input">
+            {% for st in stages %}<option value="{{ st.key }}">{{ st.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="lead-valor" class="hazon-label">Valor (R$)</label>
+          <input id="lead-valor" name="valor" inputmode="decimal" placeholder="0" class="lead-input">
+        </div>
+      </div>
+      <div>
+        <label for="lead-origem" class="hazon-label">Origem</label>
+        <select id="lead-origem" name="origem" class="lead-input">
+          <option value="">—</option>
+          {% for o in origens %}<option value="{{ o }}">{{ o }}</option>{% endfor %}
+        </select>
+      </div>
+      <p id="lead-erros" class="hidden rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[12.5px] text-red-200"></p>
+      <div class="flex gap-3 pt-1">
+        <button type="submit" id="btn-lead-salvar" class="hazon-btn hazon-btn-primary flex-1 text-[13.5px] font-semibold text-white transition hover:brightness-110" style="min-height:44px">Criar lead</button>
+        <button type="button" data-fechar-lead class="hazon-btn hazon-btn-ghost px-5 text-[13px]" style="min-height:44px">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block js %}
@@ -134,6 +180,32 @@
     from { transform: scale(0.92); opacity: 0; }
     to   { transform: scale(1); opacity: 1; }
   }
+  {% if web_pode_editar %}
+  /* Cadastro rápido de lead */
+  .lead-modal input.lead-input, .lead-modal select.lead-input {
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.06);
+    font-size: 13.5px;
+    color: var(--hazon-text, #f4fafb);
+    outline: none;
+    transition: border-color .15s, background .15s;
+  }
+  .lead-modal input.lead-input::placeholder { color: var(--hazon-dim, #6f8a93); }
+  .lead-modal input.lead-input:focus, .lead-modal select.lead-input:focus {
+    border-color: rgba(116,179,198,.45);
+    background: rgba(255,255,255,.1);
+  }
+  .lead-modal select.lead-input option { background: #0b2029; }
+  .lead-modal-painel { animation: leadModalEntra .22s ease; max-height: 90vh; overflow-y: auto; }
+  @keyframes leadModalEntra {
+    from { transform: translateY(10px) scale(.97); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  {% endif %}
 </style>
 {% if web_pode_editar %}
 <script>
@@ -172,7 +244,7 @@ function atualizarOcultos(col, count) {
   }
 }
 
-document.querySelectorAll('.kanban-card').forEach(function (card) {
+function armarDrag(card) {
   card.addEventListener('dragstart', function (e) {
     e.dataTransfer.setData('text/plain', card.getAttribute('data-id'));
     e.dataTransfer.effectAllowed = 'move';
@@ -182,7 +254,25 @@ document.querySelectorAll('.kanban-card').forEach(function (card) {
     card.classList.remove('dragging');
     document.querySelectorAll('.is-over').forEach(function (c) { c.classList.remove('is-over'); });
   });
-});
+}
+document.querySelectorAll('.kanban-card').forEach(armarDrag);
+
+// Atualiza contadores, somas, aviso de ocultos e total do board (após drag ou novo lead)
+function aplicarBoard(dados) {
+  if (!dados || !dados.colunas) return;
+  dados.colunas.forEach(function (c) {
+    var colEl = document.querySelector('.kanban-col[data-stage="' + c.key + '"]');
+    if (!colEl) return;
+    var contador = colEl.querySelector('[data-contador]');
+    if (contador) contador.textContent = c.count;
+    var soma = colEl.querySelector('[data-soma]');
+    if (soma) soma.textContent = c.soma;
+    atualizarOcultos(colEl, c.count);
+    manterVazio(colEl);
+  });
+  var total = document.getElementById('total-funil');
+  if (total) total.textContent = dados.total_funil;
+}
 
 document.querySelectorAll('.kanban-col').forEach(function (col) {
   col.addEventListener('dragover', function (e) {
@@ -234,22 +324,113 @@ document.querySelectorAll('.kanban-col').forEach(function (col) {
         if (ocultos) ocultos.remove();
         // (o aviso correto volta no loop abaixo via atualizarOcultos)
         // atualiza contadores, somas, aviso de ocultos e total
-        dados.colunas.forEach(function (c) {
-          var colEl = document.querySelector('.kanban-col[data-stage="' + c.key + '"]');
-          if (!colEl) return;
-          var contador = colEl.querySelector('[data-contador]');
-          if (contador) contador.textContent = c.count;
-          var soma = colEl.querySelector('[data-soma]');
-          if (soma) soma.textContent = c.soma;
-          atualizarOcultos(colEl, c.count);
-          manterVazio(colEl);
-        });
-        var total = document.getElementById('total-funil');
-        if (total) total.textContent = dados.total_funil;
+        aplicarBoard(dados);
         manterVazio(col);
       })
       .catch(function () { window.location.reload(); });
   });
+});
+
+// ---- Cadastro rápido de lead ----
+var modalLead = document.getElementById('modal-novo-lead');
+var btnLead = document.getElementById('btn-novo-lead');
+var formLead = document.getElementById('form-novo-lead');
+var errosLead = document.getElementById('lead-erros');
+var btnSalvar = document.getElementById('btn-lead-salvar');
+
+function abrirLead(stage) {
+  if (!modalLead) return;
+  errosLead.classList.add('hidden');
+  // formulário sempre limpo ao abrir
+  ['lead-nome', 'lead-tel', 'lead-email', 'lead-valor'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  var origem = document.getElementById('lead-origem');
+  if (origem) origem.selectedIndex = 0;
+  // etapa pré-selecionada (botão + da coluna) ou a primeira do pipeline
+  var sel = document.getElementById('lead-stage');
+  if (sel) {
+    var achou = false;
+    if (stage) {
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === stage) { sel.selectedIndex = i; achou = true; break; }
+      }
+    }
+    if (!achou) sel.selectedIndex = 0;
+  }
+  modalLead.classList.remove('hidden');
+  modalLead.classList.add('flex');
+  var nome = document.getElementById('lead-nome');
+  if (nome) nome.focus();
+}
+function fecharLead() {
+  if (!modalLead) return;
+  modalLead.classList.add('hidden');
+  modalLead.classList.remove('flex');
+}
+if (btnLead) btnLead.addEventListener('click', function () { abrirLead(); });
+document.querySelectorAll('.btn-lead-coluna').forEach(function (b) {
+  b.addEventListener('click', function () { abrirLead(b.getAttribute('data-etapa')); });
+});
+document.querySelectorAll('[data-fechar-lead]').forEach(function (el) {
+  el.addEventListener('click', fecharLead);
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && modalLead && !modalLead.classList.contains('hidden')) fecharLead();
+});
+if (formLead) formLead.addEventListener('submit', function (e) {
+  e.preventDefault();
+  if (btnSalvar) { btnSalvar.disabled = true; btnSalvar.textContent = 'Criando…'; }
+  var fd = new FormData(formLead);
+  // mantém o filtro de busca ativo no recálculo do board (contador/ocultos)
+  var busca = document.querySelector('input[name=q]');
+  if (busca && busca.value) fd.append('q', busca.value);
+  fetch('{% url "funil:novo_lead" %}', {
+    method: 'POST',
+    body: fd,
+    headers: { 'X-CSRFToken': csrftoken(), 'X-Requested-With': 'XMLHttpRequest' },
+  })
+    .then(function (r) {
+      return r.json().then(function (dados) { return { ok: r.ok, dados: dados }; });
+    })
+    .then(function (res) {
+      if (!res.ok) {
+        var msg = (res.dados.erros && res.dados.erros.length)
+          ? res.dados.erros.join(' · ')
+          : 'Não foi possível criar o lead.';
+        errosLead.textContent = msg;
+        errosLead.classList.remove('hidden');
+        return;
+      }
+      errosLead.classList.add('hidden');
+      var col = document.querySelector('.kanban-col[data-stage="' + res.dados.coluna + '"]');
+      if (col && res.dados.html) {
+        var vazio = col.querySelector('.vazio-msg');
+        if (vazio) vazio.remove();
+        var temp = document.createElement('div');
+        temp.innerHTML = res.dados.html.trim();
+        var novo = temp.firstElementChild;
+        novo.classList.add('card-entrou');
+        armarDrag(novo);
+        col.querySelector('.cards').appendChild(novo);
+        setTimeout(function () { novo.classList.remove('card-entrou'); }, 350);
+        var cartoes = col.querySelectorAll('.kanban-card[data-id]');
+        while (cartoes.length > 30) {
+          cartoes[0].remove();
+          cartoes = col.querySelectorAll('.kanban-card[data-id]');
+        }
+      }
+      aplicarBoard(res.dados);
+      fecharLead();
+    })
+    .catch(function () {
+      errosLead.textContent = 'Falha de conexão. Tente novamente.';
+      errosLead.classList.remove('hidden');
+    })
+    .finally(function () {
+      if (btnSalvar) { btnSalvar.disabled = false; btnSalvar.textContent = 'Criar lead'; }
+    });
 });
 </script>
 {% endif %}

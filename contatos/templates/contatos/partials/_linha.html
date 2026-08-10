@@ -13,6 +13,14 @@
               title="Lead scoring: {{ c.score_label }}">{{ c.score }}</span>
       </td>
       <td class="px-5 py-4">
+        <div class="flex items-center gap-2" title="Perfil {{ c.completude.total }}% — {{ c.completude.label }}{% if c.completude.faltam %} · falta: {{ c.completude.faltam|join:', ' }}{% endif %}">
+          <div class="h-1 w-16 overflow-hidden rounded-full bg-white/10">
+            <div class="h-full rounded-full" style="width:{{ c.completude.total }}%;background:{{ c.completude.cor }}"></div>
+          </div>
+          <span class="font-mono text-[10.5px] font-bold" style="color:{{ c.completude.cor }}">{{ c.completude.total }}%</span>
+        </div>
+      </td>
+      <td class="px-5 py-4">
         {% for t in c.tags|slice:":2" %}
           <span class="mr-1 inline-block hazon-chip px-2 font-semibold" style="color:{{ t.cor }};background:{{ t.cor }}1a">{{ t.nome }}</span>
         {% empty %}
@@ -44,5 +52,5 @@
     </tr>
   {% endfor %}
 {% else %}
-  <tr><td colspan="10" class="px-5 py-12 text-center text-sm text-[#6f8a93]">Nenhum contato encontrado.</td></tr>
+  <tr><td colspan="11" class="px-5 py-12 text-center text-sm text-[#6f8a93]">Nenhum contato encontrado.</td></tr>
 {% endif %}

@@ -1,0 +1,43 @@
+# Contexto do build Docker — manter a imagem enxuta e sem segredos.
+.git
+.gitignore
+.venv
+venv
+env
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.mypy_cache
+.coverage
+htmlcov
+
+# Node (legado + tailwind)
+node_modules
+theme/static_src/node_modules
+
+# Artefatos de build / coletados (regenerados no Dockerfile)
+staticfiles
+theme/static/css/dist
+
+# Ambiente / segredos
+.env
+.env.*
+*.log
+*.sqlite3
+db.sqlite3
+*.pem
+*.key
+
+# Editores / SO
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Conteudo nao necessario na imagem
+teste
+DOCS
+.codex
+.agents
+.impeccable

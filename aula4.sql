@@ -45,11 +45,6 @@ UPDATE contatos SET procedimento='Limpeza de pele',       ultima_consulta='2026-
 UPDATE contatos SET procedimento='Clareamento dental',    ultima_consulta='2026-07-13', origem='Google',     pagamento='Convênio'   WHERE id=19;
 UPDATE contatos SET procedimento='Harmonização facial',   ultima_consulta='2026-07-17', origem='Instagram',  pagamento='Particular' WHERE id=20;
 
--- Agendamentos com termos da clínica
-UPDATE agendamentos SET tipo_label='Avaliação' WHERE tipo='demo';
-UPDATE agendamentos SET tipo_label='Consulta'  WHERE tipo='reuniao';
-UPDATE agendamentos SET tipo_label='Retorno'   WHERE tipo='call';
-
 -- Confirmação
 SELECT stage, COUNT(*) AS qtd FROM contatos GROUP BY stage ORDER BY stage;
 SELECT seg, COUNT(*) AS qtd FROM contatos GROUP BY seg ORDER BY seg;

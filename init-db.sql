@@ -24,15 +24,6 @@ CREATE TABLE IF NOT EXISTS contatos (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS agendamentos (
-  id          SERIAL PRIMARY KEY,
-  contato_id  INTEGER REFERENCES contatos(id) ON DELETE CASCADE,
-  hora        TEXT NOT NULL,
-  offset_dias INTEGER NOT NULL DEFAULT 0,
-  tipo        TEXT NOT NULL,
-  tipo_label  TEXT NOT NULL
-);
-
 -- ============================================================
 -- SEED — 20 contatos fictícios (id 1..20)
 -- ============================================================
@@ -66,22 +57,7 @@ UPDATE contatos SET updated_at = NOW() - (21 - id) * INTERVAL '1 second';
 SELECT setval('contatos_id_seq', (SELECT MAX(id) FROM contatos));
 
 -- ============================================================
--- SEED — 8 agendamentos (datas calculadas por offset em dias úteis)
--- ============================================================
-INSERT INTO agendamentos (contato_id, hora, offset_dias, tipo, tipo_label) VALUES
-  (1,  '09:00', 0, 'demo',    'Demonstração'),
-  (2,  '11:30', 0, 'reuniao', 'Reunião'),
-  (6,  '14:00', 0, 'call',    'Call'),
-  (10, '16:30', 0, 'call',    'Call'),
-  (11, '10:00', 1, 'reuniao', 'Reunião'),
-  (16, '13:00', 1, 'demo',    'Demonstração'),
-  (14, '15:30', 1, 'call',    'Call'),
-  (18, '09:30', 4, 'reuniao', 'Reunião')
-ON CONFLICT DO NOTHING;
-
--- ============================================================
 -- Confirmação
 -- ============================================================
 SELECT 'CronosCRM pronto!' AS status,
-       (SELECT COUNT(*) FROM contatos) AS contatos,
-       (SELECT COUNT(*) FROM agendamentos) AS agendamentos;
+       (SELECT COUNT(*) FROM contatos) AS contatos;

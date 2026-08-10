@@ -7,7 +7,7 @@ PostgreSQL:
 
 | Camada | Tecnologia | Porta | O que faz |
 |---|---|---|---|
-| **Painel web** | Django 5.2 + templates DTL + django-tailwind | `8000` | Login por sessão, dashboard, funil, contatos, agenda, discador, acordos, relatórios |
+| **Painel web** | Django 5.2 + templates DTL + django-tailwind | `8000` | Login por sessão, dashboard, funil, contatos, agenda, discador, relatórios |
 | **API REST** | FastAPI (usa o ORM do Django) | `8000` (`/api/v1`) | Endpoints JSON para integrações, autenticados por JWT |
 | **HTML estático legado** | Node `server.js` | `3001` | Front estático antigo, mantido apenas como referência |
 
@@ -42,15 +42,13 @@ teste/                 Suite pytest (463 testes, fixtures em conftest.py)
 |---|---|
 | `acesso` | Tenant, usuários, papéis (RBAC), login por sessão, convites, metas por vendedor |
 | `contatos` | Contatos, negócios (pipeline), carteiras, tags, campos personalizados, notas, movimentações, importação CSV, orçamento PDF |
-| `agendamentos` | Agenda de retornos por dia útil |
 | `dashboard` | KPIs, funil, timeline, conversão, metas e gráficos SVG |
 | `funil` | Etapas do funil e kanban com drag & drop |
 | `emails` | Modelos de e-mail, envio (SMTP ou simulação), rastreio de abertura/clique |
-| `tarefas` | Tarefas por contato/responsável, prioridades |
+| `tarefas` | Tarefas por contato/responsável, prioridades, vencimento e hora (absorveu a antiga Agenda) |
 | `automacoes` | Automações no-code (gatilho + ações), verificação de negócios estagnados |
 | `campanhas` | Campanhas de e-mail |
 | `discador` | Filas de chamadas, scripts, registro de chamadas, softphone |
-| `acordos` | Simulador financeiro, acordos, PIX (BR Code + QR) |
 | `relatorios` | Relatório gerencial (KPIs de cobrança, filtros, exportação CSV/PDF) |
 
 ## Multi-tenancy

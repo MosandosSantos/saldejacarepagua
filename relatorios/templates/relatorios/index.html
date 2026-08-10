@@ -6,7 +6,7 @@
 <div class="mb-7 flex flex-wrap items-end justify-between gap-3">
   <div>
     <h1 class="hazon-titulo">Relatórios gerenciais</h1>
-    <p class="hazon-sub mt-2">Operação de cobrança — base, CPC, retornos, acordos, valor recuperado e produtividade.</p>
+    <p class="hazon-sub mt-2">Operação de cobrança — base, CPC, retornos e produtividade.</p>
   </div>
   <div class="flex items-center gap-2.5">
     <a href="{% url 'relatorios:exportar_csv' %}?periodo={{ periodo }}{% if operador_atual %}&operador={{ operador_atual }}{% endif %}"
@@ -52,7 +52,7 @@
 </form>
 
 <!-- KPIs -->
-<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
   <div class="hazon-card p-5">
     <div class="mb-3 flex items-center justify-between">
       <span class="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Base em cobrança</span>
@@ -82,24 +82,6 @@
 
   <div class="hazon-card p-5">
     <div class="mb-3 flex items-center justify-between">
-      <span class="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Acordos</span>
-      <span class="rounded-full bg-[#4ade80]/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#4ade80]">{{ kpis.acordos_pagos }} pagos</span>
-    </div>
-    <div class="font-mono text-[30px] font-bold leading-none text-white">{{ kpis.acordos }}</div>
-    <div class="mt-2 text-[11.5px] text-[#6f8a93]">acordos criados no período</div>
-  </div>
-
-  <div class="hazon-card p-5">
-    <div class="mb-3 flex items-center justify-between">
-      <span class="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Valor recuperado</span>
-      <span class="rounded-full bg-[#4ade80]/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#4ade80]">pago</span>
-    </div>
-    <div class="font-mono text-[30px] font-bold leading-none text-[#7fe3c4]">{{ kpis.valor_recuperado_label }}</div>
-    <div class="mt-2 text-[11.5px] text-[#6f8a93]">acordos pagos no período</div>
-  </div>
-
-  <div class="hazon-card p-5">
-    <div class="mb-3 flex items-center justify-between">
       <span class="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Produtividade</span>
       <span class="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10px] font-bold text-[#bcd3da]">{{ produtividade|length }} operador{{ produtividade|length|pluralize }}</span>
     </div>
@@ -113,20 +95,10 @@
   <div class="hazon-card p-6">
     <div class="mb-5 flex items-center justify-between">
       <h2 class="font-display text-lg font-semibold text-white">Atividade diária</h2>
-      <span class="text-xs text-[#6f8a93]">CPC × acordos · por dia · {{ periodo_label }}</span>
+      <span class="text-xs text-[#6f8a93]">CPC · por dia · {{ periodo_label }}</span>
     </div>
     <div class="w-full overflow-x-auto">
       {{ grafico_atividade|safe }}
-    </div>
-  </div>
-
-  <div class="hazon-card p-6">
-    <div class="mb-5 flex items-center justify-between">
-      <h2 class="font-display text-lg font-semibold text-white">Valor recuperado por dia</h2>
-      <span class="text-xs text-[#6f8a93]">acordos pagos · por dia · {{ periodo_label }}</span>
-    </div>
-    <div class="w-full overflow-x-auto">
-      {{ grafico_valor|safe }}
     </div>
   </div>
 </div>
@@ -147,8 +119,6 @@
           <th class="hazon-th text-center">Chamadas</th>
           <th class="hazon-th text-center">Realizadas</th>
           <th class="hazon-th text-center">Retornos</th>
-          <th class="hazon-th text-center">Acordos</th>
-          <th class="hazon-th text-right">Valor recuperado</th>
         </tr>
       </thead>
       <tbody>
@@ -163,32 +133,10 @@
           <td class="hazon-td text-center font-mono text-[13px] font-bold text-white">{{ p.chamadas }}</td>
           <td class="hazon-td text-center font-mono text-[13px] text-[#7fe3c4]">{{ p.realizadas }}</td>
           <td class="hazon-td text-center font-mono text-[13px] text-[#fbbf24]">{{ p.retornos }}</td>
-          <td class="hazon-td text-center font-mono text-[13px] text-[#4ade80]">{{ p.acordos }}</td>
-          <td class="hazon-td text-right font-mono text-[13px] font-bold text-[#7fe3c4]">{{ p.valor_recuperado_label }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-  </div>
-
-  <div class="mt-7 border-t border-white/10 pt-6">
-    <div class="mb-4 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Valor recuperado por operador</div>
-    <div class="space-y-3.5">
-      {% for p in produtividade %}
-        <div>
-          <div class="mb-1.5 flex items-center justify-between gap-2">
-            <span class="flex min-w-0 items-center gap-2 text-[12px] text-[#bcd3da]">
-              <span class="h-2 w-2 shrink-0 rounded bg-[#7fe3c4]"></span>
-              <span class="truncate">{{ p.nome }}</span>
-            </span>
-            <span class="shrink-0 font-mono text-[12px] font-bold text-[#7fe3c4]">{{ p.valor_recuperado_label }}</span>
-          </div>
-          <div class="h-2 overflow-hidden rounded-full bg-white/5">
-            <div class="h-full rounded-full bg-gradient-to-r from-[#2aa1a8] to-[#7fe3c4] transition-all duration-500" style="width:{{ p.valor_pct }}%"></div>
-          </div>
-        </div>
-      {% endfor %}
-    </div>
   </div>
   {% else %}
   <p class="py-8 text-center text-sm text-[#6f8a93]">Nenhuma chamada registrada neste período.</p>

@@ -24,8 +24,6 @@ class Carteira(models.Model):
         'acesso.Tenant',
         on_delete=models.CASCADE,
         db_column='tenant_id',
-        null=True,
-        blank=True,
         related_name='carteiras',
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -51,8 +49,6 @@ class Tag(models.Model):
         'acesso.Tenant',
         on_delete=models.CASCADE,
         db_column='tenant_id',
-        null=True,
-        blank=True,
         related_name='tags',
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -113,14 +109,17 @@ class Contato(models.Model):
         'acesso.Tenant',
         on_delete=models.CASCADE,
         db_column='tenant_id',
-        null=True,
-        blank=True,
         related_name='contatos',
     )
 
     class Meta:
         db_table = 'contatos'
         ordering = ['id']
+        indexes = [
+            models.Index(fields=['tenant_id', 'seg'], name='cto_tenant_seg_idx'),
+            models.Index(fields=['tenant_id', 'lead_score'], name='cto_tenant_score_idx'),
+            models.Index(fields=['tenant_id', 'tel_normalizado'], name='cto_tenant_tel_idx'),
+        ]
 
     @property
     def negocio(self):
@@ -178,8 +177,6 @@ class Negocio(models.Model):
         'acesso.Tenant',
         on_delete=models.CASCADE,
         db_column='tenant_id',
-        null=True,
-        blank=True,
         related_name='negocios',
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -188,6 +185,10 @@ class Negocio(models.Model):
     class Meta:
         db_table = 'negocios'
         ordering = ['id']
+        indexes = [
+            models.Index(fields=['tenant_id', 'stage'], name='neg_tenant_stage_idx'),
+            models.Index(fields=['tenant_id', 'updated_at'], name='neg_tenant_upd_idx'),
+        ]
 
     def __str__(self):
         return f'{self.titulo or self.contato_id} ({self.stage})'
@@ -216,8 +217,6 @@ class CampoPersonalizado(models.Model):
         'acesso.Tenant',
         on_delete=models.CASCADE,
         db_column='tenant_id',
-        null=True,
-        blank=True,
         related_name='campos_personalizados',
     )
     created_at = models.DateTimeField(auto_now_add=True)

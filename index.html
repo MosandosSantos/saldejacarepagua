@@ -287,25 +287,6 @@ table.leads tbody tr:hover td:first-child{color:var(--accent)}
 .lead-val{font-family:var(--font-mono);font-weight:700;color:var(--accent)}
 .tag{font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:0.02em;display:inline-block}
 
-/* ===== AGENDA ===== */
-.agenda-day{margin-bottom:32px}
-.agenda-day-title{font-family:var(--font-display);font-weight:600;font-size:19px;color:var(--text);margin-bottom:14px;letter-spacing:-0.01em;display:flex;align-items:center;gap:10px}
-.agenda-day-title::before{content:'';width:4px;height:18px;border-radius:2px;background:var(--accent)}
-.agenda-item{
-  display:flex;align-items:center;gap:18px;padding:18px 22px;
-  background:var(--glass);border:1px solid var(--border);border-radius:14px;
-  margin-bottom:10px;transition:all .18s;
-}
-.agenda-item:hover{background:var(--glass-hover);border-color:var(--accent-soft)}
-.agenda-time{font-family:var(--font-mono);font-weight:700;font-size:20px;color:var(--accent);min-width:70px}
-.agenda-date{font-size:11.5px;color:var(--text-muted);min-width:80px}
-.agenda-info{flex:1;min-width:0}
-.agenda-name{font-size:14.5px;font-weight:600;color:var(--text)}
-.agenda-comp{font-size:12.5px;color:var(--text-muted);margin-top:3px}
-.agenda-type{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--text-secondary);
-  padding:7px 14px;border-radius:20px;background:var(--surface);border:1px solid var(--border)}
-.agenda-type svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8}
-
 /* ===== MODAL ===== */
 .modal-bg{
   position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;
@@ -403,7 +384,6 @@ table.leads tbody tr:hover td:first-child{color:var(--accent)}
     <a class="nav-link" data-route="dashboard" href="#/dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Dashboard</span></a>
     <a class="nav-link" data-route="funil" href="#/funil"><svg viewBox="0 0 24 24"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg><span>Funil</span></a>
     <a class="nav-link" data-route="leads" href="#/leads"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Contatos</span></a>
-    <a class="nav-link" data-route="agenda" href="#/agenda"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Agenda</span></a>
   </nav>
   <div class="header-right">
     <div class="header-search">
@@ -497,15 +477,6 @@ table.leads tbody tr:hover td:first-child{color:var(--accent)}
     </div>
   </section>
 
-  <!-- AGENDA -->
-  <section class="screen" id="screen-agenda">
-    <div class="page-head">
-      <div class="page-title">Agenda de avaliações</div>
-      <div class="page-sub">Avaliações, consultas e retornos dos seus pacientes.</div>
-    </div>
-    <div id="agendaWrap"></div>
-  </section>
-
 </main>
 
 <!-- MODAL -->
@@ -515,7 +486,7 @@ table.leads tbody tr:hover td:first-child{color:var(--accent)}
 
 <script>
 /* ════════════════════════════════════════════════════════════════
-   DADOS ESTÁTICOS (leads e agendamentos vêm da API / PostgreSQL)
+   DADOS ESTÁTICOS (leads vêm da API / PostgreSQL)
    ════════════════════════════════════════════════════════════════ */
 var STAGES = [
   { key:'interessado',        name:'Interessado',          color:'#94a3b8' },
@@ -538,7 +509,6 @@ var SEG = {
 };
 
 var LEADS = [];
-var APPTS = [];
 
 var HOJE = new Date();
 function pad2(n){ return (n < 10 ? '0' : '') + n; }
@@ -595,10 +565,9 @@ async function api(method, path, body){
 async function loadData(){
   try {
     LEADS = await api('GET', '/api/contatos') || [];
-    APPTS = await api('GET', '/api/agendamentos') || [];
   } catch(e){
     console.error('Erro ao carregar dados:', e);
-    LEADS = []; APPTS = [];
+    LEADS = [];
   }
 }
 
@@ -964,36 +933,6 @@ function renderLeads(){
 }
 
 /* ════════════════════════════════════════════════════════════════
-   AGENDA
-   ════════════════════════════════════════════════════════════════ */
-var AGENDA_ICONS = {
-  call:    '<svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
-  reuniao: '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>',
-  demo:    '<svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>'
-};
-
-function renderAgenda(){
-  var wrap = document.getElementById('agendaWrap');
-  var byDay = {};
-  APPTS.forEach(function(a){ if(!byDay[a.dia]) byDay[a.dia] = []; byDay[a.dia].push(a); });
-  var html = '';
-  Object.keys(byDay).forEach(function(dia){
-    html += '<div class="agenda-day"><div class="agenda-day-title">' + dia + '</div>';
-    byDay[dia].forEach(function(a){
-      html += '<div class="agenda-item">' +
-        '<div class="agenda-time">' + a.hora + '</div>' +
-        '<div class="agenda-date">' + a.data + '</div>' +
-        '<div class="agenda-info"><div class="agenda-name">' + esc(a.nome || '—') + '</div>' +
-        '<div class="agenda-comp">' + esc(a.empresa || '') + '</div></div>' +
-        '<div class="agenda-type">' + (AGENDA_ICONS[a.tipo]||'') + ' ' + esc(a.tipoLabel) + '</div>' +
-      '</div>';
-    });
-    html += '</div>';
-  });
-  wrap.innerHTML = html;
-}
-
-/* ════════════════════════════════════════════════════════════════
    MODAL — Formulário + Ficha
    ════════════════════════════════════════════════════════════════ */
 function openModal(html){
@@ -1141,7 +1080,6 @@ function rerenderAll(){
   renderDashboard();
   renderBoard();
   renderLeads();
-  renderAgenda();
 }
 
 function showScreen(route){
@@ -1156,7 +1094,7 @@ function showScreen(route){
 
 function router(){
   var hash = (location.hash || '#/dashboard').replace('#/','');
-  var valid = ['dashboard','funil','leads','agenda'];
+  var valid = ['dashboard','funil','leads'];
   if(valid.indexOf(hash) === -1) hash = 'dashboard';
   showScreen(hash);
 }

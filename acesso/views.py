@@ -6,6 +6,7 @@ from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.sessions.models import Session
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import validate_email
@@ -15,6 +16,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.text import slugify
+from django.views.decorators.http import require_POST
 
 from acesso.context_processors import ROLE_LABELS
 from acesso.decorators import web_login_required
@@ -29,9 +31,26 @@ from acesso.models import (
     Usuario,
     token_captura_do_tenant,
 )
+from acesso.rate_limit import (
+    bloqueado as login_bloqueado,
+    limpar as login_limpar,
+    registrar_falha as login_registrar_falha,
+    tentativas_restantes as login_tentativas_restantes,
+)
 from contatos.models import Negocio
 from core.dominio import NICHO_PADRAO, NICHOS, stages_do_nicho
 from funil.models import EtapaFunil, adotar_nicho, garantir_etapas
+
+
+# A4/S8 — hash pre-computado para o caso de usuario inexistente: garante que
+# `check_password` rode o PBKDF2 completo mesmo sem usuario, eliminando a
+# diferenca de timing que permitia enumerar e-mails validos.
+_HASH_DUMMY = make_password('usuario-inexistente-dummy')
+
+
+def _client_ip(request) -> str:
+    """IP do cliente para fins de rate limiting (sem confiar em X-Forwarded-For)."""
+    return request.META.get('REMOTE_ADDR', '') or '0.0.0.0'
 
 
 def login_web(request):
@@ -43,13 +62,23 @@ def login_web(request):
     if request.method == 'POST':
         email = request.POST.get('email', '').strip().lower()
         senha = request.POST.get('senha', '')
-        if not email or not senha:
+        ip = _client_ip(request)
+
+        # Rate limit — bloqueia antes de gastar CPU com PBKDF2.
+        if login_bloqueado(ip, email):
+            erro = 'Muitas tentativas. Aguarde alguns minutos e tente novamente.'
+        elif not email or not senha:
             erro = 'Informe e-mail e senha.'
         else:
+            # A4/S8 — roda check_password sempre (hash dummy quando usuario nao existe)
+            # para o tempo de resposta nao revelar quais e-mails estao cadastrados.
             usuario = Usuario.objects.filter(email__iexact=email).first()
-            if usuario is None or not check_password(senha, usuario.senha):
+            senha_ok = check_password(senha, usuario.senha) if usuario else check_password(senha, _HASH_DUMMY)
+            if usuario is None or not senha_ok:
+                login_registrar_falha(ip, email)
                 erro = 'E-mail ou senha inválidos.'
             else:
+                login_limpar(ip, email)
                 request.session.flush()
                 request.session['usuario_id'] = usuario.id
                 request.session['usuario'] = {
@@ -101,7 +130,9 @@ def onboarding(request):
     })
 
 
+@require_POST
 def logout_web(request):
+    """S8/A5 — POST-only: evita logout CSRF via <img src="/logout/"> em site malicioso."""
     request.session.flush()
     return redirect('acesso:login')
 
@@ -134,10 +165,13 @@ def equipe(request):
                 erros.append('Informe um e-mail válido.')
             if Usuario.objects.filter(email__iexact=email).exists():
                 erros.append(f'Já existe um usuário com o e-mail {email}.')
-        if len(senha) < 6:
-            erros.append('A senha deve ter pelo menos 6 caracteres.')
         if papel not in (ROLE_OPERACIONAL, ROLE_ADMIN_COMPANY, ROLE_VIEWER):
             erros.append('Escolha um papel válido (Operacional, Admin da empresa ou Somente leitura).')
+        # A2/S8 — politica de senha (AUTH_PASSWORD_VALIDATORS do settings).
+        try:
+            validate_password(senha, user=Usuario(nome=nome, email=email))
+        except DjangoValidationError as e:
+            erros.extend(e.messages)
         if not erros:
             Usuario.objects.create(
                 nome=nome, email=email, senha=make_password(senha), role=papel, tenant_id=tid,
@@ -250,8 +284,11 @@ def config(request):
         confirma = request.POST.get('confirma_senha', '')
         if not check_password(atual, usuario.senha):
             erros.append('A senha atual está incorreta.')
-        if len(nova) < 6:
-            erros.append('A nova senha deve ter pelo menos 6 caracteres.')
+        # A2/S8 — politica de senha via AUTH_PASSWORD_VALIDATORS.
+        try:
+            validate_password(nova, user=usuario)
+        except DjangoValidationError as e:
+            erros.extend(e.messages)
         if nova != confirma:
             erros.append('A confirmação da nova senha não confere.')
         if not erros:
@@ -424,43 +461,6 @@ def config(request):
             tenant.save(update_fields=['softphone_schema', 'softphone_dominio'])
             msgs.append('Discador atualizado — a chamada agora usa a configuração do softphone da empresa.')
 
-    elif acao == 'pix_salvar' and role == ROLE_ADMIN_COMPANY and tid:
-        tenant = usuario.tenant
-        tenant.pix_chave = (request.POST.get('pix_chave', '') or '').strip()[:120]
-        tenant.pix_recebedor = (request.POST.get('pix_recebedor', '') or '').strip()[:80]
-        tenant.pix_cidade = (request.POST.get('pix_cidade', '') or '').strip()[:40]
-        tenant.save(update_fields=['pix_chave', 'pix_recebedor', 'pix_cidade'])
-        msgs.append('Dados do PIX atualizados — o BR Code do acordo usa estas informações.')
-
-    elif acao == 'regra_desconto' and role == ROLE_ADMIN_COMPANY and tid:
-        modalidade = request.POST.get('modalidade', '')
-        parcelas = request.POST.get('parcelas', '')
-        percentual = (request.POST.get('percentual', '') or '').strip()
-        if modalidade not in ('vista', 'parcelado') or not parcelas.isdigit() or int(parcelas) < 1:
-            erros.append('Modalidade ou número de parcelas inválido.')
-        else:
-            try:
-                pct = Decimal(percentual.replace(',', '.'))
-            except (InvalidOperation, ValueError):
-                erros.append('Informe um percentual de desconto válido.')
-            else:
-                if pct < 0 or pct > 100:
-                    erros.append('O percentual deve ficar entre 0 e 100.')
-                else:
-                    from acordos.models import RegraDesconto
-
-                    RegraDesconto.objects.update_or_create(
-                        modalidade=modalidade, parcelas=int(parcelas), tenant_id=tid,
-                        defaults={'percentual': pct},
-                    )
-                    msgs.append(f'Regra salva: {modalidade} em {parcelas}x com {pct}% de desconto.')
-
-    elif acao == 'regra_desconto_excluir' and role == ROLE_ADMIN_COMPANY and tid:
-        from acordos.models import RegraDesconto
-
-        RegraDesconto.objects.filter(pk=request.POST.get('regra_id', 0), tenant_id=tid).delete()
-        msgs.append('Regra de desconto excluída.')
-
     elif acao == 'captura_gerar' and role == ROLE_ADMIN_COMPANY and tid:
         usuario.tenant.token_captura = secrets.token_urlsafe(18)
         usuario.tenant.save(update_fields=['token_captura'])
@@ -549,16 +549,6 @@ def config(request):
         contexto['softphone_schema'] = usuario.tenant.softphone_schema
         contexto['softphone_dominio'] = usuario.tenant.softphone_dominio
 
-    # Acordos & PIX (apenas admin da clínica — regras de desconto + dados do recebedor)
-    contexto['mostrar_acordos'] = role == ROLE_ADMIN_COMPANY and tid is not None
-    if contexto['mostrar_acordos'] and usuario.tenant is not None:
-        from acordos.models import RegraDesconto
-
-        contexto['pix_chave'] = usuario.tenant.pix_chave
-        contexto['pix_recebedor'] = usuario.tenant.pix_recebedor
-        contexto['pix_cidade'] = usuario.tenant.pix_cidade
-        contexto['regras_desconto'] = list(RegraDesconto.objects.filter(tenant_id=tid).order_by('modalidade', 'parcelas'))
-
     # Etapas do funil (apenas admin da clínica — pipeline próprio do tenant)
     contexto['mostrar_etapas'] = role == ROLE_ADMIN_COMPANY and tid is not None
     if contexto['mostrar_etapas'] and usuario.tenant is not None:
@@ -635,8 +625,11 @@ def convidar(request, token):
         confirma = request.POST.get('confirma', '')
         if not nome:
             erros.append('Informe seu nome.')
-        if len(senha) < 6:
-            erros.append('A senha deve ter pelo menos 6 caracteres.')
+        # A2/S8 — politica de senha via AUTH_PASSWORD_VALIDATORS.
+        try:
+            validate_password(senha, user=Usuario(nome=nome, email=convite.email))
+        except DjangoValidationError as e:
+            erros.extend(e.messages)
         if senha != confirma:
             erros.append('A confirmação de senha não confere.')
         if not erros:

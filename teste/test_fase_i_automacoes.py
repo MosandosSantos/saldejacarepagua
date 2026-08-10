@@ -4,6 +4,7 @@ O admin cria uma regra (gatilho + ações). Quando o evento acontece — contato
 negócio criado, negócio movido de etapa ou negócio parado — o motor executa as
 ações (tarefa, nota, tag, e-mail) e registra a execução. Tudo escopado por tenant;
 gestão restrita ao admin; viewer só visualiza.
+
 """
 
 import json

@@ -26,8 +26,6 @@ class Campanha(models.Model):
         'acesso.Tenant',
         on_delete=models.CASCADE,
         db_column='tenant_id',
-        null=True,
-        blank=True,
         related_name='campanhas',
     )
     created_at = models.DateTimeField(auto_now_add=True)

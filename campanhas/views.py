@@ -18,6 +18,34 @@ from emails.models import ModeloEmail
 from emails.servico import disparar_campanha
 
 
+_PAGINAS_EM_BREVE = {
+    'ads': {
+        'titulo': 'Ads',
+        'icone': ('<svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" '
+                  'stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>'
+                  '<polyline points="17 6 23 6 23 12"/></svg>'),
+        'descricao': 'Gerencie anúncios pagos (Meta Ads, Google Ads) e acompanhe o desempenho das suas campanhas de mídia paga.',
+        'vai_ter': ['Criar e editar anúncios', 'Vincular contas de anúncio', 'Métricas de desempenho (CTR, CPM, conversões)'],
+    },
+    'instagram': {
+        'titulo': 'Instagram',
+        'icone': ('<svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" '
+                  'stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/>'
+                  '<path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>'),
+        'descricao': 'Conecte o perfil da empresa, agende publicações e acompanhe o engajamento com os pacientes.',
+        'vai_ter': ['Conectar o perfil do Instagram', 'Agendar publicações e stories', 'Acompanhar curtidas, comentários e seguidores'],
+    },
+    'criativos': {
+        'titulo': 'Criativos',
+        'icone': ('<svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" '
+                  'stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/>'
+                  '<circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'),
+        'descricao': 'Central de materiais da sua clínica: imagens, vídeos e textos de apoio para todas as campanhas.',
+        'vai_ter': ['Banco de imagens e vídeos', 'Textos e legendas prontos', 'Reutilizar materiais em várias campanhas'],
+    },
+}
+
+
 def _tenant_id(request):
     return request.session.get('usuario', {}).get('tenant_id')
 
@@ -37,6 +65,18 @@ def _campanhas_scope(request):
 def _base_pixel(request):
     fake = '00000000-0000-0000-0000-000000000000'
     return request.build_absolute_uri(reverse('emails:aberto', args=[fake])).replace(fake, '').rstrip('/')
+
+
+@web_login_required
+def em_breve(request, secao):
+    """Página placeholder de um canal ainda não implementado (Ads, Instagram, Criativos)."""
+    info = _PAGINAS_EM_BREVE.get(secao)
+    if info is None:
+        return redirect('campanhas:lista')
+    return render(request, 'campanhas/em_breve.html', {
+        'secao': info,
+        'voltar': reverse('campanhas:lista'),
+    })
 
 
 @web_login_required

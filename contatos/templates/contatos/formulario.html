@@ -230,4 +230,48 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
+
+{% if editando %}
+<style>
+  .focar-destaque { animation: focarPulse 1.6s ease 2; }
+  @keyframes focarPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(116,179,198,0); }
+    50%      { box-shadow: 0 0 0 3px rgba(116,179,198,.55); }
+  }
+</style>
+<script>
+// Foco automático no primeiro campo que falta no perfil (link 'Completar perfil')
+document.addEventListener('DOMContentLoaded', function () {
+  var MAPA_FOCAR = {
+    'Telefone': 'id_tel',
+    'E-mail': 'id_email',
+    'Segmento': 'id_seg',
+    'Empresa': 'id_empresa',
+    'Procedimento de interesse': 'id_procedimento',
+    'Origem': 'id_origem',
+    'Cidade': 'id_cidade',
+    'Nascimento': 'id_nascimento',
+    'Observações': 'id_observacoes',
+    'Tags': 'id_tags',
+    'Valor do negócio': 'id_valor'
+  };
+  var p = new URLSearchParams(window.location.search);
+  var raw = p.get('focar');
+  if (!raw) return;
+  var ids = raw.split(',').map(function (s) { return MAPA_FOCAR[s.trim()]; }).filter(Boolean);
+  for (var i = 0; i < ids.length; i++) {
+    var el = document.getElementById(ids[i]);
+    if (!el) continue;
+    var alvo = (el.tagName === 'DIV' || el.tagName === 'FIELDSET' || el.tagName === 'UL')
+      ? el.querySelector('input, select, textarea') : el;
+    if (!alvo) continue;
+    alvo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    alvo.focus({ preventScroll: true });
+    el.classList.add('focar-destaque');
+    setTimeout(function () { el.classList.remove('focar-destaque'); }, 3200);
+    break;
+  }
+});
+</script>
+{% endif %}
 {% endblock %}

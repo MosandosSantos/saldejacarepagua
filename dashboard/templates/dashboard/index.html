@@ -19,9 +19,8 @@
 </div>
 
 {% include 'dashboard/partials/_kpis.html' %}
-{% include 'dashboard/partials/_kpis_avancados.html' %}
+
 {% include 'dashboard/partials/_tarefas.html' %}
-{% include 'dashboard/partials/_metas.html' %}
 
 <div class="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
   <div class="hazon-card-sm p-7 backdrop-blur-xl">
@@ -42,6 +41,8 @@
   </div>
 </div>
 
+{% include 'dashboard/partials/_metas.html' %}
+
 <div class="mt-5 grid gap-5 xl:grid-cols-2">
   {% include 'dashboard/partials/_melhores.html' %}
   {% include 'dashboard/partials/_atividade.html' %}
@@ -57,6 +58,10 @@
 
 <div class="mt-5">
   {% include 'dashboard/partials/_analise.html' %}
+</div>
+
+<div class="mt-5">
+  {% include 'dashboard/partials/_kpis_avancados.html' %}
 </div>
 {% endblock %}
 

@@ -2,6 +2,7 @@
 import secrets
 
 from django.db import models
+from django.db.models.functions import Lower
 
 ROLE_ADMIN_SAAS = 'admin_saas'
 ROLE_ADMIN_COMPANY = 'admin_company'
@@ -58,19 +59,6 @@ class Tenant(models.Model):
         max_length=160, blank=True, default='',
         help_text='Domínio SIP (ex.: sip.empresa.com.br) usado quando o esquema é SIP',
     )
-    # Acordos e PIX (PRD Sprint 6) — dados do recebedor para o BR Code estático
-    pix_chave = models.CharField(
-        max_length=120, blank=True, default='',
-        help_text='Chave PIX da empresa (CPF/CNPJ/e-mail/telefone ou aleatória)',
-    )
-    pix_recebedor = models.CharField(
-        max_length=80, blank=True, default='',
-        help_text='Nome do recebedor exibido no PIX',
-    )
-    pix_cidade = models.CharField(
-        max_length=40, blank=True, default='',
-        help_text='Cidade do recebedor exibida no PIX',
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -111,6 +99,9 @@ class Usuario(models.Model):
     class Meta:
         db_table = 'usuarios'
         ordering = ['id']
+        indexes = [
+            models.Index(Lower('email'), name='usuario_email_lower_idx'),
+        ]
 
     def pode_transferir_dono(self) -> bool:
         """So o admin da clinica que e o dono (ou, enquanto nao houver dono definido,

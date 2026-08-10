@@ -75,41 +75,6 @@ app.delete('/api/contatos/:id', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
 });
 
-// Lista agendamentos com datas calculadas a partir de hoje
-app.get('/api/agendamentos', async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      'SELECT a.hora, a.offset_dias, a.tipo, a.tipo_label, c.nome, c.empresa ' +
-      'FROM agendamentos a JOIN contatos c ON c.id = a.contato_id ' +
-      'ORDER BY a.offset_dias, a.hora'
-    );
-    var MESES = ['janeiro','fevereiro','marco','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-    var SEMANA = ['domingo','segunda-feira','terca-feira','quarta-feira','quinta-feira','sexta-feira','sabado'];
-    function pad2(n){ return (n < 10 ? '0' : '') + n; }
-    function diaUtil(base, n){
-      var d = new Date(base.getTime());
-      while(d.getDay() === 0 || d.getDay() === 6){ d.setDate(d.getDate() + 1); }
-      var somados = 0;
-      while(somados < n){ d.setDate(d.getDate() + 1); if(d.getDay() !== 0 && d.getDay() !== 6) somados++; }
-      return d;
-    }
-    var hoje = new Date();
-    var result = rows.map(function (a) {
-      var d = diaUtil(hoje, a.offset_dias);
-      // Restaurar acentos que vieram limpos do array acima
-      var mesNome = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][d.getMonth()];
-      var semNome = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'][d.getDay()];
-      return {
-        hora: a.hora, tipo: a.tipo, tipoLabel: a.tipo_label,
-        nome: a.nome, empresa: a.empresa,
-        data: pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1),
-        dia: semNome + ', ' + d.getDate() + ' de ' + mesNome
-      };
-    });
-    res.json(result);
-  } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
-});
-
 /* ===================== FALLBACK ===================== */
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));

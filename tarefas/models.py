@@ -49,6 +49,7 @@ class Tarefa(models.Model):
     )
     prioridade = models.TextField(choices=PRIORIDADES, default='media')
     vencimento = models.DateField(null=True, blank=True)
+    hora = models.TimeField(null=True, blank=True)
     concluida = models.BooleanField(default=False)
     concluida_em = models.DateTimeField(null=True, blank=True)
     criado_por = models.ForeignKey(
@@ -63,7 +64,10 @@ class Tarefa(models.Model):
 
     class Meta:
         db_table = 'tarefas'
-        ordering = ['concluida', 'vencimento', 'id']
+        ordering = ['concluida', 'vencimento', 'hora', 'id']
+        indexes = [
+            models.Index(fields=['tenant_id', 'concluida', 'vencimento'], name='tar_tenant_status_due_idx'),
+        ]
 
     def __str__(self):
         return f'{self.titulo} ({self.tenant_id})'

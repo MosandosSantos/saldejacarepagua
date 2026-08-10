@@ -52,10 +52,6 @@ def _p(s):
     return _xml_escape(_txt(s))
 
 
-def _brl(n):
-    return 'R$ {:,.2f}'.format(float(n or 0)).replace(',', 'X').replace('.', ',').replace('X', '.')
-
-
 def _kpi_cell(rotulo, valor, valor_cor=COR_PRIMARIA_ESC):
     """Célula de KPI: rótulo pequeno em cima, valor em baixo."""
     return [
@@ -128,12 +124,10 @@ def gerar_relatorio_pdf(tenant, periodo_label, kpis, produtividade, operador_nom
     kpi_rows = [
         [_kpi_cell('Base em cobrança', kpis['base_label']),
          _kpi_cell('Contatos úteis (CPC)', kpis['cpc_label']),
-         _kpi_cell('Retornos agendados', kpis['retornos_label'])],
-        [_kpi_cell('Acordos', kpis['acordos_label']),
-         _kpi_cell('Valor recuperado', kpis['valor_recuperado_label'], COR_PRIMARIA),
+         _kpi_cell('Retornos agendados', kpis['retornos_label']),
          _kpi_cell('Chamadas', kpis['chamadas_label'])],
     ]
-    kpi_tbl = Table(kpi_rows, colWidths=[57.33 * mm] * 3)
+    kpi_tbl = Table(kpi_rows, colWidths=[43 * mm] * 4)
     kpi_tbl.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), COR_FUNDO),
         ('BOX', (0, 0), (-1, -1), 0.6, COR_LINHA),
@@ -151,7 +145,7 @@ def gerar_relatorio_pdf(tenant, periodo_label, kpis, produtividade, operador_nom
     story.append(Paragraph('PRODUTIVIDADE POR OPERADOR', ESTILO_TITULO_SECAO))
     cab = [Paragraph(_txt(c), ParagraphStyle(
         'th', fontName='Helvetica-Bold', fontSize=7.5, textColor=colors.white, leading=10))
-        for c in ['Operador', 'Chamadas', 'Realizadas', 'Retornos', 'Acordos', 'Valor recuperado']]
+        for c in ['Operador', 'Chamadas', 'Realizadas', 'Retornos']]
     linhas = []
     for p in produtividade:
         linhas.append([
@@ -162,16 +156,11 @@ def gerar_relatorio_pdf(tenant, periodo_label, kpis, produtividade, operador_nom
                 'c2', fontName='Helvetica', fontSize=9.5, textColor=COR_TEXTO, alignment=TA_CENTER, leading=13)),
             Paragraph(str(p['retornos']), ParagraphStyle(
                 'c3', fontName='Helvetica', fontSize=9.5, textColor=COR_TEXTO, alignment=TA_CENTER, leading=13)),
-            Paragraph(str(p['acordos']), ParagraphStyle(
-                'c4', fontName='Helvetica', fontSize=9.5, textColor=COR_TEXTO, alignment=TA_CENTER, leading=13)),
-            Paragraph(_brl(p['valor_recuperado']), ParagraphStyle(
-                'c5', fontName='Helvetica', fontSize=9.5, textColor=COR_PRIMARIA_ESC,
-                alignment=TA_RIGHT, leading=13)),
         ])
     if not linhas:
-        linhas = [[Paragraph('—', ESTILO_TEXTO_CLARO), '', '', '', '', '']]
+        linhas = [[Paragraph('—', ESTILO_TEXTO_CLARO), '', '', '']]
     dados = [cab] + linhas
-    prod_tbl = Table(dados, colWidths=[58 * mm, 22 * mm, 24 * mm, 22 * mm, 20 * mm, 26 * mm])
+    prod_tbl = Table(dados, colWidths=[58 * mm, 30 * mm, 30 * mm, 30 * mm])
     prod_tbl.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), COR_PRIMARIA),
         ('GRID', (0, 0), (-1, -1), 0.4, COR_LINHA),

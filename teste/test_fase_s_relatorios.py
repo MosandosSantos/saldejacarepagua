@@ -1,18 +1,17 @@
 """Testes da Fase S — S7 do PRD HAZON (Dashboard e relatórios).
 
-KPIs de cobrança (base, CPC, retornos, acordos, valor recuperado e produtividade
-por operador), filtros de período (hoje/7/30/mês) e exportação em CSV e PDF
-(7.1, 7.2, 7.3). Tudo escopado por tenant e respeitando permissões.
+KPIs de cobrança (base, CPC, retornos e produtividade por operador), filtros de
+período (hoje/7/30/mês) e exportação em CSV e PDF (7.1, 7.2, 7.3). Tudo
+escopado por tenant e respeitando permissões.
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import pytest
 from django.test import Client
 from django.utils import timezone
 
 from acesso.models import Tenant, Usuario
-from acordos.models import Acordo
 from contatos.models import Contato
 from discador.models import Chamada, Fila
 
@@ -55,35 +54,17 @@ def _chamada(tenant, operador, status='realizada', dias_atras=0, retorno_em=None
     return chamada
 
 
-def _acordo(tenant, chamada=None, valor=1000, status='aceito', dias_atras=0, pago=False):
-    contato = _contato(tenant, nome=f'A{dias_atras}', tel=f'(11) 96666-{dias_atras:04d}')
-    agora = timezone.now()
-    a = Acordo.objects.create(
-        contato=contato, chamada=chamada,
-        valor_original=valor, modalidade='vista', parcelas=1,
-        percentual_desconto=0, desconto=0, valor_final=valor,
-        status='pago' if pago else status, tenant=tenant,
-    )
-    if pago:
-        a.pago_em = agora - timedelta(days=dias_atras)
-        a.save(update_fields=['pago_em'])
-    Acordo.objects.filter(pk=a.pk).update(created_at=agora - timedelta(days=dias_atras))
-    return a
-
-
 # --- KPIs (7.1) ---
 
 @pytest.mark.django_db
-def test_kpis_base_cpc_retornos_acordos_valor(tenant_aurora, admin_company, usuario_operacional):
-    """Base conta só contatos com telefone; CPC/retornos/acordos/valor no período."""
+def test_kpis_base_cpc_retornos(tenant_aurora, admin_company, usuario_operacional):
+    """Base conta só contatos com telefone; CPC/retornos no período."""
     _contato(tenant_aurora, nome='Sem tel', tel='—')            # sem telefone -> não conta
     _contato(tenant_aurora, nome='Com tel', tel='(11) 91111-1111')
-    chamada = _chamada(tenant_aurora, usuario_operacional, status='realizada', dias_atras=1)
+    _chamada(tenant_aurora, usuario_operacional, status='realizada', dias_atras=1)
     _chamada(tenant_aurora, usuario_operacional, status='nao_atendeu', dias_atras=1)
     retorno_em = timezone.now() + timedelta(days=2)
     _chamada(tenant_aurora, usuario_operacional, status='retornar', dias_atras=0, retorno_em=retorno_em)
-    _acordo(tenant_aurora, chamada, valor=500, status='aceito', dias_atras=0)
-    _acordo(tenant_aurora, chamada, valor=300, status='pago', dias_atras=0, pago=True)
 
     c = _cliente_web(admin_company)
     r = c.get('/relatorios/?periodo=30')
@@ -91,12 +72,9 @@ def test_kpis_base_cpc_retornos_acordos_valor(tenant_aurora, admin_company, usua
     html = r.content.decode()
     assert 'Base em cobrança' in html
     assert 'Contatos úteis (CPC)' in html
-    # base = 2 contatos com telefone (1 sem telefone fora)
-    assert 'data-kpi-base' not in html  # sem data-kpi (página não usa auto-refresh)
-    assert '2' in html  # base
-    assert '1' in html  # cpc (1 realizada)
-    assert '3' in html  # retornos agendados (1) — verificar abaixo
     assert 'Retornos agendados' in html
+    assert 'Acordos' not in html  # módulo de acordos removido
+    assert 'Valor recuperado' not in html
 
 
 @pytest.mark.django_db
@@ -153,13 +131,11 @@ def test_filtro_mes_usa_inicio_do_mes(tenant_aurora, admin_company, usuario_oper
 @pytest.mark.django_db
 def test_isolamento_entre_tenants(tenant_aurora, tenant_beta, admin_company, usuario_operacional_beta):
     _chamada(tenant_beta, usuario_operacional_beta, status='realizada', dias_atras=0)
-    _acordo(tenant_beta, valor=900, status='pago', dias_atras=0, pago=True)
 
     c = _cliente_web(admin_company)
     html = c.get('/relatorios/?periodo=30').content.decode()
     # A clínica Aurora não vê nada da Beta
     assert 'Oper Beta' not in html
-    assert 'R$ 900' not in html
 
 
 # --- Exportação CSV (7.3.1) ---
@@ -167,7 +143,6 @@ def test_isolamento_entre_tenants(tenant_aurora, tenant_beta, admin_company, usu
 @pytest.mark.django_db
 def test_exportar_csv(tenant_aurora, admin_company, usuario_operacional):
     _chamada(tenant_aurora, usuario_operacional, status='realizada', dias_atras=1)
-    _acordo(tenant_aurora, valor=450, status='pago', dias_atras=0, pago=True)
 
     c = _cliente_web(admin_company)
     r = c.get('/relatorios/exportar/csv/?periodo=7')
@@ -177,7 +152,8 @@ def test_exportar_csv(tenant_aurora, admin_company, usuario_operacional):
     assert 'Relatório gerencial' in conteudo
     assert 'Contatos úteis realizados (CPC)' in conteudo
     assert 'Oper Aurora' in conteudo
-    assert 'R$ 450,00' in conteudo
+    assert 'Valor recuperado' not in conteudo
+    assert 'Acordos' not in conteudo
 
 
 # --- Exportação PDF (7.3.2) ---
@@ -185,7 +161,6 @@ def test_exportar_csv(tenant_aurora, admin_company, usuario_operacional):
 @pytest.mark.django_db
 def test_exportar_pdf(tenant_aurora, admin_company, usuario_operacional):
     _chamada(tenant_aurora, usuario_operacional, status='realizada', dias_atras=1)
-    _acordo(tenant_aurora, valor=450, status='pago', dias_atras=0, pago=True)
 
     c = _cliente_web(admin_company)
     r = c.get('/relatorios/exportar/pdf/?periodo=30')
@@ -226,17 +201,15 @@ def test_viewer_pode_ver_relatorios(tenant_aurora, usuario_viewer):
 
 @pytest.mark.django_db
 def test_graficos_serie_diaria_na_pagina(tenant_aurora, admin_company, usuario_operacional):
-    """A página traz os gráficos SVG (atividade diária + valor por dia) e as barras por operador."""
+    """A página traz o gráfico SVG da série diária (CPC)."""
     _chamada(tenant_aurora, usuario_operacional, status='realizada', dias_atras=1)
-    _acordo(tenant_aurora, valor=450, status='pago', dias_atras=0, pago=True)
 
     c = _cliente_web(admin_company)
     html = c.get('/relatorios/?periodo=30').content.decode()
     assert 'Atividade diária' in html
-    assert 'Valor recuperado por dia' in html
     assert '<svg' in html
-    assert 'rlArea0' in html  # gradiente do gráfico multi-série
-    assert 'Valor recuperado por operador' in html
+    assert 'rlArea0' in html  # gradiente do gráfico
+    assert 'Valor recuperado' not in html
 
 
 # --- Filtro por operador (S7+) ---

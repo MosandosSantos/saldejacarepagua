@@ -1,0 +1,31 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}HAZON CRM — {{ secao.titulo }}{% endblock %}
+
+{% block conteudo %}
+<div class="mx-auto max-w-2xl">
+  <div class="text-center">
+    <div class="mb-5 inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-[#74b3c6]/35 bg-[#74b3c6]/10 text-[#74b3c6]">
+      {{ secao.icone|safe }}
+    </div>
+    <h1 class="hazon-titulo">{{ secao.titulo }}</h1>
+    <p class="mx-auto mt-3 max-w-md text-sm text-[#bcd3da]">{{ secao.descricao }}</p>
+    <span class="mt-5 inline-block rounded-full border border-[#fbbf24]/30 bg-[#fbbf24]/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[#fbbf24]">
+      Em breve
+    </span>
+  </div>
+
+  <div class="mt-8 hazon-card-lg p-8">
+    <div class="mb-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#6f8a93]">O que essa área vai ter</div>
+    <ul class="space-y-3">
+      {% for item in secao.vai_ter %}
+      <li class="flex items-center gap-3 text-[13.5px] text-white">
+        <svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-[#7fe3c4]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        {{ item }}
+      </li>
+      {% endfor %}
+    </ul>
+    <a href="{{ voltar }}" class="mt-6 inline-block hazon-btn hazon-btn-ghost">← Voltar para campanhas</a>
+  </div>
+</div>
+{% endblock %}

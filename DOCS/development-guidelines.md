@@ -12,7 +12,7 @@ Convenções adotadas no projeto. Siga-as ao contribuir.
 
 ## Estrutura de código
 
-- Um **app Django por módulo de negócio** (`contatos`, `discador`, `acordos`, ...).
+- Um **app Django por módulo de negócio** (`contatos`, `discador`, ...).
 - Views web são **funções** (`def`) com decorators de acesso — não class-based
   views (padrão do projeto).
 - A API usa a separação **route → service → repository**: rotas finas (validação

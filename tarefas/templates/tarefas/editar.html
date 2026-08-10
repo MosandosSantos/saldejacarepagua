@@ -6,7 +6,7 @@
 <div class="mx-auto max-w-2xl space-y-5">
   <div>
     <h1 class="hazon-titulo text-[28px]">Editar tarefa</h1>
-    <p class="hazon-sub mt-2">Ajuste o título, o responsável e o vencimento do follow-up.</p>
+    <p class="hazon-sub mt-2">Ajuste o título, o responsável, o vencimento e o horário do follow-up.</p>
   </div>
 
   {% for e in erros %}
@@ -58,6 +58,11 @@
       <div>
         <label for="vencimento" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Vencimento</label>
         <input type="date" id="vencimento" name="vencimento" value="{{ tarefa.vencimento|date:'Y-m-d'|default:'' }}"
+               class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#74b3c6]/40">
+      </div>
+      <div>
+        <label for="hora" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Hora</label>
+        <input type="time" id="hora" name="hora" value="{{ tarefa.hora_label }}"
                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#74b3c6]/40">
       </div>
     </div>

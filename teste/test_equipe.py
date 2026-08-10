@@ -46,7 +46,7 @@ def test_admin_company_acessa_equipe(admin_company, usuario_operacional):
 def test_admin_company_convida_operacional(tenant_aurora, admin_company):
     c = _cliente_web(admin_company)
     r = c.post('/equipe/', {'nome': 'Ana Souza', 'email': 'ana@aurora.com',
-                            'senha': 'senha123', 'papel': 'operacional'})
+                            'senha': 'SenhaForte!2026', 'papel': 'operacional'})
     assert r.status_code == 200
     u = Usuario.objects.get(email='ana@aurora.com')
     assert u.role == 'operacional'
@@ -76,7 +76,7 @@ def test_senha_curta_rejeitada(admin_company):
     c = _cliente_web(admin_company)
     r = c.post('/equipe/', {'nome': 'Ana', 'email': 'ana@aurora.com',
                             'senha': '123', 'papel': 'operacional'})
-    assert 'pelo menos 6 caracteres'.encode() in r.content
+    assert 'pelo menos 8 caracteres'.encode() in r.content
     assert not Usuario.objects.filter(email='ana@aurora.com').exists()
 
 

@@ -30,11 +30,6 @@ Stack: **Django ≥5.2**, `psycopg` (PostgreSQL), `python-dotenv`, `PyJWT`,
 - `Nota` — anotações no contato.
 - `Movimentacao` — histórico de movimentações do contato.
 
-### agendamentos
-
-- `Agendamento` — `contato` FK, `hora` (HH:MM), `offset_dias` (dias a partir de hoje),
-  `tipo`/`tipo_label`.
-
 ### funil
 
 - `EtapaFunil` — etapa do pipeline: `key` (chave interna salva em `Negocio.stage`),
@@ -72,17 +67,9 @@ Stack: **Django ≥5.2**, `psycopg` (PostgreSQL), `python-dotenv`, `PyJWT`,
 - `Chamada` — `fila`, `contato`, `operador` FK, `status` (discada/realizada/…),
   `observacao`, `retorno_em` (agendamento de retorno), tenant.
 
-### acordos
-
-- `RegraDesconto` — desconto por `modalidade` + `parcelas` (ex.: à vista 30%).
-- `Acordo` — `contato`, `chamada`, `valor_original`, `modalidade`, `parcelas`,
-  `percentual_desconto`, `desconto`, `valor_final`,
-  `status` (proposta/aceito/pix_gerado/enviado/pago/recusado),
-  `pix_payload` (BR Code), `pago_em`, tenant.
-
 ### relatorios
 
-- Sem modelos — lê dos apps existentes (chamadas, acordos, contatos).
+- Sem modelos — lê dos apps existentes (chamadas, contatos).
 
 ### dashboard
 
@@ -116,8 +103,6 @@ Decorators (em `acesso/decorators.py`):
 - `contatos/scoring.py` — cálculo do `lead_score`.
 - `contatos/orcamento.py` — geração do orçamento em PDF (reportlab).
 - `discador/softphone.py` — montagem da URI de chamada (sip:/tel:) por empresa.
-- `acordos/servico.py` — simulação de opções de acordo e regras de desconto.
-- `acordos/pix.py` — montagem do payload PIX (BR Code, EMV/TLV + CRC16) e QR Code SVG.
 - `automacoes/engine.py` — motor de execução das automações (gatilho → ações).
 - `core/segredos.py` — criptografia AES-256-GCM de segredos (chave derivada de
   `SECRET_KEY`/`CRYPTO_KEY`).

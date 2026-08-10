@@ -24,8 +24,8 @@ O CSS compilado fica em `theme/static/css/dist/styles.css` (gerado por
 ## Base e navegação
 
 - `theme/templates/base.html` — layout padrão das telas internas: header com nav
-  (Dashboard, Funil, Contatos, Agenda, E-mails, Tarefas, Automações, Campanhas,
-  Discador, Acordos, Relatórios), menu do usuário (Configurações, Equipe, Sair).
+  (Dashboard, Funil, Contatos, Tarefas, Automações, Campanhas, Discador),
+  menu do usuário (Configurações, Equipe, Sair).
 - `templates/base/basic.html` — layout simples para páginas públicas
   (login, onboarding, convite, captura).
 - Context processor `acesso.context_processors.web_sessao` disponibiliza o usuário
@@ -40,13 +40,12 @@ O CSS compilado fica em `theme/static/css/dist/styles.css` (gerado por
 | `/dashboard/` | `dashboard/index.html` + `partials/_*.html` (KPIs, funil, timeline, conversão, metas, melhores, recentes, atividade, tarefas) | dashboard |
 | `/funil/` | `funil/kanban.html` (drag & drop) | funil |
 | `/contatos/`, `/contatos/<id>/`, `novo/`, `editar/`, `excluir/`, `importar/`, `carteiras/`, `campos/` | `contatos/*.html` | contatos |
-| `/agenda/` | `agendamentos/agenda.html` | agendamentos |
 | `/emails/`, `/emails/campanha/` | `emails/lista.html`, `emails/campanha.html`, `emails/form_modelo.html` | emails |
-| `/tarefas/` | `tarefas/lista.html` + `partials/_linha.html`, `_secao.html` | tarefas |
+| `/tarefas/` | `tarefas/lista.html` + `partials/_linha.html`, `_secao.html` (vencimento + hora) | tarefas |
+| `/agenda/` (redirect) | → `/tarefas/` | tarefas |
 | `/automacoes/` | `automacoes/lista.html`, `automacoes/formulario.html` | automacoes |
 | `/campanhas/` | `campanhas/lista.html`, `campanhas/detalhe.html`, `campanhas/form.html` | campanhas |
 | `/discador/` | `discador/operador.html`, `discador/filas.html`, `discador/scripts.html` + forms | discador |
-| `/acordos/` | `acordos/lista.html`, `acordos/detalhe.html`, `acordos/simular.html` | acordos |
 | `/relatorios/` | `relatorios/index.html` | relatorios |
 | `/captura/<token>/` | `contatos/captura.html` (página pública de captura) | contatos |
 

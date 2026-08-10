@@ -4,7 +4,8 @@ As tarefas são escopadas por tenant; o vencimento alimenta os lembretes
 (atrasadas, de hoje, próximas). Viewer só visualiza; admin exclui.
 """
 
-from datetime import date
+import re
+from datetime import date, time
 
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -52,6 +53,8 @@ def _decorar(t):
         'prioridade': t.prioridade,
         'prioridade_cor': PRIORIDADE_CORES.get(t.prioridade, '#94a3b8'),
         'vencimento': t.vencimento,
+        'hora': t.hora,
+        'hora_label': t.hora.strftime('%H:%M') if t.hora else '',
         'atrasada': t.atrasada,
         'contato_id': t.contato_id,
         'contato_nome': t.contato.nome if t.contato else '',
@@ -84,6 +87,21 @@ def _parse_vencimento(raw, erros):
         return date.fromisoformat(raw)
     except ValueError:
         erros.append('Informe uma data de vencimento válida (aaaa-mm-dd, ex.: 2026-08-10).')
+        return None
+
+
+def _parse_hora(raw, erros):
+    """Converte o horário HH:MM do formulário; None quando vazio; erro se inválido."""
+    raw = (raw or '').strip()
+    if not raw:
+        return None
+    if not re.fullmatch(r'\d{1,2}:\d{2}', raw):
+        erros.append('Informe uma hora válida (HH:MM, ex.: 09:30).')
+        return None
+    try:
+        return time.fromisoformat(raw)
+    except ValueError:
+        erros.append('Informe uma hora válida (HH:MM, ex.: 09:30).')
         return None
 
 
@@ -123,6 +141,7 @@ def lista(request):
             erros.append('Informe o título da tarefa.')
         else:
             vencimento = _parse_vencimento(request.POST.get('vencimento', ''), erros)
+            hora = _parse_hora(request.POST.get('hora', ''), erros)
             if not erros:
                 Tarefa.objects.create(
                     tenant_id=tid,
@@ -132,14 +151,15 @@ def lista(request):
                     responsavel_id=_membro_do_tenant(tid, request.POST.get('responsavel_id', '')),
                     prioridade=_valida_prioridade(request.POST.get('prioridade', 'media')),
                     vencimento=vencimento,
+                    hora=hora,
                     criado_por_id=_usuario_id(request),
                 )
                 return redirect('tarefas:lista')
 
     abertas = qs.filter(concluida=False)
-    atrasadas = [_decorar(t) for t in abertas.filter(vencimento__lt=hoje).order_by('vencimento')]
-    hoje_lista = [_decorar(t) for t in abertas.filter(vencimento=hoje).order_by('vencimento')]
-    proximas = [_decorar(t) for t in abertas.filter(vencimento__gt=hoje).order_by('vencimento')[:50]]
+    atrasadas = [_decorar(t) for t in abertas.filter(vencimento__lt=hoje).order_by('vencimento', 'hora')]
+    hoje_lista = [_decorar(t) for t in abertas.filter(vencimento=hoje).order_by('vencimento', 'hora')]
+    proximas = [_decorar(t) for t in abertas.filter(vencimento__gt=hoje).order_by('vencimento', 'hora')[:50]]
     sem_data = [_decorar(t) for t in abertas.filter(vencimento__isnull=True).order_by('-created_at')]
     concluidas = [
         _decorar(t) for t in qs.filter(concluida=True).order_by('-concluida_em', '-id')[:20]
@@ -166,6 +186,7 @@ def editar(request, pk):
             erros.append('Informe o título da tarefa.')
         else:
             vencimento = _parse_vencimento(request.POST.get('vencimento', ''), erros)
+            hora = _parse_hora(request.POST.get('hora', ''), erros)
             if not erros:
                 tarefa.titulo = titulo
                 tarefa.descricao = (request.POST.get('descricao', '') or '').strip()
@@ -173,6 +194,7 @@ def editar(request, pk):
                 tarefa.responsavel_id = _membro_do_tenant(tarefa.tenant_id, request.POST.get('responsavel_id', ''))
                 tarefa.prioridade = _valida_prioridade(request.POST.get('prioridade', 'media'))
                 tarefa.vencimento = vencimento
+                tarefa.hora = hora
                 tarefa.save()
                 return redirect('tarefas:lista')
     contatos, membros = _opcoes(request)
@@ -228,6 +250,7 @@ def nova_para_contato(request, contato_id):
                 responsavel_id=_usuario_id(request),
                 prioridade=_valida_prioridade(request.POST.get('prioridade', 'media')),
                 vencimento=_parse_vencimento(request.POST.get('vencimento', ''), []),
+                hora=_parse_hora(request.POST.get('hora', ''), []),
                 criado_por_id=_usuario_id(request),
             )
     return redirect('contatos:detalhe', pk=contato.id)

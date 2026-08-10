@@ -24,8 +24,6 @@ class Script(models.Model):
         'acesso.Tenant',
         on_delete=models.CASCADE,
         db_column='tenant_id',
-        null=True,
-        blank=True,
         related_name='scripts',
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -81,8 +79,6 @@ class Fila(models.Model):
         'acesso.Tenant',
         on_delete=models.CASCADE,
         db_column='tenant_id',
-        null=True,
-        blank=True,
         related_name='filas',
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -160,8 +156,6 @@ class Chamada(models.Model):
         'acesso.Tenant',
         on_delete=models.CASCADE,
         db_column='tenant_id',
-        null=True,
-        blank=True,
         related_name='chamadas',
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -170,6 +164,9 @@ class Chamada(models.Model):
     class Meta:
         db_table = 'chamadas'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['tenant_id', 'status'], name='cha_tenant_status_idx'),
+        ]
 
     def __str__(self):
         return f'Chamada {self.id} — contato {self.contato_id} ({self.status})'

@@ -35,8 +35,8 @@ Um **núcleo de CRM, vários nichos**: as chaves de etapa e as categorias são f
 
 ## Capabilities and Constraints
 
-- **Apps web**: `acesso` (login/logout, decorators `web_login_required`/`filtro_tenant`, context processor de sessão), `dashboard` (KPIs, timeline, conversão, funil, movimentações), `funil` (kanban com drag & drop, mover via POST), `contatos` (lista/busca, ficha, CRUD), `agendamentos` (agenda por dia útil a partir de hoje). `theme` é o app do django-tailwind.
-- **Outros módulos no repo** (presença/estado a confirmar conforme evolução): `automacoes`, `campanhas`, `discador`, `emails`, `relatorios`, `tarefas`, `acordos`, `api/`.
+- **Apps web**: `acesso` (login/logout, decorators `web_login_required`/`filtro_tenant`, context processor de sessão), `dashboard` (KPIs, timeline, conversão, funil, movimentações), `funil` (kanban com drag & drop, mover via POST), `contatos` (lista/busca, ficha, CRUD), `tarefas` (follow-ups com vencimento e `hora` — a antiga Agenda foi consolidada aqui). `theme` é o app do django-tailwind.
+- **Outros módulos no repo** (presença/estado a confirmar conforme evolução): `automacoes`, `campanhas`, `discador`, `emails`, `relatorios`, `api/`.
 - **Funil**: etapas fixas por chave — `interessado`, `avaliacao_agendada`, `avaliacao_feita`, `orcamento`, `fechado`, `perdido` — cada uma com cor fixa (`STAGES` em `core/dominio.py`). Nomes são re-rotulados por nicho.
 - **Receita projetada**: `PESOS_ETAPA` pondera o valor por probabilidade de fechamento (10%→100%; `perdido`=0%).
 - **Nichos** suportados (`_NICHO_NOMES`): `saude` (padrão), `odonto`, `imob`, `educacao`, `servicos`, `outro`.

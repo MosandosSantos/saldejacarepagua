@@ -9,6 +9,18 @@
       ✅ E-mail registrado{% if not email_configurado %}<b> em modo simulação</b> (configure o SMTP no <code>.env</code> para enviar de verdade){% endif %} — rastreio de abertura ativo.
     </div>
   {% endif %}
+  <!-- Contato pobre (poucos dados) — convite a enriquecer o perfil -->
+  {% if contato.completude.nivel == 'pobre' %}
+  <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#fb923c]/30 bg-[#fb923c]/10 px-5 py-4">
+    <p class="text-[13px] leading-relaxed text-[#fb923c]">
+      <b>Perfil básico ({{ contato.completude.total }}% preenchido)</b> — este contato entrou com poucos dados
+      {% if contato.completude.faltam %}(falta: {{ contato.completude.faltam|join:', '|lower }}){% endif %}. Complete a ficha para enriquecer o lead e priorizar melhor.
+    </p>
+    {% if web_pode_editar %}
+    <a href="{% url 'contatos:editar' contato.id %}?focar={{ contato.completude.faltam|join:','|urlencode }}" class="hazon-btn hazon-btn-primary px-4 py-2 text-[12.5px] font-semibold text-white transition hover:brightness-110">Completar perfil</a>
+    {% endif %}
+  </div>
+  {% endif %}
   <!-- Cabeçalho / resumo -->
   <div class="hazon-card-lg p-8">
     <div class="flex flex-col gap-6 sm:flex-row sm:items-start">
@@ -199,32 +211,6 @@
       </div>
       {% empty %}
         <p class="text-[13px] text-[#6f8a93]">Nenhuma tarefa para este contato — crie o primeiro follow-up acima.</p>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- Acordos -->
-  <div class="hazon-card-lg p-8">
-    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-      <h2 class="font-display text-lg font-semibold text-white">Acordos</h2>
-      {% if web_pode_editar %}
-      <a href="{% url 'acordos:simular_contato' contato.id %}"
-         class="hazon-btn hazon-btn-primary px-4 py-2 text-[12.5px] font-semibold text-white transition hover:brightness-110">+ Simular acordo</a>
-      {% endif %}
-    </div>
-    <div class="space-y-2.5">
-      {% for a in acordos %}
-        <a href="{% url 'acordos:detalhe' a.id %}"
-           class="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-[#74b3c6]/40 hover:bg-white/10">
-          <div class="min-w-0 flex-1">
-            <div class="text-[13.5px] font-semibold text-white">{{ a.modalidade }}{% if a.parcelas > 1 %} · {{ a.parcelas }}x{% endif %}</div>
-            <div class="text-[11.5px] text-[#6f8a93]">original {{ a.valor_original }} · criado em {{ a.created_at|date:"d/m/Y" }}</div>
-          </div>
-          <span class="font-mono text-[15px] font-bold text-[#74b3c6]">{{ a.valor_final }}</span>
-          <span class="hazon-chip px-2 text-[10.5px] {% if a.status == 'pago' %}text-[#7fe3c4] bg-[#7fe3c4]/15{% elif a.status == 'recusado' %}text-red-300 bg-red-400/15{% else %}text-[#fbbf24] bg-[#fbbf24]/15{% endif %}">{{ a.status_label }}</span>
-        </a>
-      {% empty %}
-        <p class="text-[13px] text-[#6f8a93]">Nenhum acordo ainda — simule uma proposta de pagamento para este contato.</p>
       {% endfor %}
     </div>
   </div>

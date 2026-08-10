@@ -137,13 +137,26 @@ def test_allowed_hosts_falha_fechado_fora_do_debug(monkeypatch):
 
     import core.settings as settings_mod
 
+    # Ambiente hermético: bloqueia o DEBUG=1 do .env local (o settings aceita o
+    # alias `DEBUG`) e evita o fail-fast de segredos, para o reload realmente
+    # carregar em modo produção.
     monkeypatch.delenv('DJANGO_ALLOWED_HOSTS', raising=False)
-    monkeypatch.setenv('DJANGO_DEBUG', '0')  # reload relê o DEBUG do ambiente
+    monkeypatch.setenv('DJANGO_DEBUG', '0')
+    monkeypatch.setenv('DEBUG', '0')
+    monkeypatch.setenv('DJANGO_SECRET_KEY', 'segredo-de-teste')
+    monkeypatch.setenv('JWT_SECRET', 'jwt-de-teste')
+    monkeypatch.setenv('PGHOST', 'db-teste')  # evita o fail-fast de banco
     settings_mod = importlib.reload(settings_mod)
     assert '*' not in settings_mod.ALLOWED_HOSTS
     assert 'localhost' in settings_mod.ALLOWED_HOSTS
+    # Restaura o ambiente e recarrega para os demais testes (o monkeypatch já
+    # desfaz as env vars; o reload garante o estado dev no módulo).
     monkeypatch.delenv('DJANGO_DEBUG', raising=False)
-    settings_mod = importlib.reload(settings_mod)  # restaura para os demais testes
+    monkeypatch.delenv('DEBUG', raising=False)
+    monkeypatch.delenv('DJANGO_SECRET_KEY', raising=False)
+    monkeypatch.delenv('JWT_SECRET', raising=False)
+    monkeypatch.delenv('PGHOST', raising=False)
+    settings_mod = importlib.reload(settings_mod)
 
 
 # ---------------------------------------------------------------------------

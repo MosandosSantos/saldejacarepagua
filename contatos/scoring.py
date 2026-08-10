@@ -123,3 +123,87 @@ def atualizar_score(contato, salvar=True):
         if salvar:
             contato.save(update_fields=['lead_score'])
     return contato.lead_score
+
+
+# ---------------------------------------------------------------------------
+# Completude do perfil (contato rico x pobre)
+# ---------------------------------------------------------------------------
+# Um lead entra "pobre" (poucos dados) e enriquece conforme a ficha é preenchida.
+# A barra de perfil no kanban e o aviso na ficha usam este número para incentivar
+# o time a completar os dados — perfis ricos priorizam melhor quem atender.
+
+PESOS_COMPLETUDE = [
+    ('tel', 15, 'Telefone'),
+    ('email', 15, 'E-mail'),
+    ('seg', 10, 'Segmento'),
+    ('empresa', 10, 'Empresa'),
+    ('procedimento', 10, 'Procedimento de interesse'),
+    ('origem', 10, 'Origem'),
+    ('cidade', 10, 'Cidade'),
+    ('nascimento', 5, 'Nascimento'),
+    ('observacoes', 5, 'Observações'),
+    ('tags', 5, 'Tags'),
+    ('valor', 5, 'Valor do negócio'),
+]
+PESOS_TOTAIS_COMPLETUDE = sum(p for _, p, _ in PESOS_COMPLETUDE)  # 100
+
+LIMIAR_COMPLETUDE_RICO = 70
+LIMIAR_COMPLETUDE_MEDIO = 35
+
+NIVEIS_COMPLETUDE = {
+    'rico': {'label': 'Perfil completo', 'cor': '#7fe3c4'},
+    'medio': {'label': 'Perfil médio', 'cor': '#fbbf24'},
+    'pobre': {'label': 'Perfil básico', 'cor': '#fb923c'},
+}
+
+
+def _preenchido(valor):
+    """Campo considerado preenchido (vazio, espaço ou o placeholder '—' não contam)."""
+    return bool(valor is not None and str(valor).strip() and str(valor).strip() != '—')
+
+
+def completude_do_contato(contato, negocio=None):
+    """Percentual do perfil preenchido + nível (pobre / médio / rico).
+
+    `negocio` pode ser passado por quem já o tem em mãos (ex.: o kanban) para
+    evitar a query extra do `contato.negocio` (anti N+1). Devolve
+    {'total', 'nivel', 'label', 'cor', 'faltam'}.
+    """
+    if negocio is None:
+        negocio = getattr(contato, 'negocio', None)
+    valores = {
+        'tel': contato.tel,
+        'email': contato.email,
+        'seg': contato.seg,
+        'empresa': contato.empresa,
+        'procedimento': contato.procedimento,
+        'origem': contato.origem,
+        'cidade': contato.cidade,
+        'nascimento': contato.nascimento,
+        'observacoes': contato.observacoes,
+        'tags': bool(list(contato.tags.all())),
+        'valor': bool(negocio and negocio.valor and float(negocio.valor) > 0),
+    }
+    pontos = 0
+    faltam = []
+    for campo, peso, rotulo in PESOS_COMPLETUDE:
+        preenchido = bool(valores[campo]) if campo in ('tags', 'valor') else _preenchido(valores[campo])
+        if preenchido:
+            pontos += peso
+        else:
+            faltam.append(rotulo)
+    total = min(PESOS_TOTAIS_COMPLETUDE, pontos)
+    if total >= LIMIAR_COMPLETUDE_RICO:
+        nivel = 'rico'
+    elif total >= LIMIAR_COMPLETUDE_MEDIO:
+        nivel = 'medio'
+    else:
+        nivel = 'pobre'
+    info = NIVEIS_COMPLETUDE[nivel]
+    return {
+        'total': total,
+        'nivel': nivel,
+        'label': info['label'],
+        'cor': info['cor'],
+        'faltam': faltam,
+    }

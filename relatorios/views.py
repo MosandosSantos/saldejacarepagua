@@ -1,15 +1,14 @@
 """Views do app 'relatorios' — dashboard gerencial de cobrança (PRD S7).
 
-KPIs operacionais e financeiros (base, CPC, retornos, acordos, valor recuperado
-e produtividade por operador) com filtro de período (hoje / 7 dias / 30 dias /
-mês), filtro por operador, gráficos SVG da série diária e exportação em CSV e
-PDF. Tudo escopado por tenant.
+KPIs operacionais (base, CPC, retornos e produtividade por operador) com filtro
+de período (hoje / 7 dias / 30 dias / mês), filtro por operador, gráficos SVG
+da série diária e exportação em CSV e PDF. Tudo escopado por tenant.
 """
 
 import csv
 from datetime import datetime, time, timedelta
 
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q
 from django.db.models.functions import TruncDate
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -17,13 +16,8 @@ from django.utils import timezone
 
 from acesso.decorators import tenant_id_da_sessao, web_login_required
 from acesso.models import ROLE_ADMIN_COMPANY, ROLE_OPERACIONAL, Tenant, Usuario
-from acordos.models import Acordo
 from contatos.models import Contato
 from discador.models import Chamada
-
-
-def _brl(n):
-    return 'R$ {:,.2f}'.format(float(n or 0)).replace(',', 'X').replace('.', ',').replace('X', '.')
 
 
 def _brl_curto(n):
@@ -75,13 +69,6 @@ def _chamadas_scope(tid):
     return qs
 
 
-def _acordos_scope(tid):
-    qs = Acordo.objects.all()
-    if tid is not None:
-        qs = qs.filter(tenant_id=tid)
-    return qs
-
-
 def _contatos_scope(tid):
     qs = Contato.objects.all()
     if tid is not None:
@@ -103,7 +90,7 @@ def _operador_do_filtro(request, tid):
 def _kpis(tid, inicio, fim, operador_id=None):
     """Indicadores do relatório no período (7.1.1 a 7.1.5).
 
-    `operador_id` (opcional) restringe CPC/retornos/acordos/valor ao operador;
+    `operador_id` (opcional) restringe CPC/retornos ao operador;
     a base em cobrança continua sendo da empresa inteira.
     """
     chamadas = _chamadas_scope(tid).filter(created_at__range=(inicio, fim))
@@ -111,18 +98,13 @@ def _kpis(tid, inicio, fim, operador_id=None):
     retornos_qs = _chamadas_scope(tid).filter(
         status='retornar', retorno_em__isnull=False, retorno_em__range=(inicio, fim),
     )
-    acordos = _acordos_scope(tid).filter(created_at__range=(inicio, fim))
     if operador_id is not None:
         chamadas = chamadas.filter(operador_id=operador_id)
         cpc_qs = cpc_qs.filter(operador_id=operador_id)
         retornos_qs = retornos_qs.filter(operador_id=operador_id)
-        acordos = acordos.filter(chamada__operador_id=operador_id)
 
     cpc = cpc_qs.count()
     retornos = retornos_qs.count()
-    acordos_qtd = acordos.exclude(status='recusado').count()
-    valor_recuperado = acordos.filter(status='pago', pago_em__range=(inicio, fim)).aggregate(
-        s=Sum('valor_final'))['s'] or 0
     base_qs = _contatos_scope(tid).filter(tel_normalizado__gt='')
     base_total = base_qs.count()
     base_novos = base_qs.filter(created_at__range=(inicio, fim)).count()
@@ -134,11 +116,6 @@ def _kpis(tid, inicio, fim, operador_id=None):
         'cpc_label': str(cpc),
         'retornos': retornos,
         'retornos_label': str(retornos),
-        'acordos': acordos_qtd,
-        'acordos_label': str(acordos_qtd),
-        'acordos_pagos': acordos.filter(status='pago').count(),
-        'valor_recuperado': float(valor_recuperado),
-        'valor_recuperado_label': _brl(valor_recuperado),
         'chamadas': chamadas.count(),
         'chamadas_label': str(chamadas.count()),
     }
@@ -159,18 +136,6 @@ def _produtividade(tid, inicio, fim, operador_id=None):
         )
         .order_by('-total')
     )
-    acordos_agg = {
-        row['chamada__operador_id']: row['qtd']
-        for row in _acordos_scope(tid)
-        .filter(created_at__range=(inicio, fim), chamada__operador_id__isnull=False)
-        .values('chamada__operador_id').annotate(qtd=Count('id'))
-    }
-    pagos_agg = {
-        row['chamada__operador_id']: float(row['soma'] or 0)
-        for row in _acordos_scope(tid)
-        .filter(status='pago', pago_em__range=(inicio, fim), chamada__operador_id__isnull=False)
-        .values('chamada__operador_id').annotate(soma=Sum('valor_final'))
-    }
     itens = []
     for linha in linhas:
         op_id = linha['operador_id']
@@ -181,22 +146,16 @@ def _produtividade(tid, inicio, fim, operador_id=None):
             'chamadas': linha['total'],
             'realizadas': linha['realizadas'],
             'retornos': linha['retornos'],
-            'acordos': acordos_agg.get(op_id, 0),
-            'valor_recuperado': pagos_agg.get(op_id, 0),
-            'valor_recuperado_label': _brl(pagos_agg.get(op_id, 0)),
         })
-    max_rec = max([i['valor_recuperado'] for i in itens] + [0])
-    for i in itens:
-        i['valor_pct'] = round(i['valor_recuperado'] / max_rec * 100) if max_rec else 0
     return itens
 
 
 def _serie_diaria(tid, inicio, fim, operador_id=None):
-    """Série diária do período (no mínimo 7 dias): CPC, acordos e valor recuperado.
+    """Série diária do período (no mínimo 7 dias): CPC.
 
-    Agregação feita no banco (TruncDate + Count/Sum) — 3 queries, sem trazer
-    todos os registros para o Python. As chaves de dia respeitam o timezone
-    local (usa `localtime().date()` ao agrupar).
+    Agregação feita no banco (TruncDate + Count) — sem trazer todos os
+    registros para o Python. As chaves de dia respeitam o timezone local
+    (usa `localtime().date()` ao agrupar).
     """
     hoje = timezone.localdate()
     primeiro = inicio.date()
@@ -205,12 +164,8 @@ def _serie_diaria(tid, inicio, fim, operador_id=None):
     dias = [primeiro + timedelta(days=i) for i in range((hoje - primeiro).days + 1)]
 
     cpc_qs = _chamadas_scope(tid).filter(status='realizada', updated_at__range=(inicio, fim))
-    acordos_qs = _acordos_scope(tid).filter(created_at__range=(inicio, fim)).exclude(status='recusado')
-    pagos_qs = _acordos_scope(tid).filter(status='pago', pago_em__range=(inicio, fim))
     if operador_id is not None:
         cpc_qs = cpc_qs.filter(operador_id=operador_id)
-        acordos_qs = acordos_qs.filter(chamada__operador_id=operador_id)
-        pagos_qs = pagos_qs.filter(chamada__operador_id=operador_id)
 
     def _por_dia(qs, campo, agregacao):
         return {
@@ -220,16 +175,12 @@ def _serie_diaria(tid, inicio, fim, operador_id=None):
         }
 
     cpc_dia = _por_dia(cpc_qs, 'updated_at', Count('id'))
-    acordos_dia = _por_dia(acordos_qs, 'created_at', Count('id'))
-    valor_dia = _por_dia(pagos_qs, 'pago_em', Sum('valor_final'))
 
     serie = []
     for d in dias:
         serie.append({
             'data': f'{d.day:02d}/{d.month:02d}',
             'cpc': cpc_dia.get(d, 0),
-            'acordos': acordos_dia.get(d, 0),
-            'valor': float(valor_dia.get(d, 0) or 0),
         })
     return serie
 
@@ -345,10 +296,6 @@ def index(request):
         'operador_atual': operador_id or '',
         'grafico_atividade': _linhas_svg(serie, [
             ('cpc', '#74b3c6', 'CPC'),
-            ('acordos', '#4ade80', 'Acordos'),
-        ]),
-        'grafico_valor': _linhas_svg(serie, [
-            ('valor', '#fbbf24', 'Valor recuperado'),
         ]),
         'empresa': tenant.nome if tenant else '—',
     })
@@ -375,17 +322,13 @@ def exportar_csv(request):
     w.writerow(['Novos na base no período', kpis['base_novos']])
     w.writerow(['Contatos úteis realizados (CPC)', kpis['cpc']])
     w.writerow(['Retornos agendados', kpis['retornos']])
-    w.writerow(['Acordos', kpis['acordos']])
-    w.writerow(['Acordos pagos', kpis['acordos_pagos']])
-    w.writerow(['Valor recuperado (R$)', _csv_seguro(kpis['valor_recuperado_label'])])
     w.writerow(['Chamadas no período', kpis['chamadas']])
     w.writerow([])
-    w.writerow(['Produtividade por operador', '', '', '', '', ''])
-    w.writerow(['Operador', 'Chamadas', 'Realizadas', 'Retornos', 'Acordos', 'Valor recuperado (R$)'])
+    w.writerow(['Produtividade por operador', '', '', ''])
+    w.writerow(['Operador', 'Chamadas', 'Realizadas', 'Retornos'])
     for p in produtividade:
         w.writerow([
             _csv_seguro(p['nome']), p['chamadas'], p['realizadas'], p['retornos'],
-            p['acordos'], _csv_seguro(p['valor_recuperado_label']),
         ])
     return resposta
 

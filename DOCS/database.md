@@ -13,7 +13,7 @@
 
 > Convenção: registros de negócio **raiz** possuem `tenant` (FK) para isolamento
 > multi-empresa; tabelas **dependentes** (`Nota`, `Movimentacao`,
-> `ValorCampoPersonalizado`, `Agendamento`) não têm `tenant` próprio — herdam o
+> `ValorCampoPersonalizado`) não têm `tenant` próprio — herdam o
 > escopo da FK para `contato`/`negocio`. Quase todos os modelos têm
 > `created_at`/`updated_at` (auto).
 
@@ -38,12 +38,6 @@
 | `contatos_valorcampopersonalizado` | campo (FK), contato (FK), valor |
 | `contatos_nota` | contato (FK), texto, autor |
 | `contatos_movimentacao` | contato (FK), tipo, descricao, responsavel |
-
-### agendamentos
-
-| Tabela | Campos principais |
-|---|---|
-| `agendamentos_agendamento` | contato (FK), hora, offset_dias, tipo, tipo_label, created_at, updated_at |
 
 ### funil
 
@@ -85,13 +79,6 @@
 | `discador_script` | nome, descricao, conteudo, ativa, tenant |
 | `discador_fila` | nome, descricao, carteira (FK), script (FK), ordem, ativa, tenant |
 | `discador_chamada` | fila (FK), contato (FK), operador (FK), status, observacao, retorno_em, tenant |
-
-### acordos
-
-| Tabela | Campos principais |
-|---|---|
-| `acordos_regradesconto` | modalidade, parcelas, percentual, tenant |
-| `acordos_acordo` | contato (FK), chamada (FK), valor_original, modalidade, parcelas, percentual_desconto, desconto, valor_final, status, observacao, pix_payload, pago_em, tenant |
 
 ## Multi-tenancy no banco
 

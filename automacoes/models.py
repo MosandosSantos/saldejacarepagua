@@ -9,6 +9,7 @@ etapa ou negócio parado), o motor (`automacoes.engine`) roda as ações da auto
 
 from django.db import models
 
+
 TRIGGERS = [
     ('contato_criado', 'Contato novo'),
     ('negocio_criado', 'Negócio criado'),
@@ -54,6 +55,9 @@ class Automacao(models.Model):
     class Meta:
         db_table = 'automacoes'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['tenant_id', 'trigger', 'ativa'], name='aut_tenant_trigger_idx'),
+        ]
 
     def __str__(self):
         return f'{self.nome} ({self.trigger})'

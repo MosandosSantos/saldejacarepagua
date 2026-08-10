@@ -41,7 +41,7 @@ from contatos.models import (
     so_digitos,
     tornar_principal,
 )
-from contatos.scoring import NIVEIS, atualizar_score, nivel_do_score
+from contatos.scoring import NIVEIS, atualizar_score, completude_do_contato, nivel_do_score
 from core.dominio import SEG_FALLBACK, SEGS
 from funil.models import etapa_map_do_tenant, etapas_do_tenant
 
@@ -251,6 +251,7 @@ def _decorar(c, stage_map):
         'score_nivel': nivel,
         'score_label': NIVEIS[nivel]['label'],
         'score_cor': NIVEIS[nivel]['cor'],
+        'completude': completude_do_contato(c),
         'tags': [{'id': t.id, 'nome': t.nome, 'cor': t.cor} for t in c.tags.all()],
     }
 
@@ -296,6 +297,9 @@ def lista(request):
         Carteira.objects.all()
         if tid is None else Carteira.objects.filter(tenant_id=tid)
     )
+    # Contatos com perfil básico — contagem global (não depende dos filtros ativos)
+    base_pobres = filtro_tenant(request, Contato.objects.all()).prefetch_related('negocios', 'tags')
+    pobres = sum(1 for c in base_pobres if completude_do_contato(c)['nivel'] == 'pobre')
     return render(request, 'contatos/lista.html', {
         'itens': items,
         'q': termo,
@@ -306,6 +310,7 @@ def lista(request):
         'carteiras_filtro': [{'id': c.id, 'nome': c.nome} for c in carteiras],
         'mostrados': len(items),
         'total': filtro_tenant(request, Contato.objects.all()).count(),
+        'pobres': pobres,
     })
 
 
@@ -346,21 +351,6 @@ def detalhe(request, pk):
     ]
     from emails.models import ModeloEmail
     from tarefas.models import PRIORIDADE_CORES
-    from acordos.models import Acordo
-
-    acordos = [
-        {
-            'id': a.id,
-            'valor_original': _brl(a.valor_original),
-            'modalidade': a.get_modalidade_display(),
-            'parcelas': a.parcelas,
-            'valor_final': _brl(a.valor_final),
-            'status': a.status,
-            'status_label': a.get_status_display(),
-            'created_at': a.created_at,
-        }
-        for a in contato.acordos.all()[:8]
-    ]
 
     tarefas = [
         {
@@ -375,7 +365,7 @@ def detalhe(request, pk):
             'responsavel_nome': t.responsavel.nome if t.responsavel else '',
             'responsavel_iniciais': _iniciais(t.responsavel.nome if t.responsavel else ''),
         }
-        for t in contato.tarefas.select_related('responsavel').order_by('concluida', 'vencimento', 'id')
+        for t in contato.tarefas.select_related('responsavel').order_by('concluida', 'vencimento', 'hora', 'id')
     ]
 
     return render(request, 'contatos/detalhe.html', {
@@ -388,7 +378,6 @@ def detalhe(request, pk):
         'campos_valores': _valores_para_ficha(contato),
         'modelos_email': [{'id': m.id, 'nome': m.nome} for m in filtro_tenant(request, ModeloEmail.objects.all())],
         'email_configurado': settings.EMAIL_CONFIGURADO,
-        'acordos': acordos,
     })
 
 
@@ -679,6 +668,62 @@ def excluir(request, pk):
         contato.delete()
         return redirect('contatos:lista')
     return render(request, 'contatos/excluir.html', {'contato': _decorar(contato, stage_map)})
+
+
+@web_login_required
+def leads_pobres(request):
+    """Perfil dos leads (rico x pobre) — quem o time deve enriquecer.
+
+    Agrupa os contatos por nível de completude (pobre / médio / rico) com a
+    aba `?nivel=`. Cada card mostra o que falta no perfil e atalho para
+    completar a ficha já com foco no primeiro campo ausente (`?focar=`).
+    """
+    tid = _tenant_id(request)
+    nicho = nicho_da_sessao(request)
+    stage_map = etapa_map_do_tenant(tid, nicho)
+    contatos = (
+        filtro_tenant(request, Contato.objects.all())
+        .select_related('carteira')
+        .prefetch_related('negocios', 'tags')
+    )
+    agrupados = {'pobre': [], 'medio': [], 'rico': []}
+    for c in contatos:
+        comp = completude_do_contato(c)
+        negocio = getattr(c, 'negocio', None)
+        agrupados[comp['nivel']].append({
+            'id': c.id,
+            'nome': c.nome,
+            'tel': c.tel,
+            'email': c.email,
+            'empresa': c.empresa,
+            'origem': c.origem,
+            'created_at': c.created_at,
+            'stage': stage_map.get(negocio.stage if negocio else '', {'name': '—', 'color': '#888'}),
+            'valor': _brl(negocio.valor) if negocio else 'R$ 0,00',
+            'completude': comp,
+        })
+    for lista in agrupados.values():
+        lista.sort(key=lambda i: i['completude']['total'])
+    nivel = request.GET.get('nivel', 'pobre')
+    if nivel not in agrupados:
+        nivel = 'pobre'
+    tabs = {
+        'pobre': {'rotulo': 'Pobre', 'cor': '#fb923c'},
+        'medio': {'rotulo': 'Médio', 'cor': '#fbbf24'},
+        'rico': {'rotulo': 'Completo', 'cor': '#7fe3c4'},
+    }
+    return render(request, 'contatos/leads_pobres.html', {
+        'itens': agrupados[nivel],
+        'total': len(agrupados[nivel]),
+        'nivel': nivel,
+        'nivel_opcoes': [
+            {'chave': k, 'rotulo': tabs[k]['rotulo'], 'cor': tabs[k]['cor'],
+             'qtd': len(agrupados[k])}
+            for k in ('pobre', 'medio', 'rico')
+        ],
+        'cor_nivel': tabs[nivel]['cor'],
+        'rotulo_nivel': tabs[nivel]['rotulo'],
+    })
 
 
 @web_login_required

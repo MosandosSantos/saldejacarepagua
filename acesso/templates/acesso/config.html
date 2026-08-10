@@ -49,9 +49,6 @@
     {% if mostrar_discador %}
       <a href="#discador" class="rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-[12px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Discador</a>
     {% endif %}
-    {% if mostrar_acordos %}
-      <a href="#acordos" class="rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-[12px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Acordos & PIX</a>
-    {% endif %}
     {% if mostrar_equipe %}
       <a href="#equipe" class="rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-[12px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Equipe</a>
       <a href="#convites" class="rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-[12px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Convites</a>
@@ -77,9 +74,12 @@
       </div>
     </form>
 
-    <form method="post" class="mt-8 grid grid-cols-1 gap-4 border-t border-white/10 pt-6 sm:grid-cols-3 hazon-form">
+    <form method="post" id="senha" class="mt-8 scroll-mt-24 grid grid-cols-1 gap-4 border-t border-white/10 pt-6 sm:grid-cols-3 hazon-form">
       {% csrf_token %}
       <input type="hidden" name="acao" value="senha">
+      <div class="sm:col-span-3">
+        <div class="mb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Trocar senha</div>
+      </div>
       <div>
         <label for="senha_atual" class="hazon-label">Senha atual</label>
         <input type="password" id="senha_atual" name="senha_atual" autocomplete="current-password">
@@ -336,75 +336,6 @@
   </section>
   {% endif %}
 
-  {% if mostrar_acordos %}
-  <!-- Acordos & PIX (regras de desconto + dados do recebedor) -->
-  <section id="acordos" class="scroll-mt-24 hazon-card-lg p-8">
-    <h2 class="mb-1 font-display text-lg font-semibold text-white">Acordos & PIX</h2>
-    <p class="mb-5 text-[12.5px] text-[#6f8a93]">
-      As <b class="text-[#bcd3da]">regras de desconto</b> alimentam o simulador do operador; os
-      <b class="text-[#bcd3da]">dados do PIX</b> montam o BR Code (copia-e-cola + QR Code) dos acordos.
-    </p>
-
-    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <form method="post" class="hazon-form">
-        {% csrf_token %}
-        <input type="hidden" name="acao" value="pix_salvar">
-        <div>
-          <label for="pix_chave" class="hazon-label">Chave PIX</label>
-          <input type="text" id="pix_chave" name="pix_chave" value="{{ pix_chave }}" placeholder="CPF, CNPJ, e-mail, telefone ou aleatória">
-        </div>
-        <div>
-          <label for="pix_recebedor" class="hazon-label">Nome do recebedor</label>
-          <input type="text" id="pix_recebedor" name="pix_recebedor" value="{{ pix_recebedor }}" placeholder="ex.: Empresa Aurora LTDA">
-        </div>
-        <div>
-          <label for="pix_cidade" class="hazon-label">Cidade do recebedor</label>
-          <input type="text" id="pix_cidade" name="pix_cidade" value="{{ pix_cidade }}" placeholder="ex.: São Paulo">
-        </div>
-        <button type="submit" class="mt-3 hazon-btn hazon-btn-primary px-6 py-2 text-[13px] font-semibold text-white transition hover:brightness-110">Salvar PIX</button>
-      </form>
-
-      <div class="sm:col-span-2">
-        <form method="post" class="mb-3 flex flex-wrap items-end gap-2 hazon-form">
-          {% csrf_token %}
-          <input type="hidden" name="acao" value="regra_desconto">
-          <div>
-            <label class="hazon-label">Modalidade</label>
-            <select name="modalidade">
-              <option value="vista">À vista</option>
-              <option value="parcelado">Parcelado</option>
-            </select>
-          </div>
-          <div>
-            <label class="hazon-label">Parcelas</label>
-            <input type="number" name="parcelas" min="1" max="24" value="3" class="w-20">
-          </div>
-          <div>
-            <label class="hazon-label">Desconto %</label>
-            <input type="text" name="percentual" placeholder="ex.: 15" class="w-24">
-          </div>
-          <button type="submit" class="hazon-btn hazon-btn-primary px-6 py-2 text-[13px] font-semibold text-white transition hover:brightness-110">+ Salvar regra</button>
-        </form>
-        <div class="flex flex-wrap gap-2">
-          {% for r in regras_desconto %}
-            <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11.5px] text-[#bcd3da]">
-              {{ r.get_modalidade_display }} {{ r.parcelas }}x · {{ r.percentual }}%
-              <form method="post" class="inline">
-                {% csrf_token %}
-                <input type="hidden" name="acao" value="regra_desconto_excluir">
-                <input type="hidden" name="regra_id" value="{{ r.id }}">
-                <button type="submit" class="text-[#6f8a93] transition hover:text-red-300" title="Excluir regra">✕</button>
-              </form>
-            </span>
-          {% empty %}
-            <span class="text-[12px] text-[#6f8a93]">Nenhuma regra — o simulador usará os padrões (à vista 30%, 2x 20%, 3x 15%, 6x 8%).</span>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
   <!-- Sessões ativas -->
   <section id="sessoes" class="scroll-mt-24 hazon-card-lg p-8">
     <h2 class="mb-1 font-display text-lg font-semibold text-white">Sessões ativas</h2>
@@ -558,7 +489,7 @@
   {% endif %}
 
   <p class="text-[12px] text-[#6f8a93]">
-    💡 <b class="text-[#bcd3da]">Papéis:</b> <b class="text-[#7fe3c4]">Operacional</b> vê e edita contatos, agenda e funil, mas não exclui nem mexe em configurações da empresa. <b class="text-[#74b3c6]">Admin da empresa</b> tem acesso completo, incluindo convites. <b class="text-[#fbbf24]">👑 Dono</b> pode transferir a propriedade para outro membro.
+    💡 <b class="text-[#bcd3da]">Papéis:</b> <b class="text-[#7fe3c4]">Operacional</b> vê e edita contatos, tarefas e funil, mas não exclui nem mexe em configurações da empresa. <b class="text-[#74b3c6]">Admin da empresa</b> tem acesso completo, incluindo convites. <b class="text-[#fbbf24]">👑 Dono</b> pode transferir a propriedade para outro membro.
   </p>
 </div>
 {% endblock %}

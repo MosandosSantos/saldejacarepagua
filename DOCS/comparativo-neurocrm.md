@@ -225,7 +225,7 @@
 | Fluxo | `Flow` + `FlowRun` | ❌ não existe |
 | Disparo | `Broadcast` + `BroadcastRecipient` | ❌ não existe |
 | Template WhatsApp | `MessageTemplate` (integração Meta) | ❌ não existe |
-| Agenda | ❌ não existe | `Agendamento` (offset de dias úteis) |
+| Agenda | ❌ não existe | Consolidada em `Tarefa` (campo `hora`) |
 
 ---
 
@@ -381,7 +381,7 @@
 | Pipeline/kanban com drag & drop | ✅ todos | ✅ temos (AJAX sem reload) |
 | Vários negócios por contato | ✅ | ✅ temos (Negocio 1:N + principal) |
 | Dashboard + receita projetada + meta | ✅ | ✅ temos (parcial: falta previsão por vendedor) |
-| **Relatórios gerenciais (KPIs de cobrança + filtros + exportação)** | ✅ | ✅ temos (Fase S — `/relatorios/` com base, CPC, retornos, acordos, valor recuperado, produtividade por operador, filtros hoje/7d/30d/mês e por operador, gráficos da série diária, CSV+PDF) |
+| **Relatórios gerenciais (KPIs de cobrança + filtros + exportação)** | ✅ | ✅ temos (Fase S — `/relatorios/` com base, CPC, retornos, produtividade por operador, filtros hoje/7d/30d/mês e por operador, gráficos da série diária, CSV+PDF) |
 | Agenda/compromissos | ✅ | ✅ temos (e neurocrm não tem — diferencial) |
 | Time: papéis, convites, dono | ✅ | ✅ temos (4 papéis + transferência de dono) |
 | **Tarefas & lembretes (follow-ups)** | ✅ todos | ✅ temos (Fase G) |
@@ -554,8 +554,8 @@ Executado (itens 1–3 da rodada, em uma tacada só):
 ### Fase K — Timestamps padronizados (§7.6 do PRD HAZON) ✅ CONCLUÍDA (08/08/2026)
 
 Executado por solicitação do cliente (PRD HAZON — §7.6: "todos os modelos com `created_at` e `updated_at`"):
-1. ✅ **Padronização em todos os 22 modelos** (7 apps: acesso, contatos, funil, tarefas, emails,
-   automacoes, agendamentos) — todo modelo agora tem `created_at` (auto_now_add) e `updated_at`
+1. ✅ **Padronização em todos os 21 modelos** (6 apps: acesso, contatos, funil, tarefas, emails,
+   automacoes) — todo modelo agora tem `created_at` (auto_now_add) e `updated_at`
    (auto_now). Antes era misturado: `created_at` só em Tenant/Usuario, `criado_em`/`criada_em` na
    maioria dos modelos e `atualizada_em` em Automacao; vários não tinham `updated_at`.
 2. ✅ **Renames via RenameField** (migrações: acesso/0008, contatos/0010, funil/0002, tarefas/0002,
@@ -711,7 +711,13 @@ estrutura de campanhas por canal, integrado ao e-mail já existente):
    (sem N+1 — `prefetch_related('envios')`, permissões consistentes, `_base_pixel`
    duplicado na revisão apenas como observação menor).
 
-### Fase R — S6 do PRD HAZON: acordos, follow-up e PIX ✅ CONCLUÍDA (08/08/2026)
+### Fase R — S6 do PRD HAZON: acordos, follow-up e PIX ✅ CONCLUÍDA (08/08/2026) · ❌ REMOVIDA (10/08/2026)
+
+> **Nota:** o módulo de **acordos + PIX foi removido** por decisão do cliente
+> (10/08/2026) — app `acordos/` deletado, tabelas `acordos`/`acordos_regradesconto`
+> derrubadas, campos `Tenant.pix_*` removidos, seção "Acordos & PIX" da config
+> removida e KPIs de acordos/valor recuperado dos relatórios. O follow-up
+> automático do discador (item 4 abaixo) continua, pois gera `Tarefa`.
 
 Executado por solicitação do cliente (S6 do PRD HAZON — Sprint 6, CRM, follow-up e
 acordos; o funil/CRM já existia — completamos follow-up automático, simulador
@@ -747,12 +753,11 @@ de cobrança com KPIs, filtros de período e exportação PDF/CSV):
 1. ✅ **Novo app `relatorios/`** (sem modelos — lê dos apps existentes) com página em
    `/relatorios/`: KPIs de cobrança **base** (contatos com telefone válido + badge de
    novos no período), **CPC** (chamadas com resultado `realizada`), **retornos**
-   (agendados p/ o período via `retorno_em`), **acordos** (criados, exceto recusados,
-   com badge de pagos), **valor recuperado** (acordos pagos no período) e
+   (agendados p/ o período via `retorno_em`) e
    **produtividade** (chamadas iniciadas). Nav "📊 Relatórios" no header (após Campanhas).
-2. ✅ **Produtividade por operador (7.1.6)** — tabela com chamadas, realizadas,
-   retornos, acordos e valor recuperado por operador (agregação por `chamada__operador`,
-   sem N+1 — 3 queries agregadas).
+2. ✅ **Produtividade por operador (7.1.6)** — tabela com chamadas, realizadas e
+   retornos por operador (agregação por `operador`,
+   sem N+1 — 1 query agregada).
 3. ✅ **Filtros de período (7.2)** — Hoje / Últimos 7 dias / Últimos 30 dias (padrão) /
    Mês corrente via `?periodo=`; aplicado a todos os KPIs e à produtividade.
 4. ✅ **Exportação (7.3)** — **CSV** com BOM UTF-8, separador `;`, proteção contra
@@ -762,11 +767,9 @@ de cobrança com KPIs, filtros de período e exportação PDF/CSV):
    `web_login_required` nas 3 rotas, arquivos com nome fixo (sem injeção); o filtro
    `?operador=` valida o id contra o tenant da sessão (id de outro tenant é ignorado).
 6. ✅ **Gráficos da série diária (30 dias)** — SVG no mesmo visual do dashboard:
-   linha multi-série "Atividade diária" (CPC × acordos) e "Valor recuperado por dia",
-   com área suave, pontos com tooltip e legenda; barras de valor recuperado por
-   operador na seção de produtividade.
+   linha "Atividade diária" (CPC), com área suave, pontos com tooltip e legenda.
 7. ✅ **Filtro por operador** — select "Operador" (admin/operacional do tenant) no topo
-   da página; restringe CPC/retornos/acordos/valor/produtividade (a base continua da
+   da página; restringe CPC/retornos/produtividade (a base continua da
    empresa inteira); preservado nos links de período e na exportação CSV/PDF.
 8. ✅ **Comando `enviar_relatorio`** — gera o PDF por empresa e envia por e-mail aos
    admins (`--tenant` opcional, `--periodo` hoje/7/30/mes); sem SMTP roda em modo
@@ -791,7 +794,7 @@ HAZON — Sprint 8: 8.1 design system, 8.2 conteúdo, 8.3 segurança):
    `bg-gradient-to-br from-[#0b6f74] to-[#075b60]`) migrados para
    `hazon-btn hazon-btn-primary` e os botões de excluir/cancelar convite/encerrar
    sessão padronizados com `hazon-btn-danger` em ~20 templates (equipe, campos,
-   importar, formulários, listas, discador, acordos, e-mails, campanhas, config,
+   importar, formulários, listas, discador, e-mails, campanhas, config,
    detalhes de contato). Páginas públicas standalone (login/onboarding/convite/captura)
    mantêm o visual hero próprio, intencional.
 3. ✅ **Segurança (8.3)** — `ALLOWED_HOSTS` configurável por ambiente
@@ -820,8 +823,8 @@ Documentação criada em `DOCS/` descrevendo **somente o que existe** no projeto
 2. ✅ **`DOCS/architecture.md`** — camadas (Django DTL + FastAPI + legado Node),
    apps, fluxos de requisição web/API e multi-tenancy.
 3. ✅ **`DOCS/backend.md`** — todos os apps e modelos (acesso, contatos,
-   agendamentos, funil, emails, tarefas, automacoes, campanhas, discador,
-   acordos, relatorios), decorators, comandos de gerenciamento e serviços.
+   funil, emails, tarefas, automacoes, campanhas, discador,
+   relatorios), decorators, comandos de gerenciamento e serviços.
 4. ✅ **`DOCS/frontend.md`** — templates DTL, base/nav, mapa de telas, SVG
    gerados em Python e interações JS por página.
 5. ✅ **`DOCS/database.md`** — configuração PostgreSQL, tabelas por app com
@@ -870,4 +873,4 @@ Documentação criada em `DOCS/` descrevendo **somente o que existe** no projeto
 16. **S3 do PRD HAZON (gestão de bases)** ✅ concluído (Fase N — modelo Carteira por tenant + cargo no contato + telas de listagem/detalhe + filtro + CSV com carteira + API; 328 testes).
 17. **S4 do PRD HAZON (e-mail avançado)** ✅ concluído (Fase O — rastreio de cliques com endpoint público + conversão de propostas quando o negócio fecha + KPIs/histórico na lista de e-mail; 350 testes).
 18. **S4 do PRD HAZON (estrutura de campanhas)** ✅ concluído (Fase P — app `campanhas` com modelo por canal, telas de lista/detalhe, disparo de e-mail integrado com KPIs e API; 374 testes). Resta do S4: **WhatsApp (4.2)** — aguarda decisão de provedor (Meta × Evolution × BSP).
-19. **S5 do PRD HAZON (Nation Dialer)** ✅ concluído (Fase Q — filas com ordenação + tela do operador com nome/empresa/cargo/telefone/score, ação única de chamada via URI sip:/tel: com MicroSIP, registro de resultado da chamada, scripts de atendimento exibidos durante a chamada, configuração do softphone por empresa e API; 412 testes). **S6 — CRM, follow-up e acordos** ✅ concluído (Fase R — simulador financeiro, acordos com status, PIX BR Code + QR, follow-up automático do discador, config por empresa e API; 438 testes). **S7 — Dashboard e relatórios** ✅ concluído (Fase S — relatório gerencial com base, CPC, retornos, acordos, valor recuperado e produtividade por operador, filtros hoje/7d/30d/mês, gráficos da série diária, filtro por operador, comando `enviar_relatorio` e exportação CSV+PDF; 452 testes). **S8 — Revisão de interface e segurança** ✅ concluído (Fase T — bug de autenticação nos campos personalizados corrigido, botões padronizados com `hazon-btn-danger`, ALLOWED_HOSTS configurável com fail-closed em produção, sessões expiradas filtradas; 463 testes). **S9 — Documentação** ✅ concluído (Fase U — 9 documentos em `DOCS/` descrevendo apenas o que existe: README, architecture, backend, frontend, database, security, design-system, api e development-guidelines).
+19. **S5 do PRD HAZON (Nation Dialer)** ✅ concluído (Fase Q — filas com ordenação + tela do operador com nome/empresa/cargo/telefone/score, ação única de chamada via URI sip:/tel: com MicroSIP, registro de resultado da chamada, scripts de atendimento exibidos durante a chamada, configuração do softphone por empresa e API; 412 testes). **S6 — CRM, follow-up e acordos** ✅ concluído e depois ❌ **removido** (Fase R — simulador financeiro, acordos com status, PIX BR Code + QR, follow-up automático do discador, config por empresa e API; 438 testes; app `acordos/` removido em 10/08/2026). **S7 — Dashboard e relatórios** ✅ concluído (Fase S — relatório gerencial com base, CPC, retornos e produtividade por operador, filtros hoje/7d/30d/mês, gráficos da série diária, filtro por operador, comando `enviar_relatorio` e exportação CSV+PDF; 452 testes). **S8 — Revisão de interface e segurança** ✅ concluído (Fase T — bug de autenticação nos campos personalizados corrigido, botões padronizados com `hazon-btn-danger`, ALLOWED_HOSTS configurável com fail-closed em produção, sessões expiradas filtradas; 463 testes). **S9 — Documentação** ✅ concluído (Fase U — 9 documentos em `DOCS/` descrevendo apenas o que existe: README, architecture, backend, frontend, database, security, design-system, api e development-guidelines).

@@ -18,7 +18,7 @@ Papéis em `acesso/models.py`:
 |---|---|
 | `admin_saas` | Administra a plataforma inteira (sem tenant) |
 | `admin_company` | Administra a própria empresa (equipe, config, campos, exclusões) |
-| `operacional` | Opera o dia a dia (cria/edita contatos, chamadas, acordos) |
+| `operacional` | Opera o dia a dia (cria/edita contatos, chamadas) |
 | `viewer` | Somente leitura |
 
 - Web: decorators `web_login_required`, `web_requer_admin`, `web_requer_edicao`.
@@ -31,8 +31,8 @@ Papéis em `acesso/models.py`:
 
 - Toda view web consulta com `filtro_tenant(request, qs)`; ids de outros tenants
   resultam em 404 (ex.: filtro de operador de outro tenant é ignorado).
-- Tabelas dependentes sem `tenant` próprio escopam pela FK: a agenda filtra por
-  `contato__tenant_id` (`agendamentos/views.py`).
+- Tabelas dependentes sem `tenant` próprio escopam pela FK (ex.: notas filtram
+  por `contato__tenant_id`).
 - A API escopa repositórios pelo `tenant_id` do usuário do JWT.
 - Testes dedicados garantem o isolamento (ver `teste/test_equipe.py`,
   `teste/test_rbac_api.py`, `teste/test_fase_s_relatorios.py`).

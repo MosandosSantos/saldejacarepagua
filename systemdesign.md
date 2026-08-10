@@ -62,7 +62,7 @@ projeto/
 │   ├── migrations/        #   criadas via makemigrations
 │   ├── tests.py           #   testes unitários Django (TestCase)
 │   └── apps.py
-├── <app2>/                # Outro tema (ex.: agendamentos)
+├── <app2>/                # Outro tema (ex.: tarefas)
 │   └── ...
 ├── api/                   # FastAPI — camada HTTP
 │   ├── main.py            #   create_app() + CORS + router; bootstrap do Django
@@ -84,7 +84,7 @@ projeto/
 ### Regras da estrutura
 
 1. **`core/`** = só configuração do Django (settings, urls). Sem models.
-2. **Apps por tema**: cada domínio (contatos, agendamentos, ...) é um app Django separado.
+2. **Apps por tema**: cada domínio (contatos, tarefas, ...) é um app Django separado.
 3. **`api/v1/`** = versão da API; a versão faz parte do prefixo da URL.
 4. **Fluxo de uma requisição**: `route` (HTTP) → `service` (negócio) → `repository` (ORM) → banco.
    A route nunca consulta o ORM diretamente; o service nunca sabe de HTTP; o repository não tem regra de negócio.
@@ -207,14 +207,6 @@ migrations já tivessem rodado. Validação: `manage.py shell` + `Model.objects.
 
 Regras de negócio: nome obrigatório; `valor >= 0`; campos vazios viram `'—'`;
 `updated_at` atualizado automaticamente a cada escrita.
-
-### agendamentos
-
-| Método | Rota | Status | Descrição |
-|---|---|---|---|
-| GET | `/api/v1/agendamentos` | 200 | Lista com `data`/`dia` calculados a partir de hoje, ignorando fins de semana (dia útil) |
-
-Saída: `{hora, tipo, tipoLabel, nome, empresa, data: "05/08", dia: "quarta-feira, 5 de agosto"}`.
 
 ### health
 
