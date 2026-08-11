@@ -1,8 +1,8 @@
-# Comparativo: neurocrm (modelo) × redcrm (nosso)
+# Comparativo: neurocrm (modelo) × cronoscrm (nosso)
 
 > **Propósito deste arquivo:** ser a fonte única de verdade da comparação entre o sistema
 > modelo (pasta `neurocrm`, na verdade o template **wacrm** — CRM para WhatsApp) e o nosso
-> **redcrm** (Django + FastAPI). Com ele, não precisamos reconsultar o projeto modelo para
+> **cronoscrm** (Django + FastAPI). Com ele, não precisamos reconsultar o projeto modelo para
 > saber o que falta: aqui está o catálogo completo, o gap e o roadmap sugerido.
 >
 > Última atualização: 08/08/2026 · Projeto modelo: `C:\Users\mosan\Documents\Sistemas\crm\neurocrm`
@@ -11,10 +11,10 @@
 
 ## 1. Visão geral das duas stacks
 
-| | **neurocrm (wacrm)** | **redcrm (nosso)** |
+| | **neurocrm (wacrm)** | **cronoscrm (nosso)** |
 |---|---|---|
 | Framework | Next.js 16 (App Router) + React 19 | Django 5 (templates DTL) + FastAPI (`api/v1`) |
-| Banco | Supabase (Postgres + Auth + Realtime + Storage) | PostgreSQL (`esferacrm`) via Django ORM |
+| Banco | Supabase (Postgres + Auth + Realtime + Storage) | PostgreSQL (`cronoscrm`) via Django ORM |
 | Estilo | Tailwind 4 + shadcn/ui + Recharts | Tailwind (app `theme`) + SVG procinente |
 | Autenticação | Supabase Auth (e-mail/senha) + sessão | Sessão Django (web) + JWT (API FastAPI) |
 | Foco | CRM de **WhatsApp** (Meta Business API) | CRM de **funil de vendas por nicho** (saúde/odonto/imob…) |
@@ -22,9 +22,9 @@
 | Público | Time que atende WhatsApp num número só | Clínicas/negócios locais (modelo "aula a aula") |
 
 **Resumo em uma frase:** o neurocrm é um CRM de *atendimento e disparo em WhatsApp*
-(caixa de entrada, broadcasts, automações, fluxos) com time; o redcrm é um CRM de
+(caixa de entrada, broadcasts, automações, fluxos) com time; o cronoscrm é um CRM de
 *funil/leads/agenda* com visual premium e nichos configuráveis. O neurocrm é o
-"motor de comunicação"; o redcrm é o "motor de vendas". Eles se complementam.
+"motor de comunicação"; o cronoscrm é o "motor de vendas". Eles se complementam.
 
 ---
 
@@ -104,7 +104,7 @@
 
 ---
 
-## 3. Catálogo do redcrm (o que NÓS já temos)
+## 3. Catálogo do cronoscrm (o que NÓS já temos)
 
 ### 3.1 Autenticação, time e configurações
 - Login web por sessão (e-mail + senha com hash), logout, redirecionamentos.
@@ -169,7 +169,7 @@
 
 ---
 
-## 4. GAP — o que o neurocrm faz que o redcrm NÃO faz
+## 4. GAP — o que o neurocrm faz que o cronoscrm NÃO faz
 
 > Ordenado do maior impacto para o menor. ✅ = já temos equivalente, ⚠️ = parcial, ❌ = não temos.
 
@@ -196,7 +196,7 @@
 
 ---
 
-## 5. O que o redcrm tem que o neurocrm NÃO tem (nossos diferenciais)
+## 5. O que o cronoscrm tem que o neurocrm NÃO tem (nossos diferenciais)
 
 | Recurso | Por que é nosso diferencial |
 |---|---|
@@ -211,7 +211,7 @@
 
 ## 6. Mapa conceitual 1:1 (para consulta rápida)
 
-| Conceito | neurocrm | redcrm |
+| Conceito | neurocrm | cronoscrm |
 |---|---|---|
 | Pessoa que compra | `Contact` (telefone normalizado) | `Contato` (sem normalização de telefone) |
 | Etiqueta | `Tag` + `ContactTag` | `Tag` (M2M) |
@@ -366,7 +366,7 @@
 
 ---
 
-## 9b. Comparativo: top-10 CRMs do mercado × redcrm (pesquisa 06/08/2026)
+## 9b. Comparativo: top-10 CRMs do mercado × cronoscrm (pesquisa 06/08/2026)
 
 > Pesquisa por solicitação do cliente: *"o que os 10 melhores CRMs do mercado têm que
 > nós não (excluindo WhatsApp)"*. Analisados: Salesforce Sales Cloud, HubSpot CRM,
@@ -375,7 +375,7 @@
 
 ### Checklist de recursos
 
-| Recurso | Top CRMs | Nós (redcrm) |
+| Recurso | Top CRMs | Nós (cronoscrm) |
 |---|---|---|
 | Contatos ricos, tags, notas, campos customizados | ✅ todos | ✅ temos (21+ campos) |
 | Pipeline/kanban com drag & drop | ✅ todos | ✅ temos (AJAX sem reload) |

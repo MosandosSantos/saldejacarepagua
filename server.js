@@ -10,7 +10,7 @@ app.use(express.static(__dirname));
 const pool = new Pool({
   user: process.env.PGUSER || 'postgres',
   host: process.env.PGHOST || 'localhost',
-  database: process.env.PGDATABASE || 'esferacrm',
+  database: process.env.PGDATABASE || 'cronoscrm',
   password: process.env.PGPASSWORD,
   port: parseInt(process.env.PGPORT || '5432', 10),
 });

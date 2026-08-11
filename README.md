@@ -64,7 +64,7 @@ O repositório já vem com `Dockerfile`, `Procfile`, `railway.json` e `.env.exam
 
 | E-mail | Senha | Papel |
 |--------|-------|-------|
-| admin@esferacrm.com | senha123 | admin_saas |
+| admin@cronoscrm.com | senha123 | admin_saas |
 | dona@aurora.com | senha123 | dono (tenant Aurora) |
 | ana@aurora.com | senha123 | recepção (tenant Aurora) |
 

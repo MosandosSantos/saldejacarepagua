@@ -1,6 +1,6 @@
 # System Design — CronosCRM (padrão replicável)
 
-> Documento de arquitetura do projeto `redcrm` (Django + FastAPI + PostgreSQL).
+> Documento de arquitetura do projeto `cronoscrm` (Django + FastAPI + PostgreSQL).
 > Serve de blueprint para replicar o mesmo padrão em outros projetos
 > (ex.: cronosCRM). Para um projeto novo, troque apenas os nomes de
 > tema e o esquema de dados — a estrutura, as camadas e os testes são os mesmos.
@@ -15,7 +15,7 @@ Sistema CRM de clínica (CronosCRM) construído em duas camadas:
   Não expõe HTTP — serve apenas como ORM/configuração.
 - **FastAPI** = camada REST (`/api/v1`), consumida pelo frontend (HTML/JS).
 
-Banco de dados: **PostgreSQL** local (banco `esferacrm`, já existente antes do
+Banco de dados: **PostgreSQL** local (banco `cronoscrm`, já existente antes do
 projeto — o Django adota as tabelas sem recriar dados).
 
 ---
@@ -270,9 +270,9 @@ def client():
     connections.close_all()
 ```
 
-`pytest` + `manage.py test` usam o mesmo banco de teste (`test_esferacrm`):
+`pytest` + `manage.py test` usam o mesmo banco de teste (`test_cronoscrm`):
 se um deixar o banco para trás, o outro pede para dropar — resolver com:
-`DROP DATABASE IF EXISTS test_esferacrm;` (após matar as sessões).
+`DROP DATABASE IF EXISTS test_cronoscrm;` (após matar as sessões).
 
 ---
 

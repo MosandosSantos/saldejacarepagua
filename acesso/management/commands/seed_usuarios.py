@@ -20,7 +20,7 @@ class Command(BaseCommand):
         garantir_etapas(tenant.id, tenant.nicho)
 
         usuarios = [
-            ('Admin SaaS', 'admin@esferacrm.com', 'admin_saas', None),
+            ('Admin SaaS', 'admin@cronoscrm.com', 'admin_saas', None),
             ('Dona Aurora', 'dona@aurora.com', 'admin_company', tenant),
             ('Ana Souza', 'ana@aurora.com', 'operacional', tenant),
             ('Laura Leitura', 'laura@aurora.com', 'viewer', tenant),

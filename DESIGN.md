@@ -1,5 +1,5 @@
 ---
-name: RedCRM (HAZON)
+name: CronosCRM (HAZON)
 description: CRM multi-tenant de vendas — painel escuro translúcido (vidro jateado) sobre gradiente teal, com tipografia Manrope + Fraunces.
 colors:
   hazon-night: "#0b2029"
@@ -126,7 +126,7 @@ components:
     padding: "{spacing.cell-pad}"
 ---
 
-# Design System: RedCRM (HAZON)
+# Design System: CronosCRM (HAZON)
 
 ## Overview
 
@@ -186,7 +186,7 @@ Paleta única nomeada `hazon-*` (família teal/night + semânticos). Os tokens s
 **Character:** Fraunces dá peso editorial e calidez aos títulos; Manrope é neutra e legível em densidade alta. O contraste serif×sans×mono cria três camadas claras: página (serif), interface (sans), dado (mono).
 
 ### Hierarchy
-- **Display** (Fraunces, 600, 28px, line-height 1.1, letter-spacing -0.01em): títulos de página (`.hazon-titulo`) e logo "HAZON CRM".
+- **Display** (Fraunces, 600, 28px, line-height 1.1, letter-spacing -0.01em): títulos de página (`.hazon-titulo`) e logo "CronosCRM".
 - **Title** (Manrope, 600, 13.5px, 1.25): nomes em cards kanban, itens de nav, texto de botões, labels de seção.
 - **Body** (Manrope, 400, 13px, 1.5): texto corrido, células de tabela, descrições, placeholders.
 - **Label** (Manrope, 700, 10px, letter-spacing 0.12em, UPPERCASE): rótulos micro (`.hazon-label`), headers de tabela (`.hazon-th`), captions de KPI, chips.
@@ -259,7 +259,7 @@ Pill full: `padding 0.125rem 0.625rem`, `font-size 10px / weight 700`, `white-sp
 Header uppercase dim (`10px / 700 / tracking 0.12em`), célula body muted (`12.5px`), ambos `padding 0.875rem 1.25rem`. Sem zebrado; separação por espaço e opacidade.
 
 ### Navigation (header)
-Logo: `rounded-[11px]` gradiente `#2aa1a8 → #075b60` + SVG de alvos concêntricos; wordmark "HAZON CRM" (Fraunces) com "CRM" em accent. Itens: `rounded-[11px] px-4 py-2.5`, ativo `bg-accent/15 text-accent`, inativo `text-muted hover:bg-white/10 hover:text-white`. Badge de tarefas: pill `bg-red-400/90` mono 10px. Avatar: `rounded-full` gradiente com iniciais (Fraunces).
+Logo: `rounded-[11px]` gradiente `#2aa1a8 → #075b60` + SVG de alvos concêntricos; wordmark "CronosCRM" (Fraunces) com "CRM" em accent. Itens: `rounded-[11px] px-4 py-2.5`, ativo `bg-accent/15 text-accent`, inativo `text-muted hover:bg-white/10 hover:text-white`. Badge de tarefas: pill `bg-red-400/90` mono 10px. Avatar: `rounded-full` gradiente com iniciais (Fraunces).
 
 ### Page Title (`.hazon-titulo`)
 Fraunces 28px/600, `letter-spacing -0.01em`, `color text`. Sub (`p.hazon-sub` ou classe): `14px dim`.

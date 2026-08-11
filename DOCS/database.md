@@ -3,7 +3,7 @@
 ## Configuração
 
 - Engine: **PostgreSQL** via `psycopg` (versão 3), configurado em `core/settings.py`.
-- Variáveis de ambiente (`.env`): `PGDATABASE` (padrão `esferacrm`), `PGUSER`
+- Variáveis de ambiente (`.env`): `PGDATABASE` (padrão `cronoscrm`), `PGUSER`
   (padrão `postgres`), `PGPASSWORD`, `PGHOST` (padrão `localhost`), `PGPORT` (5432).
 - Migrações: Django ORM (`python manage.py makemigrations` / `migrate`).
 - `USE_TZ = True`, `TIME_ZONE = 'America/Sao_Paulo'` — datas armazenadas em UTC

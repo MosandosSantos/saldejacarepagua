@@ -4,10 +4,10 @@
 -- ============================================================
 
 -- Cria o banco se não existir (truque psql)
-SELECT 'CREATE DATABASE esferacrm'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'esferacrm')\gexec
+SELECT 'CREATE DATABASE cronoscrm'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'cronoscrm')\gexec
 
-\c esferacrm
+\c cronoscrm
 
 -- ============================================================
 -- TABELAS

@@ -1,7 +1,7 @@
 {% extends 'base/basic.html' %}
 {% load static %}
 
-{% block titulo %}HAZON CRM — Entrar{% endblock %}
+{% block titulo %}CronosCRM — Entrar{% endblock %}
 
 {% block cabecalho %}{% endblock %}
 
@@ -67,7 +67,7 @@
             <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.6" fill="#fff"/>
           </svg>
         </div>
-        <span class="font-display text-[1.35rem] font-semibold tracking-tight text-white">HAZON<span class="text-[#74b3c6]"> CRM</span></span>
+        <span class="font-display text-[1.35rem] font-semibold tracking-tight text-white">Cronos<span class="text-[#74b3c6]">CRM</span></span>
       </div>
 
       <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.3em] text-white/90">
@@ -114,7 +114,7 @@
 
       <p class="footer mt-6 text-center text-[12.5px] leading-relaxed text-white/50">
         Demonstração — usuários de exemplo com senha <code class="rounded-md bg-white/10 px-1.5 py-0.5 text-white/75">senha123</code><br>
-        admin@esferacrm.com · dona@aurora.com · ana@aurora.com
+        admin@cronoscrm.com · dona@aurora.com · ana@aurora.com
       </p>
     </section>
   </div>
@@ -127,7 +127,7 @@
   var card = document.getElementById('loginCard');
   if (!card) return;
 
-  var STORE = 'esferacrm_card_pos';
+  var STORE = 'cronoscrm_card_pos';
   var tx = 0, ty = 0;
   try {
     var saved = JSON.parse(localStorage.getItem(STORE) || 'null');

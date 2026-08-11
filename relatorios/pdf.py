@@ -70,7 +70,7 @@ def _rodape(canvas, doc):
     canvas.setFont('Helvetica', 7)
     canvas.setFillColor(COR_MUTA)
     canvas.drawString(18 * mm, 9.5 * mm, _txt(
-        f'Documento gerado por HAZON CRM em {date.today().strftime("%d/%m/%Y")}'
+        f'Documento gerado por CronosCRM em {date.today().strftime("%d/%m/%Y")}'
     ))
     canvas.drawRightString(A4[0] - 18 * mm, 9.5 * mm, 'Relatório gerencial')
     canvas.restoreState()
@@ -82,7 +82,7 @@ def gerar_relatorio_pdf(tenant, periodo_label, kpis, produtividade, operador_nom
     `operador_nome` (opcional) identifica o operador quando o relatório foi
     filtrado por `?operador=` — exibido na faixa de contexto do cabeçalho.
     """
-    nome_empresa = _txt(tenant.nome) if tenant is not None else 'HAZON CRM'
+    nome_empresa = _txt(tenant.nome) if tenant is not None else 'CronosCRM'
     story = []
 
     # ---------- Cabeçalho ----------

@@ -8,7 +8,7 @@ web
 
 ## Users
 
-RedCRM serve três papéis dentro do modelo SaaS multi-tenant:
+CronosCRM serve três papéis dentro do modelo SaaS multi-tenant:
 
 - **admin_saas** — operador da plataforma (dono do SaaS). Não pertence a nenhum tenant e por isso enxerga todos eles; cuida de provisionamento, clientes e saúde do produto.
 - **dono** — dono do negócio cliente (um tenant). Acompanha pipeline, receita projetada e equipe.
@@ -29,7 +29,7 @@ Um **núcleo de CRM, vários nichos**: as chaves de etapa e as categorias são f
 - **Painel web** em Django 5.2 (templates DTL + Tailwind) na porta `8000`, autenticação por **sessão**.
 - **API REST** em FastAPI (`/api/v1`) também na `8000`, autenticação por **JWT** (exclusiva da API).
 - **Multi-tenant**: toda consulta web é escopada por `tenant_id` da sessão; o `admin_saas` (sem tenant) enxerga tudo.
-- **Banco** PostgreSQL (`esferacrm`); o Django adota tabelas existentes via `Meta.db_table` + `migrate --fake-initial`.
+- **Banco** PostgreSQL (`cronoscrm`); o Django adota tabelas existentes via `Meta.db_table` + `migrate --fake-initial`.
 - **Front legado** em HTML estático (`index.html`, `server.js` na porta `3001`) permanece só como referência.
 - **Stack completa e dev commands** já definidos no `README.md` e em `systemdesign.md` (arquitetura em camadas route→service→repository).
 
@@ -47,14 +47,14 @@ Um **núcleo de CRM, vários nichos**: as chaves de etapa e as categorias são f
 
 ## Brand Commitments
 
-- **Nome do produto**: RedCRM.
+- **Nome do produto**: CronosCRM.
 - **Design system existente**: **HAZON** — tokens de cor únicos em `theme/static_src/tailwind.config.js` (paleta teal/night escura: `night`, `abyss`, `deep`, `surface`, `primary`, `accent`, `success`, etc.).
 - **Tipografia**: `Manrope` (sans) e `Fraunces` (display).
 - **Cores das etapas do funil** (`STAGES`) são fixas e compartilhadas entre nichos — parte da identidade visual do produto.
 
 ## Evidence on Hand
 
-- `README.md` — arquitetura, setup, apps web, usuários de seed (admin@esferacrm.com, dona@aurora.com, ana@aurora.com).
+- `README.md` — arquitetura, setup, apps web, usuários de seed (admin@cronoscrm.com, dona@aurora.com, ana@aurora.com).
 - `systemdesign.md` — blueprint da arquitetura Django+FastAPI+PostgreSQL (camadas, contratos de API, padrão de testes).
 - `core/dominio.py` — fonte da verdade de stages, pesos, nichos, segmentos, origens e pagamentos.
 - `theme/static_src/tailwind.config.js` — tokens do design system HAZON.

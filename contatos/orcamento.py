@@ -99,7 +99,7 @@ def _rodape(canvas, doc):
 
 def gerar_orcamento_pdf(tenant, contato, negocio) -> bytes:
     """Monta o PDF da proposta comercial do negócio; devolve os bytes do arquivo."""
-    nome_clinica = _txt(tenant.nome) if tenant is not None else 'HAZON CRM'
+    nome_clinica = _txt(tenant.nome) if tenant is not None else 'CronosCRM'
     hoje = date.today()
     validade = hoje + timedelta(days=7)
 

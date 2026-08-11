@@ -62,7 +62,7 @@ class Command(BaseCommand):
                 f'Olá!\n\n'
                 f'Segue o relatório gerencial de {label.lower()} da {tenant.nome} '
                 f'(gerado em {date.today().strftime("%d/%m/%Y")}).\n\n'
-                f'— HAZON CRM'
+                f'— CronosCRM'
             )
             anexo = f'relatorio-gerencial-{date.today():%Y-%m-%d}.pdf'
 

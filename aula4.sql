@@ -1,7 +1,7 @@
 -- ============================================================
 -- CronosCRM — Aula 4: adaptação pro nicho CLÍNICA / SAÚDE
 -- ============================================================
-\c esferacrm
+\c cronoscrm
 
 -- Novos campos do cadastro
 ALTER TABLE contatos ADD COLUMN IF NOT EXISTS procedimento    TEXT DEFAULT '—';

@@ -118,7 +118,7 @@ ASGI_APPLICATION = 'core.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('PGDATABASE', 'esferacrm'),
+        'NAME': os.getenv('PGDATABASE', 'cronoscrm'),
         'USER': os.getenv('PGUSER', 'postgres'),
         'PASSWORD': os.getenv('PGPASSWORD', ''),
         'HOST': os.getenv('PGHOST', 'localhost'),
@@ -215,7 +215,7 @@ LOGIN_RATE_JANELA = int(os.getenv('LOGIN_RATE_JANELA', '300'))  # segundos
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'redcrm-default',
+        'LOCATION': 'cronoscrm-default',
     }
 }
 
@@ -265,7 +265,7 @@ EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', '1') == '1'
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'CRM EsferaDataSci <nao-responder@esferadatasci.com.br>')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'CronosCRM <nao-responder@esferadatasci.com.br>')
 EMAIL_CONFIGURADO = bool(EMAIL_HOST)
 
 # ---------------------------------------------------------------------------
