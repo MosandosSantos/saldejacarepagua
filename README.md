@@ -1,6 +1,6 @@
-# CronosCRM
+# CRMCronos.Cloud
 
-CRM multi-tenant de vendas (CronosCRM) com painel web em **Django (templates DTL + Tailwind)**, API REST em **FastAPI** e banco **PostgreSQL**.
+CRM multi-tenant de vendas (CRMCronos.Cloud) com painel web em **Django (templates DTL + Tailwind)**, API REST em **FastAPI** e banco **PostgreSQL**.
 
 ## Arquitetura
 
@@ -62,11 +62,15 @@ O repositório já vem com `Dockerfile`, `Procfile`, `railway.json` e `.env.exam
 
 ## Usuários de seed
 
-| E-mail | Senha | Papel |
-|--------|-------|-------|
-| admin@cronoscrm.com | senha123 | admin_saas |
-| dona@aurora.com | senha123 | dono (tenant Aurora) |
-| ana@aurora.com | senha123 | recepção (tenant Aurora) |
+Após rodar `python manage.py seed_usuarios`, as credenciais são geradas
+aleatoriamente e salvas em `.env-seed` (não versionado).
+
+| E-mail | Papel |
+|--------|-------|
+| admin@cronoscrm.com | admin_saas |
+| carlos@lojavirtual.com | admin_company |
+| ana@lojavirtual.com | operacional |
+| pedro@lojavirtual.com | viewer |
 
 ## Apps web
 

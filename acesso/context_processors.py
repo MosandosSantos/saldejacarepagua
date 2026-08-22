@@ -55,10 +55,10 @@ _ROTAS = [
     ('Dashboard', 'dashboard', 'dashboard:index', _ICONE_DASH, None, set()),
     ('Funil', 'funil', 'funil:kanban', _ICONE_FUNIL, None, set()),
     ('Contatos', 'contatos', 'contatos:lista', _ICONE_CONTATOS, None, {'carteiras', 'carteira_detalhe'}),
-    ('Carteiras', 'contatos', 'contatos:carteiras', _ICONE_CARTEIRA, {'carteiras', 'carteira_detalhe'}, set()),
+    ('Carteiras', None, 'premium_carteiras', _ICONE_CARTEIRA, None, set()),
     ('Tarefas', 'tarefas', 'tarefas:lista', _ICONE_TAREFAS, None, set()),
-    ('Campanhas', 'campanhas', 'campanhas:lista', _ICONE_CAMPANHA, None, set(), _CAMPANHA_SUBS),
-    ('Discador', 'discador', 'discador:operador', _ICONE_DISCADOR, None, set()),
+    ('Campanhas', None, 'premium_campanhas', _ICONE_CAMPANHA, None, set()),
+    ('WhatsApp', None, 'premium_whatsapp', _ICONE_DISCADOR, None, set()),
 ]
 
 ROLE_LABELS = {
@@ -124,7 +124,7 @@ def web_sessao(request):
         ),
         'web_logado': bool(request.session.get('usuario_id')),
         'web_eh_admin': role in ('admin_company', 'admin_saas'),
-        'web_pode_editar': role in ('admin_company', 'operacional'),
+        'web_pode_editar': role in ('admin_company', 'operacional', 'admin_saas'),
         'web_tema': request.session.get('tema', 'escuro'),
         'web_tarefas': resumo,
         'web_usuario': {

@@ -1,5 +1,5 @@
 -- ============================================================
--- CronosCRM — Aula 4: adaptação pro nicho CLÍNICA / SAÚDE
+-- CRMCronos.Cloud — Aula 4: adaptação pro nicho CLÍNICA / SAÚDE
 -- ============================================================
 \c cronoscrm
 

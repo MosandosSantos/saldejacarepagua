@@ -1,6 +1,6 @@
 # Documentação do projeto
 
-Documentação técnica do **CronosCRM** — CRM multi-tenant de vendas com painel web em
+Documentação técnica do **CRMCronos.Cloud** — CRM multi-tenant de vendas com painel web em
 **Django (templates DTL + Tailwind)**, API REST em **FastAPI** e banco **PostgreSQL**.
 
 Esta documentação descreve **somente o que existe no projeto** no momento em que foi

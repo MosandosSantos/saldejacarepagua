@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}CronosCRM — Configurações{% endblock %}
+{% block titulo %}CRMCronos.Cloud — Configurações{% endblock %}
 
 {% block conteudo %}
 <div class="mx-auto max-w-4xl space-y-6">
@@ -376,7 +376,42 @@
     <!-- Equipe -->
     <section id="equipe" class="scroll-mt-24 hazon-card-lg p-8">
       <h2 class="mb-1 font-display text-lg font-semibold text-white">Equipe</h2>
-      <p class="mb-5 text-[12.5px] text-[#6f8a93]">Convide por link: a pessoa preenche nome e senha e entra direto como membro — sem você precisar criar a senha.</p>
+
+      <!-- Criar usuário diretamente -->
+      <div class="mb-6 rounded-2xl border border-[#74b3c6]/30 bg-[#74b3c6]/5 p-5">
+        <h3 class="mb-3 text-[13.5px] font-semibold text-[#74b3c6]">👤 Criar usuário</h3>
+        <p class="mb-4 text-[12px] text-[#6f8a93]">Crie um usuário com nome, e-mail e senha — ele entra imediatamente com as credenciais.</p>
+        <form method="post" class="grid grid-cols-1 gap-3 sm:grid-cols-2 hazon-form">
+          {% csrf_token %}
+          <input type="hidden" name="acao" value="criar_usuario">
+          <div>
+            <label for="cu_nome" class="hazon-label">Nome *</label>
+            <input type="text" id="cu_nome" name="nome" placeholder="Nome completo" required>
+          </div>
+          <div>
+            <label for="cu_email" class="hazon-label">E-mail *</label>
+            <input type="email" id="cu_email" name="email" placeholder="usuario@empresa.com" required>
+          </div>
+          <div>
+            <label for="cu_senha" class="hazon-label">Senha *</label>
+            <input type="password" id="cu_senha" name="senha" placeholder="Mínimo 8 caracteres" required minlength="8">
+          </div>
+          <div>
+            <label for="cu_papel" class="hazon-label">Papel</label>
+            <select id="cu_papel" name="papel">
+              <option value="operacional" selected>Operacional</option>
+              <option value="admin_company">Admin da empresa</option>
+              <option value="viewer">Somente leitura</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <button type="submit" class="hazon-btn hazon-btn-primary px-6 py-2 text-[13px] font-semibold text-white transition hover:brightness-110">Criar usuário</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Convidar por link -->
+      <p class="mb-3 text-[12.5px] text-[#6f8a93]">Ou convide por link: a pessoa preenche nome e senha e entra direto como membro — sem você precisar criar a senha.</p>
       <form method="post" class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 hazon-form">
         {% csrf_token %}
         <input type="hidden" name="acao" value="equipe">

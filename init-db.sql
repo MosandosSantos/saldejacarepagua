@@ -1,5 +1,5 @@
 -- ============================================================
--- CronosCRM — Inicialização do banco PostgreSQL
+-- CRMCronos.Cloud — Inicialização do banco PostgreSQL
 -- Rodar com: psql -U postgres -h localhost -f init-db.sql
 -- ============================================================
 
@@ -59,5 +59,5 @@ SELECT setval('contatos_id_seq', (SELECT MAX(id) FROM contatos));
 -- ============================================================
 -- Confirmação
 -- ============================================================
-SELECT 'CronosCRM pronto!' AS status,
+SELECT 'CRMCronos.Cloud pronto!' AS status,
        (SELECT COUNT(*) FROM contatos) AS contatos;

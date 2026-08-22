@@ -8,7 +8,7 @@ web
 
 ## Users
 
-CronosCRM serve três papéis dentro do modelo SaaS multi-tenant:
+CRMCronos.Cloud serve três papéis dentro do modelo SaaS multi-tenant:
 
 - **admin_saas** — operador da plataforma (dono do SaaS). Não pertence a nenhum tenant e por isso enxerga todos eles; cuida de provisionamento, clientes e saúde do produto.
 - **dono** — dono do negócio cliente (um tenant). Acompanha pipeline, receita projetada e equipe.
@@ -47,7 +47,7 @@ Um **núcleo de CRM, vários nichos**: as chaves de etapa e as categorias são f
 
 ## Brand Commitments
 
-- **Nome do produto**: CronosCRM.
+- **Nome do produto**: CRMCronos.Cloud.
 - **Design system existente**: **HAZON** — tokens de cor únicos em `theme/static_src/tailwind.config.js` (paleta teal/night escura: `night`, `abyss`, `deep`, `surface`, `primary`, `accent`, `success`, etc.).
 - **Tipografia**: `Manrope` (sans) e `Fraunces` (display).
 - **Cores das etapas do funil** (`STAGES`) são fixas e compartilhadas entre nichos — parte da identidade visual do produto.

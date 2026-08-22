@@ -1,5 +1,5 @@
 # =============================================================================
-# CronosCRM — imagem de producao (Railway)
+# CRMCronos.Cloud — imagem de producao (Railway)
 #
 # Servidor: uvicorn (ASGI) servindo Django (painel web) + FastAPI (/api/v1)
 # no mesmo processo e porta (core.asgi).

@@ -2,7 +2,7 @@
   "name": "cronoscrm",
   "version": "1.0.0",
   "private": true,
-  "description": "CronosCRM — Sales CRM com PostgreSQL",
+  "description": "CRMCronos.Cloud — Sales CRM com PostgreSQL",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -25,6 +25,15 @@ PESOS_ETAPA = {
 
 # As chaves dos estágios ficam fixas no banco; o nicho apenas re-rotula os nomes.
 _NICHO_NOMES = {
+    'ecommerce': {
+        'label': 'E-commerce',
+        'interessado': 'Lead capturado',
+        'avaliacao_agendada': 'Contato feito',
+        'avaliacao_feita': 'Qualificado',
+        'orcamento': 'Proposta enviada',
+        'fechado': 'Pedido fechado',
+        'perdido': 'Perdido',
+    },
     'saude': {
         'label': 'Saúde & estética',
         'interessado': 'Interessado',
@@ -81,7 +90,7 @@ _NICHO_NOMES = {
     },
 }
 
-NICHO_PADRAO = 'saude'
+NICHO_PADRAO = 'ecommerce'
 NICHOS = {k: {'label': v['label']} for k, v in _NICHO_NOMES.items()}
 
 
@@ -101,17 +110,17 @@ def stage_map_do_nicho(nicho):
 STAGE_MAP = {s['key']: s for s in STAGES}
 
 SEGS = {
-    'estetica': {'label': 'Estética',      'color': '#4ade80'},
-    'odonto':   {'label': 'Odontologia',   'color': '#60a5fa'},
-    'derma':    {'label': 'Dermatologia',  'color': '#7fe3c4'},
-    'fisio':    {'label': 'Fisioterapia',  'color': '#fbbf24'},
-    'nutri':    {'label': 'Nutrição',      'color': '#c084fc'},
-    'psi':      {'label': 'Psicologia',    'color': '#38bdf8'},
-    'geral':    {'label': 'Geral', 'color': '#fb923c'},
+    'eletronicos': {'label': 'Eletrônicos',  'color': '#60a5fa'},
+    'moda':        {'label': 'Moda & vestuário', 'color': '#c084fc'},
+    'casa':        {'label': 'Casa & decoração', 'color': '#4ade80'},
+    'beleza':      {'label': 'Beleza & cuidados', 'color': '#f472b6'},
+    'esportes':    {'label': 'Esportes & lazer', 'color': '#fbbf24'},
+    'alimentos':   {'label': 'Alimentos',    'color': '#fb923c'},
+    'geral':       {'label': 'Geral',        'color': '#94a3b8'},
 }
 
 SEG_FALLBACK = {'label': '—', 'color': '#888888'}
 
 # Opções fixas de origem do contato e forma de pagamento (compartilhadas por forms/dashboard)
-ORIGENS = ['Instagram', 'Indicação', 'Google', 'WhatsApp', 'Site', 'Outro']
-PAGAMENTOS = ['Particular', 'Convênio', 'Plano', 'Outro']
+ORIGENS = ['Instagram', 'Google Ads', 'Facebook', 'Indicação', 'WhatsApp', 'Orgânico', 'Marketplace', 'Outro']
+PAGAMENTOS = ['Cartão de crédito', 'Boleto', 'Pix', 'Transferência', 'Parcelado', 'Outro']

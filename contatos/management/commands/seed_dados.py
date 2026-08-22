@@ -85,22 +85,21 @@ _CIDADES = ['São Paulo', 'Campinas', 'Santos', 'Ribeirão Preto', 'São José d
             'Guarulhos', 'Osasco', 'Santo André', 'Sorocaba', 'Jundiaí']
 _BAIRROS = ['Centro', 'Vila Mariana', 'Moema', 'Pinheiros', 'Tatuapé', 'Santana',
             'Jardins', 'Itaim Bibi', 'Perdizes', 'Alphaville']
-_EMPRESAS = ['Studio Bella', 'OdontoMais', 'Prime Consultoria', 'Vida Ativa', 'Bem Estar',
-             'Sorriso Perfeito', 'Nova Era Estética', 'Vitalle Saúde', 'Clínica Aurora']
-_CARGOS = ['Gerente', 'Proprietária', 'Coordenadora', 'Sócia', 'Diretora']
-_PROCEDIMENTOS = ['Limpeza de pele', 'Harmonização facial', 'Botox', 'Preenchimento labial',
-                  'Depilação a laser', 'Clareamento dental', 'Implante dentário',
-                  'Avaliação postural', 'Fisioterapia', 'Acompanhamento nutricional',
-                  'Terapia', 'Check-up geral']
+_EMPRESAS = ['TechStore', 'Moda Express', 'Casa & Estilo', 'Beleza Total', 'Esporte Premium',
+             'Alimentos Bio', 'Pet Shop Online', 'Ferramentas Pro', 'Livraria Digital', 'Loja Virtual']
+_CARGOS = ['Gerente', 'Comprador', 'Coordenador', 'Sócio', 'Diretor', 'Responsável', 'Analista']
+_PRODUTOS = ['Smartphone X', 'Notebook Pro', 'Tênis Runner', 'Camiseta Premium', 'Sofá Moderno',
+             'Kit Skincare', 'Suplemento Natural', 'Mochila Travel', 'Fone Bluetooth', 'Smartwatch',
+             'Console Games', 'Livro Best-seller', 'Cadeira Ergonômica', 'Air Fryer', 'Robô Aspirador']
 _NOTAS = [
-    'Preferiu aguardar o contato do financeiro.',
-    'Pediu orçamento por WhatsApp.',
-    'Interessada em pacote de 5 sessões.',
-    'Encaminhada pelo Dr. Carlos.',
-    'Retornar após o dia 15 (pagamento).',
-    'Reclamou do tempo de espera na última visita.',
-    'Confirmou presença na avaliação.',
-    'Solicitou reenvio do orçamento por e-mail.',
+    'Aguardando estoque do produto.',
+    'Pediu desconto para compra atacado.',
+    'Interessado em frete grátis.',
+    'Indicado por cliente satisfeito.',
+    'Retornar após pagamento do boleto.',
+    'Reclamou de atraso na entrega.',
+    'Confirmou compra via Pix.',
+    'Solicitou troca do tamanho.',
 ]
 
 _CARTEIRAS = [
@@ -121,43 +120,43 @@ _TAGS = [
 ]
 
 _TITULOS_TAREFAS = [
-    'Ligar para retornar orçamento',
-    'Enviar proposta por e-mail',
-    'Agendar avaliação',
-    'Confirmar consulta',
-    'Reagendar consulta perdida',
-    'Enviar lembrete de pagamento',
-    'Pedir indicações',
-    'Cobrar pendência financeira',
-    'Enviar material do procedimento',
-    'Follow-up pós-avaliação',
-    'Renovar plano de fidelidade',
+    'Ligar para confirmar pedido',
+    'Enviar código de rastreio',
+    'Confirmar estoque do produto',
+    'Atualizar status de entrega',
+    'Retornar sobre troca solicitada',
+    'Enviar cupom de desconto',
+    'Pedir avaliação do produto',
+    'Cobrar pedido pendente',
+    'Enviar catálogo de novidades',
+    'Follow-up pós-venda',
+    'Renovar assinatura',
     'Atualizar dados cadastrais',
 ]
 
 _CAMPANHAS = [
-    ('Boas-vindas', 'E-mail de boas-vindas para novos contatos', 'email', True),
-    ('Promoção de Inverno', 'Divulgação da campanha promocional da estação', 'email', True),
-    ('Recall de consultas', 'Lembrete de consultas e retornos', 'whatsapp', True),
-    ('Novidades da clínica', 'Anúncio de novos procedimentos', 'whatsapp', True),
-    ('Telecobrança', 'Contato telefônico de pendências', 'telefone', True),
-    ('Fidelização', 'Campanha de retorno de clientes antigos', 'telefone', False),
+    ('Boas-vindas', 'E-mail de boas-vindas para novos clientes', 'email', True),
+    ('Black Friday', 'Divulgação de ofertas da Black Friday', 'email', True),
+    ('Carrinho abandonado', 'Lembrete de carrinho abandonado', 'whatsapp', True),
+    ('Lançamento de produto', 'Anúncio de novos produtos', 'whatsapp', True),
+    ('Recompra', 'Contato para recompra de produtos', 'telefone', True),
+    ('Fidelização', 'Campanha de retenção de clientes', 'telefone', False),
 ]
 
 _MODELOS_EMAIL = [
-    ('Boas-vindas', 'Seja bem-vinda(o), {{nome}}!',
-     'Olá {{nome}}, é um prazer ter você com a gente. Conte com nossa equipe para o que precisar.'),
-    ('Lembrete de consulta', 'Lembrete: sua consulta se aproxima',
-     'Olá {{nome}}, passando pra lembrar do seu horário na {{empresa}}. Qualquer dúvida, é só chamar.'),
-    ('Orçamento', 'Seu orçamento, {{nome}}',
-     'Olá {{nome}}, segue o orçamento do procedimento {{procedimento}} no valor de R$ {{valor}}. Ficamos à disposição.'),
+    ('Boas-vindas', 'Seja bem-vindo(a), {{nome}}!',
+     'Olá {{nome}}, é um prazer ter você conosco. Aproveite nossas ofertas exclusivas!'),
+    ('Pedido confirmado', 'Seu pedido foi confirmado!',
+     'Olá {{nome}}, seu pedido na {{empresa}} foi confirmado. Acompanhe pelo código de rastreio.'),
+    ('Proposta', 'Sua proposta personalizada, {{nome}}',
+     'Olá {{nome}}, preparamos uma proposta especial para o produto de R$ {{valor}}. Aproveite!'),
 ]
 
 _SCRIPTS = [
     ('Cobrança amigável',
      'Roteiro para contato de cobrança com abordagem consultiva.',
      '1. Cumprimentar pelo nome e confirmar identidade\n'
-     '- Bom dia! Falo com {nome}? Aqui é da Clínica Aurora.\n'
+     '- Bom dia! Falo com {nome}? Aqui é da Loja Online.\n'
      '2. Contextualizar a pendência\n'
      '- Estamos ligando sobre o valor de R$ {valor}, referente a {procedimento}.\n'
      '3. Ouvir e negociar\n'
@@ -166,7 +165,7 @@ _SCRIPTS = [
      '4. Fechar e registrar\n'
      '- Combinado então: retorno em {retorno}. Obrigado pela atenção!'),
     ('Prospecção de novos leads',
-     'Roteiro para qualificar leads novos e agendar avaliação.',
+     'Roteiro para qualificar leads novos e apresentar produtos.',
      '1. Abrir com a origem do contato\n'
      '- Vi que você nos procurou pelo {origem}. Como podemos ajudar?\n'
      '2. Descobrir o interesse\n'
@@ -250,8 +249,8 @@ class Command(BaseCommand):
             'do funil, tarefas, carteiras, campanhas e dados de apoio.')
 
     def add_arguments(self, parser):
-        parser.add_argument('--tenant', default='clinica-aurora',
-                            help='Slug do tenant de destino (padrão: clinica-aurora).')
+        parser.add_argument('--tenant', default='loja-virtual',
+                            help='Slug do tenant de destino (padrão: loja-virtual).')
         parser.add_argument('--total', type=int, default=100,
                             help='Quantidade de contatos a semear (padrão: 100).')
         parser.add_argument('--reset', action='store_true',
@@ -265,7 +264,7 @@ class Command(BaseCommand):
         tenant = Tenant.objects.filter(slug=slug).first()
         if tenant is None:
             tenant = Tenant.objects.create(
-                nome='Empresa Aurora (demonstração)', slug=slug, nicho='saude')
+                nome='Loja Virtual (demonstração)', slug=slug, nicho='ecommerce')
             self.stdout.write(self.style.SUCCESS(f'Tenant "{slug}" criado.'))
         garantir_etapas(tenant.id, tenant.nicho)
         self._garantir_usuarios(tenant)
@@ -302,6 +301,7 @@ class Command(BaseCommand):
 
     # ------------------------------------------------------------------ apoio
     def _garantir_usuarios(self, tenant):
+        import secrets as _secrets
         padrao = [
             ('Admin SaaS', 'admin@cronoscrm.com', 'admin_saas', None),
             ('Dona Aurora', 'dona@aurora.com', 'admin_company', tenant),
@@ -309,11 +309,15 @@ class Command(BaseCommand):
             ('Laura Leitura', 'laura@aurora.com', 'viewer', tenant),
         ]
         for nome, email, role, ten in padrao:
-            Usuario.objects.get_or_create(
+            _, created = Usuario.objects.get_or_create(
                 email=email,
-                defaults={'nome': nome, 'role': role, 'tenant': ten,
-                          'senha': make_password('senha123')},
+                defaults={'nome': nome, 'role': role, 'tenant': ten},
             )
+            if created:
+                senha = _secrets.token_urlsafe(12)
+                u = Usuario.objects.get(email=email)
+                u.senha = make_password(senha)
+                u.save(update_fields=['senha'])
 
     def _limpar(self, tenant):
         tenant.contatos.all().delete()  # cascata: negocios, notas, movimentacoes, envios, chamadas
@@ -358,7 +362,7 @@ class Command(BaseCommand):
                 tel=tel,
                 email=email,
                 seg=random.choice(list(SEGS)),
-                procedimento=random.choice(_PROCEDIMENTOS) if i % 5 != 0 else '—',
+                procedimento=random.choice(_PRODUTOS) if i % 5 != 0 else '—',
                 ultima_consulta=(agora - timedelta(days=random.randint(5, 180))).strftime('%d/%m/%Y')
                 if i % 4 == 0 else '—',
                 origem=random.choice(ORIGENS),
@@ -604,4 +608,4 @@ class Command(BaseCommand):
             f'{e}: {Negocio.objects.filter(tenant=tenant, stage=e).count()}'
             for e in [s['key'] for s in STAGES])
         self.stdout.write(f'  Negócios por etapa — {por_etapa}')
-        self.stdout.write(self.style.SUCCESS('Carga concluída. Senha padrão dos usuários: senha123'))
+        self.stdout.write(self.style.SUCCESS('Carga concluída. Senhas aleatórias geradas para usuários novos (ver .env-seed).'))

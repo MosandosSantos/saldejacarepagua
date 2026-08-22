@@ -19,6 +19,7 @@ theme/static/css/dist/
 .env.txt
 .env.*
 !.env.example
+.env-seed
 pg_hba.conf.bak
 
 # Virtualenvs

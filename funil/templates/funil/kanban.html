@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}CronosCRM — Funil{% endblock %}
+{% block titulo %}CRMCronos.Cloud — Funil{% endblock %}
 
 {% block conteudo %}
 {% if web_pode_editar %}
@@ -8,8 +8,7 @@
 <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 {% endif %}
 <div class="mb-7">
-  <h1 class="hazon-titulo">Funil de pacientes</h1>
-  <p class="mt-2 text-sm font-medium text-[#74b3c6]">{% if web_pode_editar %}Arraste os cards entre as etapas para atualizar cada paciente.{% else %}Modo somente leitura — peça ao admin da empresa para mover os pacientes.{% endif %}</p>
+  <h1 class="hazon-titulo">Funil de clientes</h1>
 </div>
 
 <div class="mb-6 flex flex-wrap items-center gap-4">
@@ -31,7 +30,14 @@
     Etapas
   </a>
   {% endif %}
-  <a href="{% url 'contatos:exportar_negocios' %}" class="ml-auto hazon-btn hazon-btn-ghost" title="Baixar CSV dos negócios">
+  {% if web_pode_editar %}
+  <button type="button" id="btn-importar-leads"
+          class="hazon-btn hazon-btn-ghost" title="Importar leads de um CSV">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Importar
+  </button>
+  {% endif %}
+  <a href="{% url 'contatos:exportar_negocios' %}" class="hazon-btn hazon-btn-ghost" title="Baixar CSV dos negócios">
     <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Exportar
   </a>
@@ -160,7 +166,46 @@
     </form>
   </div>
 </div>
+
+<!-- Modal de importação de leads -->
+<div id="modal-importar" class="lead-modal fixed inset-0 z-40 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="importar-titulo">
+  <div class="absolute inset-0" style="background:rgba(0,0,0,.62);backdrop-filter:blur(4px)" data-fechar-importar></div>
+  <div class="lead-modal-painel relative w-full max-w-lg hazon-card-lg p-6">
+    <div class="mb-5 flex items-center justify-between gap-3">
+      <h2 id="importar-titulo" class="font-display text-lg font-semibold text-white">📥 Importar leads</h2>
+      <button type="button" data-fechar-importar aria-label="Fechar"
+              class="flex h-9 w-9 items-center justify-center rounded-lg text-[#6f8a93] transition hover:bg-white/10 hover:text-white">✕</button>
+    </div>
+    <p class="-mt-2 mb-4 text-[12.5px] leading-relaxed text-[#6f8a93]">
+      Envie um arquivo <b class="text-white">.csv</b> com os leads. Colunas aceitas:<br>
+      <code class="text-[11px] text-[#74b3c6]">nome, telefone, email, empresa, valor, origem, etapa, segmento, descricao</code><br>
+      Apenas a coluna <b class="text-[#fb923c]">nome</b> é obrigatória.
+    </p>
+    <form id="form-importar" class="space-y-4" novalidate>
+      {% csrf_token %}
+      <div>
+        <label for="importar-arquivo" class="hazon-label">Arquivo CSV</label>
+        <input id="importar-arquivo" name="arquivo" type="file" accept=".csv"
+               class="block w-full rounded-xl border border-white/12 bg-white/6 px-4 py-3 text-[13.5px] text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#74b3c6]/20 file:px-4 file:py-2 file:text-[12.5px] file:font-semibold file:text-[#74b3c6] hover:file:bg-[#74b3c6]/30">
+      </div>
+      <div>
+        <label for="importar-etapa" class="hazon-label">Etapa padrão (para leads sem coluna "etapa")</label>
+        <select id="importar-etapa" name="etapa_padrao" class="lead-input">
+          {% for st in stages %}<option value="{{ st.key }}">{{ st.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <p id="importar-erros" class="hidden rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[12.5px] text-red-200"></p>
+      <p id="importar-ok" class="hidden rounded-xl border border-[#74b3c6]/40 bg-[#74b3c6]/15 px-4 py-3 text-[12.5px] text-[#74b3c6]"></p>
+      <div class="flex gap-3 pt-1">
+        <button type="submit" id="btn-importar-salvar" class="hazon-btn hazon-btn-primary flex-1 text-[13.5px] font-semibold text-white transition hover:brightness-110" style="min-height:44px">Importar leads</button>
+        <button type="button" data-fechar-importar class="hazon-btn hazon-btn-ghost px-5 text-[13px]" style="min-height:44px">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endif %}
+
+
 {% endblock %}
 
 {% block js %}
@@ -168,6 +213,8 @@
   {% if web_pode_editar %}
   .kanban-card { cursor: grab; }
   .kanban-card:active { cursor: grabbing; }
+  .stage-select { cursor: pointer; }
+  .stage-select:focus { border-color: rgba(116,179,198,.5); background: rgba(255,255,255,.1); }
   {% endif %}
   .kanban-card.dragging { opacity: 0.35; }
   .kanban-col.is-over {
@@ -256,6 +303,43 @@ function armarDrag(card) {
   });
 }
 document.querySelectorAll('.kanban-card').forEach(armarDrag);
+
+// ---- Seletor de fase (select no card) ----
+document.querySelectorAll('.stage-select').forEach(function(sel) {
+  sel.addEventListener('change', function() {
+    var id = sel.getAttribute('data-id');
+    var stage = sel.value;
+    if (!id || !stage) return;
+    var card = sel.closest('.kanban-card');
+    var colOrigem = card ? card.closest('.kanban-col') : null;
+    var stageOrigem = colOrigem ? colOrigem.getAttribute('data-stage') : '';
+    if (stage === stageOrigem) return; // mesma coluna
+    var fd = new FormData();
+    fd.append('stage', stage);
+    var busca = document.querySelector('input[name=q]');
+    if (busca && busca.value) fd.append('q', busca.value);
+    fetch('/funil/' + id + '/mover/', {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-CSRFToken': csrftoken(), 'X-Requested-With': 'XMLHttpRequest' },
+    })
+      .then(function(r) { if (!r.ok) throw new Error('falha'); return r.json(); })
+      .then(function(dados) {
+        if (!dados.ok || !card) return;
+        var colDest = document.querySelector('.kanban-col[data-stage="' + stage + '"]');
+        if (colDest) {
+          var vazio = colDest.querySelector('.vazio-msg');
+          if (vazio) vazio.remove();
+          colDest.querySelector('.cards').appendChild(card);
+          card.classList.add('card-entrou');
+          setTimeout(function(){ card.classList.remove('card-entrou'); }, 350);
+        }
+        aplicarBoard(dados);
+        manterVazio(colOrigem);
+      })
+      .catch(function() { window.location.reload(); });
+  });
+});
 
 // Atualiza contadores, somas, aviso de ocultos e total do board (após drag ou novo lead)
 function aplicarBoard(dados) {
@@ -370,6 +454,7 @@ function fecharLead() {
   modalLead.classList.remove('flex');
 }
 if (btnLead) btnLead.addEventListener('click', function () { abrirLead(); });
+
 document.querySelectorAll('.btn-lead-coluna').forEach(function (b) {
   b.addEventListener('click', function () { abrirLead(b.getAttribute('data-etapa')); });
 });
@@ -432,6 +517,84 @@ if (formLead) formLead.addEventListener('submit', function (e) {
       if (btnSalvar) { btnSalvar.disabled = false; btnSalvar.textContent = 'Criar lead'; }
     });
 });
+
+// ---- Importação de leads (CSV) ----
+var modalImportar = document.getElementById('modal-importar');
+var btnImportar = document.getElementById('btn-importar-leads');
+var formImportar = document.getElementById('form-importar');
+var errosImportar = document.getElementById('importar-erros');
+var okImportar = document.getElementById('importar-ok');
+var btnImportarSalvar = document.getElementById('btn-importar-salvar');
+
+function abrirImportar() {
+  if (!modalImportar) return;
+  errosImportar.classList.add('hidden');
+  okImportar.classList.add('hidden');
+  var arquivo = document.getElementById('importar-arquivo');
+  if (arquivo) arquivo.value = '';
+  modalImportar.classList.remove('hidden');
+  modalImportar.classList.add('flex');
+}
+function fecharImportar() {
+  if (!modalImportar) return;
+  modalImportar.classList.add('hidden');
+  modalImportar.classList.remove('flex');
+}
+if (btnImportar) btnImportar.addEventListener('click', abrirImportar);
+document.querySelectorAll('[data-fechar-importar]').forEach(function (el) {
+  el.addEventListener('click', fecharImportar);
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && modalImportar && !modalImportar.classList.contains('hidden')) fecharImportar();
+});
+if (formImportar) formImportar.addEventListener('submit', function (e) {
+  e.preventDefault();
+  var arquivoInput = document.getElementById('importar-arquivo');
+  if (!arquivoInput || !arquivoInput.files.length) {
+    errosImportar.textContent = 'Selecione um arquivo .csv.';
+    errosImportar.classList.remove('hidden');
+    okImportar.classList.add('hidden');
+    return;
+  }
+  if (btnImportarSalvar) { btnImportarSalvar.disabled = true; btnImportarSalvar.textContent = 'Importando…'; }
+  errosImportar.classList.add('hidden');
+  okImportar.classList.add('hidden');
+  var fd = new FormData(formImportar);
+  fetch('{% url "funil:importar_leads" %}', {
+    method: 'POST',
+    body: fd,
+    headers: { 'X-CSRFToken': csrftoken(), 'X-Requested-With': 'XMLHttpRequest' },
+  })
+    .then(function (r) {
+      return r.json().then(function (dados) { return { ok: r.ok, dados: dados }; });
+    })
+    .then(function (res) {
+      if (!res.ok) {
+        var msg = (res.dados.erros && res.dados.erros.length)
+          ? res.dados.erros.join(' · ')
+          : 'Não foi possível importar.';
+        errosImportar.textContent = msg;
+        errosImportar.classList.remove('hidden');
+        okImportar.classList.add('hidden');
+        return;
+      }
+      okImportar.textContent = res.dados.msg || 'Importação concluída!';
+      okImportar.classList.remove('hidden');
+      errosImportar.classList.add('hidden');
+      // Recarrega a página após 1.5s para mostrar os novos leads no funil
+      setTimeout(function () { window.location.reload(); }, 1500);
+    })
+    .catch(function () {
+      errosImportar.textContent = 'Falha de conexão. Tente novamente.';
+      errosImportar.classList.remove('hidden');
+      okImportar.classList.add('hidden');
+    })
+    .finally(function () {
+      if (btnImportarSalvar) { btnImportarSalvar.disabled = false; btnImportarSalvar.textContent = 'Importar leads'; }
+    });
+});
+
+
 </script>
 {% endif %}
 {% endblock %}

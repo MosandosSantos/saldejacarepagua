@@ -22,17 +22,22 @@
     <span class="text-[10px] font-bold uppercase tracking-wide {% if card.score_nivel == 'quente' %}text-[#4ade80]{% elif card.score_nivel == 'morno' %}text-[#fbbf24]{% else %}text-[#6f8a93]{% endif %}">{{ card.score_nivel }}</span>
     <span class="font-mono text-[13.5px] font-bold text-[#74b3c6]">{{ card.valor }}</span>
   </div>
-  {% if web_pode_editar %}
-  <div class="mt-2 hidden border-t border-white/10 pt-2 group-hover:block">
-    <form method="post" action="{% url 'funil:mover' card.id %}">
-      {% csrf_token %}
-      <select name="stage" onchange="this.form.submit()"
-              class="w-full rounded-lg border border-white/10 bg-[#0b2029] px-2 py-1.5 text-[11.5px] text-white outline-none">
+  <div class="mt-2 border-t border-white/10 pt-2">
+    <div class="mb-2">
+      {% if web_pode_editar %}
+      <select class="stage-select w-full rounded-lg border border-white/10 bg-[#0b2029] px-2 py-1.5 text-[11.5px] text-white outline-none"
+              data-id="{{ card.id }}"
+              title="Mover para outra etapa">
         {% for st in stages %}
           <option value="{{ st.key }}" {% if st.key == col.key %}selected{% endif %}>{{ st.name }}</option>
         {% endfor %}
       </select>
-    </form>
+      {% else %}
+      <div class="rounded-lg border border-white/10 bg-[#0b2029]/50 px-2 py-1.5 text-[11.5px] text-[#6f8a93]">
+        {% for st in stages %}{% if st.key == col.key %}{{ st.name }}{% endif %}{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
   </div>
-  {% endif %}
 </div>

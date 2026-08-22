@@ -376,6 +376,34 @@ def config(request):
             )
             return redirect(f'{request.path}?convite={convite.id}')
 
+    elif acao == 'criar_usuario' and role == ROLE_ADMIN_COMPANY and tid:
+        nome = (request.POST.get('nome', '') or '').strip()
+        email = _validar_email(request.POST.get('email', ''), erros)
+        senha = request.POST.get('senha', '')
+        papel = request.POST.get('papel', '')
+        if not nome:
+            erros.append('Informe o nome do usuário.')
+        if not senha:
+            erros.append('Informe a senha do usuário.')
+        else:
+            try:
+                validate_password(senha)
+            except DjangoValidationError as e:
+                erros.extend(e.messages)
+        if email and Usuario.objects.filter(email__iexact=email).exists():
+            erros.append(f'Já existe um usuário com o e-mail {email}.')
+        if papel not in ROLES_DE_TENANT:
+            erros.append('Escolha um papel válido.')
+        if not erros:
+            Usuario.objects.create(
+                nome=nome,
+                email=email,
+                senha=make_password(senha),
+                role=papel,
+                tenant_id=tid,
+            )
+            msgs.append(f'Usuário "{nome}" criado com sucesso!')
+
     elif acao == 'convite_cancelar' and role == ROLE_ADMIN_COMPANY and tid:
         convite_id = request.POST.get('convite_id', '')
         if convite_id.isdigit():

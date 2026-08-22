@@ -15,8 +15,13 @@ def healthz(request):
 
 from acesso import views as acesso_views
 from contatos import views as contatos_views
+from core import views as core_views
 
 urlpatterns = [
+    path('premium/<str:recurso>/', core_views.versao_educativa, name='versao_educativa'),
+    path('premium/whatsapp/', lambda r: core_views.versao_educativa(r, 'whatsapp'), name='premium_whatsapp'),
+    path('premium/carteiras/', lambda r: core_views.versao_educativa(r, 'carteiras'), name='premium_carteiras'),
+    path('premium/campanhas/', lambda r: core_views.versao_educativa(r, 'campanhas'), name='premium_campanhas'),
     path('', lambda request: redirect('dashboard:index')),
     path('healthz/', healthz, name='healthz'),
     path('login/', include('acesso.urls')),

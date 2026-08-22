@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CronosCRM — Sales CRM</title>
+<title>CRMCronos.Cloud — Sales CRM</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -376,7 +376,7 @@ table.leads tbody tr:hover td:first-child{color:var(--accent)}
       <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.5 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>
     </div>
     <div class="brand-text">
-      <div class="brand-name">CronosCRM</div>
+      <div class="brand-name">CRMCronos.Cloud</div>
       <div class="brand-sub">Sales CRM</div>
     </div>
   </div>
@@ -401,7 +401,7 @@ table.leads tbody tr:hover td:first-child{color:var(--accent)}
   <section class="screen" id="screen-dashboard">
     <div class="page-head">
       <div class="page-title">Visão geral</div>
-      <div class="page-sub">Resumo dos seus pacientes e tratamentos em tempo real.</div>
+      <div class="page-sub">Resumo dos seus clientes e tratamentos em tempo real.</div>
     </div>
     <div class="kpi-grid" id="kpiGrid"></div>
     <div class="dash-grid">
@@ -416,7 +416,7 @@ table.leads tbody tr:hover td:first-child{color:var(--accent)}
       </div>
       <div class="panel">
         <div class="panel-head">
-          <div class="panel-title">Funil de pacientes</div>
+          <div class="panel-title">Funil de clientes</div>
           <div class="panel-note">por etapa</div>
         </div>
         <div class="funnel3d-wrap">
@@ -437,7 +437,7 @@ table.leads tbody tr:hover td:first-child{color:var(--accent)}
   <!-- FUNIL -->
   <section class="screen" id="screen-funil">
     <div class="page-head">
-      <div class="page-title">Funil de pacientes</div>
+      <div class="page-title">Funil de clientes</div>
       <div class="page-sub alert">Arraste os cards entre as etapas para atualizar cada paciente.</div>
     </div>
     <div class="kanban-toolbar">
@@ -453,8 +453,8 @@ table.leads tbody tr:hover td:first-child{color:var(--accent)}
   <!-- LEADS -->
   <section class="screen" id="screen-leads">
     <div class="page-head">
-      <div class="page-title">Pacientes & contatos</div>
-      <div class="page-sub">Todos os pacientes e seus respectivos tratamentos.</div>
+      <div class="page-title">Clientes & contatos</div>
+      <div class="page-sub">Todos os clientes e seus respectivos tratamentos.</div>
     </div>
     <div class="leads-toolbar">
       <div class="field-search">
@@ -489,23 +489,23 @@ table.leads tbody tr:hover td:first-child{color:var(--accent)}
    DADOS ESTÁTICOS (leads vêm da API / PostgreSQL)
    ════════════════════════════════════════════════════════════════ */
 var STAGES = [
-  { key:'interessado',        name:'Interessado',          color:'#94a3b8' },
-  { key:'avaliacao_agendada', name:'Avaliação agendada',   color:'#60a5fa' },
-  { key:'avaliacao_feita',    name:'Avaliação feita',      color:'#38bdf8' },
-  { key:'orcamento',          name:'Orçamento enviado',    color:'#74b3c6' },
-  { key:'fechado',            name:'Fechado',              color:'#4ade80' },
+  { key:'interessado',        name:'Lead capturado',       color:'#94a3b8' },
+  { key:'avaliacao_agendada', name:'Contato feito',        color:'#60a5fa' },
+  { key:'avaliacao_feita',    name:'Qualificado',          color:'#38bdf8' },
+  { key:'orcamento',          name:'Proposta enviada',     color:'#74b3c6' },
+  { key:'fechado',            name:'Pedido fechado',       color:'#4ade80' },
   { key:'perdido',            name:'Perdido',              color:'#ef4444' }
 ];
 var STAGE_MAP = {}; STAGES.forEach(function(s){ STAGE_MAP[s.key] = s; });
 
 var SEG = {
-  estetica: { label:'Estética',      color:'#4ade80' },
-  odonto:   { label:'Odontologia',   color:'#60a5fa' },
-  derma:    { label:'Dermatologia',  color:'#7fe3c4' },
-  fisio:    { label:'Fisioterapia',  color:'#fbbf24' },
-  nutri:    { label:'Nutrição',      color:'#c084fc' },
-  psi:      { label:'Psicologia',    color:'#38bdf8' },
-  geral:    { label:'Clínica geral', color:'#fb923c' }
+  eletronicos: { label:'Eletrônicos',      color:'#60a5fa' },
+  moda:        { label:'Moda & vestuário',  color:'#c084fc' },
+  casa:        { label:'Casa & decoração',  color:'#4ade80' },
+  beleza:      { label:'Beleza & cuidados', color:'#f472b6' },
+  esportes:    { label:'Esportes & lazer',  color:'#fbbf24' },
+  alimentos:   { label:'Alimentos',         color:'#fb923c' },
+  geral:       { label:'Geral',             color:'#94a3b8' }
 };
 
 var LEADS = [];
@@ -729,7 +729,7 @@ function calcKpis(){
 }
 
 var KPI_DEFS = [
-  { icon:'<path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/>', badge:'+12%', badgeCls:'up', label:'Pacientes ativos', gold:false },
+  { icon:'<path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/>', badge:'+12%', badgeCls:'up', label:'Clientes ativos', gold:false },
   { icon:'<path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>', badge:'+8%', badgeCls:'up', label:'Valor no funil', gold:true },
   { icon:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01" fill="none"/>', badge:'+3', badgeCls:'up', label:'Fechados no mês', gold:true },
   { icon:'<path d="M4 21V10M12 21V4M20 21v-7"/>', badge:'estável', badgeCls:'flat', label:'Taxa de conversão', gold:false }

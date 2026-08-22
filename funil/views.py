@@ -1,7 +1,9 @@
 """Views web do Funil (kanban) — listagem por etapa, mover cartao e cadastro rapido de lead."""
 
+import csv
+import io
 from datetime import timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -21,6 +23,7 @@ from contatos.models import Contato, Negocio, criar_negocio, registrar_movimenta
 from contatos.scoring import atualizar_score, completude_do_contato, nivel_do_score
 from core.dominio import ORIGENS, SEG_FALLBACK, SEGS
 from funil.models import etapa_map_do_tenant, etapas_do_tenant
+from tarefas.models import Tarefa, PRIORIDADES
 
 
 def _brl_curto(n):
@@ -74,6 +77,11 @@ def _cards_do_kanban(negocios, stages):
 def kanban(request):
     tid = tenant_id_da_sessao(request)
     nicho = nicho_da_sessao(request)
+    # admin_saas (sem tenant) → usa primeiro tenant
+    if tid is None:
+        from acesso.models import Tenant as _Tenant
+        _t = _Tenant.objects.first()
+        tid = _t.id if _t else None
     stages = etapas_do_tenant(tid, nicho)
     stage_map = etapa_map_do_tenant(tid, nicho)
     negocios = filtro_tenant(
@@ -130,6 +138,13 @@ def novo_lead(request):
         return HttpResponseBadRequest('Método não permitido.')
     tid = tenant_id_da_sessao(request)
     nicho = nicho_da_sessao(request)
+    # admin_saas (sem tenant) → auto-atribui ao primeiro tenant
+    if tid is None:
+        from acesso.models import Tenant
+        _t = Tenant.objects.first()
+        tid = _t.id if _t else None
+    if tid is None:
+        return JsonResponse({'ok': False, 'erros': ['Nenhuma empresa configurada no sistema.']}, status=400)
     stages = etapas_do_tenant(tid, nicho)
     stage_map = etapa_map_do_tenant(tid, nicho)
     nome = (request.POST.get('nome') or '').strip()
@@ -262,3 +277,162 @@ def mover(request, pk):
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse(_dados_board(request))
     return redirect('funil:kanban')
+
+
+@web_login_required
+@web_requer_edicao
+def nova_atividade(request):
+    """Cria uma tarefa/atividade vinculada a um contato a partir do funil (AJAX)."""
+    if request.method != 'POST':
+        return HttpResponseBadRequest('Método não permitido.')
+    tid = tenant_id_da_sessao(request)
+    titulo = (request.POST.get('titulo') or '').strip()
+    contato_id = request.POST.get('contato_id', '')
+    prioridade = request.POST.get('prioridade', 'media')
+    vencimento_raw = (request.POST.get('vencimento') or '').strip()
+    hora_raw = (request.POST.get('hora') or '').strip()
+    descricao = (request.POST.get('descricao') or '').strip()
+
+    erros = []
+    if not titulo:
+        erros.append('Informe o título da atividade.')
+    if prioridade not in dict(PRIORIDADES):
+        erros.append('Prioridade inválida.')
+    vencimento = None
+    if vencimento_raw:
+        from datetime import date
+        try:
+            vencimento = date.fromisoformat(vencimento_raw)
+        except ValueError:
+            erros.append('Data inválida.')
+    hora = None
+    if hora_raw:
+        import re as _re
+        from datetime import time
+        if _re.fullmatch(r'\d{1,2}:\d{2}', hora_raw):
+            try:
+                hora = time.fromisoformat(hora_raw)
+            except ValueError:
+                erros.append('Hora inválida.')
+        else:
+            erros.append('Hora inválida (use HH:MM).')
+
+    # Valida contato pertence ao tenant
+    cid = None
+    if contato_id and contato_id.isdigit():
+        if Contato.objects.filter(tenant_id=tid, pk=contato_id).exists():
+            cid = int(contato_id)
+
+    if erros:
+        return JsonResponse({'ok': False, 'erros': erros}, status=400)
+
+    tarefa = Tarefa.objects.create(
+        tenant_id=tid,
+        titulo=titulo,
+        descricao=descricao,
+        contato_id=cid,
+        responsavel_id=request.session.get('usuario_id'),
+        prioridade=prioridade,
+        vencimento=vencimento,
+        hora=hora,
+        criado_por_id=request.session.get('usuario_id'),
+    )
+    return JsonResponse({
+        'ok': True,
+        'msg': f'Atividade "{tarefa.titulo}" criada com sucesso!',
+    })
+
+
+@web_login_required
+@web_requer_edicao
+def importar_leads(request):
+    """Importa leads de um CSV — cria contato + negócio no funil (AJAX).
+
+    Colunas aceitas no CSV:
+      nome, telefone, email, empresa, valor, origem, etapa, segmento, descricao
+    Colunas obrigatórias: nome
+    """
+    if request.method != 'POST':
+        return HttpResponseBadRequest('Método não permitido.')
+    tid = tenant_id_da_sessao(request)
+    nicho = nicho_da_sessao(request)
+    # admin_saas (sem tenant) → auto-atribui ao primeiro tenant
+    if tid is None:
+        from acesso.models import Tenant
+        _t = Tenant.objects.first()
+        tid = _t.id if _t else None
+    if tid is None:
+        return JsonResponse({'ok': False, 'erros': ['Nenhuma empresa configurada no sistema.']}, status=400)
+    stages = etapas_do_tenant(tid, nicho)
+    stage_map = etapa_map_do_tenant(tid, nicho)
+
+    arquivo = request.FILES.get('arquivo')
+    if not arquivo:
+        return JsonResponse({'ok': False, 'erros': ['Selecione um arquivo .csv para importar.']}, status=400)
+
+    try:
+        conteudo = arquivo.read().decode('utf-8-sig')
+    except UnicodeDecodeError:
+        try:
+            conteudo = arquivo.read().decode('latin-1')
+        except Exception:
+            return JsonResponse({'ok': False, 'erros': ['Não foi possível ler o arquivo. Use UTF-8 ou Latin-1.']}, status=400)
+
+    reader = csv.DictReader(io.StringIO(conteudo))
+    colunas_disponiveis = set(reader.fieldnames or [])
+    if 'nome' not in colunas_disponiveis:
+        return JsonResponse({
+            'ok': False,
+            'erros': ['O CSV precisa ter a coluna "nome". Colunas encontradas: ' + ', '.join(colunas_disponiveis) + '.'],
+        }, status=400)
+
+    criados = 0
+    erros_linha = []
+    etapa_padrao = request.POST.get('etapa_padrao', 'lead_capturado')
+    if etapa_padrao not in stage_map:
+        etapa_padrao = stages[0]['key'] if stages else 'lead_capturado'
+
+    for i, row in enumerate(reader, start=2):  # linha 1 = cabeçalho
+        nome = (row.get('nome') or '').strip()
+        if not nome:
+            erros_linha.append(f'Linha {i}: nome vazio — ignorada.')
+            continue
+        tel = (row.get('telefone') or row.get('tel') or '').strip()
+        email = (row.get('email') or '').strip().lower()
+        empresa = (row.get('empresa') or '').strip()
+        origem = (row.get('origem') or '').strip()
+        seg = (row.get('segmento') or row.get('seg') or '').strip()
+        stage_key = (row.get('etapa') or '').strip()
+        if stage_key not in stage_map:
+            stage_key = etapa_padrao
+        valor_raw = (row.get('valor') or '0').strip()
+        try:
+            valor = Decimal(valor_raw.replace('.', '').replace(',', '.')) if valor_raw else Decimal('0')
+        except (InvalidOperation, ValueError):
+            valor = Decimal('0')
+
+        contato = Contato.objects.create(
+            nome=nome,
+            tel=tel or '—',
+            email=email or '—',
+            empresa=empresa or '',
+            seg=seg,
+            origem=origem or 'Importação',
+            tenant_id=tid,
+        )
+        negocio = criar_negocio(contato, stage=stage_key, valor=valor, tenant_id=tid)
+        negocio.responsavel_id = request.session.get('usuario_id')
+        negocio.save(update_fields=['responsavel'])
+        registrar_movimentacao(negocio, '', stage_key, request.session.get('usuario_id'))
+        disparar('contato_criado', tenant_id=tid, contato=contato, negocio=negocio)
+        disparar('negocio_criado', tenant_id=tid, contato=contato, negocio=negocio)
+        atualizar_score(contato)
+        criados += 1
+
+    msg = f'{criados} lead(s) importado(s) com sucesso!'
+    if erros_linha:
+        msg += ' Avisos: ' + '; '.join(erros_linha[:5])
+        if len(erros_linha) > 5:
+            msg += f' ... e mais {len(erros_linha) - 5} aviso(s).'
+
+    return JsonResponse({'ok': True, 'msg': msg, 'criados': criados})

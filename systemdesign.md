@@ -1,4 +1,4 @@
-# System Design — CronosCRM (padrão replicável)
+# System Design — CRMCronos.Cloud (padrão replicável)
 
 > Documento de arquitetura do projeto `cronoscrm` (Django + FastAPI + PostgreSQL).
 > Serve de blueprint para replicar o mesmo padrão em outros projetos
@@ -9,7 +9,7 @@
 
 ## 1. Visão geral
 
-Sistema CRM de clínica (CronosCRM) construído em duas camadas:
+Sistema CRM de clínica (CRMCronos.Cloud) construído em duas camadas:
 
 - **Django** = fonte de verdade dos dados (ORM, migrations, configuração central).
   Não expõe HTTP — serve apenas como ORM/configuração.
@@ -210,7 +210,7 @@ Regras de negócio: nome obrigatório; `valor >= 0`; campos vazios viram `'—'`
 
 ### health
 
-- `GET /` → `{"api": "CronosCRM", "version": "1.0.0", "docs": "/docs"}`
+- `GET /` → `{"api": "CRMCronos.Cloud", "version": "1.0.0", "docs": "/docs"}`
 - `/docs` → Swagger (gerado pelo FastAPI).
 
 ---

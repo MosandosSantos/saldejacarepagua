@@ -91,7 +91,7 @@ def _rodape(canvas, doc):
     canvas.setFont('Helvetica', 7)
     canvas.setFillColor(COR_MUTA)
     canvas.drawString(18 * mm, 9.5 * mm, _txt(
-        f'Documento gerado por CronosCRM em {date.today().strftime("%d/%m/%Y")}'
+        f'Documento gerado por CRMCronos.Cloud em {date.today().strftime("%d/%m/%Y")}'
     ))
     canvas.drawRightString(A4[0] - 18 * mm, 9.5 * mm, 'Proposta válida por 7 dias')
     canvas.restoreState()
@@ -99,7 +99,7 @@ def _rodape(canvas, doc):
 
 def gerar_orcamento_pdf(tenant, contato, negocio) -> bytes:
     """Monta o PDF da proposta comercial do negócio; devolve os bytes do arquivo."""
-    nome_clinica = _txt(tenant.nome) if tenant is not None else 'CronosCRM'
+    nome_clinica = _txt(tenant.nome) if tenant is not None else 'CRMCronos.Cloud'
     hoje = date.today()
     validade = hoje + timedelta(days=7)
 

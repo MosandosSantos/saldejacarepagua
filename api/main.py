@@ -26,7 +26,7 @@ API_CSP = (
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title='CronosCRM API',
+        title='CRMCronos.Cloud API',
         version='1.0.0',
         description='API REST do CRM da empresa (FastAPI + Django ORM).',
     )
@@ -55,7 +55,7 @@ def create_app() -> FastAPI:
 
     @app.get('/', tags=['health'])
     def health():
-        return {'api': 'CronosCRM', 'version': '1.0.0', 'docs': '/docs'}
+        return {'api': 'CRMCronos.Cloud', 'version': '1.0.0', 'docs': '/docs'}
 
     return app
 

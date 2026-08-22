@@ -11,4 +11,6 @@ urlpatterns = [
     path('<int:pk>/reabrir/', views.reabrir, name='reabrir'),
     path('<int:pk>/excluir/', views.excluir, name='excluir'),
     path('contato/<int:contato_id>/nova/', views.nova_para_contato, name='nova_para_contato'),
+    path('exportar/', views.exportar_ics, name='exportar_ics'),
+    path('importar/', views.importar_ics, name='importar_ics'),
 ]

@@ -1,1 +1,1 @@
-"""App 'contatos' — tema: pacientes e contatos da clinica."""
+"""App 'contatos' — tema: clientes e contatos da clinica."""

@@ -7,6 +7,7 @@ As tarefas são escopadas por tenant; o vencimento alimenta os lembretes
 import re
 from datetime import date, time
 
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 
@@ -19,6 +20,7 @@ from acesso.decorators import (
 )
 from acesso.models import Usuario
 from contatos.models import Contato
+from tarefas.ical import gerar_ics, parse_ics
 from tarefas.models import PRIORIDADES, PRIORIDADE_CORES, Tarefa, concluir_tarefa, reabrir_tarefa
 
 
@@ -135,26 +137,29 @@ def lista(request):
         qs = qs.filter(titulo__icontains=termo) | qs.filter(contato__nome__icontains=termo)
 
     erros = []
-    if request.method == 'POST' and request.POST.get('acao') == 'criar' and pode_editar(request):
-        titulo = (request.POST.get('titulo', '') or '').strip()
-        if not titulo:
-            erros.append('Informe o título da tarefa.')
+    if request.method == 'POST' and request.POST.get('acao') == 'criar':
+        if not pode_editar(request):
+            erros.append('Voce nao tem permissao para criar tarefas. Peça ao admin da empresa.')
         else:
-            vencimento = _parse_vencimento(request.POST.get('vencimento', ''), erros)
-            hora = _parse_hora(request.POST.get('hora', ''), erros)
-            if not erros:
-                Tarefa.objects.create(
-                    tenant_id=tid,
-                    titulo=titulo,
-                    descricao=(request.POST.get('descricao', '') or '').strip(),
-                    contato_id=_contato_do_tenant(tid, request.POST.get('contato_id', '')),
-                    responsavel_id=_membro_do_tenant(tid, request.POST.get('responsavel_id', '')),
-                    prioridade=_valida_prioridade(request.POST.get('prioridade', 'media')),
-                    vencimento=vencimento,
-                    hora=hora,
-                    criado_por_id=_usuario_id(request),
-                )
-                return redirect('tarefas:lista')
+            titulo = (request.POST.get('titulo', '') or '').strip()
+            if not titulo:
+                erros.append('Informe o titulo da tarefa.')
+            else:
+                vencimento = _parse_vencimento(request.POST.get('vencimento', ''), erros)
+                hora = _parse_hora(request.POST.get('hora', ''), erros)
+                if not erros:
+                    Tarefa.objects.create(
+                        tenant_id=tid,
+                        titulo=titulo,
+                        descricao=(request.POST.get('descricao', '') or '').strip(),
+                        contato_id=_contato_do_tenant(tid, request.POST.get('contato_id', '')),
+                        responsavel_id=_membro_do_tenant(tid, request.POST.get('responsavel_id', '')),
+                        prioridade=_valida_prioridade(request.POST.get('prioridade', 'media')),
+                        vencimento=vencimento,
+                        hora=hora,
+                        criado_por_id=_usuario_id(request),
+                    )
+                    return redirect('tarefas:lista')
 
     abertas = qs.filter(concluida=False)
     atrasadas = [_decorar(t) for t in abertas.filter(vencimento__lt=hoje).order_by('vencimento', 'hora')]
@@ -166,12 +171,14 @@ def lista(request):
     ]
 
     contatos, membros = _opcoes(request)
+    msg_importacao = request.session.pop('msg_importacao', '')
     return render(request, 'tarefas/lista.html', {
         'atrasadas': atrasadas, 'hoje': hoje_lista, 'proximas': proximas,
         'sem_data': sem_data, 'concluidas': concluidas,
         'q': termo, 'erros': erros,
         'contatos': contatos, 'membros': membros,
         'total_abertas': abertas.count(),
+        'msg_importacao': msg_importacao,
     })
 
 
@@ -254,3 +261,56 @@ def nova_para_contato(request, contato_id):
                 criado_por_id=_usuario_id(request),
             )
     return redirect('contatos:detalhe', pk=contato.id)
+
+
+@web_login_required
+def exportar_ics(request):
+    """Exporta todas as tarefas abertas do tenant como arquivo .ics (Google Calendar)."""
+    tid = _tenant_id(request)
+    qs = Tarefa.objects.filter(tenant_id=tid).select_related('contato', 'responsavel')
+    ics_bytes = gerar_ics(qs)
+    response = HttpResponse(ics_bytes, content_type='text/calendar; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="CRMCronos.Cloud-tarefas.ics"'
+    return response
+
+
+@web_login_required
+@web_requer_edicao
+def importar_ics(request):
+    """Importa tarefas de um arquivo .ics (compatível com Google Calendar)."""
+    if request.method != 'POST':
+        return redirect('tarefas:lista')
+
+    arquivo = request.FILES.get('arquivo_ics')
+    if not arquivo:
+        return redirect('tarefas:lista')
+
+    try:
+        conteudo = arquivo.read()
+        eventos = parse_ics(conteudo)
+    except Exception:
+        return redirect('tarefas:lista')
+
+    tid = _tenant_id(request)
+    uid = _usuario_id(request)
+    criadas = 0
+
+    for ev in eventos:
+        titulo = (ev.get('titulo') or '').strip()
+        if not titulo:
+            continue
+        Tarefa.objects.create(
+            tenant_id=tid,
+            titulo=titulo,
+            descricao=ev.get('descricao', ''),
+            vencimento=ev.get('vencimento'),
+            hora=ev.get('hora'),
+            prioridade=ev.get('prioridade', 'media'),
+            concluida=ev.get('concluida', False),
+            criado_por_id=uid,
+        )
+        criadas += 1
+
+    # Salvar msg na session para exibir na lista
+    request.session['msg_importacao'] = f'{criadas} tarefa(s) importada(s) com sucesso!'
+    return redirect('tarefas:lista')

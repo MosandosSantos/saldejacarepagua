@@ -1,7 +1,7 @@
 {% extends 'base/basic.html' %}
 {% load static %}
 
-{% block titulo %}CronosCRM — Entrar{% endblock %}
+{% block titulo %}CRMCronos.Cloud — Entrar{% endblock %}
 
 {% block cabecalho %}{% endblock %}
 
@@ -67,7 +67,7 @@
             <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.6" fill="#fff"/>
           </svg>
         </div>
-        <span class="font-display text-[1.35rem] font-semibold tracking-tight text-white">Cronos<span class="text-[#74b3c6]">CRM</span></span>
+        <span class="font-display text-[1.35rem] font-semibold tracking-tight text-white">CRM<span class="text-[#74b3c6]">Cronos</span></span>
       </div>
 
       <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.3em] text-white/90">
@@ -76,7 +76,7 @@
       </div>
 
       <h1 class="font-display mb-2.5 text-[2.1rem] font-medium leading-[1.12] tracking-tight text-white">Bem-vindo(a) de volta</h1>
-      <p class="mb-7 text-[15px] leading-relaxed text-white/70">Entre com o seu e-mail e senha para acessar o painel de pacientes &amp; contatos.</p>
+      <p class="mb-7 text-[15px] leading-relaxed text-white/70">Entre com o seu e-mail e senha para acessar o painel de clientes &amp; contatos.</p>
 
       {% if erro %}
         <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ erro }}</div>
@@ -113,8 +113,8 @@
       </form>
 
       <p class="footer mt-6 text-center text-[12.5px] leading-relaxed text-white/50">
-        Demonstração — usuários de exemplo com senha <code class="rounded-md bg-white/10 px-1.5 py-0.5 text-white/75">senha123</code><br>
-        admin@cronoscrm.com · dona@aurora.com · ana@aurora.com
+        Usuários de exemplo: admin@cronoscrm.com · carlos@lojavirtual.com<br>
+        Senhas geradas aleatoriamente — veja <code class="rounded-md bg-white/10 px-1.5 py-0.5 text-white/75">.env-seed</code>
       </p>
     </section>
   </div>

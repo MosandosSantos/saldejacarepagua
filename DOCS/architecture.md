@@ -2,7 +2,7 @@
 
 ## Visão geral
 
-O CronosCRM é um sistema **monolítico em duas camadas HTTP** sobre o mesmo banco
+O CRMCronos.Cloud é um sistema **monolítico em duas camadas HTTP** sobre o mesmo banco
 PostgreSQL:
 
 | Camada | Tecnologia | Porta | O que faz |

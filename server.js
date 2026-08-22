@@ -83,5 +83,5 @@ app.get('*', (req, res) => {
 /* ===================== START ===================== */
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log('CronosCRM rodando em http://localhost:' + PORT);
+  console.log('CRMCronos.Cloud rodando em http://localhost:' + PORT);
 });

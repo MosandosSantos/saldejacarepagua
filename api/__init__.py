@@ -1,1 +1,1 @@
-"""API REST do CronosCRM (FastAPI). Camada HTTP separada do Django/ORM."""
+"""API REST do CRMCronos.Cloud (FastAPI). Camada HTTP separada do Django/ORM."""
