@@ -26,11 +26,7 @@ from funil.models import etapa_map_do_tenant, etapas_do_tenant
 from tarefas.models import Tarefa, PRIORIDADES
 
 
-def _brl_curto(n):
-    n = float(n)
-    if n >= 1000:
-        return 'R$ ' + '{:.1f}'.format(n / 1000).replace('.0', '').replace('.', ',') + 'k'
-    return 'R$ ' + str(int(n))
+from core.utils import brl_curto as _brl_curto
 
 
 def _card_dict(negocio, stage_map):

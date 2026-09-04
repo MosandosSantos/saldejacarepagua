@@ -18,20 +18,7 @@ from acesso.decorators import tenant_id_da_sessao, web_login_required
 from acesso.models import ROLE_ADMIN_COMPANY, ROLE_OPERACIONAL, Tenant, Usuario
 from contatos.models import Contato
 from discador.models import Chamada
-
-
-def _brl_curto(n):
-    n = float(n or 0)
-    if n >= 1000:
-        return 'R$ ' + '{:.1f}'.format(n / 1000).replace('.0', '').replace('.', ',') + 'k'
-    return 'R$ ' + str(int(n))
-
-
-def _iniciais(nome):
-    partes = [p for p in (nome or '').split() if p]
-    if not partes:
-        return '?'
-    return (partes[0][0] + (partes[-1][0] if len(partes) > 1 else '')).upper()
+from core.utils import brl_curto as _brl_curto, iniciais as _iniciais
 
 
 def _periodo_por_chave(chave, hoje):

@@ -1,0 +1,273 @@
+{% extends 'base/basic.html' %}
+{% load seguranca %}
+
+{% block titulo %}Ranking de Presença{% endblock %}
+
+{% block conteudo %}
+<!-- Header -->
+<div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <div class="mb-2 text-[11px] text-[#6f8a93]">
+      <a href="{% url 'tarefas:lista' %}" class="text-[#5b8def] transition hover:underline">Tarefas</a>
+      <span class="mx-1.5">/</span>
+      <span class="text-[#a6bfc7]">Ranking</span>
+    </div>
+    <h1 class="hazon-titulo">Ranking de Presença</h1>
+    <p class="hazon-sub mt-2">
+      {% if classe_selecionada == 'MX' %}
+        Mestres de Santo André — ordenados por tempo de recepção e assiduidade.
+      {% else %}
+        Escudeiros Noviços — ordenados por tempo de recepção e assiduidade.
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="mb-5 grid gap-4 sm:grid-cols-3">
+  <div class="hazon-card-sm flex items-center gap-4 p-5 backdrop-blur-xl">
+    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#5b8def]/15">
+      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#5b8def" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div>
+      <div class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Total no ranking</div>
+      <div class="font-mono text-[24px] font-bold leading-none text-white">{{ total_ranking }}</div>
+    </div>
+  </div>
+  <div class="hazon-card-sm flex items-center gap-4 p-5 backdrop-blur-xl">
+    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#3b82f6]/15">
+      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#3b82f6" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    </div>
+    <div>
+      <div class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Mestres de Santo André</div>
+      <div class="font-mono text-[24px] font-bold leading-none text-[#3b82f6]">{{ total_mx }}</div>
+    </div>
+  </div>
+  <div class="hazon-card-sm flex items-center gap-4 p-5 backdrop-blur-xl">
+    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#5b8def]/15">
+      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#5b8def" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div>
+      <div class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Escudeiros Noviços</div>
+      <div class="font-mono text-[24px] font-bold leading-none text-[#5b8def]">{{ total_ec }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="mb-5 hazon-card-sm p-5 backdrop-blur-xl">
+  <div class="flex flex-wrap items-center gap-4">
+    <!-- Período -->
+    <div class="text-[12px] text-[#a6bfc7]">
+      Período: <span class="font-mono font-bold text-white">{{ data_inicio|date:"d/m/Y" }}</span> a <span class="font-mono font-bold text-white">{{ data_fim|date:"d/m/Y" }}</span>
+    </div>
+
+    <!-- Filtro Prefeitura -->
+    <div class="flex items-center gap-2">
+      <label class="text-[11px] font-semibold uppercase tracking-wider text-[#6f8a93]">Prefeitura:</label>
+      <select id="filter-prefeitura" class="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/50">
+        <option value="">Todas as prefeituras</option>
+        {% for p in prefeituras %}
+          <option value="{{ p.id }}" {% if p.id == prefeitura_selecionada %}selected{% endif %}>{{ p.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Filtro Loja (depende da prefeitura escolhida) -->
+    <div id="filter-loja-grupo" class="flex items-center gap-2 {% if not prefeitura_selecionada %}hidden{% endif %}">
+      <label class="text-[11px] font-semibold uppercase tracking-wider text-[#6f8a93]">Loja:</label>
+      <select id="filter-loja" class="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/50">
+        <option value="">Todas as lojas</option>
+        {% for l in lojas_da_prefeitura %}
+          <option value="{{ l.id }}" {% if l.id == loja_selecionada %}selected{% endif %}>{{ l.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Botão limpar filtros -->
+    {% if tem_filtros %}
+      <a href="{% url 'tarefas:ranking' %}"
+         class="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-1.5 text-[12px] font-semibold text-red-200 transition hover:bg-red-400/20">
+        Limpar filtros
+      </a>
+    {% endif %}
+
+    <!-- Rádio Classe -->
+    <div class="flex items-center gap-3">
+      <label class="text-[11px] font-semibold uppercase tracking-wider text-[#6f8a93]">Classe:</label>
+      <label class="flex items-center gap-1.5 cursor-pointer">
+        <input type="radio" name="classe" value="MX" {% if classe_selecionada == 'MX' %}checked{% endif %}
+               class="accent-[#3b82f6]" onchange="navigateClasse(this.value)">
+        <span class="text-[12px] {% if classe_selecionada == 'MX' %}font-bold text-[#3b82f6]{% else %}text-[#a6bfc7]{% endif %}">MX</span>
+      </label>
+      <label class="flex items-center gap-1.5 cursor-pointer">
+        <input type="radio" name="classe" value="EN" {% if classe_selecionada == 'EN' %}checked{% endif %}
+               class="accent-[#5b8def]" onchange="navigateClasse(this.value)">
+        <span class="text-[12px] {% if classe_selecionada == 'EN' %}font-bold text-[#5b8def]{% else %}text-[#a6bfc7]{% endif %}">EN</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- Tabela de Ranking -->
+<div class="overflow-x-auto hazon-card">
+  {% if ranking_rows %}
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="border-b border-white/10 text-left">
+          <th class="sticky left-0 z-10 w-12 bg-[#0b2029] px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">RK</th>
+          <th class="sticky left-12 z-10 w-[200px] bg-[#0b2029] px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Nome</th>
+          <th class="bg-[#0b2029] px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Pref.</th>
+          <th class="bg-[#0b2029] px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Loja</th>
+          <th class="bg-[#0b2029] px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Recepção</th>
+          <th class="bg-[#0b2029] px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Tempo</th>
+          <th class="bg-[#0b2029] px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[#4ade80]">Presenças</th>
+          <th class="bg-[#0b2029] px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[#ef4444]">Faltas</th>
+        </tr>
+      </thead>
+      <tbody id="ranking-body">
+      </tbody>
+    </table>
+
+    <!-- Paginação -->
+    <div id="ranking-pagination" class="flex items-center justify-between border-t border-white/10 px-5 py-3">
+      <span class="text-[11px] text-[#6f8a93]">
+        Mostrando <span id="showing-range"></span> de <span class="text-white">{{ ranking_rows|length }}</span> membros
+      </span>
+      <div id="pagination-btns" class="flex items-center gap-1.5"></div>
+    </div>
+  {% else %}
+    <div class="py-16 text-center">
+      <p class="text-[14px] text-[#a6bfc7]">Nenhum membro encontrado no período selecionado.</p>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script>
+(function () {
+  var rankingRows = {{ ranking_rows|js }};
+  var perPage = 20;
+  var page = 1;
+  var totalPages = Math.ceil(rankingRows.length / perPage);
+
+  function render() {
+    var tbody = document.getElementById('ranking-body');
+    var pagBtns = document.getElementById('pagination-btns');
+    var showingRange = document.getElementById('showing-range');
+    if (!tbody) return;
+
+    var start = (page - 1) * perPage;
+    var slice = rankingRows.slice(start, start + perPage);
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    var html = '';
+    slice.forEach(function (r) {
+      html += '<tr class="border-b border-white/5 transition hover:bg-white/5">';
+      html += '<td class="sticky left-0 z-10 bg-[#0b2029] px-3 py-2.5 font-mono text-[12px] font-bold text-[#a6bfc7]">' + r.rk + '</td>';
+      html += '<td class="sticky left-12 z-10 bg-[#0b2029] px-3 py-2.5 text-[12px] font-medium text-[#bcd3da]">' + esc(r.nome) + '</td>';
+      html += '<td class="px-3 py-2.5 text-[11px] text-[#6f8a93]">' + esc(r.prefeitura_sigla || '—') + '</td>';
+      html += '<td class="px-3 py-2.5 text-[11px] text-[#a6bfc7]">' + esc(r.loja_nome || '—') + '</td>';
+      html += '<td class="px-3 py-2.5 text-[11px] text-[#6f8a93]">' + esc(r.recepcao_fmt || '—') + '</td>';
+      html += '<td class="px-3 py-2.5 text-center font-mono text-[12px] font-bold text-[#a6bfc7]">' + r.tempo_meses + 'm</td>';
+      html += '<td class="px-3 py-2.5 text-center font-mono text-[12px] font-bold text-[#4ade80]">' + r.total_present + '</td>';
+      html += '<td class="px-3 py-2.5 text-center font-mono text-[12px] font-bold text-[#ef4444]">' + r.total_absent + '</td>';
+      html += '</tr>';
+    });
+    tbody.innerHTML = html;
+
+    // Range
+    if (showingRange) {
+      showingRange.textContent = (start + 1) + '–' + Math.min(start + perPage, rankingRows.length);
+    }
+
+    // Pagination
+    if (!pagBtns || totalPages <= 1) { if (pagBtns) pagBtns.innerHTML = ''; return; }
+    var phtml = '';
+    // Prev
+    phtml += '<button data-p="' + (page - 1) + '" class="rank-page h-7 min-w-[28px] rounded-lg px-2 text-[11px] font-bold transition bg-white/5 text-[#6f8a93] border border-white/10' + (page === 1 ? ' opacity-30 pointer-events-none' : '') + '">&laquo;</button>';
+    for (var i = 1; i <= totalPages; i++) {
+      phtml += '<button data-p="' + i + '" class="rank-page h-7 min-w-[28px] rounded-lg px-2 text-[11px] font-bold transition ';
+      if (i === page) {
+        phtml += 'bg-[#5b8def]/20 text-[#5b8def] border border-[#5b8def]/30';
+      } else {
+        phtml += 'bg-white/5 text-[#6f8a93] border border-white/10 hover:bg-white/10 hover:text-white';
+      }
+      phtml += '">' + i + '</button> ';
+    }
+    // Next
+    phtml += '<button data-p="' + (page + 1) + '" class="rank-page h-7 min-w-[28px] rounded-lg px-2 text-[11px] font-bold transition bg-white/5 text-[#6f8a93] border border-white/10' + (page === totalPages ? ' opacity-30 pointer-events-none' : '') + '">&raquo;</button>';
+    pagBtns.innerHTML = phtml;
+
+    pagBtns.querySelectorAll('.rank-page').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var p = parseInt(this.getAttribute('data-p'));
+        if (p >= 1 && p <= totalPages) { page = p; render(); }
+      });
+    });
+  }
+
+  // Filtro Prefeitura -> carrega as lojas da prefeitura escolhida e navega
+  var prefeituraSelect = document.getElementById('filter-prefeitura');
+  var lojaGrupo = document.getElementById('filter-loja-grupo');
+  var lojaSelect = document.getElementById('filter-loja');
+  if (prefeituraSelect) {
+    prefeituraSelect.addEventListener('change', function () {
+      var id = this.value;
+      var params = new URLSearchParams(window.location.search);
+      params.delete('loja_id');
+      if (!id) {
+        params.delete('prefeitura_id');
+        window.location.search = params.toString();
+        return;
+      }
+      params.set('prefeitura_id', id);
+      lojaSelect.innerHTML = '<option value="">Todas as lojas</option>';
+      lojaSelect.disabled = true;
+      lojaGrupo.classList.remove('hidden');
+      fetch('/contatos/prefeitura/' + encodeURIComponent(id) + '/lojas-json/')
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          (d.lojas || []).forEach(function (lj) {
+            var opt = document.createElement('option');
+            opt.value = lj.id;
+            opt.textContent = lj.nome;
+            lojaSelect.appendChild(opt);
+          });
+          lojaSelect.disabled = false;
+          window.location.search = params.toString();
+        })
+        .catch(function () {
+          lojaSelect.innerHTML = '<option value="">Todas as lojas</option>';
+          lojaSelect.disabled = false;
+          window.location.search = params.toString();
+        });
+    });
+  }
+
+  // Filtro Loja (preserva a prefeitura escolhida)
+  if (lojaSelect) {
+    lojaSelect.addEventListener('change', function () {
+      var params = new URLSearchParams(window.location.search);
+      if (this.value) { params.set('loja_id', this.value); } else { params.delete('loja_id'); }
+      window.location.search = params.toString();
+    });
+  }
+
+  // Navigate classe
+  window.navigateClasse = function (c) {
+    var params = new URLSearchParams(window.location.search);
+    params.set('classe', c);
+    window.location.search = params.toString();
+  };
+
+  render();
+})();
+</script>
+{% endblock %}

@@ -1,8 +1,8 @@
 {
-  "name": "cronoscrm",
+  "name": "gprbr",
   "version": "1.0.0",
   "private": true,
-  "description": "CRMCronos.Cloud — Sales CRM com PostgreSQL",
+  "description": "GPRBRCRM — Sales CRM com PostgreSQL",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

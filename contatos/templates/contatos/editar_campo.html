@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}CRMCronos.Cloud — Editar campo{% endblock %}
+{% block titulo %}GPRBRCRM — Editar campo{% endblock %}
 
 {% block conteudo %}
 <div class="mx-auto max-w-2xl">
@@ -30,7 +30,7 @@
       </div>
       <div class="flex items-end">
         <label for="id_obrigatorio" class="flex items-center gap-2 pb-[7px] text-[13px] text-[#bcd3da]">
-          <input type="checkbox" name="obrigatorio" id="id_obrigatorio" class="h-4 w-4 accent-[#74b3c6]"
+          <input type="checkbox" name="obrigatorio" id="id_obrigatorio" class="h-4 w-4 accent-[#5b8def]"
                  {% if form.obrigatorio.value %}checked{% endif %}>
           Obrigatório
         </label>
@@ -39,7 +39,7 @@
     <div>
       <label for="id_opcoes" class="hazon-label">Opções (tipo Lista)</label>
       {{ form.opcoes }}
-      <p class="mt-1 text-[11px] text-[#6f8a93]">Separadas por vírgula — ex.: Bronze, Prata, Ouro</p>
+      <p class="mt-1 text-[11px] text-[#a6bfc7]">Separadas por vírgula — ex.: Bronze, Prata, Ouro</p>
     </div>
     <div class="flex flex-wrap gap-3 pt-2">
       <button type="submit" class="hazon-btn hazon-btn-primary px-6 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">Salvar alterações</button>

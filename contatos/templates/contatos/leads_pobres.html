@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}CRMCronos.Cloud — Perfil dos leads{% endblock %}
+{% block titulo %}GPRBRCRM — Perfil dos leads{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7 flex flex-wrap items-end justify-between gap-3">
@@ -27,7 +27,7 @@
   <span class="flex h-9 w-9 items-center justify-center rounded-full font-mono text-[15px] font-bold" style="color:{{ cor_nivel }};background:{{ cor_nivel }}1f">{{ total }}</span>
   <p class="text-[13.5px] text-[#bcd3da]">
     <b style="color:{{ cor_nivel }}">{{ rotulo_nivel }}</b>
-    {% if total %}<span class="text-[#6f8a93]">— cada ficha completada aumenta o score de prioridade.</span>{% endif %}
+    {% if total %}<span class="text-[#a6bfc7]">— cada ficha completada aumenta o score de prioridade.</span>{% endif %}
   </p>
 </div>
 
@@ -36,10 +36,10 @@
   {% for c in itens %}
   <div class="hazon-card-sm flex flex-col p-5 transition hover:bg-white/10">
     <div class="mb-3 flex items-start justify-between gap-3">
-      <a href="{% url 'contatos:detalhe' c.id %}" class="text-[14.5px] font-semibold text-white transition hover:text-[#74b3c6]">{{ c.nome }}</a>
+      <a href="{% url 'contatos:detalhe' c.id %}" class="text-[14.5px] font-semibold text-white transition hover:text-[#5b8def]">{{ c.nome }}</a>
       <span class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold" style="color:{{ c.stage.color }};background:{{ c.stage.color }}1a">{{ c.stage.name }}</span>
     </div>
-    <div class="mb-3 space-y-1 text-[12.5px] text-[#6f8a93]">
+    <div class="mb-3 space-y-1 text-[12.5px] text-[#a6bfc7]">
       {% if c.empresa and c.empresa != '—' %}<div>{{ c.empresa }}</div>{% endif %}
       <div class="font-mono text-[#bcd3da]">{{ c.tel }}</div>
       {% if c.email and c.email != '—' %}<div class="break-all text-[#bcd3da]">{{ c.email }}</div>{% endif %}
@@ -49,19 +49,19 @@
     <!-- Completude -->
     <div class="mt-auto">
       <div class="mb-1.5 flex items-center justify-between">
-        <span class="text-[10px] font-bold uppercase tracking-[0.1em] text-[#6f8a93]">Perfil</span>
+        <span class="text-[10px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Perfil</span>
         <span class="font-mono text-[12px] font-bold" style="color:{{ c.completude.cor }}">{{ c.completude.total }}%</span>
       </div>
       <div class="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
         <div class="h-full rounded-full" style="width:{{ c.completude.total }}%;background:{{ c.completude.cor }}"></div>
       </div>
       {% if c.completude.faltam %}
-      <p class="mb-4 text-[11.5px] leading-relaxed text-[#6f8a93]">
+      <p class="mb-4 text-[11.5px] leading-relaxed text-[#a6bfc7]">
         falta: <span class="text-[#bcd3da]">{{ c.completude.faltam|join:', ' }}</span>
       </p>
       {% endif %}
       <div class="flex items-center justify-between gap-3 border-t border-white/10 pt-3">
-        <span class="font-mono text-[13.5px] font-bold text-[#74b3c6]">{{ c.valor }}</span>
+        <span class="font-mono text-[13.5px] font-bold text-[#5b8def]">{{ c.valor }}</span>
         {% if web_pode_editar %}
         <a href="{% url 'contatos:editar' c.id %}?focar={{ c.completude.faltam|join:','|urlencode }}"
            class="hazon-btn hazon-btn-primary px-3.5 py-1.5 text-[12px] font-semibold text-white transition hover:brightness-110"
@@ -76,7 +76,7 @@
 <div class="hazon-card flex flex-col items-center justify-center px-6 py-16 text-center">
   <span class="mb-4 flex h-14 w-14 items-center justify-center rounded-full font-mono text-xl font-bold" style="color:{{ cor_nivel }};background:{{ cor_nivel }}14">✓</span>
   <h2 class="font-display text-lg font-semibold text-white">{% if nivel == 'pobre' %}Nenhum lead pobre 🎉{% elif nivel == 'medio' %}Nenhum perfil médio 🎉{% else %}Nenhum perfil completo ainda 🎉{% endif %}</h2>
-  <p class="mt-2 max-w-md text-[13px] leading-relaxed text-[#6f8a93]">
+  <p class="mt-2 max-w-md text-[13px] leading-relaxed text-[#a6bfc7]">
     {% if nivel == 'pobre' %}Todos os contatos têm perfil médio ou completo. Continue cadastrando leads rápidos no funil — eles aparecem aqui até ganharem dados.{% elif nivel == 'medio' %}Nenhum perfil médio no momento.{% else %}Nenhum perfil completo ainda — complete as fichas dos leads para chegar lá.{% endif %}
   </p>
   <a href="{% url 'contatos:lista' %}" class="mt-5 hazon-btn hazon-btn-primary px-5 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">Ver contatos</a>

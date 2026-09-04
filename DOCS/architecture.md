@@ -2,7 +2,7 @@
 
 ## Visão geral
 
-O CRMCronos.Cloud é um sistema **monolítico em duas camadas HTTP** sobre o mesmo banco
+O GPRBRCRM é um sistema **monolítico em duas camadas HTTP** sobre o mesmo banco
 PostgreSQL:
 
 | Camada | Tecnologia | Porta | O que faz |
@@ -50,6 +50,71 @@ teste/                 Suite pytest (463 testes, fixtures em conftest.py)
 | `campanhas` | Campanhas de e-mail |
 | `discador` | Filas de chamadas, scripts, registro de chamadas, softphone |
 | `relatorios` | Relatório gerencial (KPIs de cobrança, filtros, exportação CSV/PDF) |
+| `gestao` | Dashboard global de inscrições do evento GEOD-CEOD (**sem escopo de tenant** — área à parte) |
+
+## Navegação (menu)
+
+O menu é montado em `acesso/context_processors.py::_ROTAS`. Cobertura atual:
+
+| Item do menu | Aplicações cobertas |
+|---|---|
+| Dashboard, Funil | `dashboard`, `funil` |
+| Membros, Prefeitura, Lojas | `contatos` (camada GPRB) |
+| Ranking | `tarefas:ranking` (badge de atrasadas) |
+| Comunicações (link para `premium_campanhas`) | upsell premium — `campanhas`/`emails` entram por lá |
+| Equipe (gestores: oficialato + `admin_company`) | cadastro de usuários **sem senha** + reenvio de link (`equipe`) |
+| Usuários | página de usuários (`config`: perfil, senha; para gestores: cadastro sem senha, convites (só `admin_company`) — aparência/sessões removidas da página em 2026-09; tema continua no botão do header) |
+
+Decisão de produto (2026-09): o menu é enxuto — **não** inclui submenus de Tarefas ou
+"Operação" (Discador/Relatórios/Automações ficam acessíveis por URL; reavaliar quando
+forem ativados comercialmente).
+
+- **`gestao`** (GEOD-CEOD) é uma área interna sem item de menu de propósito: o dashboard
+  agrega dados globais (sem tenant). Acesso direto por `gestao:dashboard`; não expor no
+  menu padrão sem definir um papel/portão próprio (ex.: somente `admin_saas`).
+- Se um app estiver em `INSTALLED_APPS`/`core/urls.py` e **não** aparecer acima, é
+  área interna ou rota de serviço — atualizar esta tabela ao mudar o menu.
+
+## `contatos`: duas camadas coexistindo
+
+| Camada | Modelo de dados | Chaves | Views | Destino |
+|---|---|---|---|---|
+| **GPRB** (diretório maçônico) | SQL cru em `core/gprb.py` → banco `saldogprb` | UUID | membros, lojas, prefeituras | **Menu**: Membros/Prefeitura/Lojas |
+| **CRM** (HAZON, venda) | ORM `Contato`/`Negocio`/`Carteira`/`CampoPersonalizado` | `int` | `lista`(antiga), `novo`, `detalhe`, negócios, notas, tags, carteiras, campos, leads, importar/exportar | alimenta `funil`, `dashboard`, `emails`, `discador`, `tarefas`, `automacoes`, `relatorios` |
+
+A lista de membros (`contatos:lista`) assumiu o item "Membros" do menu; a antiga lista de
+contatos CRM ficou **sem entrada na UI**. Rotas CRM que hoje não têm link de entrada
+(levantamento 2026-09 — confirmar uso antes de remover):
+
+| Rota | Referências externas à própria tela | Veredito |
+|---|---|---|
+| `contatos:novo`, `detalhe`, `editar`, `excluir`, negócios, notas, tags | somente fluxo interno entre essas telas | sem entrada no menu — decidir reexpor (submenu CRM premium) ou ocultar |
+| `contatos:carteiras` / `carteira_detalhe` | auto-refs + upsell `premium_carteiras` | área premium — reexpor para quem contratou |
+| `contatos:campos` | usado por `formulario` | segue o fluxo acima |
+| `contatos:leads_pobres` | nenhuma | candidata a remoção (verificar tráfego) |
+| `contatos:importar` / `modelo` | só link próprio | sem entrada — reexpor junto com a tela CRM correspondente |
+| `contatos:exportar` | nenhuma | candidata a remoção (substituída por exportações do funil/relatórios) |
+| `contatos:exportar_negocios` | link no `funil/kanban.html` | em uso — manter |
+
+## Acesso: criação de usuário sem senha (ativação por link 72h)
+
+Desde 2026-09, usuários do sistema são criados **sem senha** (PRD-USUARIOS-SEM-SENHA):
+
+- **Criação** (`acesso/views.py::equipe` e ação `criar_usuario` do `config`): nome,
+  e-mail, celular e perfil. Quem pode criar/reenviar: `ROLES_GESTORES_USUARIOS`
+  (oficialato Grão Prior/Grande Chanceler/Grande Tesoureiro/Prefeito/Deputado/TI +
+  `admin_company` legado). A conta nasce `pendente_senha` no tenant do gestor, com
+  senha inutilizável (`!`), `criado_por` e token de ativação de 256 bits.
+- **E-mail**: rotina única `acesso/ativacao.py::enviar_email_ativacao` →
+  `emails.servico.enviar_mensagem` (em dev, sem SMTP, roda em modo simulação e o
+  link vai ao log). Validade: 72h (`PRAZO_ATIVACAO`); reenvio limitado a 3
+  (`LIMITE_REENVIOS`), gerando token novo.
+- **Ativação** (`ativar_conta`, rota pública `usuario/ativar/<token>/`): token
+  inválido/expirado/já usado mostram o motivo; válido → usuário define e confirma a
+  senha (política `AUTH_PASSWORD_VALIDATORS`), a conta vira `ativo`, o token é
+  limpo (uso único) e o login é automático.
+- **Login** de usuário pendente é bloqueado em todos os caminhos (CRM local,
+  fallback GPRB e Saldorer).
 
 ## Multi-tenancy
 

@@ -1,23 +1,9 @@
-<div class="hazon-card-sm p-7 backdrop-blur-xl">
+<div class="hazon-card-sm flex flex-col p-7 backdrop-blur-xl" style="min-height:300px;">
   <div class="mb-6 flex items-center justify-between">
-    <h2 class="font-display text-lg font-semibold text-white">Atividade do time</h2>
-    <span class="text-xs text-[#6f8a93]">últimos 30 dias</span>
+    <h2 class="font-display text-lg font-semibold text-white">Tempo na Maçonaria</h2>
+    <span class="text-xs text-[#a6bfc7]">por tempo de iniciação</span>
   </div>
-  <div class="space-y-3">
-    {% for a in atividade %}
-      <div class="flex items-center gap-3.5 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2aa1a8] to-[#075b60] text-[12px] font-bold text-white">{{ a.iniciais }}</span>
-        <div class="min-w-0 flex-1">
-          <span class="block truncate text-[13px] font-semibold text-white">{{ a.nome }}</span>
-          <span class="block text-[11.5px] text-[#6f8a93]">{{ a.total }} ações no período</span>
-        </div>
-        <div class="flex shrink-0 items-center gap-1.5">
-          <span class="rounded-full border border-[#74b3c6]/25 bg-[#74b3c6]/10 px-2.5 py-1 font-mono text-[10.5px] font-semibold text-[#74b3c6]" title="Movimentações de etapa">{{ a.movs }} mov.</span>
-          <span class="rounded-full border border-[#fbbf24]/25 bg-[#fbbf24]/10 px-2.5 py-1 font-mono text-[10.5px] font-semibold text-[#fbbf24]" title="Notas adicionadas">{{ a.notas }} notas</span>
-        </div>
-      </div>
-    {% empty %}
-      <p class="py-8 text-center text-[13px] text-[#6f8a93]">Sem atividade nos últimos 30 dias.</p>
-    {% endfor %}
+  <div class="flex-1" style="position:relative;min-height:200px;">
+    <canvas id="chart-tempo-maconaria"></canvas>
   </div>
 </div>

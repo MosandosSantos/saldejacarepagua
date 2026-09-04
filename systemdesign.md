@@ -1,21 +1,21 @@
-# System Design — CRMCronos.Cloud (padrão replicável)
+# System Design — GPRBRCRM (padrão replicável)
 
-> Documento de arquitetura do projeto `cronoscrm` (Django + FastAPI + PostgreSQL).
+> Documento de arquitetura do projeto `gprbr` (Django + FastAPI + PostgreSQL).
 > Serve de blueprint para replicar o mesmo padrão em outros projetos
-> (ex.: cronosCRM). Para um projeto novo, troque apenas os nomes de
+> (ex.: gprbrCRM). Para um projeto novo, troque apenas os nomes de
 > tema e o esquema de dados — a estrutura, as camadas e os testes são os mesmos.
 
 ---
 
 ## 1. Visão geral
 
-Sistema CRM de clínica (CRMCronos.Cloud) construído em duas camadas:
+Sistema CRM de clínica (GPRBRCRM) construído em duas camadas:
 
 - **Django** = fonte de verdade dos dados (ORM, migrations, configuração central).
   Não expõe HTTP — serve apenas como ORM/configuração.
 - **FastAPI** = camada REST (`/api/v1`), consumida pelo frontend (HTML/JS).
 
-Banco de dados: **PostgreSQL** local (banco `cronoscrm`, já existente antes do
+Banco de dados: **PostgreSQL** local (banco `gprbr`, já existente antes do
 projeto — o Django adota as tabelas sem recriar dados).
 
 ---
@@ -210,7 +210,7 @@ Regras de negócio: nome obrigatório; `valor >= 0`; campos vazios viram `'—'`
 
 ### health
 
-- `GET /` → `{"api": "CRMCronos.Cloud", "version": "1.0.0", "docs": "/docs"}`
+- `GET /` → `{"api": "GPRBRCRM", "version": "1.0.0", "docs": "/docs"}`
 - `/docs` → Swagger (gerado pelo FastAPI).
 
 ---
@@ -270,15 +270,15 @@ def client():
     connections.close_all()
 ```
 
-`pytest` + `manage.py test` usam o mesmo banco de teste (`test_cronoscrm`):
+`pytest` + `manage.py test` usam o mesmo banco de teste (`test_gprbr`):
 se um deixar o banco para trás, o outro pede para dropar — resolver com:
-`DROP DATABASE IF EXISTS test_cronoscrm;` (após matar as sessões).
+`DROP DATABASE IF EXISTS test_gprbr;` (após matar as sessões).
 
 ---
 
 ## 8. Passo a passo para replicar (projeto novo)
 
-1. Clonar/abrir o repositório do projeto novo (ex.: cronosCRM).
+1. Clonar/abrir o repositório do projeto novo (ex.: gprbrCRM).
 2. Criar venv e instalar deps:
    ```
    python -m venv .venv

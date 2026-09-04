@@ -65,26 +65,26 @@ module.exports = {
     theme: {
         extend: {
             colors: {
-                /* Design system HAZON — tokens únicos de cor (S2 do PRD). */
+                /* Design system GEOD-CEOD — tokens de cor piano azul-marinho. */
                 hazon: {
-                    night: '#0b2029',      /* fundo base */
-                    abyss: '#072026',      /* header / superfícies mais escuras */
-                    deep: '#0e3a44',       /* gradiente de fundo */
-                    surface: '#0d2a33',    /* superfícies escuras (cartões sólidos) */
-                    mid: '#112530',        /* gradiente de fundo */
-                    primary: '#0b6f74',
-                    'primary-dark': '#075b60',
-                    accent: '#74b3c6',
+                    night: '#0a1e3d',      /* fundo base piano */
+                    abyss: '#081830',      /* header / superfícies mais escuras */
+                    deep: '#0f2a52',       /* gradiente de fundo */
+                    surface: '#0e2540',    /* superfícies escuras (cartões sólidos) */
+                    mid: '#0c2245',        /* gradiente de fundo */
+                    primary: '#1a5fb4',
+                    'primary-dark': '#1450a0',
+                    accent: '#5b8def',
                     text: '#f4fafb',
                     muted: '#bcd3da',
-                    dim: '#6f8a93',
-                    success: '#7fe3c4',
-                    'success-bright': '#4ade80',
+                    dim: '#a6bfc7',
+                    success: '#4ade80',
+                    'success-bright': '#22c55e',
                     warn: '#fbbf24',
                     danger: '#fca5a5',
-                    info: '#c084fc',
+                    info: '#93b8f7',
                     orange: '#fb923c',
-                    blue: '#60a5fa',
+                    blue: '#5b8def',
                     slate: '#94a3b8',
                     pink: '#f472b6',
                 },
@@ -92,11 +92,12 @@ module.exports = {
             fontFamily: {
                 sans: ['Manrope', 'Segoe UI', 'sans-serif'],
                 display: ['Fraunces', 'Georgia', 'serif'],
+                mono: ['JetBrains Mono', 'monospace'],
             },
             boxShadow: {
-                'glow-accent': '0 0 8px rgba(116,179,198,0.44)',
+                'glow-accent': '0 0 8px rgba(91,141,239,0.44)',
                 'glow-warn': '0 0 8px rgba(251,191,36,0.44)',
-                'accent-lg': '0 10px 30px -12px rgba(116,179,198,0.35)',
+                'accent-lg': '0 10px 30px -12px rgba(91,141,239,0.35)',
                 soft: '0 8px 30px -12px rgba(0,0,0,0.40)',
             },
         },

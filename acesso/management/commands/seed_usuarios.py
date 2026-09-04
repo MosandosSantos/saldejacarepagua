@@ -25,7 +25,7 @@ class Command(BaseCommand):
         garantir_etapas(tenant.id, tenant.nicho)
 
         usuarios = [
-            ('Admin SaaS', 'admin@cronoscrm.com', 'admin_saas', None),
+            ('Admin SaaS', 'admin@gprbr.com', 'admin_saas', None),
             ('Carlos Silva', 'carlos@lojavirtual.com', 'admin_company', tenant),
             ('Ana Souza', 'ana@lojavirtual.com', 'operacional', tenant),
             ('Pedro Costa', 'pedro@lojavirtual.com', 'viewer', tenant),

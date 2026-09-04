@@ -15,11 +15,9 @@ from emails.models import EmailEnviado, ModeloEmail
 from emails.servico import (
     EMAIL_VAZIO,
     GIF_1PX,
-    _anexar_pixel_e_links,
     _expandir_url,
     disparar_campanha,
-    enviar_um,
-    renderizar,
+    registrar_e_enviar,
 )
 
 
@@ -211,20 +209,10 @@ def enviar_contato(request, contato_id):
             filtro_tenant(request, ModeloEmail.objects.all()),
             pk=request.POST.get('modelo_id', ''),
         )
-        if contato.email in EMAIL_VAZIO:
+        # registrar_e_enviar devolve None quando o contato não tem e-mail
+        registro = registrar_e_enviar(modelo, contato, _base_pixel(request))
+        if registro is None:
             return redirect('contatos:detalhe', pk=contato_id)
-        registro = EmailEnviado.objects.create(
-            tenant_id=request.session.get('usuario', {}).get('tenant_id'),
-            contato=contato,
-            modelo=modelo,
-            assunto=renderizar(modelo.assunto, contato),
-            corpo=renderizar(modelo.corpo, contato),
-            destinatario=contato.email,
-            status='pendente',
-        )
-        _anexar_pixel_e_links(registro, _base_pixel(request))
-        registro.save(update_fields=['corpo'])
-        enviar_um(registro)
         return redirect(reverse('contatos:detalhe', args=[contato_id]) + '?email=ok')
     return redirect('contatos:detalhe', pk=contato_id)
 

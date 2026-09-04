@@ -32,14 +32,22 @@ def client():
 def tenant_aurora():
     from acesso.models import Tenant
 
-    return Tenant.objects.create(nome='Clínica Aurora', slug='clinica-aurora')
+    # get_or_create: a migracao 0002 do contatos semeia 'clinica-aurora' em
+    # todo banco novo — criar de novo violaria o slug unico.
+    tenant, _ = Tenant.objects.get_or_create(
+        slug='clinica-aurora', defaults={'nome': 'Clínica Aurora'},
+    )
+    return tenant
 
 
 @pytest.fixture
 def tenant_beta():
     from acesso.models import Tenant
 
-    return Tenant.objects.create(nome='Clínica Beta', slug='clinica-beta')
+    tenant, _ = Tenant.objects.get_or_create(
+        slug='clinica-beta', defaults={'nome': 'Clínica Beta'},
+    )
+    return tenant
 
 
 def criar_usuario(nome, email, role, tenant):

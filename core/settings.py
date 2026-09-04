@@ -21,12 +21,26 @@ def _env_bool(name: str, default: str = '0') -> bool:
 DEBUG = _env_bool('DJANGO_DEBUG') or _env_bool('DEBUG', '0')
 
 # --- Secrets fail-fast em producao ---------------------------------------
-# S8/C2 —fallback so em DEBUG=1; em producao a ausencia das env vars aborta
+# S8/C2 — fallback so em DEBUG=1; em producao a ausencia das env vars aborta
 # o boot em vez de rodar com chave publica/estatica forjavel.
 _DEV_SECRET = 'chave-dev-nao-usar-em-producao'
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY') or os.getenv('SECRET_KEY') or _DEV_SECRET
-if not DEBUG and SECRET_KEY == _DEV_SECRET:
-    raise ImproperlyConfigured('DJANGO_SECRET_KEY e obrigatoria em producao (DEBUG=0).')
+
+
+def _secret_fraca(chave):
+    """True para chaves placeholder (ex.: copiadas do .env.example)."""
+    chave = (chave or '').strip().lower()
+    marcadores = ('troque', 'change-me', 'change_me', 'placeholder',
+                  'nao-usar', 'minha-chave', 'exemplo', 'segredo')
+    return not chave or any(m in chave for m in marcadores)
+
+
+if not DEBUG and (SECRET_KEY == _DEV_SECRET or _secret_fraca(SECRET_KEY)):
+    raise ImproperlyConfigured(
+        'DJANGO_SECRET_KEY ausente ou com valor placeholder em producao (DEBUG=0). '
+        'Defina uma chave aleatoria via env (ex.: python -c "import secrets; '
+        'print(secrets.token_urlsafe(64))").'
+    )
 _DJANGO_ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '')
 ALLOWED_HOSTS = [h.strip() for h in _DJANGO_ALLOWED_HOSTS.split(',') if h.strip()]
 if not ALLOWED_HOSTS:
@@ -64,6 +78,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Apps de negocio
+    # App de infraestrutura (templatetags `seguranca`, middleware) — declarado
+    # para o {% load seguranca %} funcionar em qualquer template.
+    'core',
     'acesso',
     'contatos',
     'dashboard',
@@ -74,6 +91,7 @@ INSTALLED_APPS = [
     'campanhas',
     'discador',
     'relatorios',
+    'gestao',  # Dashboard de inscricoes (GEOD-CEOD)
     # Tailwind (gera o CSS com classes utilitarias)
     'tailwind',
     'theme',
@@ -108,6 +126,9 @@ TEMPLATES = [
                 'django.template.context_processors.csrf',
                 'acesso.context_processors.web_sessao',
             ],
+            # S1.1 — filtro |js (JSON seguro p/ dentro de <script>) disponivel
+            # em todos os templates, sem depender de app no INSTALLED_APPS.
+            'builtins': ['core.templatetags.seguranca'],
         },
     },
 ]
@@ -118,7 +139,7 @@ ASGI_APPLICATION = 'core.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('PGDATABASE', 'cronoscrm'),
+        'NAME': os.getenv('PGDATABASE', 'gprbr'),
         'USER': os.getenv('PGUSER', 'postgres'),
         'PASSWORD': os.getenv('PGPASSWORD', ''),
         'HOST': os.getenv('PGHOST', 'localhost'),
@@ -209,15 +230,27 @@ RATE_LIMIT_ATIVO = os.getenv('DJANGO_RATE_LIMIT', '1') != '0'
 LOGIN_RATE_LIMITE = int(os.getenv('LOGIN_RATE_LIMITE', '10'))   # tentativas
 LOGIN_RATE_JANELA = int(os.getenv('LOGIN_RATE_JANELA', '300'))  # segundos
 
-# Cache em memoria (usado pelo rate limit do login web e invalidacao de
-# sessao). Em producao, troque por Redis/BMemcached para ser compartilhado
-# entre processos/workers.
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'cronoscrm-default',
+# Cache (usado pelo rate limit do login web e invalidacao de sessao).
+# Padrao: LocMem (dev). Se REDIS_URL estiver definida (producao com varios
+# workers), usa o RedisCache embutido do Django — compartilhado entre
+# processos, mantendo o rate limit eficaz.
+_REDIS_URL = os.getenv('REDIS_URL') or os.getenv('REDIS_TLS_URL')
+if _REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': _REDIS_URL,
+            'KEY_PREFIX': 'gprbr',
+            'TIMEOUT': 300,
+        }
     }
-}
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'gprbr-default',
+        }
+    }
 
 # Deploy atras de proxy que termina o TLS (Railway/nginx/caddy): o Django
 # precisa saber que a requisicao original e HTTPS (request.is_secure()). Fica
@@ -265,7 +298,7 @@ EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', '1') == '1'
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'CRMCronos.Cloud <nao-responder@esferadatasci.com.br>')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'GPRBRCRM <nao-responder@esferadatasci.com.br>')
 EMAIL_CONFIGURADO = bool(EMAIL_HOST)
 
 # ---------------------------------------------------------------------------
@@ -276,3 +309,62 @@ EMAIL_CONFIGURADO = bool(EMAIL_HOST)
 # fallback global por ambiente.
 SOFTPHONE_SCHEMA = os.getenv('SOFTPHONE_SCHEMA', 'sip')
 SOFTPHONE_DOMINIO = os.getenv('SOFTPHONE_DOMINIO', '')
+
+# ---------------------------------------------------------------------------
+# Logging — estrutura padrao para observabilidade
+# ---------------------------------------------------------------------------
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'acesso': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'core.gprb': {
+            'handlers': ['console', 'file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'dashboard': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

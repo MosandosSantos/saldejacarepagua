@@ -1,95 +1,16 @@
-<div class="hazon-card-sm p-7 backdrop-blur-xl">
-  <div class="mb-7 flex items-center justify-between">
-    <h2 class="font-display text-lg font-semibold text-white">Análise do funil</h2>
-    <span class="text-xs text-[#6f8a93]">receita &middot; origens &middot; segmentos</span>
+<div class="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+  <div class="mb-4">
+    <h3 class="text-[14px] font-semibold text-white">Ranking das Lojas</h3>
+    <p class="text-[11px] text-[#6f8a93]">top 10 por membros</p>
   </div>
-
-  <div class="grid gap-8 xl:grid-cols-2 2xl:grid-cols-4">
-    <!-- Receita por etapa -->
-    <div>
-      <div class="mb-4 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Receita por etapa</div>
-      <div class="space-y-3.5">
-        {% for e in por_etapa %}
-          <div>
-            <div class="mb-1.5 flex items-center justify-between gap-2">
-              <span class="flex min-w-0 items-center gap-2 text-[12px] text-[#bcd3da]">
-                <span class="h-2 w-2 shrink-0 rounded" style="background:{{ e.color }}"></span>
-                <span class="truncate">{{ e.name }}</span>
-              </span>
-              <span class="shrink-0 font-mono text-[12px] font-bold text-white">{{ e.total_label }}</span>
-            </div>
-            <div class="h-2 overflow-hidden rounded-full bg-white/5">
-              <div class="h-full rounded-full transition-all duration-500" style="width:{{ e.pct }}%;background:{{ e.color }}"></div>
-            </div>
-          </div>
-        {% endfor %}
+  <div class="space-y-1">
+    {% for l in ranking_lojas_dados %}
+      <div class="flex items-center gap-2 py-1">
+        <span class="w-4 shrink-0 text-right font-mono text-[11px]
+          {% if l.rank <= 3 %}font-bold text-[#fbbf24]{% else %}text-[#6f8a93]{% endif %}">{{ l.rank }}.</span>
+        <span class="min-w-0 flex-1 truncate text-[12px] text-[#a6bfc7]">{{ l.nome }}</span>
+        <span class="font-mono text-[12px] font-bold text-white">{{ l.total }}</span>
       </div>
-    </div>
-
-    <!-- Ticket médio + origens -->
-    <div>
-      <div class="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Ticket médio</div>
-      <div class="mb-7 rounded-xl border border-[#74b3c6]/30 bg-[#74b3c6]/10 p-5">
-        <div class="font-mono text-[30px] font-bold leading-none text-[#74b3c6]">{{ ticket_medio }}</div>
-        <div class="mt-2 text-xs text-[#6f8a93]">valor médio por paciente no funil</div>
-      </div>
-      <div class="mb-4 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Origens</div>
-      <div class="space-y-2.5">
-        {% for o in por_origem %}
-          <div class="flex items-center gap-2.5">
-            <span class="w-24 shrink-0 truncate text-[12px] text-[#bcd3da]" title="{{ o.nome }}">{{ o.nome }}</span>
-            <div class="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-white/5">
-              <div class="h-full rounded-full bg-[#74b3c6] transition-all duration-500" style="width:{{ o.pct }}%"></div>
-            </div>
-            <span class="w-[74px] shrink-0 text-right font-mono text-[11px] text-[#6f8a93]">
-              {{ o.count }}{% if o.fechados %} · {{ o.fechados }} fech.{% endif %}
-            </span>
-          </div>
-        {% empty %}
-          <p class="text-[12.5px] text-[#6f8a93]">Sem contatos ainda.</p>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Valor por segmento -->
-    <div>
-      <div class="mb-4 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Valor por segmento</div>
-      <div class="space-y-2.5">
-        {% for s in por_segmento %}
-          <div class="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 transition hover:border-[#74b3c6]/40">
-            <span class="flex min-w-0 items-center gap-2 text-[12px] text-[#bcd3da]">
-              <span class="h-2.5 w-2.5 shrink-0 rounded" style="background:{{ s.color }}"></span>
-              <span class="truncate">{{ s.label }}</span>
-            </span>
-            <span class="shrink-0 font-mono text-[13px] font-bold text-[#74b3c6]">{{ s.total_label }}</span>
-          </div>
-        {% empty %}
-          <p class="text-[12.5px] text-[#6f8a93]">Sem contatos com segmento.</p>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Velocidade média por etapa -->
-    <div>
-      <div class="mb-4 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Velocidade média por etapa</div>
-      <div class="space-y-3.5">
-        {% for v in velocidade %}
-          <div>
-            <div class="mb-1.5 flex items-center justify-between gap-2">
-              <span class="flex min-w-0 items-center gap-2 text-[12px] text-[#bcd3da]">
-                <span class="h-2 w-2 shrink-0 rounded" style="background:{{ v.color }}"></span>
-                <span class="truncate">{{ v.name }}</span>
-              </span>
-              <span class="shrink-0 font-mono text-[12px] font-bold text-white">{{ v.label }}</span>
-            </div>
-            <div class="h-2 overflow-hidden rounded-full bg-white/5">
-              <div class="h-full rounded-full transition-all duration-500" style="width:{{ v.pct }}%;background:{{ v.color }}"></div>
-            </div>
-          </div>
-        {% empty %}
-          <p class="text-[12.5px] text-[#6f8a93]">Sem movimentações ainda — o tempo médio aparece conforme os negócios mudam de etapa.</p>
-        {% endfor %}
-      </div>
-    </div>
+    {% endfor %}
   </div>
 </div>

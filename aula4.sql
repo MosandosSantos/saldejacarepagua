@@ -1,7 +1,7 @@
 -- ============================================================
--- CRMCronos.Cloud — Aula 4: adaptação pro nicho CLÍNICA / SAÚDE
+-- GPRBRCRM — Aula 4: adaptação pro nicho CLÍNICA / SAÚDE
 -- ============================================================
-\c cronoscrm
+\c gprbr
 
 -- Novos campos do cadastro
 ALTER TABLE contatos ADD COLUMN IF NOT EXISTS procedimento    TEXT DEFAULT '—';

@@ -1,6 +1,6 @@
-# CRMCronos.Cloud
+# GPRBRCRM
 
-CRM multi-tenant de vendas (CRMCronos.Cloud) com painel web em **Django (templates DTL + Tailwind)**, API REST em **FastAPI** e banco **PostgreSQL**.
+CRM multi-tenant de vendas (GPRBRCRM) com painel web em **Django (templates DTL + Tailwind)**, API REST em **FastAPI** e banco **PostgreSQL**.
 
 ## Arquitetura
 
@@ -67,7 +67,7 @@ aleatoriamente e salvas em `.env-seed` (não versionado).
 
 | E-mail | Papel |
 |--------|-------|
-| admin@cronoscrm.com | admin_saas |
+| admin@gprbr.com | admin_saas |
 | carlos@lojavirtual.com | admin_company |
 | ana@lojavirtual.com | operacional |
 | pedro@lojavirtual.com | viewer |

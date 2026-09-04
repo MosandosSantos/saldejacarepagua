@@ -1,9 +1,9 @@
 @echo off
-title CRMCronos.Cloud — Servidor Web (porta 8009)
+title GPRBRCRM — Servidor Web (porta 8009)
 cd /d "%~dp0"
 
 echo ============================================================
-echo   CRMCronos.Cloud — servidor web
+echo   GPRBRCRM — servidor web
 echo   Acesse:  http://localhost:8009
 echo   Para parar: feche esta janela (ou Ctrl+C)
 echo ============================================================

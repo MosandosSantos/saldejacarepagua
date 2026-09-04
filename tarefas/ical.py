@@ -54,7 +54,7 @@ def _prioridade_ics(prioridade):
 def tarefa_para_vevent(tarefa):
     """Converte uma Tarefa em VEVENT (string iCalendar)."""
     now = timezone.now()
-    uid = f'tarefa-{tarefa.id}@crmcronos.local'
+    uid = f'tarefa-{tarefa.id}@gprbr.local'
     dtstamp = formatdate(now.timestamp(), usegmt=True)
 
     # DTSTART / DTEND
@@ -95,7 +95,7 @@ def tarefa_para_vevent(tarefa):
         lines.append(_fold_line(f'DESCRIPTION:{description}'))
     lines.append(f'PRIORITY:{_prioridade_ics(tarefa.prioridade)}')
     lines.append(f'STATUS:{status}')
-    lines.append('CATEGORIES:CRMCronos.Cloud,Tarefa')
+    lines.append('CATEGORIES:GPRBRCRM,Tarefa')
 
     # Concluída -> COMPLETED com data
     if tarefa.concluida and tarefa.concluida_em:
@@ -116,7 +116,7 @@ def tarefa_para_vevent(tarefa):
     return '\r\n'.join(lines)
 
 
-def gerar_ics(tarefas, nome_calendar='CRMCronos.Cloud - Tarefas'):
+def gerar_ics(tarefas, nome_calendar='GPRBRCRM - Tarefas'):
     """Gera arquivo .ics completo a partir de um queryset de Tarefas."""
     vevents = [tarefa_para_vevent(t) for t in tarefas]
     now = formatdate(timezone.now().timestamp(), usegmt=True)
@@ -124,7 +124,7 @@ def gerar_ics(tarefas, nome_calendar='CRMCronos.Cloud - Tarefas'):
     cal = '\r\n'.join([
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
-        'PRODID:-//CRMCronos.Cloud//Tarefas v1.0//PT',
+        'PRODID:-//GPRBRCRM//Tarefas v1.0//PT',
         f'X-WR-CALNAME:{nome_calendar}',
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',

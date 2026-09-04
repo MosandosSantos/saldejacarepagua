@@ -5,19 +5,31 @@ from functools import wraps
 from django.shortcuts import redirect
 
 from core.dominio import NICHO_PADRAO
-from acesso.models import ROLES_QUE_EDITAM
+from acesso.models import ROLES_ADMINISTRATIVOS, ROLES_GESTORES_USUARIOS, ROLES_QUE_EDITAM
 
-ROLES_ADMIN = ('admin_company', 'admin_saas')
+# Admins com acesso administrativo amplo: empresa + plataforma + oficialato.
+ROLES_ADMIN = ROLES_ADMINISTRATIVOS
+
+# Quem pode gerenciar usuários (criar sem senha / reenviar link) — oficialato + admin legado.
+ROLES_GESTORES = ROLES_GESTORES_USUARIOS
 
 
 def e_admin_do_tenant(request):
-    """True quando o usuario da sessao e admin (da clinica ou da plataforma)."""
+    """True quando o usuario da sessao e admin (da clinica, plataforma ou oficialato)."""
     return request.session.get('usuario', {}).get('role') in ROLES_ADMIN
 
 
 def pode_editar(request):
-    """True quando o usuario da sessao pode criar/editar dados (viewer nao pode)."""
+    """True quando o usuario da sessao pode criar/editar dados (viewer nao pode).
+
+    O oficialato edita (ROLES_QUE_EDITAM inclui os perfis RER — coexistência).
+    """
     return request.session.get('usuario', {}).get('role') in ROLES_QUE_EDITAM
+
+
+def pode_gerir_usuarios(request):
+    """True quando o usuario da sessao pode criar usuários sem senha / reenviar links."""
+    return request.session.get('usuario', {}).get('role') in ROLES_GESTORES
 
 
 def web_requer_edicao(view_func):

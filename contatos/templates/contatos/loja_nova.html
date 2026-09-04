@@ -1,0 +1,80 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}GPRBRCRM — Nova Loja{% endblock %}
+
+{% block conteudo %}
+<div class="mb-7">
+  <h1 class="hazon-titulo">Nova Loja</h1>
+  <p class="hazon-sub mt-2">Preencha os dados para cadastrar uma nova loja.</p>
+</div>
+
+{% if erro %}
+<div class="mb-5 rounded-xl border border-[#ef4444]/30 bg-[#ef4444]/10 px-5 py-3 text-[13px] font-medium text-[#ef4444]">
+  {{ erro }}
+</div>
+{% endif %}
+
+<form method="post" class="space-y-6">
+  {% csrf_token %}
+
+  <div class="hazon-card space-y-5">
+    <div>
+      <label class="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-[#a6bfc7]">Nome da Loja *</label>
+      <input type="text" name="nome" required
+             class="hazon-input w-full" placeholder="Ex: Estrela do Norte">
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div>
+        <label class="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-[#a6bfc7]">Numero</label>
+        <input type="number" name="numero"
+               class="hazon-input w-full" placeholder="Ex: 1">
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-[#a6bfc7]">Prefeitura</label>
+        <select name="prefeitura" class="hazon-input w-full">
+          <option value="">— Selecione —</option>
+          {% for pf in prefeituras %}
+            <option value="{{ pf.id }}">{{ pf.nome }} ({{ pf.regiao }})</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div>
+        <label class="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-[#a6bfc7]">Telefone</label>
+        <input type="tel" name="telefone"
+               class="hazon-input w-full" placeholder="(21) 99999-0000">
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-[#a6bfc7]">E-mail</label>
+        <input type="email" name="email"
+               class="hazon-input w-full" placeholder="contato@loja.com">
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div>
+        <label class="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-[#a6bfc7]">Cidade</label>
+        <input type="text" name="cidade"
+               class="hazon-input w-full" placeholder="Cidade">
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-[#a6bfc7]">UF</label>
+        <input type="text" name="uf" maxlength="2"
+               class="hazon-input w-full" placeholder="RJ">
+      </div>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-4">
+    <button type="submit"
+            class="flex items-center gap-2 rounded-xl bg-[#4ade80] px-6 py-2.5 text-[13px] font-semibold text-[#0a1e3d] transition hover:bg-[#4ade80]/80">
+      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Salvar Loja
+    </button>
+    <a href="{% url 'contatos:lojas' %}" class="text-[13px] text-[#a6bfc7] transition hover:text-white">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

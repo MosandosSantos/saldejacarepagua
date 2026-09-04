@@ -5,6 +5,7 @@ uvicorn[standard]
 gunicorn>=23.0  # fallback se o build do Railway gerar start command com gunicorn
 pydantic>=2.7
 psycopg[binary]>=3.2
+redis>=4.5  # RedisCache do Django quando REDIS_URL estiver definida (S2.2)
 python-dotenv>=1.0
 pytest>=8
 pytest-django>=4.8
@@ -16,3 +17,6 @@ reportlab>=4.2
 qrcode>=8.0
 whitenoise>=6.6
 dj-database-url>=2.1
+openpyxl>=3.1
+pywhatkit>=5.4
+

@@ -1,0 +1,210 @@
+- generic [active] [ref=f1e1]:
+  - banner [ref=f1e3]:
+    - generic [ref=f1e4]:
+      - link "GPRBR GPRBRCRM CRM de gestao" [ref=f1e5] [cursor=pointer]:
+        - /url: /dashboard/
+        - img "GPRBR" [ref=f1e6]
+        - generic [ref=f1e7]:
+          - generic [ref=f1e8]: GPRBRCRM
+          - generic [ref=f1e9]: CRM de gestao
+      - navigation [ref=f1e10]:
+        - link "Dashboard" [ref=f1e11] [cursor=pointer]:
+          - /url: /dashboard/
+        - link "Funil" [ref=f1e17] [cursor=pointer]:
+          - /url: /funil/
+        - link "Membros" [ref=f1e20] [cursor=pointer]:
+          - /url: /contatos/
+        - link "Prefeitura" [ref=f1e26] [cursor=pointer]:
+          - /url: /contatos/prefeituras/
+        - link "Lojas" [ref=f1e29] [cursor=pointer]:
+          - /url: /contatos/lojas/
+        - link "Tarefas" [ref=f1e32] [cursor=pointer]:
+          - /url: /tarefas/
+        - link "Campanhas" [ref=f1e36] [cursor=pointer]:
+          - /url: /premium/campanhas/
+        - link "WhatsApp" [ref=f1e40] [cursor=pointer]:
+          - /url: /premium/whatsapp/
+        - link "Configurações" [ref=f1e43] [cursor=pointer]:
+          - /url: /config/
+      - generic [ref=f1e47]:
+        - button "Ativar tema claro" [ref=f1e49] [cursor=pointer]
+        - button "Menu do usuário" [ref=f1e54] [cursor=pointer]:
+          - generic [ref=f1e55]: R
+          - generic [ref=f1e56]: Render
+  - main [ref=f1e60]:
+    - generic [ref=f1e61]:
+      - generic [ref=f1e62]:
+        - heading "Visão geral" [level=1] [ref=f1e63]
+        - paragraph [ref=f1e64]: Resumo dos seus clientes, negócios e do desempenho do time.
+      - generic [ref=f1e65]:
+        - generic [ref=f1e66]: atualizado às 10:27:35
+        - button "Atualizar" [ref=f1e67] [cursor=pointer]
+    - generic [ref=f1e71]:
+      - generic [ref=f1e72]:
+        - generic [ref=f1e73]: "11"
+        - generic [ref=f1e79]: Lojas Ativas
+        - generic [ref=f1e80]: "11"
+        - generic [ref=f1e81]: "lojas do cadastro: 11"
+      - generic [ref=f1e82]:
+        - generic [ref=f1e83]: "416"
+        - generic [ref=f1e91]: Novos Membros em 2026
+        - generic [ref=f1e92]: "416"
+        - generic [ref=f1e93]: congressistas vinculados
+      - generic [ref=f1e94]:
+        - generic [ref=f1e95]: "0"
+        - generic [ref=f1e100]: Sessões no Ano
+        - generic [ref=f1e101]: "0"
+        - generic [ref=f1e102]: inscrições em 2026
+      - generic [ref=f1e103]:
+        - generic [ref=f1e104]: confirmados
+        - generic [ref=f1e109]: Caixa
+        - generic [ref=f1e110]: R$ 0,00
+        - generic [ref=f1e111]: pagamentos confirmados
+    - generic [ref=f1e112]:
+      - generic [ref=f1e113]:
+        - generic [ref=f1e114]:
+          - heading "BAIIS Ativos" [level=2] [ref=f1e115]
+          - text: "(BAIIS Cadastrados) total: 752"
+        - generic [ref=f1e116]:
+          - img [ref=f1e118]:
+            - generic [ref=f1e122]: "292"
+            - generic [ref=f1e127]: "227"
+            - generic [ref=f1e130]: "233"
+          - generic [ref=f1e131]:
+            - generic [ref=f1e132]:
+              - generic [ref=f1e134]: MX
+              - generic [ref=f1e135]: "292"
+              - generic [ref=f1e136]: 39%
+            - generic [ref=f1e137]:
+              - generic [ref=f1e139]: EN
+              - generic [ref=f1e140]: "227"
+              - generic [ref=f1e141]: 30%
+            - generic [ref=f1e142]:
+              - generic [ref=f1e144]: CBCS
+              - generic [ref=f1e145]: "233"
+              - generic [ref=f1e146]: 31%
+            - generic [ref=f1e147]:
+              - generic [ref=f1e148]: Total
+              - generic [ref=f1e149]: "752"
+      - generic [ref=f1e150]:
+        - generic [ref=f1e151]:
+          - heading "Anualidade 2026" [level=2] [ref=f1e152]
+          - text: Pagantes vs. Inadimplentes
+        - generic [ref=f1e155]:
+          - generic [ref=f1e156]:
+            - text: "Pagantes:"
+            - generic [ref=f1e158]: "488"
+          - generic [ref=f1e159]:
+            - text: "Inadimplentes:"
+            - generic [ref=f1e161]: "264"
+    - generic [ref=f1e162]:
+      - generic [ref=f1e163]:
+        - generic [ref=f1e164]:
+          - heading "Metas dos vendedores" [level=2] [ref=f1e165]
+          - paragraph [ref=f1e166]:
+            - text: Fechados no mês × meta definida na
+            - link "configuração" [ref=f1e167] [cursor=pointer]:
+              - /url: /config/#metas-vendedores
+            - text: .
+        - generic [ref=f1e168]: mês atual
+      - generic [ref=f1e170]:
+        - generic [ref=f1e171]:
+          - generic [ref=f1e172]: R
+          - generic [ref=f1e173]:
+            - generic [ref=f1e174]: Render
+            - generic [ref=f1e175]: 0 fechados · R$ 0
+        - paragraph [ref=f1e176]: Sem meta definida para este mês.
+    - generic [ref=f1e177]:
+      - generic [ref=f1e178]:
+        - generic [ref=f1e179]:
+          - heading "Melhores negócios" [level=2] [ref=f1e180]
+          - generic [ref=f1e181]: em aberto por valor
+        - paragraph [ref=f1e183]: Nenhum negócio em aberto — comece a movimentar o funil!
+      - generic [ref=f1e184]:
+        - generic [ref=f1e185]:
+          - heading "Atividade do time" [level=2] [ref=f1e186]
+          - generic [ref=f1e187]: últimos 30 dias
+        - paragraph [ref=f1e189]: Sem atividade nos últimos 30 dias.
+    - generic [ref=f1e191]:
+      - heading "Admissões" [level=2] [ref=f1e192]
+      - generic [ref=f1e193]: últimos 36 meses
+    - generic [ref=f1e197]:
+      - generic [ref=f1e198]:
+        - heading "Análise do funil" [level=2] [ref=f1e199]
+        - generic [ref=f1e200]: receita · origens · segmentos
+      - generic [ref=f1e201]:
+        - generic [ref=f1e202]:
+          - generic [ref=f1e203]: Receita por etapa
+          - generic [ref=f1e204]:
+            - generic [ref=f1e206]:
+              - generic [ref=f1e207]: Lead capturado
+              - generic [ref=f1e210]: R$ 0
+            - generic [ref=f1e213]:
+              - generic [ref=f1e214]: Contato feito
+              - generic [ref=f1e217]: R$ 0
+            - generic [ref=f1e220]:
+              - generic [ref=f1e221]: Qualificado
+              - generic [ref=f1e224]: R$ 0
+            - generic [ref=f1e227]:
+              - generic [ref=f1e228]: Proposta enviada
+              - generic [ref=f1e231]: R$ 0
+            - generic [ref=f1e234]:
+              - generic [ref=f1e235]: Pedido fechado
+              - generic [ref=f1e238]: R$ 0
+            - generic [ref=f1e241]:
+              - generic [ref=f1e242]: Perdido
+              - generic [ref=f1e245]: R$ 0
+        - generic [ref=f1e247]:
+          - generic [ref=f1e248]: Ticket médio
+          - generic [ref=f1e249]:
+            - generic [ref=f1e250]: R$ 0
+            - generic [ref=f1e251]: valor médio por paciente no funil
+          - generic [ref=f1e252]: Origens
+          - generic [ref=f1e253]:
+            - generic [ref=f1e254]:
+              - generic "Instagram" [ref=f1e255]
+              - generic [ref=f1e257]: "0"
+            - generic [ref=f1e258]:
+              - generic "Google Ads" [ref=f1e259]
+              - generic [ref=f1e261]: "0"
+            - generic [ref=f1e262]:
+              - generic "Facebook" [ref=f1e263]
+              - generic [ref=f1e265]: "0"
+            - generic [ref=f1e266]:
+              - generic "Indicação" [ref=f1e267]
+              - generic [ref=f1e269]: "0"
+            - generic [ref=f1e270]:
+              - generic "WhatsApp" [ref=f1e271]
+              - generic [ref=f1e273]: "0"
+            - generic [ref=f1e274]:
+              - generic "Orgânico" [ref=f1e275]
+              - generic [ref=f1e277]: "0"
+            - generic [ref=f1e278]:
+              - generic "Marketplace" [ref=f1e279]
+              - generic [ref=f1e281]: "0"
+            - generic [ref=f1e282]:
+              - generic "Outro" [ref=f1e283]
+              - generic [ref=f1e285]: "0"
+        - generic [ref=f1e286]:
+          - generic [ref=f1e287]: Valor por segmento
+          - paragraph [ref=f1e289]: Sem contatos com segmento.
+        - generic [ref=f1e290]:
+          - generic [ref=f1e291]: Velocidade média por etapa
+          - paragraph [ref=f1e293]: Sem movimentações ainda — o tempo médio aparece conforme os negócios mudam de etapa.
+    - generic [ref=f1e295]:
+      - generic [ref=f1e296]:
+        - generic [ref=f1e297]: 0%
+        - generic [ref=f1e302]:
+          - generic [ref=f1e303]: Receita projetada
+          - generic [ref=f1e304]: R$ 0
+          - generic [ref=f1e305]: do potencial em aberto
+      - generic [ref=f1e306]:
+        - generic [ref=f1e307]:
+          - generic [ref=f1e308]: Meta do mês
+          - generic [ref=f1e309]: —
+        - paragraph [ref=f1e310]: Defina a meta na página de Configurações da empresa.
+      - generic [ref=f1e311]:
+        - generic [ref=f1e312]: mês atual
+        - generic [ref=f1e318]: Tempo médio de fechamento
+        - generic [ref=f1e319]: — dias
+        - generic [ref=f1e320]: do primeiro contato ao fechamento

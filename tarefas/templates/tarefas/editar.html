@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}CRMCronos.Cloud — Editar tarefa{% endblock %}
+{% block titulo %}GPRBRCRM — Editar tarefa{% endblock %}
 
 {% block conteudo %}
 <div class="mx-auto max-w-2xl space-y-5">
@@ -16,20 +16,20 @@
   <form method="post" class="space-y-5 hazon-card-lg p-8">
     {% csrf_token %}
     <div>
-      <label for="titulo" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Título *</label>
+      <label for="titulo" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Título *</label>
       <input type="text" id="titulo" name="titulo" value="{{ tarefa.titulo }}" required
-             class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#74b3c6]/40">
+             class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#5b8def]/40">
     </div>
     <div>
-      <label for="descricao" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Descrição</label>
+      <label for="descricao" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Descrição</label>
       <textarea id="descricao" name="descricao" rows="3" placeholder="Detalhes do follow-up (opcional)"
-                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition placeholder:text-[#6f8a93] focus:border-[#74b3c6]/40">{{ tarefa.descricao }}</textarea>
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition placeholder:text-[#a6bfc7] focus:border-[#5b8def]/40">{{ tarefa.descricao }}</textarea>
     </div>
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
       <div>
-        <label for="contato_id" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Contato</label>
+        <label for="contato_id" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Contato</label>
         <select id="contato_id" name="contato_id"
-                class="w-full rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40">
+                class="w-full rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40">
           <option value="">— sem contato —</option>
           {% for c in contatos %}
             <option value="{{ c.id }}" {% if c.id == tarefa.contato_id %}selected{% endif %}>{{ c.nome }}</option>
@@ -37,9 +37,9 @@
         </select>
       </div>
       <div>
-        <label for="responsavel_id" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Responsável</label>
+        <label for="responsavel_id" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Responsável</label>
         <select id="responsavel_id" name="responsavel_id"
-                class="w-full rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40">
+                class="w-full rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40">
           <option value="">— sem responsável —</option>
           {% for m in membros %}
             <option value="{{ m.id }}" {% if m.id == tarefa.responsavel_id %}selected{% endif %}>{{ m.nome }}</option>
@@ -47,23 +47,23 @@
         </select>
       </div>
       <div>
-        <label for="prioridade" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Prioridade</label>
+        <label for="prioridade" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Prioridade</label>
         <select id="prioridade" name="prioridade"
-                class="w-full rounded-xl border border-white/10 bg-[#0b2029] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#74b3c6]/40">
+                class="w-full rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40">
           <option value="baixa" {% if tarefa.prioridade == 'baixa' %}selected{% endif %}>Baixa</option>
           <option value="media" {% if tarefa.prioridade == 'media' %}selected{% endif %}>Média</option>
           <option value="alta" {% if tarefa.prioridade == 'alta' %}selected{% endif %}>Alta</option>
         </select>
       </div>
       <div>
-        <label for="vencimento" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Vencimento</label>
+        <label for="vencimento" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Vencimento</label>
         <input type="date" id="vencimento" name="vencimento" value="{{ tarefa.vencimento|date:'Y-m-d'|default:'' }}"
-               class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#74b3c6]/40">
+               class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#5b8def]/40">
       </div>
       <div>
-        <label for="hora" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Hora</label>
+        <label for="hora" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Hora</label>
         <input type="time" id="hora" name="hora" value="{{ tarefa.hora_label }}"
-               class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#74b3c6]/40">
+               class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#5b8def]/40">
       </div>
     </div>
     <div class="flex items-center gap-3">

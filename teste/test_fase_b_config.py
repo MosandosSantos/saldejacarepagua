@@ -28,7 +28,7 @@ def test_operacional_acessa_config_sem_equipe(usuario_operacional):
     r = c.get('/config/')
     assert r.status_code == 200
     html = r.content.decode()
-    assert 'Configurações' in html
+    assert 'Usuários' in html
     assert 'id="perfil"' in html
     assert 'Convites pendentes' not in html  # equipe/convites só para admin
 

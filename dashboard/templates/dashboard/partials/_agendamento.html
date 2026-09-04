@@ -1,0 +1,82 @@
+{% load seguranca %}
+<div class="hazon-card-sm p-5 backdrop-blur-xl">
+  <div class="mb-4">
+    <h3 class="text-[14px] font-semibold text-white">Agendamento</h3>
+    <p class="text-[11px] text-[#6f8a93]">sessões realizadas &middot; agendadas</p>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full border-collapse text-[12px]">
+      <thead>
+        <tr class="border-b border-white/10 text-left">
+          <th class="pb-2 pr-2 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Loja</th>
+          <th class="pb-2 pr-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Realizadas</th>
+          <th class="pb-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Agendadas</th>
+        </tr>
+      </thead>
+      <tbody id="agend-table-body">
+      </tbody>
+    </table>
+  </div>
+
+  <div id="agend-pagination" class="mt-4 flex items-center justify-center gap-2"></div>
+</div>
+
+<script>
+(function () {
+  var dados = {{ agendamento_dados|js }};
+  if (!dados || !dados.length) return;
+
+  var perPage = 8;
+  var page = 1;
+  var totalPages = Math.ceil(dados.length / perPage);
+  var cores = { 'vermelho': '#ef4444', 'amarelo': '#fbbf24', 'verde': '#4ade80' };
+
+  function render() {
+    var tbody = document.getElementById('agend-table-body');
+    var pag = document.getElementById('agend-pagination');
+    if (!tbody || !pag) return;
+
+    var start = (page - 1) * perPage;
+    var slice = dados.slice(start, start + perPage);
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    var html = '';
+    slice.forEach(function (d) {
+      var cor = cores[d.cor] || '#a6bfc7';
+      html += '<tr class="border-b border-white/5">';
+      html += '<td class="py-2 pr-2 font-medium" style="color:' + cor + '">' + esc(d.loja) + '</td>';
+      html += '<td class="py-2 pr-2 text-center font-mono text-[12px] font-bold text-white">' + d.realizadas + '</td>';
+      html += '<td class="py-2 text-center font-mono text-[12px] font-bold text-[#a6bfc7]">' + d.agendadas + '</td>';
+      html += '</tr>';
+    });
+    tbody.innerHTML = html;
+
+    if (totalPages <= 1) { pag.innerHTML = ''; return; }
+    var phtml = '';
+    for (var i = 1; i <= totalPages; i++) {
+      phtml += '<button data-page="' + i + '" class="agend-page h-7 min-w-[28px] rounded-lg px-2 text-[11px] font-bold transition ';
+      if (i === page) {
+        phtml += 'bg-[#5b8def]/20 text-[#5b8def] border border-[#5b8def]/30';
+      } else {
+        phtml += 'bg-white/5 text-[#6f8a93] border border-white/10 hover:bg-white/10 hover:text-white';
+      }
+      phtml += '">' + i + '</button> ';
+    }
+    pag.innerHTML = phtml;
+
+    pag.querySelectorAll('.agend-page').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        page = parseInt(this.getAttribute('data-page'));
+        render();
+      });
+    });
+  }
+
+  render();
+})();
+</script>

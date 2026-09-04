@@ -9,16 +9,57 @@ ROLE_ADMIN_COMPANY = 'admin_company'
 ROLE_OPERACIONAL = 'operacional'
 ROLE_VIEWER = 'viewer'
 
+# Oficialato (perfis RER — usuários do sistema, PRD-USUARIOS-SEM-SENHA)
+ROLE_GRANDE_PRIOR = 'grande_prior'
+ROLE_GRANDE_CHANCELER = 'grande_chanceler'
+ROLE_GRANDE_TESOUREIRO = 'grande_tesoureiro'
+ROLE_GRANDE_SECRETARIO = 'grande_secretario'
+ROLE_PREFEITO = 'prefeito'
+ROLE_DEPUTADO_MESTRE = 'deputado_mestre'
+
 ROLES = [
     (ROLE_ADMIN_SAAS, 'Admin SaaS'),
     (ROLE_ADMIN_COMPANY, 'Admin da empresa'),
     (ROLE_OPERACIONAL, 'Operacional'),
     (ROLE_VIEWER, 'Somente leitura'),
+    (ROLE_GRANDE_PRIOR, 'Grande Prior'),
+    (ROLE_GRANDE_CHANCELER, 'Grande Chanceler'),
+    (ROLE_GRANDE_TESOUREIRO, 'Grande Tesoureiro'),
+    (ROLE_GRANDE_SECRETARIO, 'Grande Secretário'),
+    (ROLE_PREFEITO, 'Prefeito'),
+    (ROLE_DEPUTADO_MESTRE, 'Deputado Mestre'),
 ]
 
 ROLES_DE_TENANT = (ROLE_ADMIN_COMPANY, ROLE_OPERACIONAL, ROLE_VIEWER)
-# Tudo que não é viewer pode editar (admin_saas inclui — o dono da plataforma).
-ROLES_QUE_EDITAM = (ROLE_ADMIN_SAAS, ROLE_ADMIN_COMPANY, ROLE_OPERACIONAL)
+# Base de edição (admin_saas inclui — o dono da plataforma). O oficialato entra
+# abaixo, junto com os demais conjuntos de perfil.
+_ROLES_EDITAM_BASE = (ROLE_ADMIN_SAAS, ROLE_ADMIN_COMPANY, ROLE_OPERACIONAL)
+
+# Perfis de oficialato que podem criar/reenviar usuários (PRD-USUARIOS-SEM-SENHA).
+ROLES_OFICIAIS = (
+    ROLE_GRANDE_PRIOR, ROLE_GRANDE_CHANCELER, ROLE_GRANDE_TESOUREIRO,
+    ROLE_GRANDE_SECRETARIO, ROLE_PREFEITO, ROLE_DEPUTADO_MESTRE,
+)
+# Tudo que não é viewer pode editar — inclusive o oficialato (coexistência).
+ROLES_QUE_EDITAM = _ROLES_EDITAM_BASE + ROLES_OFICIAIS
+# Quem gerencia usuários: oficialato + admin da empresa legado (coexistência).
+# admin_saas entra: no fluxo GPRB ele recebe tenant e administra o tenant GPRB
+# (sem tenant continua barrado pelo guard da view, que exige tenant na sessão).
+ROLES_GESTORES_USUARIOS = ROLES_OFICIAIS + (ROLE_ADMIN_COMPANY, ROLE_ADMIN_SAAS)
+# Perfis que podem ser atribuídos ao criar um usuário: oficialato + perfis legados.
+ROLES_ATRIB_CRIACAO = ROLES_OFICIAIS + ROLES_DE_TENANT
+# Admins com acesso administrativo amplo (config/gestão) — oficialato incluso.
+ROLES_ADMINISTRATIVOS = ROLES_OFICIAIS + (ROLE_ADMIN_COMPANY, ROLE_ADMIN_SAAS)
+
+# Estados de conta de usuário.
+USUARIO_ATIVO = 'ativo'
+USUARIO_PENDENTE_SENHA = 'pendente_senha'
+STATUS_USUARIO = [
+    (USUARIO_ATIVO, 'Ativo'),
+    (USUARIO_PENDENTE_SENHA, 'Aguardando ativação (sem senha)'),
+]
+# Senha não utilizável usada em contas pendentes (pref. '!' = hash inutilizável).
+SENHA_PENDENTE = '!'
 
 
 class Tenant(models.Model):
@@ -73,18 +114,44 @@ class Tenant(models.Model):
 def token_captura_do_tenant(tenant):
     """Token público único do formulário de captura do tenant (gerado sob demanda)."""
     if not tenant.token_captura:
-        tenant.token_captura = secrets.token_urlsafe(18)
+        tenant.token_captura = secrets.token_urlsafe(32)  # 256 bits de entropia (S2.4)
         tenant.save(update_fields=['token_captura'])
     return tenant.token_captura
 
 
 class Usuario(models.Model):
-    """Usuario do sistema. Roles: admin_saas (plataforma) e, por tenant, admin_company/operacional/viewer."""
+    """Usuario do sistema. Roles: admin_saas (plataforma), por tenant admin_company/
+    operacional/viewer e oficialato (Grão Prior, Grande Chanceler, ...)."""
 
     nome = models.TextField()
     email = models.TextField(unique=True)
-    senha = models.TextField()  # hash (django.contrib.auth.hashers)
+    celular = models.TextField(blank=True, default='')
+    senha = models.TextField()  # hash (django.contrib.auth.hashers); '!' = pendente
     role = models.TextField(choices=ROLES)
+    status = models.TextField(
+        choices=STATUS_USUARIO, default=USUARIO_ATIVO,
+        help_text='pendente_senha = conta criada aguardando o usuário definir a senha (72h)',
+    )
+    token_ativacao = models.TextField(
+        null=True, blank=True,
+        help_text='Token de uso único do link de ativação de senha (PRD-USUARIOS-SEM-SENHA)',
+    )
+    ativacao_expira_em = models.DateTimeField(
+        null=True, blank=True, help_text='Validade do link de ativação (72h)',
+    )
+    ativado_em = models.DateTimeField(null=True, blank=True)
+    reenvios_ativacao = models.PositiveSmallIntegerField(
+        default=0,
+        help_text='Quantas vezes o link de ativação foi reenviado (limite de 3 por usuário pendente)',
+    )
+    criado_por = models.ForeignKey(
+        'Usuario',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='usuarios_criados',
+        help_text='Quem criou a conta (auditoria)',
+    )
     tenant = models.ForeignKey(
         Tenant,
         on_delete=models.CASCADE,
@@ -92,6 +159,10 @@ class Usuario(models.Model):
         null=True,
         blank=True,
         related_name='usuarios',
+    )
+    prefeitura_id = models.CharField(
+        max_length=36, blank=True, default='',
+        help_text='UUID da prefeitura GPRB vinculada ao usuário (opcional)',
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -102,6 +173,10 @@ class Usuario(models.Model):
         indexes = [
             models.Index(Lower('email'), name='usuario_email_lower_idx'),
         ]
+
+    @property
+    def pendente_ativacao(self):
+        return self.status == USUARIO_PENDENTE_SENHA
 
     def pode_transferir_dono(self) -> bool:
         """So o admin da clinica que e o dono (ou, enquanto nao houver dono definido,

@@ -1,0 +1,74 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - heading "Page not found (404)" [level=1] [ref=e3]
+    - table [ref=e4]:
+      - rowgroup [ref=e5]:
+        - row [ref=e6]:
+          - rowheader "Request Method:" [ref=e7]
+          - cell "GET" [ref=e8]
+        - row [ref=e9]:
+          - rowheader "Request URL:" [ref=e10]
+          - cell "http://127.0.0.1:8009/acesso/login/" [ref=e11]
+  - main [ref=e12]:
+    - paragraph [ref=e13]:
+      - text: Using the URLconf defined in
+      - code [ref=e14]: core.urls
+      - text: ", Django tried these URL patterns, in this order:"
+    - list [ref=e15]:
+      - listitem [ref=e16]:
+        - code [ref=e17]: premium/<str:recurso>/ [name='versao_educativa']
+      - listitem [ref=e18]:
+        - code [ref=e19]: premium/whatsapp/ [name='premium_whatsapp']
+      - listitem [ref=e20]:
+        - code [ref=e21]: premium/carteiras/ [name='premium_carteiras']
+      - listitem [ref=e22]:
+        - code [ref=e23]: premium/campanhas/ [name='premium_campanhas']
+      - listitem [ref=e24]:
+        - code
+      - listitem [ref=e25]:
+        - code [ref=e26]: healthz/ [name='healthz']
+      - listitem [ref=e27]:
+        - code [ref=e28]: login/
+      - listitem [ref=e29]:
+        - code [ref=e30]: equipe/ [name='equipe']
+      - listitem [ref=e31]:
+        - code [ref=e32]: config/ [name='config']
+      - listitem [ref=e33]:
+        - code [ref=e34]: config/tema/ [name='alternar_tema']
+      - listitem [ref=e35]:
+        - code [ref=e36]: convidar/<str:token>/ [name='convidar']
+      - listitem [ref=e37]:
+        - code [ref=e38]: dashboard/
+      - listitem [ref=e39]:
+        - code [ref=e40]: funil/
+      - listitem [ref=e41]:
+        - code [ref=e42]: contatos/
+      - listitem [ref=e43]:
+        - code [ref=e44]: agenda/ [name='agenda_redirect']
+      - listitem [ref=e45]:
+        - code [ref=e46]: emails/
+      - listitem [ref=e47]:
+        - code [ref=e48]: tarefas/
+      - listitem [ref=e49]:
+        - code [ref=e50]: automacoes/
+      - listitem [ref=e51]:
+        - code [ref=e52]: campanhas/
+      - listitem [ref=e53]:
+        - code [ref=e54]: discador/
+      - listitem [ref=e55]:
+        - code [ref=e56]: relatorios/
+      - listitem [ref=e57]:
+        - code [ref=e58]: gestao/
+      - listitem [ref=e59]:
+        - code [ref=e60]: captura/<str:token>/ [name='captura_lead']
+    - paragraph [ref=e61]:
+      - text: The current path,
+      - code [ref=e62]: acesso/login/
+      - text: ", didn’t match any of these."
+  - contentinfo [ref=e63]:
+    - paragraph [ref=e64]:
+      - text: You’re seeing this error because you have
+      - code [ref=e65]: DEBUG = True
+      - text: in your Django settings file. Change that to
+      - code [ref=e66]: "False"
+      - text: ", and Django will display a standard 404 page."

@@ -27,7 +27,10 @@ class HoraTarefaTest(TestCase):
     def setUp(self):
         from django.contrib.auth.hashers import make_password
 
-        self.tenant = Tenant.objects.create(nome='Clínica Aurora', slug='clinica-aurora')
+        self.tenant, _ = Tenant.objects.get_or_create(
+            slug='clinica-aurora',
+            defaults={'nome': 'Clínica Aurora'}
+        )
         self.admin = Usuario.objects.create(
             nome='Dona Aurora', email='dona@aurora.com', role='admin_company',
             tenant=self.tenant, senha=make_password('senha123'),
@@ -75,11 +78,12 @@ class HoraTarefaOrdenacaoTest(TestCase):
     """Hora opcional + ordenação por hora dentro do mesmo vencimento."""
 
     def test_hora_opcional_e_nula(self):
-        t = Tarefa.objects.create(tenant=Tenant.objects.create(nome='Beta', slug='beta'), titulo='X')
+        tenant, _ = Tenant.objects.get_or_create(slug='beta', defaults={'nome': 'Beta'})
+        t = Tarefa.objects.create(tenant=tenant, titulo='X')
         self.assertIsNone(t.hora)
 
     def test_ordena_por_hora_no_mesmo_vencimento(self):
-        tenant = Tenant.objects.create(nome='Aurora', slug='aurora-ord')
+        tenant, _ = Tenant.objects.get_or_create(slug='aurora-ord', defaults={'nome': 'Aurora'})
         venc = date.today() + timedelta(days=1)
         Tarefa.objects.create(tenant=tenant, titulo='Tarde', vencimento=venc, hora=time(16, 0))
         Tarefa.objects.create(tenant=tenant, titulo='Manhã', vencimento=venc, hora=time(8, 30))

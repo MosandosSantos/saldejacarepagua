@@ -1,0 +1,87 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}GPRBRCRM — Nova Prefeitura{% endblock %}
+
+{% block conteudo %}
+<div class="mb-6">
+  <a href="{% url 'contatos:prefeituras' %}" class="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#a6bfc7] transition hover:text-white">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Voltar
+  </a>
+</div>
+
+<div class="mx-auto max-w-lg">
+  <div class="hazon-card-sm p-7 backdrop-blur-xl">
+    <div class="mb-6 flex items-center gap-3">
+      <span class="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#4ade80]/15">
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </span>
+      <div>
+        <h1 class="font-display text-lg font-semibold text-white">Nova Prefeitura</h1>
+        <p class="text-[13px] text-[#a6bfc7]">Preencha os dados abaixo</p>
+      </div>
+    </div>
+
+    {% if erro %}
+      <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ erro }}</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'contatos:prefeitura_nova' %}">
+      {% csrf_token %}
+      <div class="grid gap-5">
+        <div>
+          <label for="nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome *</label>
+          <input type="text" id="nome" name="nome" required placeholder="Ex: Prefeitura Centro-Oeste"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+        </div>
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="sigla" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Sigla</label>
+            <input type="text" id="sigla" name="sigla" placeholder="Ex: PCO" maxlength="10"
+                   class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          </div>
+          <div>
+            <label for="regiao" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Regiao *</label>
+            <select id="regiao" name="regiao" required
+                    class="w-full rounded-xl border border-white/15 bg-[#0a1e3d] px-4 py-3 text-[14px] text-white outline-none transition focus:border-[#5b8def]/60 focus:ring-4 focus:ring-[#5b8def]/15">
+              <option value="">Selecione...</option>
+              <option value="Centro-Oeste">Centro-Oeste</option>
+              <option value="Nordeste">Nordeste</option>
+              <option value="Norte">Norte</option>
+              <option value="Sudeste">Sudeste</option>
+              <option value="Sul">Sul</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="prefeito" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Prefeito</label>
+            <input type="text" id="prefeito" name="prefeito" placeholder="Nome do prefeito"
+                   class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          </div>
+          <div>
+            <label for="telefone" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone</label>
+            <input type="tel" id="telefone" name="telefone" placeholder="(21) 99999-9999"
+                   class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          </div>
+          <div>
+            <label for="email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Prefeito</label>
+            <input type="email" id="email" name="email" placeholder="prefeito@prefeitura.gov.br"
+                   class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center gap-3">
+        <button type="submit" class="flex items-center gap-2 rounded-xl border border-[#5b8def]/50 bg-gradient-to-br from-[#1a5fb4] to-[#1450a0] px-6 py-3 text-[14px] font-bold text-white shadow-lg shadow-[#1a5fb4]/30 transition hover:brightness-110">
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Salvar
+        </button>
+        <a href="{% url 'contatos:prefeituras' %}" class="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-[14px] font-medium text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">
+          Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

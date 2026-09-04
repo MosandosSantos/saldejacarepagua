@@ -303,7 +303,7 @@ class Command(BaseCommand):
     def _garantir_usuarios(self, tenant):
         import secrets as _secrets
         padrao = [
-            ('Admin SaaS', 'admin@cronoscrm.com', 'admin_saas', None),
+            ('Admin SaaS', 'admin@gprbr.com', 'admin_saas', None),
             ('Dona Aurora', 'dona@aurora.com', 'admin_company', tenant),
             ('Ana Souza', 'ana@aurora.com', 'operacional', tenant),
             ('Laura Leitura', 'laura@aurora.com', 'viewer', tenant),

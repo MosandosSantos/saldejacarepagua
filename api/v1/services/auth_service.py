@@ -32,7 +32,7 @@ class AuthService:
             'sub': str(usuario.id),
             'role': usuario.role,
             'tenant_id': usuario.tenant_id,
-            'iss': 'cronoscrm',
+            'iss': 'gprbr',
             'iat': agora,
             'exp': agora + timedelta(days=settings.TOKEN_TTL_DIAS),
         }

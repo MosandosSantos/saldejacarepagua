@@ -93,24 +93,30 @@ def renderizar(texto, contato):
     return texto
 
 
-def enviar_um(registro):
-    """Envia o e-mail via SMTP real; sem SMTP, marca como 'simulado'."""
+def enviar_mensagem(assunto, corpo, destinatario, anexo=None, anexo_nome='anexo',
+                    conteudo_tipo='application/octet-stream'):
+    """Envia uma mensagem via SMTP real; sem SMTP configurado, retorna 'simulado'.
+
+    Rotina única de "simulação vs SMTP" do projeto (PRD 4.1): campanhas, envio
+    individual, automações e o comando de relatório passam todos por aqui.
+    Retorna: 'enviado' | 'simulado' | 'erro'.
+    """
     if not settings.EMAIL_CONFIGURADO:
-        registro.status = 'simulado'
-        registro.enviado_em = timezone.now()
-        registro.save(update_fields=['status', 'enviado_em'])
-        return registro.status
+        return 'simulado'
     try:
-        EmailMessage(
-            registro.assunto,
-            registro.corpo,
-            settings.DEFAULT_FROM_EMAIL,
-            [registro.destinatario],
-        ).send(fail_silently=False)
-        registro.status = 'enviado'
+        msg = EmailMessage(assunto, corpo, settings.DEFAULT_FROM_EMAIL, [destinatario])
+        if anexo is not None:
+            msg.attach(anexo_nome, anexo, conteudo_tipo)
+        msg.send(fail_silently=False)
+        return 'enviado'
     except Exception:
-        logger.exception('falha ao enviar e-mail para %s', registro.destinatario)
-        registro.status = 'erro'
+        logger.exception('falha ao enviar e-mail para %s', destinatario)
+        return 'erro'
+
+
+def enviar_um(registro):
+    """Envia um EmailEnviado via SMTP real; sem SMTP, marca como 'simulado'."""
+    registro.status = enviar_mensagem(registro.assunto, registro.corpo, registro.destinatario)
     registro.enviado_em = timezone.now()
     registro.save(update_fields=['status', 'enviado_em'])
     return registro.status
@@ -126,6 +132,31 @@ def _anexar_pixel_e_links(registro, base_url):
     registro.corpo = registro.corpo + pixel
 
 
+def registrar_e_enviar(modelo, contato, base_url, campanha=None):
+    """Cria um EmailEnviado para o contato (render + pixel/links) e dispara.
+
+    Rotina única de "criar registro + anexar pixel + salvar + enviar" (PRD 4.1),
+    usada pela campanha e pelo envio individual. Retorna o registro criado, ou
+    None quando o contato não tem e-mail.
+    """
+    if contato.email in EMAIL_VAZIO:
+        return None
+    registro = EmailEnviado.objects.create(
+        tenant_id=modelo.tenant_id,
+        contato=contato,
+        modelo=modelo,
+        campanha=campanha,
+        assunto=renderizar(modelo.assunto, contato),
+        corpo=renderizar(modelo.corpo, contato),
+        destinatario=contato.email,
+        status='pendente',
+    )
+    _anexar_pixel_e_links(registro, base_url)
+    registro.save(update_fields=['corpo'])
+    enviar_um(registro)
+    return registro
+
+
 def disparar_campanha(modelo, contatos, base_url, campanha=None):
     """Cria e dispara um EmailEnviado por contato com e-mail (pixel + links rastreados).
 
@@ -134,20 +165,6 @@ def disparar_campanha(modelo, contatos, base_url, campanha=None):
     """
     criados = 0
     for contato in contatos:
-        if contato.email in EMAIL_VAZIO:
-            continue
-        registro = EmailEnviado.objects.create(
-            tenant_id=modelo.tenant_id,
-            contato=contato,
-            modelo=modelo,
-            campanha=campanha,
-            assunto=renderizar(modelo.assunto, contato),
-            corpo=renderizar(modelo.corpo, contato),
-            destinatario=contato.email,
-            status='pendente',
-        )
-        _anexar_pixel_e_links(registro, base_url)
-        registro.save(update_fields=['corpo'])
-        enviar_um(registro)
-        criados += 1
+        if registrar_e_enviar(modelo, contato, base_url, campanha) is not None:
+            criados += 1
     return criados

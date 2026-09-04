@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}CRMCronos.Cloud — Funil{% endblock %}
+{% block titulo %}GPRBRCRM — Funil{% endblock %}
 
 {% block conteudo %}
 {% if web_pode_editar %}
@@ -13,7 +13,7 @@
 
 <div class="mb-6 flex flex-wrap items-center gap-4">
   <form method="get" action="{% url 'funil:kanban' %}" class="relative">
-    <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="#6f8a93" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="#a6bfc7" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nome ou empresa..."
            class="hazon-search w-72">
   </form>
@@ -41,9 +41,9 @@
     <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Exportar
   </a>
-  <div class="flex items-center gap-2.5 rounded-xl border border-[#74b3c6]/35 bg-[#74b3c6]/10 px-4 py-2.5">
+  <div class="flex items-center gap-2.5 rounded-xl border border-[#5b8def]/35 bg-[#5b8def]/10 px-4 py-2.5">
     <span class="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#bcd3da]">Total no funil</span>
-    <span id="total-funil" class="font-mono text-[17px] font-bold text-[#74b3c6]">{{ total_funil }}</span>
+    <span id="total-funil" class="font-mono text-[17px] font-bold text-[#5b8def]">{{ total_funil }}</span>
   </div>
 </div>
 
@@ -55,7 +55,7 @@
       {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
       <label class="text-[11px] text-[#bcd3da]">Mostrar parados há +</label>
       <select name="dias" onchange="this.form.submit()"
-              class="rounded-lg border border-white/10 bg-[#0b2029] px-2 py-1.5 text-[11.5px] text-white outline-none">
+              class="rounded-lg border border-white/10 bg-[#0a1e3d] px-2 py-1.5 text-[11.5px] text-white outline-none">
         {% for d in '3,7,15,30'|make_list %}
           <option value="{{ d }}" {% if dias == d|add:0 %}selected{% endif %}>{{ d }} dias</option>
         {% endfor %}
@@ -72,7 +72,7 @@
         </div>
         <div class="mt-1.5 flex items-center justify-between gap-2">
           <span class="font-mono text-[12.5px] font-bold text-[#fbbf24]">{{ n.valor }}</span>
-          <span class="text-[11px] text-[#6f8a93]">parado há {{ n.dias }} dia{{ n.dias|pluralize }}</span>
+          <span class="text-[11px] text-[#a6bfc7]">parado há {{ n.dias }} dia{{ n.dias|pluralize }}</span>
         </div>
       </a>
     {% endfor %}
@@ -90,7 +90,7 @@
       <span data-contador="{{ col.key }}" class="rounded-full bg-white/5 px-2.5 py-0.5 font-mono text-xs font-bold text-white">{{ col.count }}</span>
       {% if web_pode_editar %}
       <button type="button" data-etapa="{{ col.key }}" aria-label="Novo lead em {{ col.name }}" title="Novo lead nesta etapa"
-              class="btn-lead-coluna flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#bcd3da] transition hover:border-[#74b3c6]/40 hover:bg-[#74b3c6]/15 hover:text-[#74b3c6]">
+              class="btn-lead-coluna flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#bcd3da] transition hover:border-[#5b8def]/40 hover:bg-[#5b8def]/15 hover:text-[#5b8def]">
         <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       {% endif %}
@@ -99,13 +99,13 @@
       {% for card in col.cards %}
       {% include 'funil/_card.html' %}
       {% empty %}
-      <p class="vazio-msg px-2 py-1 text-xs text-[#6f8a93]">Vazio</p>
+      <p class="vazio-msg px-2 py-1 text-xs text-[#a6bfc7]">Vazio</p>
       {% endfor %}
       {% if col.ocultos %}
-      <p class="ocultos-msg px-2 py-1 text-[11px] font-medium text-[#6f8a93]">+{{ col.ocultos }} não exibido{{ col.ocultos|pluralize }}</p>
+      <p class="ocultos-msg px-2 py-1 text-[11px] font-medium text-[#a6bfc7]">+{{ col.ocultos }} não exibido{{ col.ocultos|pluralize }}</p>
       {% endif %}
     </div>
-    <div class="border-t border-white/10 px-4 py-3 font-mono text-[12.5px] font-semibold text-[#6f8a93]">
+    <div class="border-t border-white/10 px-4 py-3 font-mono text-[12.5px] font-semibold text-[#a6bfc7]">
       Soma: <b data-soma="{{ col.key }}" class="text-white">{{ col.soma_label }}</b>
     </div>
   </div>
@@ -120,9 +120,9 @@
     <div class="mb-5 flex items-center justify-between gap-3">
       <h2 id="novo-lead-titulo" class="font-display text-lg font-semibold text-white">⚡ Novo lead</h2>
       <button type="button" data-fechar-lead aria-label="Fechar"
-              class="flex h-9 w-9 items-center justify-center rounded-lg text-[#6f8a93] transition hover:bg-white/10 hover:text-white">✕</button>
+              class="flex h-9 w-9 items-center justify-center rounded-lg text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">✕</button>
     </div>
-    <p class="-mt-2 mb-5 text-[12.5px] leading-relaxed text-[#6f8a93]">Só o essencial — o perfil nasce <b class="text-[#fb923c]">básico</b> e enriquece quando você completar a ficha do contato.</p>
+    <p class="-mt-2 mb-5 text-[12.5px] leading-relaxed text-[#a6bfc7]">Só o essencial — o perfil nasce <b class="text-[#fb923c]">básico</b> e enriquece quando você completar a ficha do contato.</p>
     <form id="form-novo-lead" class="space-y-4" novalidate>
       {% csrf_token %}
       <div>
@@ -174,11 +174,11 @@
     <div class="mb-5 flex items-center justify-between gap-3">
       <h2 id="importar-titulo" class="font-display text-lg font-semibold text-white">📥 Importar leads</h2>
       <button type="button" data-fechar-importar aria-label="Fechar"
-              class="flex h-9 w-9 items-center justify-center rounded-lg text-[#6f8a93] transition hover:bg-white/10 hover:text-white">✕</button>
+              class="flex h-9 w-9 items-center justify-center rounded-lg text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">✕</button>
     </div>
-    <p class="-mt-2 mb-4 text-[12.5px] leading-relaxed text-[#6f8a93]">
+    <p class="-mt-2 mb-4 text-[12.5px] leading-relaxed text-[#a6bfc7]">
       Envie um arquivo <b class="text-white">.csv</b> com os leads. Colunas aceitas:<br>
-      <code class="text-[11px] text-[#74b3c6]">nome, telefone, email, empresa, valor, origem, etapa, segmento, descricao</code><br>
+      <code class="text-[11px] text-[#5b8def]">nome, telefone, email, empresa, valor, origem, etapa, segmento, descricao</code><br>
       Apenas a coluna <b class="text-[#fb923c]">nome</b> é obrigatória.
     </p>
     <form id="form-importar" class="space-y-4" novalidate>
@@ -186,7 +186,7 @@
       <div>
         <label for="importar-arquivo" class="hazon-label">Arquivo CSV</label>
         <input id="importar-arquivo" name="arquivo" type="file" accept=".csv"
-               class="block w-full rounded-xl border border-white/12 bg-white/6 px-4 py-3 text-[13.5px] text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#74b3c6]/20 file:px-4 file:py-2 file:text-[12.5px] file:font-semibold file:text-[#74b3c6] hover:file:bg-[#74b3c6]/30">
+               class="block w-full rounded-xl border border-white/12 bg-white/6 px-4 py-3 text-[13.5px] text-white file:mr-4 file:rounded-lg file:border-0 file:bg-[#5b8def]/20 file:px-4 file:py-2 file:text-[12.5px] file:font-semibold file:text-[#5b8def] hover:file:bg-[#5b8def]/30">
       </div>
       <div>
         <label for="importar-etapa" class="hazon-label">Etapa padrão (para leads sem coluna "etapa")</label>
@@ -195,7 +195,7 @@
         </select>
       </div>
       <p id="importar-erros" class="hidden rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[12.5px] text-red-200"></p>
-      <p id="importar-ok" class="hidden rounded-xl border border-[#74b3c6]/40 bg-[#74b3c6]/15 px-4 py-3 text-[12.5px] text-[#74b3c6]"></p>
+      <p id="importar-ok" class="hidden rounded-xl border border-[#5b8def]/40 bg-[#5b8def]/15 px-4 py-3 text-[12.5px] text-[#5b8def]"></p>
       <div class="flex gap-3 pt-1">
         <button type="submit" id="btn-importar-salvar" class="hazon-btn hazon-btn-primary flex-1 text-[13.5px] font-semibold text-white transition hover:brightness-110" style="min-height:44px">Importar leads</button>
         <button type="button" data-fechar-importar class="hazon-btn hazon-btn-ghost px-5 text-[13px]" style="min-height:44px">Cancelar</button>
@@ -214,13 +214,13 @@
   .kanban-card { cursor: grab; }
   .kanban-card:active { cursor: grabbing; }
   .stage-select { cursor: pointer; }
-  .stage-select:focus { border-color: rgba(116,179,198,.5); background: rgba(255,255,255,.1); }
+  .stage-select:focus { border-color: rgba(91,141,239,.5); background: rgba(255,255,255,.1); }
   {% endif %}
   .kanban-card.dragging { opacity: 0.35; }
   .kanban-col.is-over {
-    border-color: rgba(116,179,198,0.55);
-    background: rgba(116,179,198,0.08);
-    box-shadow: inset 0 0 0 2px rgba(116,179,198,0.45);
+    border-color: rgba(91,141,239,0.55);
+    background: rgba(91,141,239,0.08);
+    box-shadow: inset 0 0 0 2px rgba(91,141,239,0.45);
   }
   .kanban-card.card-entrou { animation: cardEntrou 0.35s ease; }
   @keyframes cardEntrou {
@@ -241,12 +241,12 @@
     outline: none;
     transition: border-color .15s, background .15s;
   }
-  .lead-modal input.lead-input::placeholder { color: var(--hazon-dim, #6f8a93); }
+  .lead-modal input.lead-input::placeholder { color: var(--hazon-dim, #a6bfc7); }
   .lead-modal input.lead-input:focus, .lead-modal select.lead-input:focus {
-    border-color: rgba(116,179,198,.45);
+    border-color: rgba(91,141,239,.45);
     background: rgba(255,255,255,.1);
   }
-  .lead-modal select.lead-input option { background: #0b2029; }
+  .lead-modal select.lead-input option { background: #0a1e3d; }
   .lead-modal-painel { animation: leadModalEntra .22s ease; max-height: 90vh; overflow-y: auto; }
   @keyframes leadModalEntra {
     from { transform: translateY(10px) scale(.97); opacity: 0; }
@@ -265,7 +265,7 @@ function manterVazio(col) {
   var cards = col.querySelector('.cards');
   if (cards && !cards.querySelector('.vazio-msg') && !cards.querySelector('[data-id]')) {
     var p = document.createElement('p');
-    p.className = 'vazio-msg px-2 py-1 text-xs text-[#6f8a93]';
+    p.className = 'vazio-msg px-2 py-1 text-xs text-[#a6bfc7]';
     p.textContent = 'Vazio';
     cards.appendChild(p);
   }
@@ -282,7 +282,7 @@ function atualizarOcultos(col, count) {
     var texto = '+' + ocultos + ' não exibido' + (ocultos > 1 ? 's' : '');
     if (!msg) {
       msg = document.createElement('p');
-      msg.className = 'ocultos-msg px-2 py-1 text-[11px] font-medium text-[#6f8a93]';
+      msg.className = 'ocultos-msg px-2 py-1 text-[11px] font-medium text-[#a6bfc7]';
       cards.appendChild(msg);
     }
     msg.textContent = texto;

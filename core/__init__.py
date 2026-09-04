@@ -1,1 +1,1 @@
-"""Modulo core do projeto CRMCronos.Cloud (configuracao central do Django)."""
+"""Modulo core do projeto GPRBRCRM (configuracao central do Django)."""

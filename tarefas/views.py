@@ -20,12 +20,9 @@ from acesso.decorators import (
 )
 from acesso.models import Usuario
 from contatos.models import Contato
+from core.utils import tenant_id as _tenant_id, iniciais as _iniciais
 from tarefas.ical import gerar_ics, parse_ics
 from tarefas.models import PRIORIDADES, PRIORIDADE_CORES, Tarefa, concluir_tarefa, reabrir_tarefa
-
-
-def _tenant_id(request):
-    return request.session.get('usuario', {}).get('tenant_id')
 
 
 def _usuario_id(request):
@@ -40,11 +37,7 @@ def _voltar(request, padrao='tarefas:lista'):
     return redirect(padrao)
 
 
-def _iniciais(nome):
-    partes = [p for p in (nome or '').split() if p]
-    if not partes:
-        return '?'
-    return (partes[0][0] + (partes[-1][0] if len(partes) > 1 else '')).upper()
+# _iniciais → importado de core.utils
 
 
 def _decorar(t):
@@ -270,7 +263,7 @@ def exportar_ics(request):
     qs = Tarefa.objects.filter(tenant_id=tid).select_related('contato', 'responsavel')
     ics_bytes = gerar_ics(qs)
     response = HttpResponse(ics_bytes, content_type='text/calendar; charset=utf-8')
-    response['Content-Disposition'] = 'attachment; filename="CRMCronos.Cloud-tarefas.ics"'
+    response['Content-Disposition'] = 'attachment; filename="GPRBRCRM-tarefas.ics"'
     return response
 
 
@@ -314,3 +307,175 @@ def importar_ics(request):
     # Salvar msg na session para exibir na lista
     request.session['msg_importacao'] = f'{criadas} tarefa(s) importada(s) com sucesso!'
     return redirect('tarefas:lista')
+
+
+def _linhas_ranking(members, member_stats):
+    """Linhas elegíveis do ranking (regras do PRD §8), sem ordenação ainda.
+
+    Usado tanto na tabela (com os filtros aplicados) quanto nos KPIs
+    estáticos (chamado com todos os membros, sem filtro de classe/loja).
+    """
+    from datetime import date
+    from core.gprb import _months_between, _years_between
+
+    hoje = date.today()
+    linhas = []
+    for i, m in enumerate(members):
+        # Regra: sem anuidade paga → não entra no ranking
+        if not m.get('anuidade_ok', False):
+            continue
+
+        recepcao = m['recepcao']
+        tempo_meses = _months_between(recepcao, hoje) if recepcao else 0
+
+        # Regra: tempo mínimo não atingido → não entra no ranking
+        threshold = 18 if m.get('classe_abbr') == 'MX' else 24
+        if tempo_meses < threshold:
+            continue
+
+        stats = member_stats.get(m['id'], {})
+        total_present = stats.get('totalPresent', 0)
+        total_absent = stats.get('totalAbsent', 0)
+        total_recorded = stats.get('totalRecorded', 0)
+        percentage = stats.get('percentage', 0)
+
+        # Regra: menos de 4 presenças → não entra no ranking
+        if total_present < 4:
+            continue
+
+        idade = _years_between(m['data_nascimento'], hoje) if m['data_nascimento'] else 0
+
+        linhas.append({
+            'id': m['id'], 'nome': m['nome'],
+            'classe': m['classe_abbr'], 'classe_nome': m['classe_nome'],
+            'recepcao': recepcao,
+            'tempo_meses': tempo_meses,
+            'idade': idade,
+            'total_present': total_present,
+            'total_absent': total_absent,
+            'total_recorded': total_recorded,
+            'percentage': percentage,
+            'loja_nome': m.get('loja_nome', ''),
+            'prefeitura_sigla': m.get('prefeitura_sigla', ''),
+            'original_index': i,
+        })
+    return linhas
+
+
+@web_login_required
+def ranking(request):
+    """Página de ranking de presença (baseada no PRD-RANKING)."""
+    from datetime import date
+    from core.gprb import ranking_dados
+
+    classe = request.GET.get('classe', 'MX').upper().strip()
+    if classe not in ('MX', 'EN'):
+        classe = 'MX'
+
+    prefeitura_id = request.GET.get('prefeitura_id') or None
+    loja_id = request.GET.get('loja_id') or None
+
+    # Período fixo: últimos 24 meses
+    data_inicio = date(date.today().year - 2, 1, 1)
+    data_fim = date.today()
+
+    # Tabela: com os filtros de classe/prefeitura/loja aplicados
+    stats_por_membro = {}
+    ranking_rows = []
+    if True:
+        dados = ranking_dados(
+            classe=classe,
+            loja_id=loja_id,
+            prefeitura_id=prefeitura_id,
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+        )
+        stats_por_membro = {s['memberId']: s for s in dados['memberStats']}
+        ranking_rows = _linhas_ranking(dados['members'], stats_por_membro)
+
+    # KPIs: contagem de TODOS os elegíveis (MX e EN), SEM o filtro — estáticos
+    dados_kpi = ranking_dados(
+        classe=None,
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+    )
+    stats_kpi = {s['memberId']: s for s in dados_kpi['memberStats']}
+    linhas_kpi = _linhas_ranking(dados_kpi['members'], stats_kpi)
+    total_ec = sum(1 for r in linhas_kpi if r['classe'] == 'EN')
+    total_mx = sum(1 for r in linhas_kpi if r['classe'] == 'MX')
+    total_ranking = len(linhas_kpi)
+
+    # Sort composto — todos já são elegíveis (tempo, presença, anuidade OK)
+    ranking_rows.sort(key=lambda x: (
+        -x['tempo_meses'],
+        -x['idade'],
+        x['original_index'],
+    ))
+
+    # Atribuir posição RK
+    for i, row in enumerate(ranking_rows, 1):
+        row['rk'] = i
+
+    # Prefeituras e lojas para filtro (degradação graciosa se o GPRB cair)
+    from core.gprb import connect
+    prefeituras = []
+    lojas_da_prefeitura = []
+    try:
+        conn = connect()
+        try:
+            cur = conn.cursor()
+            tid = request.session.get('usuario', {}).get('tenant_id')
+            if not tid:
+                # Sessão sem tenant (ex.: admin_saas): usa o tenant GPRB do ranking
+                cur.execute("SELECT id FROM tenant WHERE code = 'GPRB'")
+                _row = cur.fetchone()
+                tid = _row[0] if _row else None
+            if tid:
+                cur.execute(
+                    'SELECT id, nome FROM prefeitura WHERE "tenantId" = %s::text ORDER BY nome',
+                    (str(tid),),
+                )
+                prefeituras = [{'id': r[0], 'nome': r[1]} for r in cur.fetchall()]
+                if prefeitura_id:
+                    cur.execute(
+                        'SELECT id, COALESCE("nomeFantasia", "lojaMX", \'Loja \' || numero::text) '
+                        'FROM loja WHERE "tenantId" = %s::text AND "prefeituraId" = %s::text '
+                        'AND situacao = \'ATIVA\' ORDER BY 2',
+                        (str(tid), prefeitura_id),
+                    )
+                    lojas_da_prefeitura = [{'id': r[0], 'nome': r[1]} for r in cur.fetchall()]
+        finally:
+            conn.close()
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception('GPRB indisponível ao listar prefeituras/lojas')
+        prefeituras = []
+        lojas_da_prefeitura = []
+
+    # Formatar datas de recepção
+    import locale
+    try:
+        locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
+    except Exception:
+        pass
+    for row in ranking_rows:
+        try:
+            d = date.fromisoformat(row['recepcao']) if row['recepcao'] else None
+            row['recepcao_fmt'] = d.strftime('%d/%m/%Y') if d else '—'
+        except Exception:
+            row['recepcao_fmt'] = row['recepcao'] or '—'
+
+    return render(request, 'tarefas/ranking.html', {
+        'ranking_rows': ranking_rows,
+        'classe_selecionada': classe,
+        'prefeituras': prefeituras,
+        'prefeitura_selecionada': prefeitura_id or '',
+        'lojas_da_prefeitura': lojas_da_prefeitura,
+        'loja_selecionada': loja_id or '',
+        'tem_filtros': bool(prefeitura_id or loja_id or classe != 'MX'),
+        'data_inicio': data_inicio,
+        'data_fim': data_fim,
+        'total_ranking': total_ranking,
+        'total_ec': total_ec,
+        'total_mx': total_mx,
+    })

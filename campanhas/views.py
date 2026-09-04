@@ -46,8 +46,7 @@ _PAGINAS_EM_BREVE = {
 }
 
 
-def _tenant_id(request):
-    return request.session.get('usuario', {}).get('tenant_id')
+from core.utils import tenant_id as _tenant_id
 
 
 def _tem_tenant(request) -> bool:

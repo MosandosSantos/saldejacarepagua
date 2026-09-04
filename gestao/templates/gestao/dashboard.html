@@ -1,0 +1,440 @@
+{% extends 'base/basic.html' %}
+{% load static %}
+{% load seguranca %}
+
+{% block titulo %}GPRBRCRM — Dashboard de Inscricoes{% endblock %}
+
+{% block extra_head %}
+<script src="{% static 'js/vendor/chart.umd.min.js' %}"></script>
+<style>
+  .chart-container { position: relative; height: 280px; }
+  .chart-container-sm { position: relative; height: 220px; }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="mb-7">
+  <h1 class="font-display text-[28px] font-semibold tracking-tight text-white">Dashboard de Inscricoes</h1>
+  <p class="mt-2 text-[14px] text-[#a6bfc7]">GEOD-CEOD — Visao geral do evento</p>
+</div>
+
+<!-- KPIs -->
+<div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+  <!-- IAS Ativas -->
+  <div class="hazon-card-sm p-6 transition hover:-translate-y-1 hover:border-[#5b8def]/40">
+    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-[11px] border border-[#5b8def]/35 bg-[#5b8def]/10">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#5b8def" stroke-width="2" class="h-5 w-5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div class="text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">IAS Ativas</div>
+    <div class="mt-1 font-mono text-[30px] font-bold leading-none text-[#5b8def]">{{ ias_ativas }}</div>
+  </div>
+
+  <!-- Membros Ativos -->
+  <div class="hazon-card-sm p-6 transition hover:-translate-y-1 hover:border-[#4ade80]/40">
+    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-[11px] border border-[#4ade80]/35 bg-[#4ade80]/10">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" class="h-5 w-5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div class="text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Membros Ativos</div>
+    <div class="mt-1 font-mono text-[30px] font-bold leading-none text-[#4ade80]">{{ membros_ativos }}</div>
+  </div>
+
+  <!-- Sessoes no Ano -->
+  <div class="hazon-card-sm p-6 transition hover:-translate-y-1 hover:border-[#93b8f7]/40">
+    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-[11px] border border-[#93b8f7]/35 bg-[#93b8f7]/10">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#93b8f7" stroke-width="2" class="h-5 w-5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    </div>
+    <div class="text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Sessoes no Ano</div>
+    <div class="mt-1 font-mono text-[30px] font-bold leading-none text-[#93b8f7]">{{ sessoes_ano }}</div>
+  </div>
+
+  <!-- Caixa -->
+  <div class="hazon-card-sm p-6 transition hover:-translate-y-1 hover:border-[#fbbf24]/40">
+    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-[11px] border border-[#fbbf24]/35 bg-[#fbbf24]/10">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" class="h-5 w-5"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    </div>
+    <div class="text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Caixa</div>
+    <div class="mt-1 font-mono text-[30px] font-bold leading-none text-[#fbbf24]">{{ caixa }}</div>
+  </div>
+
+  <!-- Novos no Ano -->
+  <div class="hazon-card-sm p-6 transition hover:-translate-y-1 hover:border-[#f472b6]/40">
+    <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-[11px] border border-[#f472b6]/35 bg-[#f472b6]/10">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2" class="h-5 w-5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+    </div>
+    <div class="text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Novos em {{ ano_corrente }}</div>
+    <div class="mt-1 font-mono text-[30px] font-bold leading-none text-[#f472b6]">{{ novos_ano }}</div>
+  </div>
+</div>
+
+<!-- Linha 1: Inscricoes por mes + Funil -->
+<div class="mb-5 grid gap-5 xl:grid-cols-2">
+  <!-- Inscricoes e cancelamentos por mes -->
+  <div class="hazon-card-sm p-7">
+    <div class="mb-5 flex items-center justify-between">
+      <h2 class="font-display text-[15px] font-semibold text-white">Inscricoes e cancelamentos</h2>
+      <span class="text-[11px] text-[#a6bfc7]">ultimos 6 meses</span>
+    </div>
+    <div class="chart-container">
+      <canvas id="chart-meses"></canvas>
+    </div>
+  </div>
+
+  <!-- Funil de conversao -->
+  <div class="hazon-card-sm p-7">
+    <div class="mb-5 flex items-center justify-between">
+      <h2 class="font-display text-[15px] font-semibold text-white">Funil de conversao</h2>
+      <span class="text-[11px] text-[#a6bfc7]">acumulado</span>
+    </div>
+    <div class="chart-container">
+      <canvas id="chart-funil"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Linha 2: Tipos + Categorias + Pagamento -->
+<div class="mb-5 grid gap-5 xl:grid-cols-3">
+  <!-- Tipos de inscricao (donut) -->
+  <div class="hazon-card-sm p-7">
+    <div class="mb-5">
+      <h2 class="font-display text-[15px] font-semibold text-white">Tipos de inscricao</h2>
+    </div>
+    <div class="chart-container-sm">
+      <canvas id="chart-tipos"></canvas>
+    </div>
+  </div>
+
+  <!-- Categorias (barras horizontais) -->
+  <div class="hazon-card-sm p-7">
+    <div class="mb-5">
+      <h2 class="font-display text-[15px] font-semibold text-white">Categorias</h2>
+    </div>
+    <div class="chart-container-sm">
+      <canvas id="chart-categorias"></canvas>
+    </div>
+  </div>
+
+  <!-- Forma de pagamento (barras horizontais) -->
+  <div class="hazon-card-sm p-7">
+    <div class="mb-5">
+      <h2 class="font-display text-[15px] font-semibold text-white">Forma de pagamento</h2>
+    </div>
+    <div class="chart-container-sm">
+      <canvas id="chart-pagamento"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Linha 3: McDiaFeliz + Camisas + Congressistas por capitulo -->
+<div class="mb-5 grid gap-5 xl:grid-cols-3">
+  <!-- McDiaFeliz por capitulo -->
+  <div class="hazon-card-sm p-7">
+    <div class="mb-5">
+      <h2 class="font-display text-[15px] font-semibold text-white">McDia Feliz</h2>
+      <span class="text-[11px] text-[#a6bfc7]">por capitulo</span>
+    </div>
+    <div class="chart-container-sm">
+      <canvas id="chart-mcdia"></canvas>
+    </div>
+  </div>
+
+  <!-- Camisas por tamanho -->
+  <div class="hazon-card-sm p-7">
+    <div class="mb-5">
+      <h2 class="font-display text-[15px] font-semibold text-white">Camisas por tamanho</h2>
+    </div>
+    <div class="chart-container-sm">
+      <canvas id="chart-camisas"></canvas>
+    </div>
+  </div>
+
+  <!-- Congressistas por capitulo -->
+  <div class="hazon-card-sm p-7">
+    <div class="mb-5">
+      <h2 class="font-display text-[15px] font-semibold text-white">Congressistas por capitulo</h2>
+    </div>
+    <div class="chart-container-sm">
+      <canvas id="chart-capitulos"></canvas>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+// Dados JSON escapados pelo filtro |js (XSS — nunca |safe com dados do banco)
+var DADOS = {
+  meses: {
+    labels: {{ chart_meses_labels|js }},
+    inscritos: {{ chart_meses_inscritos|js }},
+    cancelados: {{ chart_meses_cancelados|js }}
+  },
+  fluxo: {
+    labels: {{ chart_fluxo_labels|js }},
+    valores: {{ chart_fluxo_valores|js }}
+  },
+  tipos: {
+    labels: {{ chart_tipos_labels|js }},
+    valores: {{ chart_tipos_valores|js }}
+  },
+  categorias: {
+    labels: {{ chart_cat_labels|js }},
+    valores: {{ chart_cat_valores|js }}
+  },
+  pagamento: {
+    labels: {{ chart_pag_labels|js }},
+    valores: {{ chart_pag_valores|js }}
+  },
+  mcdia: {
+    labels: {{ chart_mcdia_labels|js }},
+    valores: {{ chart_mcdia_valores|js }}
+  },
+  camisas: {
+    labels: {{ chart_camisas_labels|js }},
+    valores: {{ chart_camisas_valores|js }}
+  },
+  capitulos: {
+    labels: {{ chart_cap_labels|js }},
+    valores: {{ chart_cap_valores|js }}
+  }
+};
+
+// Cores do tema GEOD-CEOD
+var CORES = {
+  primary: '#1a5fb4',
+  accent: '#5b8def',
+  accentBright: '#93b8f7',
+  success: '#4ade80',
+  danger: '#ef4444',
+  warning: '#fbbf24',
+  blue: '#5b8def',
+  yellow: '#fbbf24',
+  grid: 'rgba(255,255,255,0.08)',
+  text: '#a6bfc7'
+};
+
+// Configuracao padrao
+Chart.defaults.color = CORES.text;
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 11;
+
+// ============================================================
+// Grafico 1: Inscricoes e cancelamentos por mes (barras)
+// ============================================================
+new Chart(document.getElementById('chart-meses'), {
+  type: 'bar',
+  data: {
+    labels: DADOS.meses.labels,
+    datasets: [
+      {
+        label: 'Inscricoes',
+        data: DADOS.meses.inscritos,
+        backgroundColor: CORES.success + 'cc',
+        borderColor: CORES.success,
+        borderWidth: 1,
+        borderRadius: 4
+      },
+      {
+        label: 'Canceladas',
+        data: DADOS.meses.cancelados,
+        backgroundColor: CORES.danger + 'cc',
+        borderColor: CORES.danger,
+        borderWidth: 1,
+        borderRadius: 4
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'top' } },
+    scales: {
+      x: { grid: { color: CORES.grid } },
+      y: { grid: { color: CORES.grid }, beginAtZero: true }
+    }
+  }
+});
+
+// ============================================================
+// Grafico 2: Funil de conversao (horizontal)
+// ============================================================
+new Chart(document.getElementById('chart-funil'), {
+  type: 'bar',
+  data: {
+    labels: DADOS.fluxo.labels,
+    datasets: [{
+      data: DADOS.fluxo.valores,
+      backgroundColor: [
+        CORES.primary,
+        CORES.accent,
+        '#3b7ded',
+        '#93b8f7',
+        CORES.success,
+        CORES.warning
+      ],
+      borderWidth: 0,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: CORES.grid }, beginAtZero: true },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// ============================================================
+// Grafico 3: Tipos de inscricao (donut)
+// ============================================================
+new Chart(document.getElementById('chart-tipos'), {
+  type: 'doughnut',
+  data: {
+    labels: DADOS.tipos.labels,
+    datasets: [{
+      data: DADOS.tipos.valores,
+      backgroundColor: [CORES.accent, CORES.primary, CORES.accentBright, CORES.success, CORES.warning],
+      borderWidth: 0,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '60%',
+    plugins: { legend: { position: 'bottom' } }
+  }
+});
+
+// ============================================================
+// Grafico 4: Categorias (barras horizontais)
+// ============================================================
+new Chart(document.getElementById('chart-categorias'), {
+  type: 'bar',
+  data: {
+    labels: DADOS.categorias.labels,
+    datasets: [{
+      data: DADOS.categorias.valores,
+      backgroundColor: CORES.accent + 'cc',
+      borderWidth: 0,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: CORES.grid }, beginAtZero: true },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// ============================================================
+// Grafico 5: Forma de pagamento (barras horizontais)
+// ============================================================
+new Chart(document.getElementById('chart-pagamento'), {
+  type: 'bar',
+  data: {
+    labels: DADOS.pagamento.labels,
+    datasets: [{
+      data: DADOS.pagamento.valores,
+      backgroundColor: CORES.primary + 'cc',
+      borderWidth: 0,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: CORES.grid }, beginAtZero: true },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// ============================================================
+// Grafico 6: McDiaFeliz por capitulo (verticais, amarelas)
+// ============================================================
+new Chart(document.getElementById('chart-mcdia'), {
+  type: 'bar',
+  data: {
+    labels: DADOS.mcdia.labels,
+    datasets: [{
+      data: DADOS.mcdia.valores,
+      backgroundColor: CORES.yellow + 'cc',
+      borderWidth: 0,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: CORES.grid } },
+      y: { grid: { color: CORES.grid }, beginAtZero: true }
+    }
+  }
+});
+
+// ============================================================
+// Grafico 7: Camisas por tamanho (verticais, azuis)
+// ============================================================
+new Chart(document.getElementById('chart-camisas'), {
+  type: 'bar',
+  data: {
+    labels: DADOS.camisas.labels,
+    datasets: [{
+      data: DADOS.camisas.valores,
+      backgroundColor: CORES.blue + 'cc',
+      borderWidth: 0,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: CORES.grid } },
+      y: { grid: { color: CORES.grid }, beginAtZero: true }
+    }
+  }
+});
+
+// ============================================================
+// Grafico 8: Congressistas por capitulo (horizontais)
+// ============================================================
+new Chart(document.getElementById('chart-capitulos'), {
+  type: 'bar',
+  data: {
+    labels: DADOS.capitulos.labels,
+    datasets: [{
+      data: DADOS.capitulos.valores,
+      backgroundColor: CORES.accentBright + 'cc',
+      borderWidth: 0,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: CORES.grid }, beginAtZero: true },
+      y: { grid: { display: false } }
+    }
+  }
+});
+</script>
+{% endblock %}

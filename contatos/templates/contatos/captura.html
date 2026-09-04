@@ -1,7 +1,7 @@
 {% extends 'base/basic.html' %}
 {% load static %}
 
-{% block titulo %}CRMCronos.Cloud — Agende seu atendimento{% endblock %}
+{% block titulo %}GPRBRCRM — Agende seu atendimento{% endblock %}
 
 {% block cabecalho %}{% endblock %}
 
@@ -14,9 +14,9 @@
   .login-bg-gradient {
     position: absolute; inset: 0;
     background:
-      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(11,111,116,0.35) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 85% 90%, rgba(17,37,48,0.55) 0%, transparent 55%),
-      linear-gradient(150deg,#0e3a44 0%,#112530 55%,#0b2029 100%);
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(26,95,180,0.35) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 85% 90%, rgba(10,30,61,0.55) 0%, transparent 55%),
+      linear-gradient(150deg,#0f2a52 0%,#0c2245 55%,#0a1e3d 100%);
   }
   .login-bg-photo {
     position: absolute; inset: 0;
@@ -55,8 +55,8 @@
     transition: border-color .15s, background .15s;
   }
   .cap-card input::placeholder { color: rgba(244,250,251,0.4); }
-  .cap-card input:focus, .cap-card select:focus { border-color: rgba(116,179,198,0.9); background: rgba(255,255,255,0.15); }
-  .cap-card select option { background: #0b2029; color: #f4fafb; }
+  .cap-card input:focus, .cap-card select:focus { border-color: rgba(91,141,239,0.9); background: rgba(255,255,255,0.15); }
+  .cap-card select option { background: #0a1e3d; color: #f4fafb; }
   /* Honeypot: escondido de humanos, visível para robôs */
   .hp { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
 </style>
@@ -73,12 +73,12 @@
   <div class="cap-wrap">
     <section class="cap-card">
       <div class="mb-6 flex items-center gap-3">
-        <div class="flex h-11 w-11 items-center justify-center rounded-[13px] bg-gradient-to-br from-[#2aa1a8] to-[#075b60] shadow-lg shadow-[#0b6f74]/70">
+        <div class="flex h-11 w-11 items-center justify-center rounded-[13px] bg-gradient-to-br from-[#3b7ded] to-[#1450a0] shadow-lg shadow-[#1a5fb4]/70">
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" class="h-6 w-6" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.6" fill="#fff"/>
           </svg>
         </div>
-        <span class="font-display text-[1.35rem] font-semibold tracking-tight text-white">HAZON<span class="text-[#74b3c6]"> CRM</span></span>
+        <span class="font-display text-[1.35rem] font-semibold tracking-tight text-white">HAZON<span class="text-[#5b8def]"> CRM</span></span>
       </div>
 
       {% if desativado %}
@@ -87,7 +87,7 @@
         <p class="mb-7 text-[15px] leading-relaxed text-white/70">Este formulário está temporariamente desativado. Entre em contato por outro canal.</p>
       {% elif sucesso %}
         <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.3em] text-white/90">
-          <span class="h-1.5 w-1.5 rounded-full bg-[#7fe3c4] shadow-[0_0_8px_#7fe3c4]"></span>
+          <span class="h-1.5 w-1.5 rounded-full bg-[#4ade80] shadow-[0_0_8px_#4ade80]"></span>
           Recebido com sucesso
         </div>
         <h1 class="font-display mb-2.5 text-[1.9rem] font-medium leading-[1.12] tracking-tight text-white">Obrigado(a)! 🎉</h1>
@@ -97,7 +97,7 @@
         </p>
       {% else %}
         <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.3em] text-white/90">
-          <span class="h-1.5 w-1.5 rounded-full bg-[#7fe3c4] shadow-[0_0_8px_#7fe3c4]"></span>
+          <span class="h-1.5 w-1.5 rounded-full bg-[#4ade80] shadow-[0_0_8px_#4ade80]"></span>
           {{ tenant.nome }}
         </div>
 
@@ -142,7 +142,7 @@
           </div>
 
           <button type="submit"
-                  class="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-[#74b3c6]/50 bg-gradient-to-br from-[#0b6f74] to-[#075b60] py-4 text-[15px] font-bold text-white shadow-[0_14px_28px_-10px_rgba(5,40,46,0.65)] transition hover:brightness-110">
+                  class="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-[#5b8def]/50 bg-gradient-to-br from-[#1a5fb4] to-[#1450a0] py-4 text-[15px] font-bold text-white shadow-[0_14px_28px_-10px_rgba(5,40,46,0.65)] transition hover:brightness-110">
             Enviar meu contato
           </button>
         </form>

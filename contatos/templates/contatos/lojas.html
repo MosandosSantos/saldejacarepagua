@@ -1,0 +1,198 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}GPRBRCRM — Lojas{% endblock %}
+
+{% block conteudo %}
+<div class="mb-7 flex items-end justify-between">
+  <div>
+    <h1 class="hazon-titulo">Lojas</h1>
+    <p class="hazon-sub mt-2">Lista de lojas cadastradas.</p>
+  </div>
+  <a href="{% url 'contatos:loja_nova' %}" class="flex items-center gap-2 rounded-xl border border-[#4ade80]/50 bg-[#4ade80]/15 px-5 py-2.5 text-[13px] font-semibold text-[#4ade80] transition hover:bg-[#4ade80]/25">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Incluir Loja
+  </a>
+</div>
+
+<div class="mb-6 flex flex-wrap items-center gap-4">
+  <form method="get" action="{% url 'contatos:lojas' %}" class="relative">
+    <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="#a6bfc7" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" name="q" value="{{ q }}" placeholder="Buscar lojas..."
+           class="hazon-search w-72">
+  </form>
+  <span class="text-[13px] text-[#a6bfc7]"><b class="font-mono text-white">{{ total }}</b> loja(s)</span>
+</div>
+
+<div class="overflow-x-auto hazon-card">
+  <table class="w-full min-w-[900px] border-collapse">
+    <thead>
+      <tr class="border-b border-white/10 text-left">
+        <th class="w-10 px-3 py-4"></th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Nome</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Prefeitura</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Deputado Mestre</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Regiao</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Cidade/UF</th>
+        <th class="px-5 py-4 text-center text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Membros</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Situacao</th>
+        <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Acoes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lojas %}
+      <!-- Loja row -->
+      <tr class="border-b border-white/5 transition hover:bg-white/5 loja-row" data-loja-id="{{ l.id }}">
+        <td class="px-3 py-3.5 text-center">
+          <button type="button" class="btn-expand-loja inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def]"
+                  data-loja-id="{{ l.id }}" data-loaded="false" title="Expandir membros">
+            <svg class="expand-icon h-3.5 w-3.5 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </td>
+        <td class="px-5 py-3.5">
+          <span class="text-[13.5px] font-medium text-white">{{ l.nome }}</span>
+        </td>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ l.prefeitura }}</td>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ l.deputado_mestre }}</td>
+        <td class="px-5 py-3.5">
+          {% if l.regiao %}
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-[#5b8def]/25 bg-[#5b8def]/10 px-2.5 py-1 text-[11px] font-semibold text-[#5b8def]">{{ l.regiao }}</span>
+          {% endif %}
+        </td>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ l.cidade }}{% if l.uf %}/{{ l.uf }}{% endif %}</td>
+        <td class="px-5 py-3.5 text-center font-mono text-[14px] font-bold text-white">{{ l.total_membros }}</td>
+        <td class="px-5 py-3.5">
+          {% if l.situacao == 'ATIVA' %}
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-[#4ade80]/25 bg-[#4ade80]/10 px-2.5 py-1 text-[11px] font-semibold text-[#4ade80]">
+              <span class="h-1.5 w-1.5 rounded-full bg-[#4ade80]"></span>Ativa
+            </span>
+          {% else %}
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-[#ef4444]/25 bg-[#ef4444]/10 px-2.5 py-1 text-[11px] font-semibold text-[#ef4444]">
+              <span class="h-1.5 w-1.5 rounded-full bg-[#ef4444]"></span>Inativa
+            </span>
+          {% endif %}
+        </td>
+        <td class="px-5 py-3.5">
+          <div class="flex items-center justify-end gap-2">
+            <a href="{% url 'contatos:loja_detalhe' l.id %}" title="Consultar" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def]">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </a>
+            <a href="{% url 'contatos:loja_editar' l.id %}" title="Alterar" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#fbbf24]/15 hover:text-[#fbbf24]">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </a>
+            <a href="{% url 'contatos:loja_excluir' l.id %}" title="Excluir" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#ef4444]/15 hover:text-[#ef4444]">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </a>
+          </div>
+        </td>
+      </tr>
+      <!-- Drill-down container for membros -->
+      <tr class="drill-membros-loja" data-loja-id="{{ l.id }}" style="display:none;">
+        <td colspan="9" class="px-0 py-0">
+          <div class="bg-white/[0.02] px-12 py-3">
+            <div class="membros-container-loja" data-loja-id="{{ l.id }}">
+              <p class="py-4 text-center text-[12px] text-[#6f8a93]">Carregando membros...</p>
+            </div>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="9" class="px-5 py-12 text-center text-[14px] text-[#a6bfc7]">Nenhuma loja encontrada.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  var classColors = { 'MX': '#3b82f6', 'EN': '#5b8def', 'CBCS': '#93b8f7' };
+
+  document.querySelectorAll('.btn-expand-loja').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var lojaId = this.getAttribute('data-loja-id');
+      var drillRow = document.querySelector('.drill-membros-loja[data-loja-id="' + lojaId + '"]');
+      var container = document.querySelector('.membros-container-loja[data-loja-id="' + lojaId + '"]');
+      var icon = this.querySelector('.expand-icon');
+      var isOpen = drillRow.style.display !== 'none';
+
+      if (isOpen) {
+        drillRow.style.display = 'none';
+        icon.style.transform = 'rotate(0deg)';
+        return;
+      }
+
+      drillRow.style.display = '';
+      icon.style.transform = 'rotate(45deg)';
+
+      if (btn.getAttribute('data-loaded') === 'true') return;
+      btn.setAttribute('data-loaded', 'true');
+
+      fetch('/contatos/loja/' + lojaId + '/membros-json/', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var membros = data.membros || [];
+          if (!membros.length) {
+            container.innerHTML = '<p class="py-4 text-center text-[12px] text-[#6f8a93]">Nenhum membro nesta loja.</p>';
+            return;
+          }
+
+          // Calcular totais
+          var totais = { MX: 0, EN: 0, CBCS: 0, ativos: 0, inativos: 0 };
+          membros.forEach(function (m) {
+            if (m.situacao === 'ATIVO') {
+              totais.ativos++;
+              if (totais[m.classe] !== undefined) totais[m.classe]++;
+            } else {
+              totais.inativos++;
+            }
+          });
+
+          var html = '<table class="w-full border-collapse">';
+
+          // Header
+          html += '<thead><tr class="border-b border-white/10 text-left">';
+          html += '<th class="px-4 py-2.5 text-[12px] font-bold uppercase tracking-wider text-[#a6bfc7]">Nome</th>';
+          html += '<th class="px-4 py-2.5 text-center text-[12px] font-bold uppercase tracking-wider text-[#a6bfc7]">Classe</th>';
+          html += '<th class="px-4 py-2.5 text-center text-[12px] font-bold uppercase tracking-wider text-[#a6bfc7]">Situacao</th>';
+          html += '</tr></thead><tbody>';
+
+          // Membros rows
+          membros.forEach(function (m) {
+            var cor = classColors[m.classe] || '#a6bfc7';
+            var corSituacao = m.situacao === 'ATIVO' ? '#4ade80' : '#ef4444';
+            html += '<tr class="border-b border-white/[0.03] hover:bg-white/[0.03]">';
+            html += '<td class="px-4 py-2 text-[12px] text-[#bcd3da]">' + m.nome + '</td>';
+            html += '<td class="px-4 py-2 text-center"><span class="inline-block rounded px-2 py-0.5 text-[10px] font-bold" style="background:' + cor + '20;color:' + cor + '">' + m.classe + '</span></td>';
+            html += '<td class="px-4 py-2 text-center"><span class="inline-block rounded-full px-2 py-0.5 text-[10px] font-bold" style="background:' + corSituacao + '20;color:' + corSituacao + '">' + m.situacao + '</span></td>';
+            html += '</tr>';
+          });
+
+          // Totals row
+          html += '<tr class="border-t-2 border-white/10 bg-white/[0.03] font-bold">';
+          html += '<td class="px-4 py-2.5 text-[11px] text-[#a6bfc7]" colspan="1">TOTAL</td>';
+          html += '<td class="px-4 py-2.5 text-center text-[11px]">';
+          html += '<span style="color:#3b82f6">MX:' + totais.MX + '</span> &middot; ';
+          html += '<span style="color:#5b8def">EN:' + totais.EN + '</span> &middot; ';
+          html += '<span style="color:#93b8f7">CBCS:' + totais.CBCS + '</span>';
+          html += '</td>';
+          html += '<td class="px-4 py-2.5 text-center text-[11px]">';
+          html += '<span style="color:#4ade80">' + totais.ativos + ' ativos</span> &middot; ';
+          html += '<span style="color:#ef4444">' + totais.inativos + ' inativos</span>';
+          html += '</td>';
+          html += '</tr>';
+
+          html += '</tbody></table>';
+          container.innerHTML = html;
+        });
+    });
+  });
+});
+</script>
+{% endblock %}

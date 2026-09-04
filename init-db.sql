@@ -1,13 +1,13 @@
 -- ============================================================
--- CRMCronos.Cloud — Inicialização do banco PostgreSQL
+-- GPRBRCRM — Inicialização do banco PostgreSQL
 -- Rodar com: psql -U postgres -h localhost -f init-db.sql
 -- ============================================================
 
 -- Cria o banco se não existir (truque psql)
-SELECT 'CREATE DATABASE cronoscrm'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'cronoscrm')\gexec
+SELECT 'CREATE DATABASE gprbr'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'gprbr')\gexec
 
-\c cronoscrm
+\c gprbr
 
 -- ============================================================
 -- TABELAS
@@ -59,5 +59,5 @@ SELECT setval('contatos_id_seq', (SELECT MAX(id) FROM contatos));
 -- ============================================================
 -- Confirmação
 -- ============================================================
-SELECT 'CRMCronos.Cloud pronto!' AS status,
+SELECT 'GPRBRCRM pronto!' AS status,
        (SELECT COUNT(*) FROM contatos) AS contatos;

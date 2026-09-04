@@ -15,17 +15,13 @@ MODO SIMULAÇÃO: gera o PDF e apenas informa o que enviaria, sem disparar nada.
 
 from datetime import date
 
-from django.conf import settings
-from django.core.mail import EmailMessage
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from acesso.models import ROLE_ADMIN_COMPANY, Tenant, Usuario
+from emails.servico import EMAIL_VAZIO, enviar_mensagem
 from relatorios.pdf import gerar_relatorio_pdf
 from relatorios.views import _kpis, _periodo_por_chave, _produtividade
-
-# Valores de e-mail considerados vazios (o modelo usa '—' como placeholder de campo)
-EMAIL_VAZIO = ('', '—')
 
 
 class Command(BaseCommand):
@@ -62,27 +58,28 @@ class Command(BaseCommand):
                 f'Olá!\n\n'
                 f'Segue o relatório gerencial de {label.lower()} da {tenant.nome} '
                 f'(gerado em {date.today().strftime("%d/%m/%Y")}).\n\n'
-                f'— CRMCronos.Cloud'
+                f'— GPRBRCRM'
             )
             anexo = f'relatorio-gerencial-{date.today():%Y-%m-%d}.pdf'
 
-            if not settings.EMAIL_CONFIGURADO:
-                for admin in admins:
+            # enviar_mensagem centraliza "simulação vs SMTP" (emails/servico.py — PRD 4.1):
+            # sem SMTP configurado devolve 'simulado' sem disparar.
+            for admin in admins:
+                status = enviar_mensagem(
+                    assunto, corpo, admin.email,
+                    anexo=pdf, anexo_nome=anexo, conteudo_tipo='application/pdf',
+                )
+                if status == 'simulado':
                     self.stdout.write(self.style.WARNING(
                         f'SIMULAÇÃO — {tenant.nome} → {admin.email}: {assunto} '
                         f'({anexo}, {len(pdf)} bytes)'))
-                enviados += len(admins)
-                continue
-
-            for admin in admins:
-                try:
-                    msg = EmailMessage(assunto, corpo, settings.DEFAULT_FROM_EMAIL, [admin.email])
-                    msg.attach(anexo, pdf, 'application/pdf')
-                    msg.send(fail_silently=False)
+                    enviados += 1
+                elif status == 'enviado':
                     self.stdout.write(self.style.SUCCESS(
                         f'{tenant.nome} → {admin.email}: enviado'))
                     enviados += 1
-                except Exception as exc:  # noqa: BLE001 — erro de um admin não derruba o restante
-                    self.stderr.write(f'{tenant.nome} → {admin.email}: ERRO ({exc})')
+                else:
+                    # erro de um admin não derruba o restante (detalhe nos logs do servico)
+                    self.stderr.write(f'{tenant.nome} → {admin.email}: ERRO (ver logs)')
 
         self.stdout.write(self.style.SUCCESS(f'{enviados} e-mail(s) processado(s)'))

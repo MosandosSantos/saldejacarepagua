@@ -1,27 +1,9 @@
-<div class="hazon-card-sm p-7 backdrop-blur-xl">
+<div class="hazon-card-sm flex flex-col p-7 backdrop-blur-xl" style="min-height:300px;">
   <div class="mb-6 flex items-center justify-between">
-    <h2 class="font-display text-lg font-semibold text-white">Melhores negócios</h2>
-    <span class="text-xs text-[#6f8a93]">em aberto por valor</span>
+    <h2 class="font-display text-lg font-semibold text-white">Potência no Simbolismo</h2>
+    <span class="text-xs text-[#a6bfc7]">distribuição dos membros</span>
   </div>
-  <div class="space-y-4">
-    {% for m in melhores %}
-      <a href="{% url 'contatos:detalhe' m.id %}" class="block rounded-xl border border-white/10 bg-white/5 p-4 transition hover:border-[#74b3c6]/40 hover:bg-white/10">
-        <div class="mb-2 flex items-center justify-between gap-3">
-          <div class="min-w-0">
-            <span class="block truncate text-[13.5px] font-semibold text-white">{{ m.nome }}</span>
-            <span class="block truncate text-[11.5px] text-[#6f8a93]">{{ m.empresa }}</span>
-          </div>
-          <div class="flex shrink-0 items-center gap-2.5">
-            <span class="rounded-full px-2.5 py-1 text-[10.5px] font-semibold" style="color:{{ m.stage.color }};background:{{ m.stage.color }}1a">{{ m.stage.name }}</span>
-            <span class="font-mono text-[14px] font-bold text-[#74b3c6]">{{ m.valor_label }}</span>
-          </div>
-        </div>
-        <div class="h-1.5 overflow-hidden rounded-full bg-white/5">
-          <div class="h-full rounded-full transition-all duration-500" style="width:{{ m.pct }}%;background:{{ m.stage.color }}"></div>
-        </div>
-      </a>
-    {% empty %}
-      <p class="py-8 text-center text-[13px] text-[#6f8a93]">Nenhum negócio em aberto — comece a movimentar o funil!</p>
-    {% endfor %}
+  <div class="flex-1" style="position:relative;min-height:200px;">
+    <canvas id="chart-potencia"></canvas>
   </div>
 </div>

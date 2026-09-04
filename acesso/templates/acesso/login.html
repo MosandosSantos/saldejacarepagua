@@ -1,7 +1,7 @@
 {% extends 'base/basic.html' %}
 {% load static %}
 
-{% block titulo %}CRMCronos.Cloud — Entrar{% endblock %}
+{% block titulo %}GPRBRCRM — Entrar{% endblock %}
 
 {% block cabecalho %}{% endblock %}
 
@@ -14,9 +14,9 @@
   .login-bg-gradient {
     position: absolute; inset: 0;
     background:
-      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(11,111,116,0.35) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 85% 90%, rgba(17,37,48,0.55) 0%, transparent 55%),
-      linear-gradient(150deg,#0e3a44 0%,#112530 55%,#0b2029 100%);
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(26,95,180,0.35) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 85% 90%, rgba(10,30,61,0.55) 0%, transparent 55%),
+      linear-gradient(150deg,#0f2a52 0%,#0c2245 55%,#0a1e3d 100%);
   }
   .login-bg-photo {
     position: absolute; inset: 0;
@@ -62,21 +62,21 @@
   <div class="login-wrap">
     <section class="login-card" id="loginCard" title="Arraste para posicionar · duplo-clique para centralizar">
       <div class="mb-7 flex items-center gap-3">
-        <div class="flex h-11 w-11 items-center justify-center rounded-[13px] bg-gradient-to-br from-[#2aa1a8] to-[#075b60] shadow-lg shadow-[#0b6f74]/70">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" class="h-6 w-6" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.6" fill="#fff"/>
-          </svg>
-        </div>
-        <span class="font-display text-[1.35rem] font-semibold tracking-tight text-white">CRM<span class="text-[#74b3c6]">Cronos</span></span>
+        <img src="{% static 'img/gprbr.png' %}" alt="GPRBR" class="h-11 w-11 rounded-[13px] object-cover shadow-lg shadow-[#1a5fb4]/70">
+        <span class="font-display text-[1.35rem] font-semibold tracking-tight"><span class="text-[#ef4444]">GPRBR</span><span class="text-[#5b8def]">CRM</span></span>
       </div>
 
       <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.3em] text-white/90">
-        <span class="h-1.5 w-1.5 rounded-full bg-[#7fe3c4] shadow-[0_0_8px_#7fe3c4]"></span>
+        <span class="h-1.5 w-1.5 rounded-full bg-[#4ade80] shadow-[0_0_8px_#4ade80]"></span>
         Acesso restrito
       </div>
 
       <h1 class="font-display mb-2.5 text-[2.1rem] font-medium leading-[1.12] tracking-tight text-white">Bem-vindo(a) de volta</h1>
-      <p class="mb-7 text-[15px] leading-relaxed text-white/70">Entre com o seu e-mail e senha para acessar o painel de clientes &amp; contatos.</p>
+      {% if eh_saldorer %}
+        <p class="mb-7 text-[15px] leading-relaxed text-white/70">Digite o seu celular e senha para acessar.</p>
+      {% else %}
+        <p class="mb-7 text-[15px] leading-relaxed text-white/70">Digite o seu celular e senha para acessar.</p>
+      {% endif %}
 
       {% if erro %}
         <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ erro }}</div>
@@ -85,14 +85,25 @@
       <form method="post" action="{% url 'acesso:login' %}" novalidate>
         {% csrf_token %}
         <div class="mb-[18px]">
-          <label for="email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-white/60">E-mail</label>
-          <div class="relative">
-            <svg viewBox="0 0 24 24" fill="none" stroke="rgba(244,250,251,0.5)" stroke-width="2" class="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/>
-            </svg>
-            <input id="email" name="email" type="email" placeholder="voce@empresa.com" autocomplete="email" required
-                   class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-4 text-[15px] text-white outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#74b3c6]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#74b3c6]/20">
-          </div>
+          {% if eh_saldorer %}
+            <label for="identifier" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-white/60">Celular</label>
+            <div class="relative">
+              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(244,250,251,0.5)" stroke-width="2" class="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="18"/>
+              </svg>
+              <input id="identifier" name="identifier" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="21999417097" autocomplete="tel" required
+                     class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-4 text-[15px] text-white outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#5b8def]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#5b8def]/20">
+            </div>
+          {% else %}
+            <label for="email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-white/60">Celular</label>
+            <div class="relative">
+              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(244,250,251,0.5)" stroke-width="2" class="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="18"/>
+              </svg>
+              <input id="email" name="email" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="21999417097" autocomplete="tel" required
+                     class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-4 text-[15px] text-white outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#5b8def]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#5b8def]/20">
+            </div>
+          {% endif %}
         </div>
 
         <div class="mb-[18px]">
@@ -102,18 +113,22 @@
               <rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>
             </svg>
             <input id="senha" name="senha" type="password" placeholder="••••••••" autocomplete="current-password" required
-                   class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-4 text-[15px] text-white outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#74b3c6]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#74b3c6]/20">
+                   class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-12 text-[15px] text-white outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#5b8def]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#5b8def]/20">
+            <button type="button" id="toggleSenha" class="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 transition hover:text-white/80" aria-label="Mostrar senha">
+              <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-[18px] w-[18px]" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg id="eyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-[18px] w-[18px] hidden" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
           </div>
         </div>
 
         <button type="submit"
-                class="mt-1.5 flex w-full items-center justify-center gap-2.5 rounded-2xl border border-[#74b3c6]/50 bg-gradient-to-br from-[#0b6f74] to-[#075b60] py-4 text-[15px] font-bold text-white shadow-[0_14px_28px_-10px_rgba(5,40,46,0.65)] transition hover:brightness-110">
+                class="mt-1.5 flex w-full items-center justify-center gap-2.5 rounded-2xl border border-[#5b8def]/50 bg-gradient-to-br from-[#1a5fb4] to-[#1450a0] py-4 text-[15px] font-bold text-white shadow-[0_14px_28px_-10px_rgba(5,40,46,0.65)] transition hover:brightness-110">
           Entrar no painel
         </button>
       </form>
 
       <p class="footer mt-6 text-center text-[12.5px] leading-relaxed text-white/50">
-        Usuários de exemplo: admin@cronoscrm.com · carlos@lojavirtual.com<br>
+        Usuários de exemplo: admin@gprbr.com · carlos@lojavirtual.com<br>
         Senhas geradas aleatoriamente — veja <code class="rounded-md bg-white/10 px-1.5 py-0.5 text-white/75">.env-seed</code>
       </p>
     </section>
@@ -127,7 +142,7 @@
   var card = document.getElementById('loginCard');
   if (!card) return;
 
-  var STORE = 'cronoscrm_card_pos';
+  var STORE = 'gprbr_card_pos';
   var tx = 0, ty = 0;
   try {
     var saved = JSON.parse(localStorage.getItem(STORE) || 'null');
@@ -174,6 +189,21 @@
 
   function apply(x, y) { tx = x; ty = y; card.style.transform = 'translate(' + x + 'px,' + y + 'px)'; }
   function clamp(v, min, max) { return v < min ? min : (v > max ? max : v); }
+})();
+
+// Toggle mostrar/ocultar senha
+(function () {
+  var btn = document.getElementById('toggleSenha');
+  var input = document.getElementById('senha');
+  var eyeOpen = document.getElementById('eyeOpen');
+  var eyeClosed = document.getElementById('eyeClosed');
+  if (!btn || !input) return;
+  btn.addEventListener('click', function () {
+    var isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    eyeOpen.classList.toggle('hidden', !isPassword);
+    eyeClosed.classList.toggle('hidden', isPassword);
+  });
 })();
 </script>
 {% endblock %}

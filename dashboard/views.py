@@ -1,5 +1,7 @@
 """Views web do Dashboard — KPIs, timeline, conversao, funil, recentes e analises avancadas."""
 
+import html
+import logging
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 
@@ -8,30 +10,22 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
 
+logger = logging.getLogger(__name__)
+
 from acesso.decorators import filtro_tenant, nicho_da_sessao, web_login_required
 from acesso.models import MetaVendedor, Tenant, Usuario
 from contatos.models import Movimentacao, Negocio, Nota
 from core.dominio import ORIGENS, PESOS_ETAPA, SEGS
+from core.gprb import membros_por_classe, total_membros, novos_membros_ano, total_lojas_ativas, total_lojas_cadastradas, membros_por_mes, anualidade_resumo, anuidade_ano_referencia, membros_por_rito, membros_por_idade_faixa, membros_por_potencia, membros_por_tempo_maconaria, ranking_lojas, ranking_lojas_mx, proximas_sessoes, agendamento_lojas
+from core.utils import brl as _brl, brl_curto as _brl_curto, iniciais as _iniciais
 from funil.models import etapa_map_do_tenant, etapas_do_tenant
 from tarefas.models import Tarefa
 
-
-def _brl(n):
-    return 'R$ {:,.2f}'.format(float(n)).replace(',', 'X').replace('.', ',').replace('X', '.')
-
-
-def _brl_curto(n):
-    n = float(n)
-    if n >= 1000:
-        return 'R$ ' + '{:.1f}'.format(n / 1000).replace('.0', '').replace('.', ',') + 'k'
-    return 'R$ ' + str(int(n))
+# Gestao (GEOD-CEOD)
+from gestao.models import Congressista, Inscricao, Pagamento
 
 
-def _iniciais(nome):
-    partes = [p for p in (nome or '').split() if p]
-    if not partes:
-        return '?'
-    return (partes[0][0] + (partes[-1][0] if len(partes) > 1 else '')).upper()
+# _brl, _brl_curto, _iniciais → importados de core.utils
 
 
 def _shade(hex_color, factor):
@@ -54,9 +48,16 @@ def _shade(hex_color, factor):
     return '#' + h2(mix(r)) + h2(mix(g)) + h2(mix(b))
 
 
+def _esc_attr(v):
+    """Escapa um valor para interpolar com seguranca em SVG (atributos e texto)."""
+    return html.escape(str(v), quote=True)
+
+
 def _funnel_svg(funil):
-    """Gráfico de funil 3D em SVG — mesma geometria do index.html original."""
+    """Gráfico de funil 3D em SVG — tons de verde para o funil de BAII."""
     steps = list(funil)
+    if not steps:
+        return ''
     top = steps[0]['count'] or 1
     W, sliceH, gap, depthX, depthY, topY = 340, 62, 5, 22, 14, 16
     cx, n = W / 2, len(steps)
@@ -67,11 +68,11 @@ def _funnel_svg(funil):
     for i, s in enumerate(steps):
         dark = _shade(s['color'], -0.42)
         defs += (f'<linearGradient id="f3g{i}" x1="0" y1="0" x2="0" y2="1">'
-                 f'<stop offset="0%" stop-color="{s["color"]}" stop-opacity="0.98"/>'
-                 f'<stop offset="100%" stop-color="{dark}" stop-opacity="0.9"/></linearGradient>')
+                 f'<stop offset="0%" stop-color="{_esc_attr(s['color'])}" stop-opacity="0.98"/>'
+                 f'<stop offset="100%" stop-color="{_esc_attr(dark)}" stop-opacity="0.9"/></linearGradient>')
         defs += (f'<linearGradient id="f3s{i}" x1="0" y1="0" x2="1" y2="0">'
-                 f'<stop offset="0%" stop-color="{dark}" stop-opacity="0.78"/>'
-                 f'<stop offset="100%" stop-color="{dark}" stop-opacity="0.32"/></linearGradient>')
+                 f'<stop offset="0%" stop-color="{_esc_attr(dark)}" stop-opacity="0.78"/>'
+                 f'<stop offset="100%" stop-color="{_esc_attr(dark)}" stop-opacity="0.32"/></linearGradient>')
     defs += '</defs>'
 
     c = defs
@@ -99,7 +100,69 @@ def _funnel_svg(funil):
             ecx = (fl + fr + depthX) / 2
             erx = (fr + depthX - fl) / 2
             c += (f'<ellipse cx="{ecx:.1f}" cy="{y1:.1f}" rx="{erx:.1f}" ry="{depthY * 0.75:.1f}" '
-                  f'fill="{s["color"]}" opacity="0.95"/>')
+                  f'fill="{_esc_attr(s['color'])}" opacity="0.95"/>')
+            c += (f'<ellipse cx="{ecx:.1f}" cy="{y1:.1f}" rx="{erx:.1f}" ry="{depthY * 0.75:.1f}" '
+                  f'fill="none" stroke="#74b3c6" stroke-width="1.4" opacity="0.6"/>')
+
+    return f'<svg viewBox="0 0 {W} {shadowY + 8}" class="w-full">' + c + '</svg>'
+
+
+def _baii_svg(baii):
+    """Gráfico de funil 3D em tons de verde para o funil de BAII (Bem Amados Irmãos)."""
+    steps = list(baii)
+    if not steps:
+        return ''
+    top = steps[0]['count'] or 1
+    W, sliceH, gap, depthX, depthY, topY = 340, 62, 5, 22, 14, 16
+    cx, n = W / 2, len(steps)
+    shadowY = topY + n * (sliceH + gap) + depthY + 10
+    max_half = cx * 0.92
+
+    # Tons de azul: escuro (base) → médio → claro (topo) — tema GEOD-CEOD
+    azul_escuro = '#1a5fb4'    # MESA (base)
+    azul_medio = '#3b7ded'     # EN (meio)
+    azul_claro = '#93b8f7'     # CBCS (topo)
+    verdes = [azul_escuro, azul_medio, azul_claro]
+
+    defs = '<defs>'
+    for i, s in enumerate(steps):
+        cor = verdes[i] if i < len(verdes) else s.get('color', '#1a5fb4')
+        dark = _shade(cor, -0.42)
+        defs += (f'<linearGradient id="baii{i}" x1="0" y1="0" x2="0" y2="1">'
+                 f'<stop offset="0%" stop-color="{_esc_attr(cor)}" stop-opacity="0.98"/>'
+                 f'<stop offset="100%" stop-color="{_esc_attr(dark)}" stop-opacity="0.9"/></linearGradient>')
+        defs += (f'<linearGradient id="baiis{i}" x1="0" y1="0" x2="1" y2="0">'
+                 f'<stop offset="0%" stop-color="{_esc_attr(dark)}" stop-opacity="0.78"/>'
+                 f'<stop offset="100%" stop-color="{_esc_attr(dark)}" stop-opacity="0.32"/></linearGradient>')
+    defs += '</defs>'
+
+    c = defs
+    c += (f'<ellipse cx="{(cx + depthX * 0.4):.1f}" cy="{shadowY:.1f}" '
+          f'rx="{(cx * 0.5):.1f}" ry="{(depthY * 0.9):.1f}" fill="rgba(0,0,0,0.4)"/>')
+
+    for i, s in enumerate(steps):
+        cor = verdes[i] if i < len(verdes) else s.get('color', '#1a5fb4')
+        frac_top = 1 - (i / n) * 0.82
+        frac_bot = 1 - ((i + 1) / n) * 0.82
+        w_top, w_bot = frac_top * max_half, frac_bot * max_half
+        y1 = topY + i * (sliceH + gap)
+        y2 = y1 + sliceH
+        fl, fr = cx - w_top, cx + w_top
+        nl, nr = cx - w_bot, cx + w_bot
+
+        c += (f'<polygon points="{fl:.1f},{y1:.1f} {fr:.1f},{y1:.1f} {nr:.1f},{y2:.1f} {nl:.1f},{y2:.1f}" '
+              f'fill="url(#baii{i})"/>')
+        c += (f'<polygon points="{fr:.1f},{y1:.1f} {fr + depthX:.1f},{y1 - depthY:.1f} '
+              f'{nr + depthX:.1f},{y2 - depthY:.1f} {nl:.1f},{y2:.1f}" fill="url(#baiis{i})"/>')
+        c += (f'<line x1="{fl:.1f}" y1="{y1:.1f}" x2="{fr:.1f}" y2="{y1:.1f}" '
+              f'stroke="rgba(255,255,255,0.24)" stroke-width="1.2"/>')
+        c += (f'<text x="{cx:.1f}" y="{(y1 + sliceH / 2 + 4):.1f}" text-anchor="middle" font-size="14" '
+              f'font-weight="700" font-family="JetBrains Mono, monospace" fill="#fff" opacity="0.92">{s["count"]}</text>')
+        if i == 0:
+            ecx = (fl + fr + depthX) / 2
+            erx = (fr + depthX - fl) / 2
+            c += (f'<ellipse cx="{ecx:.1f}" cy="{y1:.1f}" rx="{erx:.1f}" ry="{depthY * 0.75:.1f}" '
+                  f'fill="{_esc_attr(cor)}" opacity="0.95"/>')
             c += (f'<ellipse cx="{ecx:.1f}" cy="{y1:.1f}" rx="{erx:.1f}" ry="{depthY * 0.75:.1f}" '
                   f'fill="none" stroke="#74b3c6" stroke-width="1.4" opacity="0.6"/>')
 
@@ -188,6 +251,21 @@ def _resumo(request, negocios=None):
     meta_pct = round(float(valor_fechados_mes) / meta_valor * 100) if meta_valor else None
     meta_bar_pct = min(100, meta_pct) if meta_pct is not None else None
 
+    # ---- KPIs do saldorer (banco GPRB) ----
+    ano_corrente = hoje.year
+    lojas_ativas = total_lojas_ativas()
+    lojas_total = total_lojas_cadastradas()
+    membros_ativos = total_membros(apenas_ativos=True)
+    membros_total = total_membros(apenas_ativos=False)
+    novos_membros = novos_membros_ano(ano=ano_corrente)
+    sessoes_ano = Inscricao.objects.filter(
+        criado_em__year=ano_corrente,
+    ).count()
+    caixa_raw = (
+        Pagamento.objects.filter(status__in=['confirmado', 'sistema'])
+        .aggregate(total=Sum('valor'))['total'] or 0
+    )
+
     return {
         'ativos': ativos.count(),
         'novos_mes': negocios.filter(created_at__gte=inicio_mes).count(),
@@ -202,6 +280,15 @@ def _resumo(request, negocios=None):
         'meta_valor': _brl(meta_valor) if meta_valor is not None else None,
         'meta_pct': meta_pct,
         'meta_bar_pct': meta_bar_pct,
+        # Saldorer (GPRB)
+        'lojas_ativas': lojas_ativas,
+        'lojas_total': lojas_total,
+        'membros_ativos': membros_ativos,
+        'membros_total': membros_total,
+        'novos_membros': novos_membros,
+        'sessoes_ano': sessoes_ano,
+        'caixa': _brl(caixa_raw),
+        'caixa_raw': float(caixa_raw),
     }
 
 
@@ -459,8 +546,122 @@ def index(request):
         })
     velocidade.sort(key=lambda v: float(v['label'].replace(' d', '').replace(',', '.')), reverse=True)
 
+    # --- Dados do Funil de BAII (Bem Amados Irmãos) ---
+    # Cores de azul para os 3 níveis (tema GEOD-CEOD)
+    azul_mesa = '#1a5fb4'   # Mestre de Santo André (base)
+    azul_en = '#3b7ded'     # Escudeiro Noviço (meio)
+    azul_cbcs = '#93b8f7'   # Cavaleiro Benfeitor (topo)
+    cores_baii = [azul_mesa, azul_en, azul_cbcs]
+
+    # BAII ATIVOS: todos os membros ativos por classe
+    try:
+        baii_ativos_raw = membros_por_classe(apenas_ativos=True)
+    except Exception as e:
+        logger.error('Erro ao buscar membros por classe (ativos): %s', e)
+        baii_ativos_raw = []
+
+    # Ordem: MESA (base), EN (meio), CBCS (topo)
+    ordem_classes = {'Mestre de Santo Andr': 0, 'Escudeiro': 1, 'Cavaleiro': 2}
+    baii_ativos_raw.sort(key=lambda x: next(
+        (v for k, v in ordem_classes.items() if k in x['name']), 99
+    ))
+    total_ativos = sum(m['total'] for m in baii_ativos_raw) or 1
+    baii_ativos = [
+        {'key': m['abbr'], 'name': m['abbr'], 'count': m['total'],
+         'color': cores_baii[i] if i < len(cores_baii) else '#166534',
+         'pct': round(m['total'] / total_ativos * 100)}
+        for i, m in enumerate(baii_ativos_raw)
+    ]
+    baii_ativos_svg = _baii_svg(baii_ativos)
+
+    # BAII CADASTRADOS: membros cadastrados no ano corrente
+    ano_corrente = date.today().year
+    try:
+        baii_ano_raw = membros_por_classe(apenas_ativos=False, ano=ano_corrente)
+    except Exception as e:
+        logger.error('Erro ao buscar membros por classe (ano): %s', e)
+        baii_ano_raw = []
+
+    baii_ano_raw.sort(key=lambda x: next(
+        (v for k, v in ordem_classes.items() if k in x['name']), 99
+    ))
+    total_ano = sum(m['total'] for m in baii_ano_raw) or 1
+    baii_ano = [
+        {'key': m['abbr'], 'name': m['abbr'], 'count': m['total'],
+         'color': cores_baii[i] if i < len(cores_baii) else '#166534',
+         'pct': round(m['total'] / total_ano * 100)}
+        for i, m in enumerate(baii_ano_raw)
+    ]
+    baii_ano_svg = _baii_svg(baii_ano)
+
+    # Grafico de linha: admisses por mes (ultimos 36 meses)
+    chart_labels, chart_valores = membros_por_mes(meses=36)
+
+    # Anualidade
+    ano_anuidade = anuidade_ano_referencia()
+    anualidade = anualidade_resumo(ano=ano_anuidade)
+
+    # Rito no simbolismo
+    try:
+        rito_dados = membros_por_rito()
+    except Exception as e:
+        logger.error('Erro ao buscar membros por rito: %s', e)
+        rito_dados = []
+
+    # Idade por faixa
+    try:
+        idade_dados = membros_por_idade_faixa()
+    except Exception as e:
+        logger.error('Erro ao buscar membros por faixa etaria: %s', e)
+        idade_dados = []
+
+    # Potencia do simbolismo
+    try:
+        potencia_dados = membros_por_potencia()
+    except Exception as e:
+        logger.error('Erro ao buscar membros por potencia: %s', e)
+        potencia_dados = []
+
+    # Tempo na maconaria
+    try:
+        tempo_maconaria_dados = membros_por_tempo_maconaria()
+    except Exception as e:
+        logger.error('Erro ao buscar membros por tempo de macomaria: %s', e)
+        tempo_maconaria_dados = []
+
+    # Ranking lojas (top 10)
+    try:
+        ranking_lojas_dados = ranking_lojas()
+    except Exception as e:
+        logger.error('Erro ao buscar ranking de lojas: %s', e)
+        ranking_lojas_dados = []
+
+    # Ranking lojas MX (top 10 — últimos 3 anos)
+    try:
+        ranking_mx_dados = ranking_lojas_mx(anos=3)
+    except Exception as e:
+        logger.error('Erro ao buscar ranking MX: %s', e)
+        ranking_mx_dados = []
+
+    # Proximas sessoes (agenda das lojas)
+    try:
+        proximas_sessoes_dados = proximas_sessoes()
+    except Exception as e:
+        logger.error('Erro ao buscar proximas sessoes: %s', e)
+        proximas_sessoes_dados = []
+
+    # Agendamento de sessoes
+    try:
+        agendamento_dados = agendamento_lojas()
+    except Exception as e:
+        logger.error('Erro ao buscar agendamento de lojas: %s', e)
+        agendamento_dados = []
+
     return render(request, 'dashboard/index.html', {
         'kpis': resumo,
+        'chart_membros_labels': chart_labels,
+        'chart_membros_valores': chart_valores,
+        'anualidade': anualidade,
         'timeline': timeline,
         'timeline_max': timeline_max,
         'timeline_svg': _timeline_svg(timeline),
@@ -478,4 +679,21 @@ def index(request):
         'velocidade': velocidade,
         'metas_dashboard': metas_dashboard,
         'atualizado_em': timezone.localtime().strftime('%H:%M:%S'),
+        'baii_ativos': baii_ativos,
+        'baii_ativos_svg': baii_ativos_svg,
+        'baii_ativos_total': sum(m['total'] for m in baii_ativos_raw),
+        'baii_ano': baii_ano,
+        'baii_ano_svg': baii_ano_svg,
+        'baii_ano_total': sum(m['total'] for m in baii_ano_raw),
+        'baii_ano_ano': ano_corrente,
+        'ano_corrente': ano_corrente,
+        'ano_anuidade': ano_anuidade,
+        'rito_dados': rito_dados,
+        'idade_dados': idade_dados,
+        'potencia_dados': potencia_dados,
+        'tempo_maconaria_dados': tempo_maconaria_dados,
+        'ranking_lojas_dados': ranking_lojas_dados,
+        'ranking_mx_dados': ranking_mx_dados,
+        'proximas_sessoes_dados': proximas_sessoes_dados,
+        'agendamento_dados': agendamento_dados,
     })

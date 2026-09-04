@@ -2,6 +2,18 @@
 
 from django.urls import reverse
 
+from acesso.models import (
+    ROLE_ADMIN_COMPANY,
+    ROLES_ADMINISTRATIVOS,
+    ROLE_DEPUTADO_MESTRE,
+    ROLES_GESTORES_USUARIOS,
+    ROLES_QUE_EDITAM,
+    ROLE_GRANDE_CHANCELER,
+    ROLE_GRANDE_TESOUREIRO,
+    ROLE_GRANDE_PRIOR,
+    ROLE_GRANDE_SECRETARIO,
+    ROLE_PREFEITO,
+)
 from tarefas.models import resumo_tarefas
 
 _ICONE_DASH = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
@@ -22,6 +34,9 @@ _ICONE_EMAIL = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="cu
 _ICONE_TAREFAS = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
                   'stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/>'
                   '<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>')
+_ICONE_EQUIPE = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
+                 'stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>'
+                 '<circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>')
 _ICONE_CARTEIRA = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
                    'stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>')
 _ICONE_CAMPANHA = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
@@ -54,11 +69,13 @@ _CAMPANHA_SUBS = [
 _ROTAS = [
     ('Dashboard', 'dashboard', 'dashboard:index', _ICONE_DASH, None, set()),
     ('Funil', 'funil', 'funil:kanban', _ICONE_FUNIL, None, set()),
-    ('Contatos', 'contatos', 'contatos:lista', _ICONE_CONTATOS, None, {'carteiras', 'carteira_detalhe'}),
-    ('Carteiras', None, 'premium_carteiras', _ICONE_CARTEIRA, None, set()),
-    ('Tarefas', 'tarefas', 'tarefas:lista', _ICONE_TAREFAS, None, set()),
-    ('Campanhas', None, 'premium_campanhas', _ICONE_CAMPANHA, None, set()),
-    ('WhatsApp', None, 'premium_whatsapp', _ICONE_DISCADOR, None, set()),
+    ('BAII', 'contatos', 'contatos:lista', _ICONE_CONTATOS, None, {'carteiras', 'carteira_detalhe'}),
+    ('Prefeitura', 'contatos', 'contatos:prefeituras', _ICONE_CARTEIRA, {'prefeituras'}, set()),
+    ('Lojas', 'contatos', 'contatos:lojas', _ICONE_CARTEIRA, {'lojas', 'loja_detalhe'}, set()),
+    ('Ranking', 'tarefas', 'tarefas:ranking', _ICONE_TAREFAS, None, set()),
+    ('Comunicações', 'gestao', 'comunicacoes', _ICONE_CAMPANHA, {'comunicacoes'}, set()),
+    # Equipe/Usuários: gestão — oficialato (Grão Prior, Grande Chanceler, ...) + admin da empresa.
+    ('Usuários', 'acesso', 'equipe', _ICONE_EQUIPE, {'equipe', 'equipe_novo'}, set(), None, ROLES_GESTORES_USUARIOS),
 ]
 
 ROLE_LABELS = {
@@ -66,16 +83,28 @@ ROLE_LABELS = {
     'admin_company': 'Admin da empresa',
     'operacional': 'Operacional',
     'viewer': 'Somente leitura',
+    ROLE_GRANDE_PRIOR: 'Grande Prior',
+    ROLE_GRANDE_CHANCELER: 'Grande Chanceler',
+    ROLE_GRANDE_TESOUREIRO: 'Grande Tesoureiro',
+    ROLE_GRANDE_SECRETARIO: 'Grande Secretário',
+    ROLE_PREFEITO: 'Prefeito',
+    ROLE_DEPUTADO_MESTRE: 'Deputado Mestre',
     None: '',
 }
 
 
-def _nav_itens(url_name='', app_atual='', tarefas_atrasadas=0):
-    """Monta a navegação com o item ativo já calculado (evita depender só do app)."""
+def _nav_itens(url_name='', app_atual='', tarefas_atrasadas=0, role=None):
+    """Monta a navegação com o item ativo já calculado (evita depender só do app).
+
+    `role` filtra itens restritos (ex.: Equipe só para admin da empresa).
+    """
     itens = []
     for item_tupla in _ROTAS:
         label, app, rota, icone, match_urls, excluir_urls = item_tupla[:6]
         subs = item_tupla[6] if len(item_tupla) > 6 else None
+        papeis = item_tupla[7] if len(item_tupla) > 7 else None
+        if papeis is not None and role not in papeis:
+            continue
         sub_itens = None
         ativa = False
         if subs:
@@ -98,9 +127,19 @@ def _nav_itens(url_name='', app_atual='', tarefas_atrasadas=0):
         if app == 'tarefas' and tarefas_atrasadas:
             item['badge'] = tarefas_atrasadas
         itens.append(item)
-    itens.append({'label': 'Configurações', 'app': None, 'url': reverse('config'),
-                  'icone': _ICONE_CONFIG, 'ativa': url_name == 'config', 'subitens': None})
     return itens
+
+
+def _css_versao():
+    """Versão do CSS compilado (mtime) — busta o cache do navegador quando o
+    Tailwind regenera o arquivo durante o desenvolvimento."""
+    import os
+    from django.conf import settings
+    caminho = os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'dist', 'styles.css')
+    try:
+        return str(int(os.path.getmtime(caminho)))
+    except OSError:
+        return '1'
 
 
 def web_sessao(request):
@@ -119,12 +158,13 @@ def web_sessao(request):
     url_name = resolver.url_name if resolver else ''
     app_atual = resolver.app_name if resolver else ''
     return {
+        'css_versao': _css_versao(),
         'NAV_ITENS': _nav_itens(
-            url_name, app_atual, tarefas_atrasadas=resumo['atrasadas']
+            url_name, app_atual, tarefas_atrasadas=resumo['atrasadas'], role=role
         ),
         'web_logado': bool(request.session.get('usuario_id')),
-        'web_eh_admin': role in ('admin_company', 'admin_saas'),
-        'web_pode_editar': role in ('admin_company', 'operacional', 'admin_saas'),
+        'web_eh_admin': role in ROLES_ADMINISTRATIVOS,
+        'web_pode_editar': role in ROLES_QUE_EDITAM,
         'web_tema': request.session.get('tema', 'escuro'),
         'web_tarefas': resumo,
         'web_usuario': {

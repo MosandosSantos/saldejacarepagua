@@ -1,8 +1,6 @@
 /* ============================================================
-   Design system HAZON (S2 do PRD)
+   Design system GEOD-CEOD — Tema piano azul-marinho
    Tokens de cor/tipografia (CSS variables) + componentes base.
-   Os valores batem 1:1 com os hex usados historicamente nos
-   templates — o visual não muda, apenas passa a ser centralizado.
    ============================================================ */
 
 @tailwind base;
@@ -11,40 +9,41 @@
 
 @layer base {
   :root {
-    /* Cores */
-    --hazon-night: #0b2029;
-    --hazon-abyss: #072026;
-    --hazon-deep: #0e3a44;
-    --hazon-surface: #0d2a33;
-    --hazon-mid: #112530;
-    --hazon-primary: #0b6f74;
-    --hazon-primary-dark: #075b60;
-    --hazon-accent: #74b3c6;
+    /* Cores GEOD-CEOD */
+    --hazon-night: #0a1e3d;
+    --hazon-abyss: #081830;
+    --hazon-deep: #0f2a52;
+    --hazon-surface: #0e2540;
+    --hazon-mid: #0c2245;
+    --hazon-primary: #1a5fb4;
+    --hazon-primary-dark: #1450a0;
+    --hazon-accent: #5b8def;
     --hazon-text: #f4fafb;
     --hazon-muted: #bcd3da;
-    --hazon-dim: #6f8a93;
-    --hazon-success: #7fe3c4;
-    --hazon-success-bright: #4ade80;
+    --hazon-dim: #a6bfc7;
+    --hazon-success: #4ade80;
+    --hazon-success-bright: #22c55e;
     --hazon-warn: #fbbf24;
     --hazon-danger: #fca5a5;
-    --hazon-info: #c084fc;
+    --hazon-info: #93b8f7;
     --hazon-orange: #fb923c;
-    --hazon-blue: #60a5fa;
+    --hazon-blue: #5b8def;
     --hazon-slate: #94a3b8;
     --hazon-pink: #f472b6;
     /* Superfícies translúcidas (branco com opacidade) */
-    --hazon-white-05: rgba(255, 255, 255, 0.05);
+    --hazon-white-05: rgba(255, 255, 255, 0.06);
     --hazon-white-10: rgba(255, 255, 255, 0.10);
-    --hazon-white-15: rgba(255, 255, 255, 0.15);
+    --hazon-white-15: rgba(255, 255, 255, 0.18);
     /* Tipografia */
     --hazon-font-sans: 'Manrope', 'Segoe UI', sans-serif;
     --hazon-font-display: 'Fraunces', Georgia, serif;
+    --hazon-font-mono: 'JetBrains Mono', monospace;
     /* Geometria */
     --hazon-radius-sm: 0.75rem;
     --hazon-radius-md: 1rem;
     --hazon-radius-lg: 1.5rem;
     --hazon-radius-full: 9999px;
-    --hazon-glow-accent: 0 0 8px rgba(116, 179, 198, 0.44);
+    --hazon-glow-accent: 0 0 8px rgba(91, 141, 239, 0.44);
   }
 }
 
@@ -107,8 +106,8 @@
     transition: all 0.15s;
   }
   .hazon-btn-primary {
-    border: 1px solid rgba(116, 179, 198, 0.5);
-    background: linear-gradient(to bottom right, var(--hazon-primary), var(--hazon-primary-dark));
+    border: 1px solid rgba(91, 141, 239, 0.5);
+    background: linear-gradient(145deg, #3b7ded, var(--hazon-primary));
     color: #ffffff;
   }
   .hazon-btn-primary:hover { filter: brightness(1.1); }
@@ -144,33 +143,83 @@
   form.hazon-form select,
   form.hazon-form textarea {
     width: 100%;
-    padding: 6px 10px;
-    border-radius: 8px;
-    /* Paridade exata com o CSS legado dos forms (0.12 / 0.06) */
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.06);
-    font-size: 12.5px;
-    line-height: 1.4;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 14px;
+    line-height: 1.5;
     color: var(--hazon-text);
     outline: none;
-    transition: border-color 0.15s, background 0.15s;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
   }
   form.hazon-form input,
-  form.hazon-form select { height: 34px; }
+  form.hazon-form select { height: 44px; }
   form.hazon-form textarea {
     height: auto;
-    min-height: 34px;
+    min-height: 100px;
     resize: vertical;
   }
   form.hazon-form input::placeholder,
   form.hazon-form textarea::placeholder { color: var(--hazon-dim); }
+  form.hazon-form input:hover,
+  form.hazon-form select:hover,
+  form.hazon-form textarea:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.12);
+  }
   form.hazon-form input:focus,
   form.hazon-form select:focus,
   form.hazon-form textarea:focus {
-    border-color: rgba(116, 179, 198, 0.4);
-    background: rgba(255, 255, 255, 0.10);
+    border-color: var(--hazon-accent);
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(91, 141, 239, 0.25);
   }
-  form.hazon-form select option { background: var(--hazon-night); }
+  form.hazon-form select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23bcd3da' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 40px;
+  }
+  form.hazon-form select option {
+    background: var(--hazon-night);
+    color: var(--hazon-text);
+    padding: 8px 12px;
+  }
+
+  /* Tema claro - inputs/selects */
+  @media (prefers-color-scheme: light) {
+    body[data-tema="claro"] form.hazon-form input,
+    body[data-tema="claro"] form.hazon-form select,
+    body[data-tema="claro"] form.hazon-form textarea {
+      color: #0a1e3d;
+      background: #ffffff;
+      border-color: rgba(10, 30, 61, 0.2);
+    }
+    body[data-tema="claro"] form.hazon-form input:hover,
+    body[data-tema="claro"] form.hazon-form select:hover,
+    body[data-tema="claro"] form.hazon-form textarea:hover {
+      border-color: rgba(10, 30, 61, 0.3);
+      background: #f8fafc;
+    }
+    body[data-tema="claro"] form.hazon-form input:focus,
+    body[data-tema="claro"] form.hazon-form select:focus,
+    body[data-tema="claro"] form.hazon-form textarea:focus {
+      border-color: var(--hazon-primary);
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(26, 95, 180, 0.2);
+    }
+    body[data-tema="claro"] form.hazon-form select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235c7a84' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    }
+    body[data-tema="claro"] form.hazon-form select option {
+      background: #ffffff;
+      color: #0a1e3d;
+    }
+    body[data-tema="claro"] form.hazon-form input::placeholder,
+    body[data-tema="claro"] form.hazon-form textarea::placeholder { color: #8aa2ab; }
+  }
 
   /* ---------- Busca com ícone ---------- */
   .hazon-search {
@@ -186,7 +235,7 @@
   }
   .hazon-search::placeholder { color: var(--hazon-dim); }
   .hazon-search:focus {
-    border-color: rgba(116, 179, 198, 0.4);
+    border-color: rgba(91, 141, 239, 0.4);
     background: var(--hazon-white-10);
   }
 
@@ -221,8 +270,8 @@
 
   /* ---------- Chips de tags de formulário (marcada/não) ---------- */
   .tag-check:checked + .tag-chip {
-    border-color: rgba(116, 179, 198, 0.55);
-    background: rgba(116, 179, 198, 0.22);
+    border-color: rgba(91, 141, 239, 0.55);
+    background: rgba(91, 141, 239, 0.22);
     color: var(--hazon-accent);
   }
   .tag-chip:hover { background: var(--hazon-white-10); }

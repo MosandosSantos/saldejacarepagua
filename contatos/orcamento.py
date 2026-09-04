@@ -8,6 +8,7 @@ import io
 from datetime import date, timedelta
 from decimal import Decimal, ROUND_DOWN
 from xml.sax.saxutils import escape as _xml_escape
+from core.utils import brl as _brl
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
@@ -61,9 +62,7 @@ def _p(s):
     return _xml_escape(_txt(s))
 
 
-def _brl(n):
-    """'R$ 1.500,00' a partir de Decimal/float/int."""
-    return 'R$ {:,.2f}'.format(float(n)).replace(',', 'X').replace('.', ',').replace('X', '.')
+# _brl → importado de core.utils
 
 
 def _parcelas(valor, max_n=3):
@@ -91,7 +90,7 @@ def _rodape(canvas, doc):
     canvas.setFont('Helvetica', 7)
     canvas.setFillColor(COR_MUTA)
     canvas.drawString(18 * mm, 9.5 * mm, _txt(
-        f'Documento gerado por CRMCronos.Cloud em {date.today().strftime("%d/%m/%Y")}'
+        f'Documento gerado por GPRBRCRM em {date.today().strftime("%d/%m/%Y")}'
     ))
     canvas.drawRightString(A4[0] - 18 * mm, 9.5 * mm, 'Proposta válida por 7 dias')
     canvas.restoreState()
@@ -99,7 +98,7 @@ def _rodape(canvas, doc):
 
 def gerar_orcamento_pdf(tenant, contato, negocio) -> bytes:
     """Monta o PDF da proposta comercial do negócio; devolve os bytes do arquivo."""
-    nome_clinica = _txt(tenant.nome) if tenant is not None else 'CRMCronos.Cloud'
+    nome_clinica = _txt(tenant.nome) if tenant is not None else 'GPRBRCRM'
     hoje = date.today()
     validade = hoje + timedelta(days=7)
 

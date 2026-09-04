@@ -11,11 +11,12 @@ from django.views.generic import RedirectView
 
 def healthz(request):
     """Endpoint de saude para o healthcheck do Railway (sem autenticacao)."""
-    return JsonResponse({'status': 'ok', 'servico': 'cronoscrm'})
+    return JsonResponse({'status': 'ok', 'servico': 'gprbr'})
 
 from acesso import views as acesso_views
 from contatos import views as contatos_views
 from core import views as core_views
+from gestao import views as gestao_views
 
 urlpatterns = [
     path('premium/<str:recurso>/', core_views.versao_educativa, name='versao_educativa'),
@@ -26,9 +27,13 @@ urlpatterns = [
     path('healthz/', healthz, name='healthz'),
     path('login/', include('acesso.urls')),
     path('equipe/', acesso_views.equipe, name='equipe'),
+    path('equipe/novo/', acesso_views.equipe_novo, name='equipe_novo'),
+    path('equipe/<str:user_id>/editar/', acesso_views.equipe_editar, name='equipe_editar'),
+    path('equipe/<str:user_id>/excluir/', acesso_views.equipe_excluir, name='equipe_excluir'),
     path('config/', acesso_views.config, name='config'),
     path('config/tema/', acesso_views.alternar_tema, name='alternar_tema'),
     path('convidar/<str:token>/', acesso_views.convidar, name='convidar'),
+    path('usuario/ativar/<str:token>/', acesso_views.ativar_conta, name='ativar_conta'),
     path('dashboard/', include('dashboard.urls')),
     path('funil/', include('funil.urls')),
     path('contatos/', include('contatos.urls')),
@@ -40,5 +45,9 @@ urlpatterns = [
     path('campanhas/', include('campanhas.urls')),
     path('discador/', include('discador.urls')),
     path('relatorios/', include('relatorios.urls')),
+    path('gestao/', include('gestao.urls')),  # Dashboard de inscricoes (GEOD-CEOD)
+    path('comunicacao/', gestao_views.comunicacoes, name='comunicacoes'),
+    path('comunicacao/zap-status/', gestao_views.zap_status, name='zap_status'),
+    path('comunicacao/zap-qrcode/', gestao_views.zap_qrcode, name='zap_qrcode'),
     path('captura/<str:token>/', contatos_views.captura_lead, name='captura_lead'),
 ]

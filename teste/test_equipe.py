@@ -40,18 +40,22 @@ def test_admin_company_acessa_equipe(admin_company, usuario_operacional):
     assert usuario_operacional.nome in r.content.decode()
 
 
-# --- Convite de membros ---
+# --- Cadastro de usuarios (fluxo sem senha) ---
 
 @pytest.mark.django_db
-def test_admin_company_convida_operacional(tenant_aurora, admin_company):
+def test_admin_company_cadastra_operacional(tenant_aurora, admin_company):
     c = _cliente_web(admin_company)
-    r = c.post('/equipe/', {'nome': 'Ana Souza', 'email': 'ana@aurora.com',
-                            'senha': 'SenhaForte!2026', 'papel': 'operacional'})
+    r = c.post('/equipe/novo/', {'nome': 'Ana Souza', 'email': 'ana@aurora.com',
+                            'celular': '(11) 99999-0000', 'papel': 'operacional'})
     assert r.status_code == 200
     u = Usuario.objects.get(email='ana@aurora.com')
     assert u.role == 'operacional'
     assert u.tenant_id == tenant_aurora.id
-    assert 'Ana Souza foi adicionado' in r.content.decode()
+    assert u.status == 'pendente_senha'  # criada sem senha — ativa pelo link (72h)
+    assert u.senha == '!'
+    assert u.celular == '(11) 99999-0000'
+    assert u.criado_por_id == admin_company.id
+    assert 'foi cadastrado' in r.content.decode()
 
 
 @pytest.mark.django_db
@@ -65,26 +69,26 @@ def test_convite_isolado_por_tenant(tenant_aurora, tenant_beta, admin_company, u
 @pytest.mark.django_db
 def test_email_duplicado_rejeitado(admin_company, usuario_operacional):
     c = _cliente_web(admin_company)
-    r = c.post('/equipe/', {'nome': 'X', 'email': usuario_operacional.email,
-                            'senha': 'senha123', 'papel': 'operacional'})
+    r = c.post('/equipe/novo/', {'nome': 'X', 'email': usuario_operacional.email,
+                            'celular': '11999990000', 'papel': 'operacional'})
     assert 'Já existe um usuário'.encode() in r.content
     assert Usuario.objects.filter(email=usuario_operacional.email).count() == 1
 
 
 @pytest.mark.django_db
-def test_senha_curta_rejeitada(admin_company):
+def test_papel_invalido_rejeitado(admin_company):
     c = _cliente_web(admin_company)
-    r = c.post('/equipe/', {'nome': 'Ana', 'email': 'ana@aurora.com',
-                            'senha': '123', 'papel': 'operacional'})
-    assert 'pelo menos 8 caracteres'.encode() in r.content
+    r = c.post('/equipe/novo/', {'nome': 'Ana', 'email': 'ana@aurora.com',
+                            'celular': '11999990001', 'papel': 'cargo-inexistente'})
+    assert 'perfil válido'.encode() in r.content
     assert not Usuario.objects.filter(email='ana@aurora.com').exists()
 
 
 @pytest.mark.django_db
-def test_operacional_nao_convida(usuario_operacional):
+def test_operacional_nao_cadastra(usuario_operacional):
     c = _cliente_web(usuario_operacional)
-    r = c.post('/equipe/', {'nome': 'X', 'email': 'x@aurora.com', 'senha': 'senha123',
-                            'papel': 'operacional'})
+    r = c.post('/equipe/novo/', {'nome': 'X', 'email': 'x@aurora.com',
+                            'celular': '11999990002', 'papel': 'operacional'})
     assert r.status_code == 302
     assert not Usuario.objects.filter(email='x@aurora.com').exists()
 
@@ -120,7 +124,7 @@ def test_operacional_nao_ve_botao_excluir(tenant_aurora, usuario_operacional):
 @pytest.mark.django_db
 def test_email_invalido_rejeitado(admin_company):
     c = _cliente_web(admin_company)
-    r = c.post('/equipe/', {'nome': 'Ana', 'email': 'abc', 'senha': 'senha123', 'papel': 'operacional'})
+    r = c.post('/equipe/novo/', {'nome': 'Ana', 'email': 'abc', 'celular': '11999990003', 'papel': 'operacional'})
     assert 'e-mail válido'.encode() in r.content
     assert not Usuario.objects.filter(email='abc').exists()
 

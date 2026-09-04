@@ -6,6 +6,7 @@ app_name = 'tarefas'
 
 urlpatterns = [
     path('', views.lista, name='lista'),
+    path('ranking/', views.ranking, name='ranking'),
     path('<int:pk>/editar/', views.editar, name='editar'),
     path('<int:pk>/concluir/', views.concluir, name='concluir'),
     path('<int:pk>/reabrir/', views.reabrir, name='reabrir'),

@@ -1,12 +1,12 @@
 <div class="flex flex-col">
   {% for r in recentes %}
     <a href="{% url 'contatos:detalhe' r.id %}" class="flex items-center gap-4 rounded-xl px-2 py-3 transition hover:bg-white/5">
-      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] border border-[#74b3c6]/35 bg-[#74b3c6]/10 text-xs font-bold text-[#74b3c6]">{{ r.nome|slice:":1"|upper }}</span>
+      <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] border border-[#5b8def]/35 bg-[#5b8def]/10 text-xs font-bold text-[#5b8def]">{{ r.nome|slice:":1"|upper }}</span>
       <span class="min-w-0 flex-1">
         <span class="block text-sm font-medium text-white">{{ r.nome }}</span>
-        <span class="block text-xs text-[#6f8a93]">{{ r.empresa }}</span>
+        <span class="block text-xs text-[#a6bfc7]">{{ r.empresa }}</span>
         {% if r.de %}
-          <span class="mt-1 block text-[11px] text-[#6f8a93]">
+          <span class="mt-1 block text-[11px] text-[#a6bfc7]">
             <span style="color:{{ r.de.color }}">{{ r.de.name }}</span> &rarr;
             <span style="color:{{ r.stage.color }}">{{ r.stage.name }}</span>
             {% if r.autor %} · por {{ r.autor }}{% endif %}
@@ -14,10 +14,10 @@
           </span>
         {% endif %}
       </span>
-      <span class="shrink-0 font-mono text-sm font-bold text-[#74b3c6]">{{ r.valor }}</span>
+      <span class="shrink-0 font-mono text-sm font-bold text-[#5b8def]">{{ r.valor }}</span>
       <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold" style="color:{{ r.stage.color }};background:{{ r.stage.color }}1a">{{ r.stage.name }}</span>
     </a>
   {% empty %}
-    <p class="py-10 text-center text-sm text-[#6f8a93]">Nenhum contato ainda.</p>
+    <p class="py-10 text-center text-sm text-[#a6bfc7]">Nenhum contato ainda.</p>
   {% endfor %}
 </div>

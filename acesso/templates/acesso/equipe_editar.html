@@ -1,0 +1,98 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}GPRBRCRM — Editar {{ u.nome }}{% endblock %}
+
+{% block conteudo %}
+<div class="mb-6">
+  <a href="{% url 'equipe' %}" class="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#a6bfc7] transition hover:text-white">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Voltar
+  </a>
+</div>
+
+<div class="hazon-card-sm p-7 backdrop-blur-xl">
+  <div class="mb-7 flex flex-wrap items-center gap-4">
+    <span class="flex h-14 w-14 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#3b7ded] to-[#1a5fb4] shadow-lg shadow-[#5b8def]/30">
+      <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </span>
+    <div>
+      <h1 class="font-display text-xl font-semibold text-white">Editar Usuário</h1>
+      <div class="mt-1 flex flex-wrap items-center gap-2">
+        <p class="text-[13px] text-[#a6bfc7]">{{ u.nome }}</p>
+        {% if u.status_code == 'ACTIVE' %}
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-[#4ade80]/25 bg-[#4ade80]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#4ade80]">
+          <span class="h-1.5 w-1.5 rounded-full bg-[#4ade80]"></span>Ativo
+        </span>
+        {% elif u.status_code == 'PENDENTE' %}
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-[#fbbf24]/25 bg-[#fbbf24]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#fbbf24]">
+          <span class="h-1.5 w-1.5 rounded-full bg-[#fbbf24]"></span>Aguardando ativação
+        </span>
+        {% else %}
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[11px] font-semibold text-[#a6bfc7]">
+          <span class="h-1.5 w-1.5 rounded-full bg-[#a6bfc7]"></span>{{ u.status_label }}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% for e in erros %}
+    <div class="mb-5 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ e }}</div>
+  {% endfor %}
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div>
+      <label for="nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Usuário *</label>
+      <input type="text" id="nome" name="nome" value="{{ u.nome }}" required
+             class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+    </div>
+
+    <div class="mt-5 grid gap-5 sm:grid-cols-2">
+      <div>
+        <label for="email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail *</label>
+        <input type="email" id="email" name="email" value="{{ u.email }}" required
+               class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+      </div>
+      <div>
+        <label for="celular" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Celular</label>
+        <input type="tel" id="celular" name="celular" value="{{ u.celular }}" placeholder="11999999999"
+               class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+      </div>
+    </div>
+
+    <div class="mt-5">
+      <label for="papel" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Perfil *</label>
+      <select id="papel" name="papel" required
+              class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+        {% for p in perfis %}
+          <option value="{{ p.key }}" {% if p.key == u.papel %}selected{% endif %} class="bg-[#0a1e3d]">{{ p.label }}</option>
+        {% endfor %}
+      </select>
+      <p class="mt-1.5 text-[12px] text-[#a6bfc7]">Define as permissões de acesso do usuário.</p>
+    </div>
+
+    <div class="mt-5">
+      <label for="prefeitura" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Prefeitura</label>
+      <select id="prefeitura" name="prefeitura"
+              class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+        <option value="" class="bg-[#0a1e3d]">— Selecione —</option>
+        {% for pf in prefeituras %}
+          <option value="{{ pf.id }}" {% if pf.id == u.prefeitura_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ pf.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mt-7 flex items-center gap-3">
+      <button type="submit" class="flex items-center gap-2 rounded-xl border border-[#5b8def]/50 bg-gradient-to-br from-[#1a5fb4] to-[#1450a0] px-6 py-3 text-[14px] font-bold text-white shadow-lg shadow-[#1a5fb4]/30 transition hover:brightness-110">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Salvar
+      </button>
+      <a href="{% url 'equipe' %}" class="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-[14px] font-medium text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">
+        Cancelar
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

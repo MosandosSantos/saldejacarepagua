@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}CRMCronos.Cloud — E-mail marketing{% endblock %}
+{% block titulo %}GPRBRCRM — E-mail marketing{% endblock %}
 
 {% block conteudo %}
 <div class="mx-auto max-w-5xl space-y-6">
@@ -15,7 +15,7 @@
         🚀 Nova campanha
       </a>
       <a href="{% url 'emails:novo' %}"
-         class="rounded-xl border border-[#74b3c6]/50 bg-white/5 px-5 py-2.5 text-[13px] font-semibold text-[#74b3c6] transition hover:bg-[#74b3c6]/10">
+         class="rounded-xl border border-[#5b8def]/50 bg-white/5 px-5 py-2.5 text-[13px] font-semibold text-[#5b8def] transition hover:bg-[#5b8def]/10">
         + Novo modelo
       </a>
     </div>
@@ -28,7 +28,7 @@
       Para enviar de fato, configure <code>EMAIL_HOST</code>, <code>EMAIL_HOST_USER</code> e <code>EMAIL_HOST_PASSWORD</code> no arquivo <code>.env</code>.
     </div>
   {% else %}
-    <div class="rounded-2xl border border-[#7fe3c4]/30 bg-[#7fe3c4]/10 px-5 py-4 text-[13px] text-[#7fe3c4]">
+    <div class="rounded-2xl border border-[#4ade80]/30 bg-[#4ade80]/10 px-5 py-4 text-[13px] text-[#4ade80]">
       ✅ SMTP configurado — os e-mails saem de verdade pelo <b>{{ email_host }}</b>.
     </div>
   {% endif %}
@@ -38,8 +38,8 @@
     {% for k in kpis %}
       <div class="hazon-card-sm p-5 backdrop-blur-xl">
         <div class="text-[28px] font-bold font-mono" style="color:{{ k.cor }}">{{ k.valor }}</div>
-        <div class="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">
-          {{ k.rotulo }}{% if k.pct is not None %} <span class="text-[10px] text-[#6f8a93]">({{ k.pct }}%)</span>{% endif %}
+        <div class="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">
+          {{ k.rotulo }}{% if k.pct is not None %} <span class="text-[10px] text-[#a6bfc7]">({{ k.pct }}%)</span>{% endif %}
         </div>
         {% if k.pct is not None %}
           <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10">
@@ -60,26 +60,26 @@
       <table class="w-full min-w-[800px] border-collapse">
         <thead>
           <tr class="border-b border-white/10 text-left">
-            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Contato</th>
-            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Modelo</th>
-            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Status</th>
-            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Aberto</th>
-            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Cliques</th>
-            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Conversão</th>
+            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Contato</th>
+            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Modelo</th>
+            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Status</th>
+            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Aberto</th>
+            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Cliques</th>
+            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Conversão</th>
           </tr>
         </thead>
         <tbody>
           {% for e in recentes %}
             <tr class="border-b border-white/5 transition last:border-0 hover:bg-white/5">
               <td class="px-5 py-3">
-                <a href="{% url 'contatos:detalhe' e.contato_id %}" class="text-[13px] font-semibold text-white hover:text-[#74b3c6]">{{ e.contato_nome }}</a>
-                <div class="text-[11.5px] text-[#6f8a93]">{{ e.destinatario }}</div>
+                <a href="{% url 'contatos:detalhe' e.contato_id %}" class="text-[13px] font-semibold text-white hover:text-[#5b8def]">{{ e.contato_nome }}</a>
+                <div class="text-[11.5px] text-[#a6bfc7]">{{ e.destinatario }}</div>
               </td>
               <td class="max-w-[220px] truncate px-5 py-3 text-[12.5px] text-[#bcd3da]" title="{{ e.assunto }}">{{ e.modelo_nome }}</td>
               <td class="px-5 py-3">
                 <span class="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase
-                  {% if e.status == 'enviado' %}bg-[#7fe3c4]/15 text-[#7fe3c4]
-                  {% elif e.status == 'simulado' %}bg-[#74b3c6]/15 text-[#74b3c6]
+                  {% if e.status == 'enviado' %}bg-[#4ade80]/15 text-[#4ade80]
+                  {% elif e.status == 'simulado' %}bg-[#5b8def]/15 text-[#5b8def]
                   {% elif e.status == 'erro' %}bg-red-400/15 text-red-300
                   {% else %}bg-white/10 text-[#bcd3da]{% endif %}">{{ e.status }}</span>
               </td>
@@ -97,13 +97,13 @@
   <!-- Modelos -->
   <div class="overflow-hidden hazon-card">
     <div class="border-b border-white/10 px-6 py-4">
-      <h2 class="text-[15px] font-semibold text-white">Modelos <span class="ml-1 rounded-full bg-white/5 px-2.5 py-0.5 font-mono text-xs text-[#74b3c6]">{{ modelos|length }}</span></h2>
+      <h2 class="text-[15px] font-semibold text-white">Modelos <span class="ml-1 rounded-full bg-white/5 px-2.5 py-0.5 font-mono text-xs text-[#5b8def]">{{ modelos|length }}</span></h2>
     </div>
     {% for m in modelos %}
       <div class="flex flex-wrap items-center gap-4 border-b border-white/5 px-6 py-4 transition last:border-0 hover:bg-white/5">
         <div class="min-w-0 flex-1">
           <div class="text-[14px] font-semibold text-white">{{ m.nome }}</div>
-          <div class="mt-0.5 truncate text-[12px] text-[#6f8a93]">
+          <div class="mt-0.5 truncate text-[12px] text-[#a6bfc7]">
             {{ m.assunto }} · {{ m.total_envios }} envio{{ m.total_envios|pluralize }}
           </div>
         </div>
@@ -115,7 +115,7 @@
               {% csrf_token %}
               <button type="submit"
                       class="rounded-lg border border-red-400/30 px-3 py-1.5 text-[11.5px] font-semibold text-red-300/90 transition hover:bg-red-500/10 hover:text-red-300"
-                      onclick="return confirm('Excluir o modelo "{{ m.nome }}"?');">Excluir</button>
+                      data-confirm="Excluir o modelo &quot;{{ m.nome }}&quot;?">Excluir</button>
             </form>
           </div>
         {% endif %}
@@ -124,16 +124,16 @@
       <div class="px-6 py-14 text-center">
         <div class="text-3xl">✉️</div>
         <p class="mt-3 text-[13.5px] text-[#bcd3da]">Nenhum modelo ainda.</p>
-        <p class="mt-1 text-[12.5px] text-[#6f8a93]">Crie um modelo de lembrete de retorno, agradecimento ou campanha e dispare para seus contatos.</p>
-        <a href="{% url 'emails:novo' %}" class="mt-4 inline-block rounded-xl border border-[#74b3c6]/50 px-5 py-2 text-[13px] font-semibold text-[#74b3c6] transition hover:bg-[#74b3c6]/10">+ Criar primeiro modelo</a>
+        <p class="mt-1 text-[12.5px] text-[#a6bfc7]">Crie um modelo de lembrete de retorno, agradecimento ou campanha e dispare para seus contatos.</p>
+        <a href="{% url 'emails:novo' %}" class="mt-4 inline-block rounded-xl border border-[#5b8def]/50 px-5 py-2 text-[13px] font-semibold text-[#5b8def] transition hover:bg-[#5b8def]/10">+ Criar primeiro modelo</a>
       </div>
     {% endfor %}
   </div>
 
-  <p class="text-[12px] text-[#6f8a93]">
+  <p class="text-[12px] text-[#a6bfc7]">
     💡 <b class="text-[#bcd3da]">Placeholders:</b> use <code>{% templatetag openvariable %}nome{% templatetag closevariable %}</code>, <code>{% templatetag openvariable %}empresa{% templatetag closevariable %}</code>,
     <code>{% templatetag openvariable %}procedimento{% templatetag closevariable %}</code>, <code>{% templatetag openvariable %}valor{% templatetag closevariable %}</code>, <code>{% templatetag openvariable %}telefone{% templatetag closevariable %}</code> e
-    <code>{% templatetag openvariable %}email{% templatetag closevariable %}</code> — eles viram os dados de cada contato na hora do envio. Total de envios registrados: <b class="text-[#74b3c6]">{{ total_envios }}</b>.
+    <code>{% templatetag openvariable %}email{% templatetag closevariable %}</code> — eles viram os dados de cada contato na hora do envio. Total de envios registrados: <b class="text-[#5b8def]">{{ total_envios }}</b>.
   </p>
 </div>
 {% endblock %}

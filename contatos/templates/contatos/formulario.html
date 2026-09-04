@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}CRMCronos.Cloud — {{ titulo }}{% endblock %}
+{% block titulo %}GPRBRCRM — {{ titulo }}{% endblock %}
 
 {% block conteudo %}
 <div class="mx-auto max-w-3xl">
@@ -32,7 +32,7 @@
 
       <!-- Dados da empresa (CNPJ preenche automaticamente) -->
       <div class="sm:col-span-2 lg:col-span-3 hazon-card-sm p-4">
-        <span class="mb-3 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Dados da empresa</span>
+        <span class="mb-3 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Dados da empresa</span>
         <div class="mb-3 flex flex-wrap items-end gap-2">
           <div class="min-w-[200px] flex-1">
             <label for="{{ form.cnpj.id_for_label }}" class="hazon-label">{{ form.cnpj.label }}</label>
@@ -71,9 +71,9 @@
       <!-- Campos personalizados (definidos pelo tenant) -->
       <div class="sm:col-span-2 lg:col-span-3 hazon-card-sm p-4">
         <div class="mb-3 flex items-center justify-between">
-          <span class="text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Campos personalizados</span>
+          <span class="text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Campos personalizados</span>
           {% if web_eh_admin %}
-            <a href="{% url 'contatos:campos' %}" class="text-[11px] font-semibold text-[#74b3c6] transition hover:underline">gerenciar campos</a>
+            <a href="{% url 'contatos:campos' %}" class="text-[11px] font-semibold text-[#5b8def] transition hover:underline">gerenciar campos</a>
           {% endif %}
         </div>
         {% if campos_personalizados %}
@@ -108,9 +108,9 @@
             {% endfor %}
           </div>
         {% else %}
-          <p class="text-[12.5px] text-[#6f8a93]">Nenhum campo extra definido.
+          <p class="text-[12.5px] text-[#a6bfc7]">Nenhum campo extra definido.
             {% if web_eh_admin %}
-              <a href="{% url 'contatos:campos' %}" class="text-[#74b3c6] hover:underline">Crie o primeiro aqui</a>
+              <a href="{% url 'contatos:campos' %}" class="text-[#5b8def] hover:underline">Crie o primeiro aqui</a>
               — ex.: plano de saúde, nº do convênio, CRM do médico.
             {% else %}
               Peça ao admin da empresa para criar campos extras (ex.: plano de saúde, nº do convênio).
@@ -121,7 +121,7 @@
 
       <!-- Tags: checkboxes em chips coloridos -->
       <div class="sm:col-span-2 lg:col-span-3 hazon-card-sm p-4">
-        <span class="mb-3 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Tags</span>
+        <span class="mb-3 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Tags</span>
         <div class="flex flex-wrap gap-2" id="tags-opcoes">
           {% for tag_id, tag_nome in form.tags.field.choices %}
             <label class="cursor-pointer">
@@ -131,10 +131,10 @@
               <span class="tag-chip inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-[#bcd3da] border border-white/15 bg-white/5 transition">{{ tag_nome }}</span>
             </label>
           {% empty %}
-            <span class="text-[12.5px] text-[#6f8a93]">Nenhuma tag criada ainda. Crie uma abaixo ou na ficha do contato.</span>
+            <span class="text-[12.5px] text-[#a6bfc7]">Nenhuma tag criada ainda. Crie uma abaixo ou na ficha do contato.</span>
           {% endfor %}
         </div>
-        <p class="mt-3 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#6f8a93]">Nova tag (opcional)</p>
+        <p class="mt-3 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Nova tag (opcional)</p>
         {{ form.nova_tag }}
       </div>
     </div>
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function mostrar(msg, erro) {
     status.textContent = msg;
     status.classList.toggle('hidden', !msg);
-    status.style.color = erro ? '#fca5a5' : '#7fe3c4';
+    status.style.color = erro ? '#fca5a5' : '#4ade80';
   }
 
   function buscar() {
@@ -235,8 +235,8 @@ document.addEventListener('DOMContentLoaded', function () {
 <style>
   .focar-destaque { animation: focarPulse 1.6s ease 2; }
   @keyframes focarPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(116,179,198,0); }
-    50%      { box-shadow: 0 0 0 3px rgba(116,179,198,.55); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(91,141,239,0); }
+    50%      { box-shadow: 0 0 0 3px rgba(91,141,239,.55); }
   }
 </style>
 <script>

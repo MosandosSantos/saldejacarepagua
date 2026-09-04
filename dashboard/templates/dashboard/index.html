@@ -1,6 +1,12 @@
 {% extends 'base/basic.html' %}
+{% load static %}
+{% load seguranca %}
 
-{% block titulo %}CRMCronos.Cloud — Visão geral{% endblock %}
+{% block titulo %}GPRBRCRM — Visão geral{% endblock %}
+
+{% block extra_head %}
+<script src="{% static 'js/vendor/chart.umd.min.js' %}"></script>
+{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7 flex flex-wrap items-end justify-between gap-3">
@@ -9,7 +15,7 @@
     <p class="hazon-sub mt-2">Resumo dos seus clientes, negócios e do desempenho do time.</p>
   </div>
   <div class="flex items-center gap-3">
-    <span class="text-[11.5px] text-[#6f8a93]">atualizado às <b id="atualizado-em" class="font-mono text-[#bcd3da]">{{ atualizado_em }}</b></span>
+    <span class="text-[11.5px] text-[#a6bfc7]">atualizado às <b id="atualizado-em" class="font-mono text-[#bcd3da]">{{ atualizado_em }}</b></span>
     <button type="button" id="btn-refresh"
             class="flex h-8 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 text-[11.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">
       <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
@@ -22,47 +28,143 @@
 
 {% include 'dashboard/partials/_tarefas.html' %}
 
-<div class="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
-  <div class="hazon-card-sm p-7 backdrop-blur-xl">
-    <div class="mb-6 flex items-center justify-between">
-      <h2 class="font-display text-lg font-semibold text-white">Novos contatos</h2>
-      <span class="text-xs text-[#6f8a93]">últimos 30 dias</span>
+<div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+  <!-- BAII ATIVOS -->
+  <div class="hazon-card-sm flex flex-col p-7 backdrop-blur-xl" style="min-height:300px;">
+    <div class="mb-6">
+      <h2 class="font-display text-lg font-semibold text-white">BAIIS Ativos</h2>
+      <span class="text-xs text-[#a6bfc7]">(BAIIS Cadastrados) total: {{ baii_ativos_total }}</span>
     </div>
-    {% include 'dashboard/partials/_timeline.html' %}
-    {% include 'dashboard/partials/_conversao.html' %}
+    <div class="flex-1">
+      {% include 'dashboard/partials/_baii.html' with baii=baii_ativos baii_svg=baii_ativos_svg baii_total=baii_ativos_total %}
+    </div>
   </div>
 
-  <div class="hazon-card-sm p-7 backdrop-blur-xl">
-    <div class="mb-6 flex items-center justify-between">
-      <h2 class="font-display text-lg font-semibold text-white">Funil de clientes</h2>
-      <span class="text-xs text-[#6f8a93]">por etapa</span>
+  <!-- ANUALIDADE PAGA — Gauge 3D -->
+  <div class="hazon-card-sm flex flex-col p-7 backdrop-blur-xl" style="min-height:300px;">
+    <div class="mb-4">
+      <h2 class="font-display text-lg font-semibold text-white">Anuidade {{ ano_anuidade }}</h2>
+      <span class="text-xs text-[#a6bfc7]">Pagantes vs. Inadimplentes</span>
     </div>
-    {% include 'dashboard/partials/_funil.html' %}
+    <div class="flex justify-center">
+      <svg viewBox="0 0 320 185" style="width:100%;max-width:340px;" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Gradiente do arco principal (azul 3D) -->
+          <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1a5fb4"/>
+            <stop offset="50%" stop-color="#3b82f6"/>
+            <stop offset="100%" stop-color="#93b8f7"/>
+          </linearGradient>
+          <!-- Sombra 3D do arco -->
+          <linearGradient id="gaugeShadow" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="rgba(0,0,0,0)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0.35)"/>
+          </linearGradient>
+          <!-- Glow azul -->
+          <filter id="gaugeGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <!-- Sombra do fundo -->
+          <filter id="bgShadow" x="-10%" y="-10%" width="120%" height="130%">
+            <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000" flood-opacity="0.4"/>
+          </filter>
+        </defs>
+
+        <!-- Arco de fundo (cinza escuro) -->
+        <path d="M 30 160 A 130 130 0 0 1 290 160" fill="none" stroke="#162a38" stroke-width="22" stroke-linecap="round" filter="url(#bgShadow)"/>
+
+        <!-- Arco de progresso (gradiente azul 3D) -->
+        <path id="gauge-arc" d="M 30 160 A 130 130 0 0 1 290 160" fill="none" stroke="url(#gaugeGrad)" stroke-width="22" stroke-linecap="round" filter="url(#gaugeGlow)"
+              stroke-dasharray="0 408" stroke-dashoffset="0"/>
+
+        <!-- Brilho no topo do arco -->
+        <path d="M 35 160 A 125 125 0 0 1 285 160" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2" stroke-linecap="round"/>
+
+        <!-- Sombra elíptica no chão -->
+        <ellipse cx="160" cy="172" rx="85" ry="10" fill="rgba(0,0,0,0.45)"/>
+
+        <!-- Agulha (velocímetro) -->
+        <g id="gauge-needle" transform="rotate(-90 160 160)">
+          <!-- Sombra da agulha -->
+          <line x1="160" y1="160" x2="160" y2="45" stroke="rgba(0,0,0,0.3)" stroke-width="4" stroke-linecap="round" transform="translate(2,2)"/>
+          <!-- Agulha principal -->
+          <line x1="160" y1="160" x2="160" y2="48" stroke="#e0ecff" stroke-width="3" stroke-linecap="round"/>
+          <!-- Centro da agulha -->
+          <circle cx="160" cy="160" r="10" fill="#1a5fb4" stroke="#93b8f7" stroke-width="2"/>
+          <circle cx="160" cy="160" r="5" fill="#3b82f6"/>
+        </g>
+
+        <!-- Texto central: percentual -->
+        <text x="160" y="128" text-anchor="middle" font-family="JetBrains Mono, monospace" font-weight="800" font-size="38" fill="#93b8f7" filter="url(#gaugeGlow)">{{ anualidade.percentual }}%</text>
+        <text x="160" y="148" text-anchor="middle" font-family="Manrope, sans-serif" font-size="11" fill="#6f8a93" font-weight="600">pagantes</text>
+
+        <!-- Labels laterais -->
+        <text x="42" y="180" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#3b82f6">0</text>
+        <text x="278" y="180" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#3b82f6">100</text>
+      </svg>
+    </div>
+    <div class="mt-2 flex items-center justify-center gap-6 text-[12px]">
+      <span class="flex items-center gap-1.5"><span class="inline-block h-3 w-3 rounded-full" style="background:#3b82f6;box-shadow:0 0 8px #3b82f670"></span> Pagantes: <b class="text-white">{{ anualidade.pagantes }}</b></span>
+      <span class="flex items-center gap-1.5"><span class="inline-block h-3 w-3 rounded-full" style="background:#1a5fb4;box-shadow:0 0 8px #1a5fb470"></span> Inadimplentes: <b class="text-white">{{ anualidade.pendentes }}</b></span>
+    </div>
   </div>
 </div>
 
-{% include 'dashboard/partials/_metas.html' %}
+<div class="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
+  <div class="flex flex-col" style="min-height:300px;">
+    {% include 'dashboard/partials/_melhores.html' %}
+  </div>
+  <div class="flex flex-col" style="min-height:300px;">
+    {% include 'dashboard/partials/_atividade.html' %}
+  </div>
+</div>
 
-<div class="mt-5 grid gap-5 xl:grid-cols-2">
-  {% include 'dashboard/partials/_melhores.html' %}
-  {% include 'dashboard/partials/_atividade.html' %}
+<!-- RITO NO SIMBOLISMO + IDADE POR FAIXA -->
+<div class="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
+  <!-- Rito no Simbolismo -->
+  <div class="hazon-card-sm flex flex-col p-7 backdrop-blur-xl" style="min-height:300px;">
+    <div class="mb-5">
+      <h2 class="font-display text-lg font-semibold text-white">Rito no Simbolismo</h2>
+      <span class="text-xs text-[#a6bfc7]">membros ativos por rito</span>
+    </div>
+    <div class="flex-1" style="position:relative;min-height:200px;">
+      <canvas id="chart-rito"></canvas>
+    </div>
+  </div>
+
+  <!-- Idade por Faixa -->
+  <div class="hazon-card-sm flex flex-col p-7 backdrop-blur-xl" style="min-height:300px;">
+    <div class="mb-5">
+      <h2 class="font-display text-lg font-semibold text-white">Faixa Et&#225;ria</h2>
+      <span class="text-xs text-[#a6bfc7]">membros com idade declarada (10 em 10 anos)</span>
+    </div>
+    <div class="flex-1" style="position:relative;min-height:200px;">
+      <canvas id="chart-idade"></canvas>
+    </div>
+  </div>
 </div>
 
 <div class="mt-5 hazon-card-sm p-7 backdrop-blur-xl">
   <div class="mb-6 flex items-center justify-between">
-    <h2 class="font-display text-lg font-semibold text-white">Movimentações recentes</h2>
-    <span class="text-xs text-[#6f8a93]">atividade recente</span>
+    <h2 class="font-display text-lg font-semibold text-white">Admiss&#245;es</h2>
+    <span class="text-xs text-[#a6bfc7]">&#250;ltimos 36 meses</span>
   </div>
-  {% include 'dashboard/partials/_recentes.html' %}
+  <div style="position:relative;height:280px;">
+    <canvas id="chart-entradas"></canvas>
+  </div>
 </div>
 
-<div class="mt-5">
+<div class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-4">
   {% include 'dashboard/partials/_analise.html' %}
+  {% include 'dashboard/partials/_ranking_mx.html' %}
+  {% include 'dashboard/partials/_proximas_sessoes.html' %}
+  {% include 'dashboard/partials/_agendamento.html' %}
 </div>
 
-<div class="mt-5">
-  {% include 'dashboard/partials/_kpis_avancados.html' %}
-</div>
 {% endblock %}
 
 {% block js %}
@@ -103,5 +205,403 @@ document.addEventListener('DOMContentLoaded', function () {
   btn.addEventListener('click', atualizar);
   setInterval(atualizar, 45000); // quase-realtime: atualiza os números a cada 45s
 });
+
+// Grafico de linha: admissoes no priorado (ultimos 36 meses)
+(function () {
+  var ctx = document.getElementById('chart-entradas');
+  if (!ctx) return;
+  var labels = {{ chart_membros_labels|js }};
+  var valores = {{ chart_membros_valores|js }};
+
+  // Formata labels para 'Jul/26'
+  var labelsBR = labels.map(function (l) {
+    var parts = l.split('-');
+    var meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    return meses[parseInt(parts[1], 10) - 1] + '/' + parts[0].slice(2);
+  });
+
+  var gradiente = ctx.getContext('2d').createLinearGradient(0, 0, 0, 280);
+  gradiente.addColorStop(0, 'rgba(91,141,239,0.35)');
+  gradiente.addColorStop(1, 'rgba(91,141,239,0)');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labelsBR,
+      datasets: [{
+        label: 'Admissões',
+        data: valores,
+        borderColor: '#5b8def',
+        backgroundColor: gradiente,
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.45,
+        borderCapStyle: 'round',
+        borderJoinStyle: 'round',
+        spanGaps: true,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: '#0b2029',
+        pointBorderColor: '#5b8def',
+        pointBorderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          ticks: { color: '#a6bfc7', font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 12 }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          ticks: { color: '#a6bfc7', font: { size: 10 }, precision: 0 },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+})();
+
+// Grafico de barras: Rito no Simbolismo
+(function () {
+  var ctx = document.getElementById('chart-rito');
+  if (!ctx) return;
+  var dados = {{ rito_dados|js }};
+  if (!dados || !dados.length) return;
+
+  var labels = dados.map(function (d) { return d.name; });
+  var valores = dados.map(function (d) { return d.total; });
+
+  // Gradiente 3D azul para cada barra
+  var gradiente = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
+  gradiente.addColorStop(0, '#93b8f7');
+  gradiente.addColorStop(0.4, '#3b82f6');
+  gradiente.addColorStop(1, '#1a5fb4');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Membros',
+        data: valores,
+        backgroundColor: gradiente,
+        borderColor: '#93b8f7',
+        borderWidth: 1,
+        borderRadius: 6,
+        borderSkipped: false,
+        barPercentage: 0.65,
+        categoryPercentage: 0.8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0b2029ee',
+          titleColor: '#bcd3da',
+          bodyColor: '#93b8f7',
+          borderColor: '#1a5fb455',
+          borderWidth: 1,
+          cornerRadius: 8,
+          padding: 10,
+          callbacks: {
+            label: function (c) { return c.raw + ' membros'; }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#a6bfc7', font: { size: 11, weight: '600', family: 'JetBrains Mono, monospace' } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          ticks: { color: '#6f8a93', font: { size: 10 }, precision: 0 },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+})();
+
+// Grafico de barras: Faixa Etaria
+(function () {
+  var ctx = document.getElementById('chart-idade');
+  if (!ctx) return;
+  var dados = {{ idade_dados|js }};
+  if (!dados || !dados.length) return;
+
+  var labels = dados.map(function (d) { return d.label; });
+  var valores = dados.map(function (d) { return d.total; });
+
+  // Gradiente 3D azul escuro → azul médio → azul claro
+  var gradiente = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
+  gradiente.addColorStop(0, '#93b8f7');
+  gradiente.addColorStop(0.4, '#5b8def');
+  gradiente.addColorStop(1, '#1a5fb4');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Membros',
+        data: valores,
+        backgroundColor: gradiente,
+        borderColor: '#93b8f7',
+        borderWidth: 1,
+        borderRadius: 6,
+        borderSkipped: false,
+        barPercentage: 0.65,
+        categoryPercentage: 0.8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0b2029ee',
+          titleColor: '#bcd3da',
+          bodyColor: '#93b8f7',
+          borderColor: '#1a5fb455',
+          borderWidth: 1,
+          cornerRadius: 8,
+          padding: 10,
+          callbacks: {
+            label: function (c) { return c.raw + ' membros'; }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#a6bfc7', font: { size: 11, weight: '600', family: 'JetBrains Mono, monospace' } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          ticks: { color: '#6f8a93', font: { size: 10 }, precision: 0 },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+})();
+
+// Grafico de barras horizontal: Potencia no Simbolismo
+(function () {
+  var ctx = document.getElementById('chart-potencia');
+  if (!ctx) return;
+  var dados = {{ potencia_dados|js }};
+  if (!dados || !dados.length) return;
+
+  var labels = dados.map(function (d) { return d.name; });
+  var valores = dados.map(function (d) { return d.total; });
+  var total = valores.reduce(function (a, b) { return a + b; }, 0);
+
+  // Gradiente 3D horizontal (esquerda escuro -> direita claro)
+  var ctxCanvas = ctx.getContext('2d');
+  var gradiente = ctxCanvas.createLinearGradient(0, 0, 300, 0);
+  gradiente.addColorStop(0, '#1a5fb4');
+  gradiente.addColorStop(0.5, '#3b82f6');
+  gradiente.addColorStop(1, '#93b8f7');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Membros',
+        data: valores,
+        backgroundColor: gradiente,
+        borderColor: '#93b8f7',
+        borderWidth: 1,
+        borderRadius: 6,
+        borderSkipped: false,
+        barPercentage: 0.6,
+        categoryPercentage: 0.8
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0b2029ee',
+          titleColor: '#bcd3da',
+          bodyColor: '#93b8f7',
+          borderColor: '#1a5fb455',
+          borderWidth: 1,
+          cornerRadius: 8,
+          padding: 10,
+          callbacks: {
+            label: function (c) {
+              var pct = total ? Math.round(c.raw / total * 100) : 0;
+              return c.label + ': ' + c.raw + ' membros (' + pct + '%)';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          ticks: { color: '#6f8a93', font: { size: 10 }, precision: 0 },
+          beginAtZero: true
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#a6bfc7', font: { size: 11, weight: '600' } }
+        }
+      }
+    },
+    plugins: [{
+      id: 'barLabelPotencia',
+      afterDatasetsDraw: function (chart) {
+        var c = chart.ctx;
+        chart.data.datasets.forEach(function (ds, i) {
+          var meta = chart.getDatasetMeta(i);
+          meta.data.forEach(function (bar, idx) {
+            var val = ds.data[idx];
+            if (val === 0) return;
+            var pct = total ? Math.round(val / total * 100) : 0;
+            c.save();
+            c.font = 'bold 12px JetBrains Mono, monospace';
+            c.fillStyle = '#e0eaf0';
+            c.textAlign = 'left';
+            c.textBaseline = 'middle';
+            c.fillText(val + ' (' + pct + '%)', bar.x + 8, bar.y);
+            c.restore();
+          });
+        });
+      }
+    }]
+  });
+})();
+
+// Grafico de barras horizontal: Tempo na Maconaria
+(function () {
+  var ctx = document.getElementById('chart-tempo-maconaria');
+  if (!ctx) return;
+  var dados = {{ tempo_maconaria_dados|js }};
+  if (!dados || !dados.length) return;
+
+  var labels = dados.map(function (d) { return d.label; });
+  var valores = dados.map(function (d) { return d.total; });
+  var total = valores.reduce(function (a, b) { return a + b; }, 0);
+
+  // Gradiente 3D horizontal (escuro -> medio -> claro)
+  var ctxCanvas = ctx.getContext('2d');
+  var gradiente = ctxCanvas.createLinearGradient(0, 0, 300, 0);
+  gradiente.addColorStop(0, '#1a5fb4');
+  gradiente.addColorStop(0.5, '#3b82f6');
+  gradiente.addColorStop(1, '#93b8f7');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Membros',
+        data: valores,
+        backgroundColor: gradiente,
+        borderColor: '#93b8f7',
+        borderWidth: 1,
+        borderRadius: 6,
+        borderSkipped: false,
+        barPercentage: 0.6,
+        categoryPercentage: 0.8
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0b2029ee',
+          titleColor: '#bcd3da',
+          bodyColor: '#93b8f7',
+          borderColor: '#1a5fb455',
+          borderWidth: 1,
+          cornerRadius: 8,
+          padding: 10,
+          callbacks: {
+            label: function (c) {
+              var pct = total ? Math.round(c.raw / total * 100) : 0;
+              return c.raw + ' membros (' + pct + '%)';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          ticks: { color: '#6f8a93', font: { size: 10 }, precision: 0 },
+          beginAtZero: true
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#a6bfc7', font: { size: 11, weight: '600' } }
+        }
+      }
+    },
+    plugins: [{
+      id: 'barLabelTempo',
+      afterDatasetsDraw: function (chart) {
+        var c = chart.ctx;
+        chart.data.datasets.forEach(function (ds, i) {
+          var meta = chart.getDatasetMeta(i);
+          meta.data.forEach(function (bar, idx) {
+            var val = ds.data[idx];
+            if (val === 0) return;
+            var pct = total ? Math.round(val / total * 100) : 0;
+            c.save();
+            c.font = 'bold 12px JetBrains Mono, monospace';
+            c.fillStyle = '#e0eaf0';
+            c.textAlign = 'left';
+            c.textBaseline = 'middle';
+            c.fillText(val + ' (' + pct + '%)', bar.x + 8, bar.y);
+            c.restore();
+          });
+        });
+      }
+    }]
+  });
+})();
+
+// Gauge animado: anuidade
+(function () {
+  var arc = document.getElementById('gauge-arc');
+  var needle = document.getElementById('gauge-needle');
+  if (!arc || !needle) return;
+  var percentual = {{ anualidade.percentual }};
+  var totalLen = 408; // comprimento total do arco semicircular (r=130)
+  var targetDash = totalLen * (percentual / 100);
+  var targetAngle = -90 + 180 * (percentual / 100);
+
+  // Animação de entrada suave
+  var start = null;
+  var duration = 1200;
+  function anim(ts) {
+    if (!start) start = ts;
+    var p = Math.min((ts - start) / duration, 1);
+    // ease-out-cubic
+    var t = 1 - Math.pow(1 - p, 3);
+    arc.setAttribute('stroke-dasharray', (targetDash * t).toFixed(1) + ' ' + totalLen);
+    needle.setAttribute('transform', 'rotate(' + (-90 + (targetAngle + 90) * t).toFixed(1) + ' 160 160)');
+    if (p < 1) requestAnimationFrame(anim);
+  }
+  requestAnimationFrame(anim);
+})();
 </script>
 {% endblock %}

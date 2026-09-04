@@ -10,7 +10,7 @@ app.use(express.static(__dirname));
 const pool = new Pool({
   user: process.env.PGUSER || 'postgres',
   host: process.env.PGHOST || 'localhost',
-  database: process.env.PGDATABASE || 'cronoscrm',
+  database: process.env.PGDATABASE || 'gprbr',
   password: process.env.PGPASSWORD,
   port: parseInt(process.env.PGPORT || '5432', 10),
 });
@@ -83,5 +83,5 @@ app.get('*', (req, res) => {
 /* ===================== START ===================== */
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log('CRMCronos.Cloud rodando em http://localhost:' + PORT);
+  console.log('GPRBRCRM rodando em http://localhost:' + PORT);
 });

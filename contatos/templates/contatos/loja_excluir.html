@@ -1,0 +1,62 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}GPRBRCRM — Excluir {{ loja.nome }}{% endblock %}
+
+{% block conteudo %}
+<div class="mb-7">
+  <h1 class="hazon-titulo">Excluir Loja</h1>
+  <p class="hazon-sub mt-2">Tem certeza que deseja excluir <b class="text-white">{{ loja.nome }}</b>?</p>
+</div>
+
+<div class="hazon-card">
+  {% if erro %}
+    <div class="mb-6 flex items-start gap-4 rounded-xl border border-[#ef4444]/30 bg-[#ef4444]/10 px-5 py-4">
+      <svg viewBox="0 0 24 24" class="mt-0.5 h-6 w-6 shrink-0 text-[#ef4444]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <div>
+        <p class="text-[13px] font-semibold text-[#ef4444]">Nao foi possivel excluir</p>
+        <p class="text-[12px] text-[#bcd3da]">{{ erro }}</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="mb-6 flex items-center gap-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-5 py-4">
+    <svg viewBox="0 0 24 24" class="h-6 w-6 shrink-0 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div>
+      <p class="text-[13px] font-semibold text-amber-400">Atencao!</p>
+      <p class="text-[12px] text-[#bcd3da]">
+        {% if membros > 0 %}
+          Esta loja possui <b class="text-white">{{ membros }}</b> membro(s) vinculado(s).
+          Enquanto houver membros, a loja <b class="text-white">nao pode ser excluida</b> —
+          transfira os membros para outra loja (via edicao do membro) e tente novamente.
+        {% else %}
+          Esta loja nao possui membros vinculados e pode ser excluida. Esta acao e irreversivel.
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-4">
+    {% if membros == 0 %}
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit"
+                class="flex items-center gap-2 rounded-xl bg-[#ef4444] px-6 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#ef4444]/80">
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Excluir Definitivamente
+        </button>
+      </form>
+    {% else %}
+      <button type="button" disabled
+              class="flex cursor-not-allowed items-center gap-2 rounded-xl bg-[#ef4444]/40 px-6 py-2.5 text-[13px] font-semibold text-white/60">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        Excluir Definitivamente
+      </button>
+    {% endif %}
+    <a href="{% url 'contatos:lojas' %}" class="text-[13px] text-[#a6bfc7] transition hover:text-white">Cancelar</a>
+  </div>
+</div>
+{% endblock %}

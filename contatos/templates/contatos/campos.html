@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}CRMCronos.Cloud — Campos personalizados{% endblock %}
+{% block titulo %}GPRBRCRM — Campos personalizados{% endblock %}
 
 {% block conteudo %}
 <div class="mx-auto max-w-4xl space-y-6">
@@ -9,7 +9,7 @@
       <h1 class="hazon-titulo">Campos personalizados</h1>
       <p class="hazon-sub mt-2">Campos extras que aparecem no formulário e na ficha do contato — exclusivos do seu negócio.</p>
     </div>
-    <a href="{% url 'contatos:lista' %}" class="text-[13px] font-semibold text-[#74b3c6] transition hover:underline">← voltar para a lista</a>
+    <a href="{% url 'contatos:lista' %}" class="text-[13px] font-semibold text-[#5b8def] transition hover:underline">← voltar para a lista</a>
   </div>
 
   {% for e in erros %}
@@ -39,7 +39,7 @@
       </div>
       <div class="flex items-end gap-4 lg:col-span-6">
         <label for="id_obrigatorio" class="flex items-center gap-2 pb-[7px] text-[13px] text-[#bcd3da]">
-          <input type="checkbox" name="obrigatorio" id="id_obrigatorio" class="h-4 w-4 accent-[#74b3c6]"
+          <input type="checkbox" name="obrigatorio" id="id_obrigatorio" class="h-4 w-4 accent-[#5b8def]"
                  {% if form.obrigatorio.value %}checked{% endif %}>
           Obrigatório
         </label>
@@ -53,11 +53,11 @@
     <table class="w-full border-collapse">
       <thead>
         <tr class="border-b border-white/10 text-left">
-          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Campo</th>
-          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Tipo</th>
-          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Obrigatório</th>
-          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Contatos usando</th>
-          <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Ações</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Campo</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Tipo</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Obrigatório</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Contatos usando</th>
+          <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -74,7 +74,7 @@
           </tr>
         {% empty %}
           <tr>
-            <td colspan="5" class="px-5 py-12 text-center text-[13px] text-[#6f8a93]">Nenhum campo criado ainda. Use o formulário acima para adicionar o primeiro.</td>
+            <td colspan="5" class="px-5 py-12 text-center text-[13px] text-[#a6bfc7]">Nenhum campo criado ainda. Use o formulário acima para adicionar o primeiro.</td>
           </tr>
         {% endfor %}
       </tbody>

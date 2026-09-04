@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}CRMCronos.Cloud — Relatórios{% endblock %}
+{% block titulo %}GPRBRCRM — Relatórios{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7 flex flex-wrap items-end justify-between gap-3">
@@ -28,7 +28,7 @@
   <span class="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#bcd3da]">Período:</span>
   {% for chave, rotulo in periodos %}
     {% if chave == periodo %}
-      <span class="rounded-lg bg-[#74b3c6]/15 px-3.5 py-2 text-[12.5px] font-semibold text-[#74b3c6]">{{ rotulo }}</span>
+      <span class="rounded-lg bg-[#5b8def]/15 px-3.5 py-2 text-[12.5px] font-semibold text-[#5b8def]">{{ rotulo }}</span>
     {% else %}
       <a href="?periodo={{ chave }}{% if operador_atual %}&operador={{ operador_atual }}{% endif %}"
          class="rounded-lg border border-white/10 bg-white/5 px-3.5 py-2 text-[12.5px] font-medium text-[#bcd3da] transition hover:bg-white/10 hover:text-white">{{ rotulo }}</a>
@@ -39,54 +39,54 @@
     <div class="flex items-center gap-2">
       <span class="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#bcd3da]">Operador:</span>
       <select name="operador" onchange="this.form.submit()"
-              class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[12.5px] font-medium text-[#bcd3da] transition hover:bg-white/10 focus:border-[#74b3c6]/60 focus:outline-none">
-        <option value="" class="bg-[#0b2029]">Todos</option>
+              class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[12.5px] font-medium text-[#bcd3da] transition hover:bg-white/10 focus:border-[#5b8def]/60 focus:outline-none">
+        <option value="" class="bg-[#0a1e3d]">Todos</option>
         {% for id, nome in operadores %}
-          <option value="{{ id }}" class="bg-[#0b2029]" {% if operador_atual == id %}selected{% endif %}>{{ nome }}</option>
+          <option value="{{ id }}" class="bg-[#0a1e3d]" {% if operador_atual == id %}selected{% endif %}>{{ nome }}</option>
         {% endfor %}
       </select>
     </div>
   {% endif %}
 
-  <span class="ml-auto text-[11.5px] text-[#6f8a93]">{{ empresa }} · <b class="font-mono text-[#bcd3da]">{{ periodo_label }}</b></span>
+  <span class="ml-auto text-[11.5px] text-[#a6bfc7]">{{ empresa }} · <b class="font-mono text-[#bcd3da]">{{ periodo_label }}</b></span>
 </form>
 
 <!-- KPIs -->
 <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
   <div class="hazon-card p-5">
     <div class="mb-3 flex items-center justify-between">
-      <span class="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Base em cobrança</span>
-      <span class="rounded-full bg-[#74b3c6]/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#74b3c6]">+{{ kpis.base_novos }} no período</span>
+      <span class="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Base em cobrança</span>
+      <span class="rounded-full bg-[#5b8def]/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#5b8def]">+{{ kpis.base_novos }} no período</span>
     </div>
     <div class="font-mono text-[30px] font-bold leading-none text-white">{{ kpis.base_label }}</div>
-    <div class="mt-2 text-[11.5px] text-[#6f8a93]">contatos com telefone válido</div>
+    <div class="mt-2 text-[11.5px] text-[#a6bfc7]">contatos com telefone válido</div>
   </div>
 
   <div class="hazon-card p-5">
     <div class="mb-3 flex items-center justify-between">
-      <span class="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Contatos úteis (CPC)</span>
-      <span class="rounded-full bg-[#7fe3c4]/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#7fe3c4]">{{ kpis.chamadas }} ligações</span>
+      <span class="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Contatos úteis (CPC)</span>
+      <span class="rounded-full bg-[#4ade80]/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#4ade80]">{{ kpis.chamadas }} ligações</span>
     </div>
     <div class="font-mono text-[30px] font-bold leading-none text-white">{{ kpis.cpc }}</div>
-    <div class="mt-2 text-[11.5px] text-[#6f8a93]">chamadas realizadas no período</div>
+    <div class="mt-2 text-[11.5px] text-[#a6bfc7]">chamadas realizadas no período</div>
   </div>
 
   <div class="hazon-card p-5">
     <div class="mb-3 flex items-center justify-between">
-      <span class="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Retornos agendados</span>
+      <span class="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Retornos agendados</span>
       <span class="rounded-full bg-[#fbbf24]/15 px-2 py-0.5 font-mono text-[10px] font-bold text-[#fbbf24]">follow-up</span>
     </div>
     <div class="font-mono text-[30px] font-bold leading-none text-white">{{ kpis.retornos }}</div>
-    <div class="mt-2 text-[11.5px] text-[#6f8a93]">retornos marcados para o período</div>
+    <div class="mt-2 text-[11.5px] text-[#a6bfc7]">retornos marcados para o período</div>
   </div>
 
   <div class="hazon-card p-5">
     <div class="mb-3 flex items-center justify-between">
-      <span class="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#6f8a93]">Produtividade</span>
+      <span class="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Produtividade</span>
       <span class="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10px] font-bold text-[#bcd3da]">{{ produtividade|length }} operador{{ produtividade|length|pluralize }}</span>
     </div>
     <div class="font-mono text-[30px] font-bold leading-none text-white">{{ kpis.chamadas }}</div>
-    <div class="mt-2 text-[11.5px] text-[#6f8a93]">chamadas iniciadas no período</div>
+    <div class="mt-2 text-[11.5px] text-[#a6bfc7]">chamadas iniciadas no período</div>
   </div>
 </div>
 
@@ -95,7 +95,7 @@
   <div class="hazon-card p-6">
     <div class="mb-5 flex items-center justify-between">
       <h2 class="font-display text-lg font-semibold text-white">Atividade diária</h2>
-      <span class="text-xs text-[#6f8a93]">CPC · por dia · {{ periodo_label }}</span>
+      <span class="text-xs text-[#a6bfc7]">CPC · por dia · {{ periodo_label }}</span>
     </div>
     <div class="w-full overflow-x-auto">
       {{ grafico_atividade|safe }}
@@ -107,14 +107,14 @@
 <div class="mt-6 hazon-card p-6">
   <div class="mb-5 flex items-center justify-between">
     <h2 class="font-display text-lg font-semibold text-white">Produtividade por operador</h2>
-    <span class="text-xs text-[#6f8a93]">{{ periodo_label }}</span>
+    <span class="text-xs text-[#a6bfc7]">{{ periodo_label }}</span>
   </div>
 
   {% if produtividade %}
   <div class="overflow-x-auto">
     <table class="w-full text-left">
       <thead>
-        <tr class="border-b border-white/10 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#6f8a93]">
+        <tr class="border-b border-white/10 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#a6bfc7]">
           <th class="hazon-th">Operador</th>
           <th class="hazon-th text-center">Chamadas</th>
           <th class="hazon-th text-center">Realizadas</th>
@@ -126,12 +126,12 @@
         <tr class="border-b border-white/5 transition hover:bg-white/5">
           <td class="hazon-td">
             <div class="flex items-center gap-3">
-              <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#2aa1a8] to-[#075b60] text-[11px] font-semibold text-white">{{ p.iniciais }}</span>
+              <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#3b7ded] to-[#1450a0] text-[11px] font-semibold text-white">{{ p.iniciais }}</span>
               <span class="text-[13px] font-medium text-white">{{ p.nome }}</span>
             </div>
           </td>
           <td class="hazon-td text-center font-mono text-[13px] font-bold text-white">{{ p.chamadas }}</td>
-          <td class="hazon-td text-center font-mono text-[13px] text-[#7fe3c4]">{{ p.realizadas }}</td>
+          <td class="hazon-td text-center font-mono text-[13px] text-[#4ade80]">{{ p.realizadas }}</td>
           <td class="hazon-td text-center font-mono text-[13px] text-[#fbbf24]">{{ p.retornos }}</td>
         </tr>
         {% endfor %}
@@ -139,7 +139,7 @@
     </table>
   </div>
   {% else %}
-  <p class="py-8 text-center text-sm text-[#6f8a93]">Nenhuma chamada registrada neste período.</p>
+  <p class="py-8 text-center text-sm text-[#a6bfc7]">Nenhuma chamada registrada neste período.</p>
   {% endif %}
 </div>
 {% endblock %}

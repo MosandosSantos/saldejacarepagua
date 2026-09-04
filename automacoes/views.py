@@ -43,8 +43,7 @@ EMOJIS_ACAO = {
 }
 
 
-def _tenant_id(request):
-    return request.session.get('usuario', {}).get('tenant_id')
+from core.utils import tenant_id as _tenant_id
 
 
 def _descricao(a, mapa):
@@ -258,10 +257,12 @@ def _ctx_form(request, automacao, erros):
         'modelos': modelos,
         'prioridades': PRIORIDADES,
         'passos_edit': passos,
-        # JSONs consumidos pelo builder JS (pares [valor, rótulo])
-        'membros_json': json.dumps([[str(m['id']), m['nome']] for m in membros]),
-        'modelos_json': json.dumps([[str(m['id']), m['nome']] for m in modelos]),
-        'passos_json': json.dumps(passos).replace('<', '\\u003c'),
+        # JSONs consumidos pelo builder JS (pares [valor, rótulo]). Nomes vêm do
+        # banco e entram dentro de <script> — escapa '<' (e '>'/'&') para impedir
+        # quebra da tag (XSS). O JSON.parse/JS decodifica \u003c de volta.
+        'membros_json': json.dumps([[str(m['id']), m['nome']] for m in membros]).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026'),
+        'modelos_json': json.dumps([[str(m['id']), m['nome']] for m in modelos]).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026'),
+        'passos_json': json.dumps(passos).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026'),
     }
 
 

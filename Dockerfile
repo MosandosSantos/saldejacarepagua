@@ -1,5 +1,5 @@
 # =============================================================================
-# CRMCronos.Cloud — imagem de producao (Railway)
+# GPRBRCRM — imagem de producao (Railway)
 #
 # Servidor: uvicorn (ASGI) servindo Django (painel web) + FastAPI (/api/v1)
 # no mesmo processo e porta (core.asgi).
@@ -17,8 +17,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Node.js 20 — necessario apenas para o build do Tailwind (django-tailwind).
+# Chromium + Xvfb — WhatsApp Web via PyWhatKit (modulo de Comunicacao, PRD_comunicacao):
+# o pywhatkit abre o navegador padrao (BROWSER) e o pyautogui precisa de display (Xvfb).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && apt-get install -y --no-install-recommends curl ca-certificates chromium xvfb python3-xlib fonts-liberation \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
@@ -37,7 +39,10 @@ RUN DJANGO_DEBUG=1 python manage.py tailwind install \
     && DJANGO_DEBUG=1 python manage.py tailwind build \
     && DJANGO_DEBUG=1 python manage.py collectstatic --noinput
 
+ENV BROWSER="chromium --no-sandbox %s"
+
 EXPOSE 8000
 
 # $PORT e injetado pelo Railway; fallback 8000 para rodar fora da plataforma.
-CMD ["sh", "-c", "uvicorn core.asgi:application --host 0.0.0.0 --port ${PORT:-8000} --workers 2"]
+# xvfb-run da display ao pyautogui (envio de WhatsApp via PyWhatKit) no headless.
+CMD ["sh", "-c", "xvfb-run -a uvicorn core.asgi:application --host 0.0.0.0 --port ${PORT:-8000} --workers 2"]

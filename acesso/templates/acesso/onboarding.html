@@ -1,7 +1,7 @@
 {% extends 'base/basic.html' %}
 {% load static %}
 
-{% block titulo %}CRMCronos.Cloud — Configure seu funil{% endblock %}
+{% block titulo %}GPRBRCRM — Configure seu funil{% endblock %}
 
 {% block cabecalho %}{% endblock %}
 
@@ -14,9 +14,9 @@
   .login-bg-gradient {
     position: absolute; inset: 0;
     background:
-      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(11,111,116,0.35) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 85% 90%, rgba(17,37,48,0.55) 0%, transparent 55%),
-      linear-gradient(150deg,#0e3a44 0%,#112530 55%,#0b2029 100%);
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(26,95,180,0.35) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 85% 90%, rgba(10,30,61,0.55) 0%, transparent 55%),
+      linear-gradient(150deg,#0f2a52 0%,#0c2245 55%,#0a1e3d 100%);
   }
   .login-bg-photo {
     position: absolute; inset: 0;
@@ -52,8 +52,8 @@
     padding: 18px 20px;
     transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
   }
-  .onb-option:hover { border-color: rgba(116,179,198,0.7); background: rgba(255,255,255,0.13); transform: translateY(-2px); }
-  .onb-option input:checked ~ .onb-option-box { border-color: #74b3c6; background: rgba(116,179,198,0.18); }
+  .onb-option:hover { border-color: rgba(91,141,239,0.7); background: rgba(255,255,255,0.13); transform: translateY(-2px); }
+  .onb-option input:checked ~ .onb-option-box { border-color: #5b8def; background: rgba(91,141,239,0.18); }
   .onb-option input { position: absolute; opacity: 0; pointer-events: none; }
 </style>
 {% endblock %}
@@ -69,16 +69,16 @@
   <div class="onb-wrap">
     <section class="onb-card">
       <div class="mb-5 flex items-center gap-3">
-        <div class="flex h-11 w-11 items-center justify-center rounded-[13px] bg-gradient-to-br from-[#2aa1a8] to-[#075b60] shadow-lg shadow-[#0b6f74]/70">
+        <div class="flex h-11 w-11 items-center justify-center rounded-[13px] bg-gradient-to-br from-[#3b7ded] to-[#1450a0] shadow-lg shadow-[#1a5fb4]/70">
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" class="h-6 w-6" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.6" fill="#fff"/>
           </svg>
         </div>
-        <span class="font-display text-[1.35rem] font-semibold tracking-tight text-white">Cronos<span class="text-[#74b3c6]">CRM</span><span style="font-size:14px;color:#6f8a93;font-weight:400">.Cloud</span></span>
+        <span class="font-display text-[1.35rem] font-semibold tracking-tight text-white">Cronos<span class="text-[#5b8def]">CRM</span><span style="font-size:14px;color:#a6bfc7;font-weight:400">.Cloud</span></span>
       </div>
 
       <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.3em] text-white/90">
-        <span class="h-1.5 w-1.5 rounded-full bg-[#7fe3c4] shadow-[0_0_8px_#7fe3c4]"></span>
+        <span class="h-1.5 w-1.5 rounded-full bg-[#4ade80] shadow-[0_0_8px_#4ade80]"></span>
         Boas-vindas, {{ tenant.nome }}
       </div>
 
@@ -99,7 +99,7 @@
             <input type="radio" name="nicho" value="{{ opcao.key }}" {% if forloop.first %}checked{% endif %}>
             <div class="onb-option-box rounded-2xl border border-transparent p-0.5 transition">
               <div class="flex items-center gap-3">
-                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#74b3c6]/60 bg-[#74b3c6]/15 text-[12.5px] font-bold text-[#74b3c6]">{{ forloop.counter }}</span>
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#5b8def]/60 bg-[#5b8def]/15 text-[12.5px] font-bold text-[#5b8def]">{{ forloop.counter }}</span>
                 <span class="text-[14.5px] font-semibold text-white">{{ opcao.label }}</span>
               </div>
               <div class="mt-2.5 flex flex-wrap gap-1.5 pl-11">
@@ -113,7 +113,7 @@
         </div>
 
         <button type="submit"
-                class="mt-7 flex w-full items-center justify-center gap-2.5 rounded-2xl border border-[#74b3c6]/50 bg-gradient-to-br from-[#0b6f74] to-[#075b60] py-4 text-[15px] font-bold text-white shadow-[0_14px_28px_-10px_rgba(5,40,46,0.65)] transition hover:brightness-110">
+                class="mt-7 flex w-full items-center justify-center gap-2.5 rounded-2xl border border-[#5b8def]/50 bg-gradient-to-br from-[#1a5fb4] to-[#1450a0] py-4 text-[15px] font-bold text-white shadow-[0_14px_28px_-10px_rgba(5,40,46,0.65)] transition hover:brightness-110">
           Continuar para o painel
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="h-4.5 w-4.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
         </button>

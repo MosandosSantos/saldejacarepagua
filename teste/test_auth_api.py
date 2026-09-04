@@ -79,7 +79,7 @@ def test_token_expirado_rejeitado(client, usuario_operacional):
             'sub': str(usuario_operacional.id),
             'role': usuario_operacional.role,
             'tenant_id': usuario_operacional.tenant_id,
-            'iss': 'cronoscrm',
+            'iss': 'gprbr',
             'iat': agora - timedelta(days=8),
             'exp': agora - timedelta(days=1),
         },
