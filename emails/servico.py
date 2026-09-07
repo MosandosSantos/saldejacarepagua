@@ -8,7 +8,6 @@ continua funcionando — ideal para demonstrar o fluxo sem custo.
 import logging
 import re
 from base64 import b64decode, urlsafe_b64decode, urlsafe_b64encode
-from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.mail import EmailMessage
@@ -79,7 +78,7 @@ def renderizar(texto, contato):
     principal = contato.negocios.filter(principal=True).first() or contato.negocios.first()
     valor = ''
     if principal is not None and principal.valor:
-        valor = 'R$ {:,.2f}'.format(float(principal.valor)).replace(',', 'X').replace('.', ',').replace('X', '.')
+        valor = f'R$ {float(principal.valor):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
     valores = {
         'nome': contato.nome or '',
         'empresa': contato.empresa or '',

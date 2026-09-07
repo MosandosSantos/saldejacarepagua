@@ -8,7 +8,6 @@ CSV associado à carteira (3.3.5) e endpoints da API.
 import pytest
 from django.test import Client
 
-from acesso.models import Tenant
 from contatos.models import Carteira, Contato, Negocio
 
 SENHA = 'senha123'
@@ -26,8 +25,9 @@ def _cliente_web(usuario):
 
 
 def _criar_usuario(nome, email, role, tenant):
-    from acesso.models import Usuario
     from django.contrib.auth.hashers import make_password
+
+    from acesso.models import Usuario
 
     return Usuario.objects.create(
         nome=nome, email=email, role=role, tenant=tenant, senha=make_password(SENHA)
@@ -99,7 +99,7 @@ def test_criar_carteira_admin(tenant_aurora, admin_company):
 def test_criar_carteira_sem_nome_da_erro(tenant_aurora, admin_company):
     r = _cliente_web(admin_company).post('/contatos/carteiras/', {'nome': '  '})
     assert r.status_code == 200
-    assert 'Informe o nome da carteira'.encode() in r.content
+    assert b'Informe o nome da carteira' in r.content
     assert Carteira.objects.count() == 0
 
 
@@ -154,7 +154,7 @@ def test_detalhe_lista_contatos_da_carteira(tenant_aurora, admin_company):
 
 @pytest.mark.django_db
 def test_detalhe_filtra_por_etapa(tenant_aurora, admin_company):
-    from funil.models import garantir_etapas
+    from recepcao.models import garantir_etapas
 
     garantir_etapas(tenant_aurora.id, 'saude')
     carteira = Carteira.objects.create(nome='Cobrança', tenant=tenant_aurora)
@@ -211,7 +211,7 @@ def test_formulario_mostra_cargo_e_carteira(tenant_aurora, admin_company):
 
 @pytest.mark.django_db
 def test_formulario_salva_cargo_e_carteira(tenant_aurora, admin_company):
-    from funil.models import garantir_etapas
+    from recepcao.models import garantir_etapas
 
     garantir_etapas(tenant_aurora.id, 'saude')
     carteira = Carteira.objects.create(nome='Cobrança', tenant=tenant_aurora)

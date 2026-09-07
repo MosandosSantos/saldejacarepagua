@@ -4,8 +4,12 @@ from functools import wraps
 
 from django.shortcuts import redirect
 
+from acesso.models import (
+    ROLES_ADMINISTRATIVOS,
+    ROLES_GESTORES_USUARIOS,
+    ROLES_QUE_EDITAM,
+)
 from core.dominio import NICHO_PADRAO
-from acesso.models import ROLES_ADMINISTRATIVOS, ROLES_GESTORES_USUARIOS, ROLES_QUE_EDITAM
 
 # Admins com acesso administrativo amplo: empresa + plataforma + oficialato.
 ROLES_ADMIN = ROLES_ADMINISTRATIVOS

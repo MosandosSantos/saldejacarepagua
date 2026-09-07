@@ -1,0 +1,108 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}{{ candidato.nome_completo }} — Detalhe da Súplica{% endblock %}
+
+{% block conteudo %}
+<div class="container mx-auto px-4 py-10 max-w-3xl">
+  <a href="{% url 'recepcao:kanban' %}" class="text-sm text-[#5b8def] hover:underline">← Voltar ao Funil</a>
+
+  <h1 class="mt-6 text-2xl font-semibold text-white">{{ candidato.nome_completo }}</h1>
+
+  <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6">
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">Status</span>
+        <div class="mt-1 flex items-center gap-2">
+          <span class="inline-block rounded-full bg-white/5 px-3 py-1 text-sm font-semibold text-white"
+                style="color:{{ candidato.get_status_display|yesno:'#4ade80,#fbbf24,#94a3b8' }}">
+            {{ candidato.get_status_display }}
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">Grau</span>
+        <div class="mt-1 text-sm font-medium text-white">{{ candidato.get_grau_display|default:"MX" }}</div>
+      </div>
+
+      <div>
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">Prefeitura</span>
+        <div class="mt-1 text-sm font-medium text-white">{{ candidato.prefeitura|default:"—" }}</div>
+      </div>
+
+      <div>
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">Loja</span>
+        <div class="mt-1 text-sm font-medium text-white">{{ candidato.loja|default:"—" }}</div>
+      </div>
+
+      <div>
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">CPF</span>
+        <div class="mt-1 text-sm font-mono text-white">{{ candidato.cpf|default:"—" }}</div>
+      </div>
+
+      <div>
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">E-mail</span>
+        <div class="mt-1 text-sm text-[#5b8def]">{{ candidato.email|default:"sem e-mail" }}</div>
+      </div>
+
+      <div>
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">Celular</span>
+        <div class="mt-1 text-sm text-white">{{ candidato.celular|default:"—" }}</div>
+      </div>
+
+      <div>
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">Incluído por</span>
+        <div class="mt-1 text-sm text-white">{{ candidato.created_by.nome|default:"—" }}</div>
+      </div>
+
+      <div>
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">Data de inscrição</span>
+        <div class="mt-1 text-sm text-white">{{ candidato.created_at|date:"d/m/Y H:i" }}</div>
+      </div>
+
+      <div>
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">Revisão atual</span>
+        <div class="mt-1 text-sm text-white">{{ candidato.get_revisao_atual_display|default:"—" }}</div>
+      </div>
+      {% if candidato.data_aprovacao %}
+      <div>
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">Data de aprovação</span>
+        <div class="mt-1 text-sm text-white">{{ candidato.data_aprovacao|date:"d/m/Y H:i" }}</div>
+      </div>
+      {% endif %}
+      <div>
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">Nível atual</span>
+        <div class="mt-1 text-sm text-white">{{ candidato.get_revisaocurrent_display|default:"—" }}</div>
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <span class="block text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">Histórico de observações</span>
+      <div class="mt-2 space-y-3">
+        {% for obs in candidato.observacoes.all|dictsort:"created_at" %}
+          <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div class="flex items-center gap-2 text-[11px] text-[#bcd3da]">
+              <span class="font-semibold text-white">{{ obs.autor_nome }}</span>
+              <span class="font-medium text-[#5b8def]">({{ obs.autor_papel }})</span>
+              <span class="text-[#a6bfc7]">{{ obs.created_at|date:"d/m/Y H:i" }}</span>
+            </div>
+            <p class="mt-1 text-sm text-white">{{ obs.texto|linebreaksbr }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if candidato.email and candidato.access_token %}
+    <div class="mt-6 rounded-xl border border-[#5b8def]/30 bg-[#5b8def]/10 p-4">
+      <span class="text-[11px] font-semibold uppercase tracking-wider text-[#bcd3da]">Portal do candidato</span>
+      <p class="mt-1 text-sm text-white">
+        Link de acesso:
+        <a class="text-sm font-medium text-[#5b8def]" href="{% url 'candidatos:portal_dashboard' candidato.access_token %}">
+          {% url 'candidatos:portal_dashboard' candidato.access_token %}
+        </a>
+      </p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

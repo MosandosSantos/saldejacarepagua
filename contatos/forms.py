@@ -6,7 +6,7 @@ from django import forms
 
 from contatos.models import CampoPersonalizado, Carteira, Contato, Nota, Tag
 from core.dominio import NICHO_PADRAO, ORIGENS, PAGAMENTOS, SEGS, stages_do_nicho
-from funil.models import etapas_do_tenant
+from recepcao.models import etapas_do_tenant
 
 CORES_TAG = ['#74b3c6', '#7fe3c4', '#fbbf24', '#c084fc', '#fb923c', '#60a5fa', '#4ade80', '#f472b6']
 

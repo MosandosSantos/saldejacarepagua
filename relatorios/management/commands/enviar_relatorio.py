@@ -33,7 +33,7 @@ class Command(BaseCommand):
                             help='Período do relatório (padrão: 30)')
 
     def handle(self, *args, **options):
-        inicio, fim, label, chave = _periodo_por_chave(options['periodo'], timezone.localdate())
+        inicio, fim, label, _chave = _periodo_por_chave(options['periodo'], timezone.localdate())
 
         tenants = Tenant.objects.all()
         if options['tenant'] is not None:

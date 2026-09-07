@@ -27,7 +27,7 @@ from automacoes.models import Automacao, RegistroExecucao
 from contatos.models import Negocio, Nota, Tag
 from emails.models import EmailEnviado, ModeloEmail
 from emails.servico import EMAIL_VAZIO, enviar_um
-from funil.models import etapa_map_do_tenant
+from recepcao.models import etapa_map_do_tenant
 from tarefas.models import PRIORIDADES, Tarefa
 
 ETAPAS_ENCERRADAS = ('fechado', 'perdido')
@@ -48,7 +48,7 @@ def _render(texto, contato, negocio, auto):
         etapa = etapa_map_do_tenant(auto.tenant_id).get(principal.stage, {}).get('name', principal.stage)
     valor = ''
     if principal is not None and principal.valor:
-        valor = 'R$ {:,.2f}'.format(float(principal.valor)).replace(',', 'X').replace('.', ',').replace('X', '.')
+        valor = f'R$ {float(principal.valor):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
     valores = {
         'nome': contato.nome or '',
         'empresa': contato.empresa or '',
@@ -177,7 +177,7 @@ def _executar(auto, contato=None, negocio=None, passos=None):
         try:
             runner(passo, auto, contato, negocio)
             executadas += 1
-        except Exception as exc:  # noqa: BLE001 — automação nunca derruba o fluxo principal
+        except Exception as exc:
             erros.append(f'{passo.get_acao_display()}: {exc}')
     auto.total_execucoes += 1
     auto.ultima_execucao = timezone.now()

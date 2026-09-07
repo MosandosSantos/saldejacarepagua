@@ -2,10 +2,14 @@
 
 from django.shortcuts import get_object_or_404, redirect, render
 
-from acesso.decorators import e_admin_do_tenant, filtro_tenant, nicho_da_sessao, web_login_required
-from contatos.models import Carteira, Contato
+from acesso.decorators import (
+    e_admin_do_tenant,
+    nicho_da_sessao,
+    web_login_required,
+)
+from contatos.models import Carteira
 from contatos.views.helpers import _decorar, _tenant_id
-from funil.models import etapa_map_do_tenant
+from recepcao.models import etapa_map_do_tenant
 
 
 def _carteiras_scope(request):

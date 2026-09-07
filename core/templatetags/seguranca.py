@@ -24,6 +24,9 @@ def js(valor):
     - U+2028/U+2029 (separadores de linha JS) sao escapados.
 
     NUNCA use com `|safe` depois — o filtro ja devolve uma SafeString.
+
+    Seguro: o JSON e escapado antes do mark_safe (json.dumps + escape manual de
+    < > & U+2028 U+2029). Bandit B703/B308 false positive.
     """
     texto = json.dumps(valor, ensure_ascii=True, default=str)
     texto = (
@@ -33,4 +36,4 @@ def js(valor):
         .replace('\u2028', '\\u2028')
         .replace('\u2029', '\\u2029')
     )
-    return mark_safe(texto)
+    return mark_safe(texto)  # nosec B703,B308 - JSON pre-escaped for script context

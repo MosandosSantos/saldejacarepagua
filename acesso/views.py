@@ -13,7 +13,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import validate_email
 from django.db import IntegrityError, models
 from django.http import Http404
-from django.shortcuts import redirect, render, get_object_or_404
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -38,7 +38,6 @@ from acesso.models import (
     ROLE_ADMIN_COMPANY,
     ROLE_ADMIN_SAAS,
     ROLE_OPERACIONAL,
-    ROLE_VIEWER,
     ROLES_ATRIB_CRIACAO,
     ROLES_DE_TENANT,
     ROLES_GESTORES_USUARIOS,
@@ -52,17 +51,18 @@ from acesso.models import (
 )
 from acesso.rate_limit import (
     bloqueado as login_bloqueado,
-    limpar as login_limpar,
-    registrar_falha as login_registrar_falha,
-    tentativas_restantes as login_tentativas_restantes,
 )
+from acesso.rate_limit import (
+    limpar as login_limpar,
+)
+from acesso.rate_limit import (
+    registrar_falha as login_registrar_falha,
+)
+from acesso.session import iniciar_sessao
 from contatos.models import Negocio
 from core.dominio import NICHO_PADRAO, NICHOS, stages_do_nicho
-from funil.models import EtapaFunil, adotar_nicho, garantir_etapas
-from core.gprb import autenticar_usuario as gprb_autenticar
-from core.gprb import existe_usuario as gprb_existe_usuario
-from core.gprb import ROLE_LABELS_GPRB
 from core.gprb import (
+    ROLE_LABELS_GPRB,
     atualizar_usuario_sistema,
     excluir_usuario_sistema,
     listar_usuarios_sistema,
@@ -71,7 +71,10 @@ from core.gprb import (
     opcoes_perfis_usuario,
     opcoes_prefeituras_usuario,
 )
-
+from core.gprb import autenticar_usuario as gprb_autenticar
+from core.gprb import existe_usuario as gprb_existe_usuario
+from core.utils import parse_brl
+from recepcao.models import EtapaFunil, adotar_nicho, garantir_etapas
 
 # A4/S8 — hash pre-computado para o caso de usuario inexistente: garante que
 # `check_password` rode o PBKDF2 completo mesmo sem usuario, eliminando a
@@ -118,9 +121,7 @@ def _is_saldorer(request) -> bool:
         return True
     # Fallback: porta 3000 = saldorer local
     port = request.get_host().split(':')[1] if ':' in request.get_host() else ''
-    if port == '3000':
-        return True
-    return False
+    return port == '3000'
 
 
 def _gprb_autenticar_seguro(login_id, senha):
@@ -171,15 +172,12 @@ def _entrar_com_usuario_gprb(request, gprb_user, senha, origem='gprb'):
             local_user.senha = make_password(senha)
         local_user.save(update_fields=['nome', 'role', 'senha', 'tenant', 'updated_at'])
     request.session.flush()
-    request.session['usuario_id'] = local_user.id
-    request.session['usuario'] = {
-        'nome': local_user.nome,
-        'email': local_user.email,
-        'role': local_user.role,
-        'tenant_id': local_user.tenant_id,
-    }
+    iniciar_sessao(
+        request, local_user,
+        nicho=local_user.tenant.nicho if local_user.tenant else '',
+        dispositivo=(request.META.get('HTTP_USER_AGENT', '') or '')[:140],
+    )
     request.session['origem'] = origem
-    request.session['dispositivo'] = (request.META.get('HTTP_USER_AGENT', '') or '')[:140]
     return local_user
 
 
@@ -234,17 +232,13 @@ def login_web(request):
                 if usuario is not None and senha_ok:
                     login_limpar(ip, login_id)
                     request.session.flush()
-                    request.session['usuario_id'] = usuario.id
-                    request.session['usuario'] = {
-                        'nome': usuario.nome,
-                        'email': usuario.email,
-                        'role': usuario.role,
-                        'tenant_id': usuario.tenant_id,
-                    }
-                    request.session['origem'] = 'crm'
-                    request.session['dispositivo'] = (request.META.get('HTTP_USER_AGENT', '') or '')[:140]
                     tenant = usuario.tenant
-                    request.session['nicho'] = tenant.nicho if tenant else ''
+                    iniciar_sessao(
+                        request, usuario,
+                        nicho=tenant.nicho if tenant else '',
+                        dispositivo=(request.META.get('HTTP_USER_AGENT', '') or '')[:140],
+                    )
+                    request.session['origem'] = 'crm'
                     if usuario.role == ROLE_ADMIN_COMPANY and tenant is not None and not tenant.nicho:
                         return redirect('acesso:onboarding')
                     return redirect('dashboard:index')
@@ -835,9 +829,8 @@ def config(request):
 
     elif acao == 'meta' and role == ROLE_ADMIN_COMPANY and tid:
         raw = (request.POST.get('meta_mensal', '') or '').strip()
-        try:
-            meta = Decimal(raw.replace('.', '').replace(',', '.')) if ',' in raw else Decimal(raw or '0')
-        except (InvalidOperation, ValueError):
+        meta = parse_brl(raw)
+        if meta < 0:
             erros.append('Informe um valor de meta válido (ex.: 50.000,00).')
         else:
             if meta < 0:
@@ -865,10 +858,9 @@ def config(request):
             if not bruto:
                 MetaVendedor.objects.filter(usuario_id=uid, mes=mes).delete()
                 continue
-            try:
-                valor = Decimal(bruto.replace('.', '').replace(',', '.')) if ',' in bruto else Decimal(bruto or '0')
-            except (InvalidOperation, ValueError):
-                erros.append(f'Meta inválida para o membro — use ex.: 30.000,00.')
+            valor = parse_brl(bruto)
+            if valor < 0:
+                erros.append('As metas não podem ser negativas.')
                 erros_meta = True
                 continue
             if valor < 0:
@@ -1237,13 +1229,11 @@ def convidar(request, token):
             convite.usado_por = usuario
             convite.save(update_fields=['usado_em', 'usado_por'])
             request.session.flush()
-            request.session['usuario_id'] = usuario.id
-            request.session['usuario'] = {
-                'nome': usuario.nome, 'email': usuario.email,
-                'role': usuario.role, 'tenant_id': usuario.tenant_id,
-            }
-            request.session['nicho'] = convite.tenant.nicho or ''
-            request.session['dispositivo'] = (request.META.get('HTTP_USER_AGENT', '') or '')[:140]
+            iniciar_sessao(
+                request, usuario,
+                nicho=convite.tenant.nicho or '',
+                dispositivo=(request.META.get('HTTP_USER_AGENT', '') or '')[:140],
+            )
             return redirect('dashboard:index')
 
     return render(request, 'acesso/convidar.html', {
@@ -1284,15 +1274,12 @@ def ativar_conta(request, token):
             ativar_senha(usuario, senha)
             # Login automático (mesmo padrão do convite).
             request.session.flush()
-            request.session['usuario_id'] = usuario.id
-            request.session['usuario'] = {
-                'nome': usuario.nome, 'email': usuario.email,
-                'role': usuario.role, 'tenant_id': usuario.tenant_id,
-            }
-            if usuario.tenant is not None:
-                request.session['nicho'] = usuario.tenant.nicho or ''
+            iniciar_sessao(
+                request, usuario,
+                nicho=usuario.tenant.nicho if usuario.tenant else '',
+                dispositivo=(request.META.get('HTTP_USER_AGENT', '') or '')[:140],
+            )
             request.session['origem'] = 'ativacao'
-            request.session['dispositivo'] = (request.META.get('HTTP_USER_AGENT', '') or '')[:140]
             return redirect('dashboard:index')
 
     return render(request, 'acesso/ativar.html', {

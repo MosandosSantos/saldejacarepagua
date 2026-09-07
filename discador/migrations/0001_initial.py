@@ -1,6 +1,6 @@
 """Migração inicial do app 'discador' — Fila, Chamada e Script (PRD Sprint 5)."""
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):

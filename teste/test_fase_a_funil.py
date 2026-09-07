@@ -3,7 +3,12 @@
 import pytest
 
 from contatos.forms import ContatoForm
-from contatos.models import Contato, Movimentacao, Negocio, criar_negocio, registrar_movimentacao
+from contatos.models import (
+    Contato,
+    Movimentacao,
+    criar_negocio,
+    registrar_movimentacao,
+)
 
 
 def _contato_com_negocio(nome, tenant, stage='interessado', valor=0, **kwargs):
@@ -93,7 +98,7 @@ def test_mover_ajax_atualiza_board(tenant_aurora, usuario_operacional):
     _sessao_web(c, usuario_operacional)
     # a URL do funil move o NEGÓCIO (pk = id do negocio, não do contato)
     resp = c.post(
-        f'/funil/{contato.negocio.id}/mover/', {'stage': 'fechado'},
+        f'/recepcao/{contato.negocio.id}/mover/', {'stage': 'fechado'},
         HTTP_X_REQUESTED_WITH='XMLHttpRequest',
     )
     assert resp.status_code == 200
@@ -225,7 +230,7 @@ def test_funil_move_negocio_nao_principal(tenant_aurora, usuario_operacional):
     c = Client()
     _sessao_web(c, usuario_operacional)
     resp = c.post(
-        f'/funil/{segundo.id}/mover/', {'stage': 'fechado'},
+        f'/recepcao/{segundo.id}/mover/', {'stage': 'fechado'},
         HTTP_X_REQUESTED_WITH='XMLHttpRequest',
     )
     assert resp.status_code == 200

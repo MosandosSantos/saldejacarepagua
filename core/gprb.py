@@ -1,38 +1,71 @@
 """Conexão ao banco de dados SAL GPRB (PostgreSQL compartilhado).
 
 Fornece funções para consultar membros, lojas e outros dados do sistema
-de gestão de lojas maônicas. A conexão é feita via psycopg3 com pooling
-simples (reconnect a cada chamada — suficiente para consultas pontuais).
+de gestão de lojas maônicas. A conexão é feita via psycopg3 com reuso
+por thread (cada handshake TCP custa ~120ms — reutilizar corta ~1,5s do
+dashboard, que faz ~15 consultas por render).
 """
 import logging
 import os
-import urllib.parse
+import threading
 
 import bcrypt
 import psycopg
 
 logger = logging.getLogger(__name__)
 
+# Conexão reutilizada por thread (psycopg não é thread-safe entre threads,
+# mas cada thread do servidor mantém a sua — evita handshake a cada consulta).
+_tls = threading.local()
 
-def _get_password():
-    """Retorna a senha do PostgreSQL a partir da variável de ambiente ou .env local."""
+
+class _ConnProxy:
+    """Proxy da conexão: `close()` devolve ao pool da thread em vez de fechar.
+
+    Permite reuso transparente — o padrão `finally: conn.close()` dos ~20 call
+    sites existentes continua funcionando sem alteração.
+    """
+
+    def __init__(self, conn):
+        self._conn = conn
+
+    def close(self):
+        # No-op: a conexão permanece viva na thread para a próxima consulta.
+        # rollback limpa qualquer transação pendente (segurança).
+        try:
+            self._conn.rollback()
+        except Exception as e:
+            logger.debug('Rollback falhou no close do proxy: %s', e)
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+
+
+def _nova_conexao():
+    """Abre uma conexão física com o banco saldogprb."""
+    password = None
     pw = os.environ.get('GPRB_DB_PASSWORD')
     if pw:
-        return pw
-    # Fallback: lê do .env do projeto
-    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
-    if os.path.exists(env_path):
-        with open(env_path) as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith('PGPASSWORD='):
-                    return line.split('=', 1)[1]
-    return None
-
-
-def connect():
-    """Abre uma conexão com o banco saldogprb e retorna o objeto psycopg."""
-    password = _get_password()
+        password = pw
+    else:
+        # Fallback: lê do .env do projeto (aceita GPRB_DB_PASSWORD ou PGPASSWORD)
+        env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+        if os.path.exists(env_path):
+            with open(env_path) as f:
+                for line in f:
+                    line = line.strip()
+                    for chave in ('GPRB_DB_PASSWORD=', 'PGPASSWORD='):
+                        if line.startswith(chave):
+                            password = line.split('=', 1)[1]
+                            break
+                    if password:
+                        break
     return psycopg.connect(
         host=os.environ.get('GPRB_DB_HOST', '127.0.0.1'),
         port=int(os.environ.get('GPRB_DB_PORT', '5432')),
@@ -44,7 +77,23 @@ def connect():
         # o banco (timeout curto evita worker preso).
         sslmode=os.environ.get('GPRB_DB_SSLMODE', 'prefer'),
         connect_timeout=int(os.environ.get('GPRB_DB_TIMEOUT', '10')),
+        autocommit=True,
     )
+
+
+def connect():
+    """Retorna a conexão da thread (reutilizada) — `close()` é no-op via proxy."""
+    conn = getattr(_tls, 'conn', None)
+    if conn is not None:
+        try:
+            if not conn.closed:
+                return _ConnProxy(conn)
+        except Exception as e:
+            logger.debug('Conexão existente inválida: %s', e)
+    # (re)abre a conexão física desta thread
+    conn = _nova_conexao()
+    _tls.conn = conn
+    return _ConnProxy(conn)
 
 
 def membros_por_classe(tenant_code='GPRB', apenas_ativos=True, ano=None):
@@ -74,15 +123,16 @@ def membros_por_classe(tenant_code='GPRB', apenas_ativos=True, ano=None):
 
         where = ' AND '.join(conditions)
 
-        cur.execute(f"""
-            SELECT c.name, c.abbreviation, COUNT(m.id) as total
-            FROM member m
-            JOIN class c ON m.class_id = c.id
-            JOIN tenant t ON m."tenantId" = t.id
-            WHERE {where}
-            GROUP BY c.name, c.abbreviation
-            ORDER BY c.name
-        """, params)
+        sql = (
+            "SELECT c.name, c.abbreviation, COUNT(m.id) as total "
+            "FROM member m "
+            "JOIN class c ON m.class_id = c.id "
+            "JOIN tenant t ON m.\"tenantId\" = t.id "
+            "WHERE " + where + " "
+            "GROUP BY c.name, c.abbreviation "
+            "ORDER BY c.name"
+        )
+        cur.execute(sql, params)
 
         return [
             {'name': row[0], 'abbr': row[1], 'total': row[2]}
@@ -110,12 +160,13 @@ def total_membros(tenant_code='GPRB', apenas_ativos=True, ano=None):
 
         where = ' AND '.join(conditions)
 
-        cur.execute(f"""
-            SELECT COUNT(m.id)
-            FROM member m
-            JOIN tenant t ON m."tenantId" = t.id
-            WHERE {where}
-        """, params)
+        sql = (
+            "SELECT COUNT(m.id) "
+            "FROM member m "
+            "JOIN tenant t ON m.\"tenantId\" = t.id "
+            "WHERE " + where
+        )
+        cur.execute(sql, params)
 
         return cur.fetchone()[0]
     finally:
@@ -508,7 +559,7 @@ def ranking_lojas_mx(tenant_code='GPRB', limite=10, anos=None):
             where_extra = ' AND m.\"apresentacao_mx\" >= %s'
             params.append(data_inicio)
         params.append(limite)
-        cur.execute(
+        sql = (
             "SELECT COALESCE(l.\"nomeFantasia\", l.\"lojaMX\", 'Loja ' || l.numero::text), "
             "COUNT(m.id) as total_mx, "
             "MIN(m.\"apresentacao_mx\")::date as primeira_mx, "
@@ -520,9 +571,9 @@ def ranking_lojas_mx(tenant_code='GPRB', limite=10, anos=None):
             "WHERE t.code = %s" + where_extra + " "
             "GROUP BY l.id, l.\"nomeFantasia\", l.\"lojaMX\", l.numero "
             "ORDER BY total_mx DESC "
-            "LIMIT %s",
-            tuple(params),
+            "LIMIT %s"
         )
+        cur.execute(sql, tuple(params))
         resultado = []
         for i, r in enumerate(cur.fetchall(), 1):
             resultado.append({
@@ -688,8 +739,7 @@ def ranking_dados(tenant_code='GPRB', classe='MX', loja_id=None, prefeitura_id=N
     estáticos do ranking). `loja_id`/`prefeitura_id` restringem as sessões
     e membros ao filtro escolhido.
     """
-    from datetime import date, timedelta
-    import re
+    from datetime import date
 
     conn = connect()
     try:
@@ -787,13 +837,13 @@ def ranking_dados(tenant_code='GPRB', classe='MX', loja_id=None, prefeitura_id=N
             for i in range(0, len(member_ids), 50):
                 batch = member_ids[i:i+50]
                 placeholders = ','.join(['%s'] * len(batch))
-                cur.execute(
-                    f'SELECT "memberId", "meetingId", status '
-                    f'FROM attendance '
-                    f'WHERE "tenantId" = %s '
-                    f'AND "memberId" IN ({placeholders})',
-                    [tid] + batch,
+                sql = (
+                    'SELECT "memberId", "meetingId", status '
+                    'FROM attendance '
+                    'WHERE "tenantId" = %s '
+                    'AND "memberId" IN (' + placeholders + ')'
                 )
+                cur.execute(sql, [tid] + batch)
                 for r in cur.fetchall():
                     attendances[f'{r[0]}_{r[1]}'] = r[2]
 
@@ -808,7 +858,7 @@ def ranking_dados(tenant_code='GPRB', classe='MX', loja_id=None, prefeitura_id=N
                 1 for mid in meeting_ids
                 if attendances.get(f'{m["id"]}_{mid}') == 'FALTA'
             )
-            percentage = round((total_present / total_meetings * 100)) if total_meetings > 0 else 0
+            percentage = round(total_present / total_meetings * 100) if total_meetings > 0 else 0
             member_stats.append({
                 'memberId': m['id'],
                 'totalPresent': total_present,

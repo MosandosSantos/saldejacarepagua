@@ -10,7 +10,7 @@ from django.apps import apps
 from django.test import Client
 from django.utils import timezone
 
-from contatos.models import Contato, Movimentacao, Negocio, Nota, criar_negocio
+from contatos.models import Contato, Movimentacao, Nota, criar_negocio
 
 
 def _sessao_web(client, usuario):

@@ -6,7 +6,7 @@ Usa apenas fontes padrão do reportlab (Helvetica, Latin-1) — mesmos cuidados 
 
 import io
 from datetime import date
-from xml.sax.saxutils import escape as _xml_escape
+from xml.sax.saxutils import escape as _xml_escape  # nosec B406 - used to escape user text for reportlab Paragraph XML, not parsing untrusted XML
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
@@ -88,7 +88,7 @@ def gerar_relatorio_pdf(tenant, periodo_label, kpis, produtividade, operador_nom
     # ---------- Cabeçalho ----------
     cabecalho = Table(
         [[Paragraph(nome_empresa, ESTILO_EMPRESA),
-          Paragraph(f'RELATÓRIO GERENCIAL', ESTILO_NUMERO)]],
+          Paragraph('RELATÓRIO GERENCIAL', ESTILO_NUMERO)]],
         colWidths=[120 * mm, 52 * mm],
     )
     cabecalho.setStyle(TableStyle([

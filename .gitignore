@@ -60,3 +60,7 @@ Thumbs.db
 .mypy_cache/
 .coverage
 htmlcov/
+
+# Arquivos auxiliares
+cookie.txt
+_legacy/

@@ -82,7 +82,7 @@ def _negocio_antigo(tenant, stage='orcamento', dias=10, nome='Ana'):
 @pytest.mark.django_db
 def test_estagnados_aparecem_no_funil(tenant_aurora, admin_company):
     n = _negocio_antigo(tenant_aurora, dias=10)
-    html = _cliente_web(admin_company).get('/funil/').content.decode()
+    html = _cliente_web(admin_company).get('/recepcao/').content.decode()
     assert 'Negócios parados' in html
     assert n.contato.nome in html
     assert 'parado há 10 dias' in html
@@ -92,21 +92,21 @@ def test_estagnados_aparecem_no_funil(tenant_aurora, admin_company):
 def test_estagnados_nao_mostra_recente(tenant_aurora, admin_company):
     co = Contato.objects.create(nome='Recente', seg='', tenant=tenant_aurora)
     criar_negocio(co, stage='orcamento', valor=1000, tenant_id=tenant_aurora.id)  # updated_at = agora
-    html = _cliente_web(admin_company).get('/funil/').content.decode()
+    html = _cliente_web(admin_company).get('/recepcao/').content.decode()
     assert 'Negócios parados' not in html
 
 
 @pytest.mark.django_db
 def test_estagnados_ignoram_fechados(tenant_aurora, admin_company):
     _negocio_antigo(tenant_aurora, stage='fechado', dias=30)
-    html = _cliente_web(admin_company).get('/funil/').content.decode()
+    html = _cliente_web(admin_company).get('/recepcao/').content.decode()
     assert 'Negócios parados' not in html
 
 
 @pytest.mark.django_db
 def test_dias_configuravel(tenant_aurora, admin_company):
     _negocio_antigo(tenant_aurora, dias=5)
-    html = _cliente_web(admin_company).get('/funil/?dias=3').content.decode()
+    html = _cliente_web(admin_company).get('/recepcao/?dias=3').content.decode()
     assert 'Negócios parados' in html  # com janela de 3 dias o de 5 aparece
 
 

@@ -1,10 +1,11 @@
 """Testes da Fase B — configurações (perfil, senha, tema, sessões) e convite por link."""
 
+from datetime import timedelta
+
 import pytest
 from django.contrib.auth.hashers import check_password
 from django.test import Client
 from django.utils import timezone
-from datetime import timedelta
 
 from acesso.models import Convite, Usuario
 
@@ -77,7 +78,7 @@ def test_altera_senha_com_atual_correta(usuario_operacional):
     r = c.post('/config/', {'acao': 'senha', 'senha_atual': 'senha123',
                             'nova_senha': 'nova4567', 'confirma_senha': 'nova4567'})
     assert r.status_code == 200
-    assert 'Senha alterada'.encode() in r.content
+    assert b'Senha alterada' in r.content
     u = Usuario.objects.get(pk=usuario_operacional.id)
     assert check_password('nova4567', u.senha)
 
@@ -87,7 +88,7 @@ def test_altera_senha_atual_errada_rejeitada(usuario_operacional):
     c = _cliente_web(usuario_operacional)
     r = c.post('/config/', {'acao': 'senha', 'senha_atual': 'errada',
                             'nova_senha': 'nova4567', 'confirma_senha': 'nova4567'})
-    assert 'incorreta'.encode() in r.content
+    assert b'incorreta' in r.content
     assert check_password('senha123', Usuario.objects.get(pk=usuario_operacional.id).senha)
 
 
@@ -96,7 +97,7 @@ def test_altera_senha_curta_rejeitada(usuario_operacional):
     c = _cliente_web(usuario_operacional)
     r = c.post('/config/', {'acao': 'senha', 'senha_atual': 'senha123',
                             'nova_senha': '123', 'confirma_senha': '123'})
-    assert 'pelo menos 8 caracteres'.encode() in r.content
+    assert b'pelo menos 8 caracteres' in r.content
 
 
 # --- Sessões ativas ---
@@ -152,7 +153,7 @@ def test_convite_duplicado_pendente_rejeitado(tenant_aurora, admin_company):
     )
     c = _cliente_web(admin_company)
     r = c.post('/config/', {'acao': 'equipe', 'email': 'X@aurora.com', 'papel': 'operacional'})
-    assert 'convite pendente'.encode() in r.content
+    assert b'convite pendente' in r.content
     assert Convite.objects.count() == 1
 
 
@@ -191,7 +192,7 @@ def test_convite_expirado_invalido(tenant_aurora, admin_company):
     )
     r = Client().get('/convidar/token-exp/')
     assert r.status_code == 200
-    assert 'expirou'.encode() in r.content
+    assert b'expirou' in r.content
     assert not Usuario.objects.filter(email='ana@aurora.com').exists()
 
 
@@ -207,7 +208,7 @@ def test_convite_cancelado_pelo_admin(tenant_aurora, admin_company):
     convite.refresh_from_db()
     assert convite.cancelado_em is not None
     r = Client().get('/convidar/token-cancel/')
-    assert 'cancelado'.encode() in r.content
+    assert b'cancelado' in r.content
 
 
 @pytest.mark.django_db
@@ -222,12 +223,12 @@ def test_convite_token_desconhecido(admin_company):
 @pytest.mark.django_db
 def test_tema_alterna_e_persiste_na_sessao(usuario_operacional):
     c = _cliente_web(usuario_operacional)
-    r = c.post('/config/tema/', {'tema': 'claro', 'voltar': '/funil/'})
+    r = c.post('/config/tema/', {'tema': 'claro', 'voltar': '/recepcao/'})
     assert r.status_code == 302
-    assert r.url == '/funil/'
+    assert r.url == '/recepcao/'
     assert c.session['tema'] == 'claro'
 
-    r = c.get('/funil/')
+    r = c.get('/recepcao/')
     assert 'data-tema="claro"' in r.content.decode()
 
 

@@ -87,7 +87,7 @@ def test_criar_campanha(tenant_aurora, admin_company):
 def test_criar_campanha_sem_nome_da_erro(tenant_aurora, admin_company):
     r = _cliente_web(admin_company).post('/campanhas/novo/', {'nome': '  '})
     assert r.status_code == 200
-    assert 'Informe o nome da campanha'.encode() in r.content
+    assert b'Informe o nome da campanha' in r.content
     assert Campanha.objects.count() == 0
 
 
@@ -180,7 +180,7 @@ def test_disparo_vincula_envios_a_campanha(tenant_aurora, admin_company):
     })
     assert r.status_code == 200
     assert EmailEnviado.objects.filter(campanha=campanha).count() == 2
-    assert '2 envio(s) registrado(s)'.encode() in r.content
+    assert b'2 envio(s) registrado(s)' in r.content
 
 
 @pytest.mark.django_db
@@ -192,7 +192,7 @@ def test_disparo_campanha_inativa_bloqueado(tenant_aurora, admin_company):
         'modelo_id': str(modelo.id), 'seg': '', 'carteira_id': '',
     })
     assert r.status_code == 200
-    assert 'Campanha inativa'.encode() in r.content
+    assert b'Campanha inativa' in r.content
     assert EmailEnviado.objects.count() == 0
 
 

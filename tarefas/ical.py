@@ -6,13 +6,10 @@ Importa VEVENTs de arquivos .ics e cria Tarefas no banco.
 """
 
 import re
-import uuid
 from datetime import datetime, timedelta
 from email.utils import formatdate
-from textwrap import dedent
 
 from django.utils import timezone
-
 
 # ── Geração de .ics ──────────────────────────────────────────────────────────
 
@@ -119,7 +116,7 @@ def tarefa_para_vevent(tarefa):
 def gerar_ics(tarefas, nome_calendar='GPRBRCRM - Tarefas'):
     """Gera arquivo .ics completo a partir de um queryset de Tarefas."""
     vevents = [tarefa_para_vevent(t) for t in tarefas]
-    now = formatdate(timezone.now().timestamp(), usegmt=True)
+    formatdate(timezone.now().timestamp(), usegmt=True)
 
     cal = '\r\n'.join([
         'BEGIN:VCALENDAR',

@@ -8,7 +8,6 @@ import time
 import pytest
 from django.test import Client
 
-from acesso.models import Usuario
 import gestao.comunicacao as comunicacao_mod
 from gestao.comunicacao import (
     _aplicar_placeholders,
@@ -16,7 +15,6 @@ from gestao.comunicacao import (
     montar_destinatarios,
 )
 from gestao.models import Campanha
-
 
 # ---------------------------------------------------------------------------
 # Helpers

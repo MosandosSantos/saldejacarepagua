@@ -9,11 +9,10 @@ formulários, receita projetada ponderada e onboarding.
 import pytest
 from django.test import Client
 
-from acesso.models import Tenant
 from contatos.forms import ContatoForm
 from contatos.importador import normalizar_stage
 from contatos.models import Contato, Movimentacao, criar_negocio
-from funil.models import EtapaFunil, adotar_nicho, etapas_do_tenant, garantir_etapas
+from recepcao.models import EtapaFunil, adotar_nicho, etapas_do_tenant, garantir_etapas
 
 
 def _cliente_web(usuario):
@@ -36,7 +35,7 @@ def _contato(tenant, nome='Ana'):
 @pytest.mark.django_db
 def test_kanban_sem_etapas_mostra_nicho(tenant_aurora, admin_company):
     c = _cliente_web(admin_company)
-    r = c.get('/funil/')
+    r = c.get('/recepcao/')
     assert r.status_code == 200
     html = r.content.decode()
     assert 'Avaliação agendada' in html  # nome do nicho saude (fallback)
@@ -118,7 +117,7 @@ def test_renomear_etapa_reflete_no_funil(tenant_aurora, admin_company):
     assert etapa.key == 'interessado'  # key preservada (negócios continuam apontando)
     assert float(etapa.peso) == 0.15
 
-    html = c.get('/funil/').content.decode()
+    html = c.get('/recepcao/').content.decode()
     assert 'Novo lead' in html
     assert 'Interessado' not in html
 
@@ -158,7 +157,7 @@ def test_criar_etapa_customizada(tenant_aurora, admin_company):
     assert float(etapa.peso) == 0.7
     assert not etapa.sistema
 
-    html = c.get('/funil/').content.decode()
+    html = c.get('/recepcao/').content.decode()
     assert 'Proposta enviada' in html
     assert 'data-stage="proposta-enviada"' in html
 
@@ -221,7 +220,7 @@ def test_mover_para_etapa_customizada(tenant_aurora, admin_company):
     contato = _contato(tenant_aurora)
     negocio = criar_negocio(contato, stage='interessado', valor=500, tenant_id=tenant_aurora.id)
 
-    r = c.post(f'/funil/{negocio.id}/mover/', {'stage': 'quente'})
+    r = c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'quente'})
     assert r.status_code in (200, 302)
     negocio.refresh_from_db()
     assert negocio.stage == 'quente'

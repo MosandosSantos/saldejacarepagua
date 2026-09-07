@@ -17,8 +17,9 @@ def client():
     Obs.: o TestClient roda o app numa thread propria; com `--reuse-db`
     (pytest.ini) o banco de teste persiste, evitando problemas de drop.
     """
-    from api.main import app
     from fastapi.testclient import TestClient
+
+    from api.main import app
 
     with TestClient(app) as test_client:
         yield test_client
@@ -51,8 +52,9 @@ def tenant_beta():
 
 
 def criar_usuario(nome, email, role, tenant):
-    from acesso.models import Usuario
     from django.contrib.auth.hashers import make_password
+
+    from acesso.models import Usuario
 
     return Usuario.objects.create(
         nome=nome, email=email, role=role, tenant=tenant, senha=make_password(SENHA)

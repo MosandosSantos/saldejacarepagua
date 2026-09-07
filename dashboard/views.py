@@ -16,14 +16,32 @@ from acesso.decorators import filtro_tenant, nicho_da_sessao, web_login_required
 from acesso.models import MetaVendedor, Tenant, Usuario
 from contatos.models import Movimentacao, Negocio, Nota
 from core.dominio import ORIGENS, PESOS_ETAPA, SEGS
-from core.gprb import membros_por_classe, total_membros, novos_membros_ano, total_lojas_ativas, total_lojas_cadastradas, membros_por_mes, anualidade_resumo, anuidade_ano_referencia, membros_por_rito, membros_por_idade_faixa, membros_por_potencia, membros_por_tempo_maconaria, ranking_lojas, ranking_lojas_mx, proximas_sessoes, agendamento_lojas
-from core.utils import brl as _brl, brl_curto as _brl_curto, iniciais as _iniciais
-from funil.models import etapa_map_do_tenant, etapas_do_tenant
-from tarefas.models import Tarefa
+from core.gprb import (
+    agendamento_lojas,
+    anualidade_resumo,
+    anuidade_ano_referencia,
+    membros_por_classe,
+    membros_por_idade_faixa,
+    membros_por_mes,
+    membros_por_potencia,
+    membros_por_rito,
+    membros_por_tempo_maconaria,
+    novos_membros_ano,
+    proximas_sessoes,
+    ranking_lojas,
+    ranking_lojas_mx,
+    total_lojas_ativas,
+    total_lojas_cadastradas,
+    total_membros,
+)
+from core.utils import brl as _brl
+from core.utils import brl_curto as _brl_curto
+from core.utils import iniciais as _iniciais
 
 # Gestao (GEOD-CEOD)
-from gestao.models import Congressista, Inscricao, Pagamento
-
+from gestao.models import Inscricao, Pagamento
+from recepcao.models import etapa_map_do_tenant, etapas_do_tenant
+from tarefas.models import Tarefa
 
 # _brl, _brl_curto, _iniciais → importados de core.utils
 
@@ -58,7 +76,7 @@ def _funnel_svg(funil):
     steps = list(funil)
     if not steps:
         return ''
-    top = steps[0]['count'] or 1
+    steps[0]['count'] or 1
     W, sliceH, gap, depthX, depthY, topY = 340, 62, 5, 22, 14, 16
     cx, n = W / 2, len(steps)
     shadowY = topY + n * (sliceH + gap) + depthY + 10
@@ -112,7 +130,7 @@ def _baii_svg(baii):
     steps = list(baii)
     if not steps:
         return ''
-    top = steps[0]['count'] or 1
+    steps[0]['count'] or 1
     W, sliceH, gap, depthX, depthY, topY = 340, 62, 5, 22, 14, 16
     cx, n = W / 2, len(steps)
     shadowY = topY + n * (sliceH + gap) + depthY + 10
@@ -300,19 +318,14 @@ def dados(request):
     return JsonResponse(resumo)
 
 
-@web_login_required
-def index(request):
-    tid = request.session.get('usuario', {}).get('tenant_id')
-    nicho = nicho_da_sessao(request)
-    stages = etapas_do_tenant(tid, nicho)
-    stage_map = etapa_map_do_tenant(tid, nicho)
-    negocios = filtro_tenant(request, Negocio.objects.select_related('contato'))
-    resumo = _resumo(request, negocios)
 
-    hoje = date.today()
-    inicio30 = timezone.make_aware(datetime.combine(hoje - timedelta(days=30), time.min))
 
-    # Timeline: últimos 30 dias por created_at dos negócios (novos negócios/dia)
+# ---------------------------------------------------------------------------
+# Helpers extraidos de index() - cada um calcula um bloco do dashboard
+# ---------------------------------------------------------------------------
+
+def _calcular_timeline(negocios, hoje):
+    """Monta timeline dos ultimos 30 dias (novos negocios/dia)."""
     por_dia = defaultdict(int)
     for uc in negocios.values_list('created_at', flat=True):
         if uc is not None:
@@ -322,64 +335,66 @@ def index(request):
     while d <= hoje:
         timeline.append({'data': f'{d.day:02d}/{d.month:02d}', 'valor': por_dia.get(d, 0)})
         d += timedelta(days=1)
-    timeline_max = max([p['valor'] for p in timeline] + [1])
+    return timeline, max([p['valor'] for p in timeline] + [1])
 
-    # Conversão por etapa (pares consecutivos, ignorando perdido)
+
+def _calcular_conversao(stages, ocorrencias):
+    """Taxa de conversao entre pares consecutivos de etapas."""
     st_validos = [s for s in stages if s['key'] != 'perdido']
-    ocorrencias = {s['key']: negocios.filter(stage=s['key']).count() for s in stages}
     conversao = []
     for i in range(1, len(st_validos)):
         prev, cur = st_validos[i - 1], st_validos[i]
         pct = round(cur and (ocorrencias[cur['key']] / ocorrencias[prev['key']] * 100)) if ocorrencias[prev['key']] else 0
         conversao.append({
             'de': prev['name'], 'para': cur['name'],
-            'cor': cur['color'],
-            'pct': min(100, pct),
+            'cor': cur['color'], 'pct': min(100, pct),
         })
+    return conversao
 
-    top = ocorrencias[st_validos[0]['key']] or negocios.count() or 1
-    funil = [
+
+def _calcular_funil(stages, ocorrencias):
+    """Contagem e percentual por etapa do funil."""
+    top = ocorrencias[stages[0]['key']] or 1
+    return [
         {'key': s['key'], 'name': s['name'], 'color': s['color'],
          'count': ocorrencias[s['key']],
          'pct': round(ocorrencias[s['key']] / top * 100) if top else 0}
         for s in stages
     ]
 
-    # Atividade recente: movimentações (com contexto) ou últimos negócios (fallback)
+
+def _buscar_atividade_recente(tid, negocios, stage_map):
+    """Ultimas movimentacoes (ou fallback: ultimos negocios)."""
     movs = Movimentacao.objects.select_related('negocio__contato', 'autor')
     if tid is not None:
         movs = movs.filter(negocio__contato__tenant_id=tid)
     movs = list(movs.order_by('-created_at', '-id')[:8])
     if movs:
-        recentes = [
+        return [
             {
-                'id': m.negocio.contato.id,
-                'nome': m.negocio.contato.nome,
+                'id': m.negocio.contato.id, 'nome': m.negocio.contato.nome,
                 'empresa': m.negocio.contato.empresa,
                 'valor': _brl_curto(m.negocio.valor),
                 'stage': stage_map.get(m.para_stage, {'name': m.para_stage, 'color': '#888'}),
                 'de': stage_map.get(m.de_stage, {'name': m.de_stage, 'color': '#888'}) if m.de_stage else None,
-                'autor': m.autor.nome if m.autor else '—',
+                'autor': m.autor.nome if m.autor else '\u2014',
                 'quando': m.created_at,
             }
             for m in movs
         ]
-    else:
-        recentes = [
-            {
-                'id': n.contato.id,
-                'nome': n.contato.nome,
-                'empresa': n.contato.empresa,
-                'valor': _brl_curto(n.valor),
-                'stage': stage_map.get(n.stage, {'name': n.stage, 'color': '#888'}),
-                'de': None,
-                'autor': None,
-                'quando': None,
-            }
-            for n in negocios.order_by('-updated_at')[:8]
-        ]
+    return [
+        {
+            'id': n.contato.id, 'nome': n.contato.nome,
+            'empresa': n.contato.empresa, 'valor': _brl_curto(n.valor),
+            'stage': stage_map.get(n.stage, {'name': n.stage, 'color': '#888'}),
+            'de': None, 'autor': None, 'quando': None,
+        }
+        for n in negocios.order_by('-updated_at')[:8]
+    ]
 
-    # --- Análise do funil ---
+
+def _analise_funil_valor(stages, negocios):
+    """Valor total por etapa + ticket medio."""
     por_etapa = []
     for st in stages:
         total = negocios.filter(stage=st['key']).aggregate(s=Sum('valor'))['s'] or 0
@@ -390,87 +405,96 @@ def index(request):
     max_etapa = max([p['total'] for p in por_etapa] + [1])
     for p in por_etapa:
         p['pct'] = round(p['total'] / max_etapa * 100) if max_etapa else 0
-
-    qtd_ativos = resumo['ativos']
-    valor_funil_raw = sum(float(n.valor) for n in negocios.exclude(stage__in=['perdido', 'fechado']))
+    qtd_ativos = negocios.exclude(stage__in=['perdido', 'fechado']).count()
+    valor_funil_raw = sum(
+        float(n.valor) for n in negocios.exclude(stage__in=['perdido', 'fechado'])
+    )
     ticket_medio = _brl_curto(round(valor_funil_raw / qtd_ativos)) if qtd_ativos else 'R$ 0'
+    return por_etapa, ticket_medio
 
-    # Metas por vendedor (atingimento no mês atual)
-    metas_dashboard = []
-    if tid is not None:
-        primeiro_do_mes = hoje.replace(day=1)
-        inicio_mes = timezone.make_aware(datetime.combine(primeiro_do_mes, time.min))
-        metas_mes = dict(
-            MetaVendedor.objects.filter(mes=primeiro_do_mes, usuario__tenant_id=tid)
-            .values_list('usuario_id', 'valor')
+
+def _buscar_metas_vendedor(tid, hoje):
+    """Atingimento de metas por vendedor no mes."""
+    if tid is None:
+        return []
+    primeiro_do_mes = hoje.replace(day=1)
+    inicio_mes = timezone.make_aware(datetime.combine(primeiro_do_mes, time.min))
+    metas_mes = dict(
+        MetaVendedor.objects.filter(mes=primeiro_do_mes, usuario__tenant_id=tid)
+        .values_list('usuario_id', 'valor')
+    )
+    vendedores = list(Usuario.objects.filter(tenant_id=tid).order_by('nome'))
+    fechados = (
+        Negocio.objects.filter(
+            tenant_id=tid, stage='fechado', updated_at__gte=inicio_mes,
+            responsavel_id__in=[u.id for u in vendedores],
         )
-        vendedores = list(Usuario.objects.filter(tenant_id=tid).order_by('nome'))
-        fechados = (
-            Negocio.objects.filter(
-                tenant_id=tid, stage='fechado', updated_at__gte=inicio_mes,
-                responsavel_id__in=[u.id for u in vendedores],
-            )
-            .values('responsavel_id')
-            .annotate(total=Sum('valor'), qtd=Count('id'))
-        )
-        vendido_por = {f['responsavel_id']: f for f in fechados}
-        for u in vendedores:
-            meta_valor = float(metas_mes.get(u.id) or 0)
-            dados_venda = vendido_por.get(u.id) or {}
-            vendido = float(dados_venda.get('total') or 0)
-            qtd = dados_venda.get('qtd') or 0
-            pct = round(vendido / meta_valor * 100) if meta_valor else None
-            metas_dashboard.append({
-                'id': u.id,
-                'nome': u.nome,
-                'iniciais': _iniciais(u.nome),
-                'meta': meta_valor,
-                'meta_label': _brl_curto(meta_valor) if meta_valor else '—',
-                'vendido': vendido,
-                'vendido_label': _brl_curto(vendido),
-                'qtd_fechados': qtd,
-                'pct': min(100, pct) if pct is not None else None,
-                'atingiu': pct is not None and pct >= 100,
-                'cor': '#7fe3c4' if pct is not None and pct >= 100 else ('#fbbf24' if pct is not None and pct >= 50 else '#fb7185'),
-                'tem_meta': meta_valor > 0,
-            })
-        metas_dashboard.sort(key=lambda m: (not m['tem_meta'], m['pct'] if m['pct'] is not None else -1), reverse=True)
+        .values('responsavel_id')
+        .annotate(total=Sum('valor'), qtd=Count('id'))
+    )
+    vendido_por = {f['responsavel_id']: f for f in fechados}
+    metas = []
+    for u in vendedores:
+        meta_valor = float(metas_mes.get(u.id) or 0)
+        dados_venda = vendido_por.get(u.id) or {}
+        vendido = float(dados_venda.get('total') or 0)
+        qtd = dados_venda.get('qtd') or 0
+        pct = round(vendido / meta_valor * 100) if meta_valor else None
+        metas.append({
+            'id': u.id, 'nome': u.nome, 'iniciais': _iniciais(u.nome),
+            'meta': meta_valor, 'meta_label': _brl_curto(meta_valor) if meta_valor else '\u2014',
+            'vendido': vendido, 'vendido_label': _brl_curto(vendido),
+            'qtd_fechados': qtd,
+            'pct': min(100, pct) if pct is not None else None,
+            'atingiu': pct is not None and pct >= 100,
+            'cor': '#7fe3c4' if pct is not None and pct >= 100 else ('#fbbf24' if pct is not None and pct >= 50 else '#fb7185'),
+            'tem_meta': meta_valor > 0,
+        })
+    metas.sort(key=lambda m: (not m['tem_meta'], m['pct'] if m['pct'] is not None else -1), reverse=True)
+    return metas
 
-    # Tarefas & lembretes: atrasadas + de hoje (alerta no topo do dashboard)
-    tarefas_alerta = []
-    if tid is not None:
-        tarefas_alerta = [
-            {
-                'id': t.id,
-                'titulo': t.titulo,
-                'contato_id': t.contato_id,
-                'contato_nome': t.contato.nome if t.contato else '',
-                'vencimento': t.vencimento,
-                'atrasada': t.vencimento < hoje,
-            }
-            for t in Tarefa.objects.filter(
-                tenant_id=tid, concluida=False, vencimento__lte=hoje
-            ).select_related('contato').order_by('vencimento')[:8]
-        ]
 
-    total_negocios = negocios.count()
+def _buscar_tarefas_alerta(tid, hoje):
+    """Tarefas atrasadas + de hoje."""
+    if tid is None:
+        return []
+    return [
+        {
+            'id': t.id, 'titulo': t.titulo,
+            'contato_id': t.contato_id,
+            'contato_nome': t.contato.nome if t.contato else '',
+            'vencimento': t.vencimento, 'atrasada': t.vencimento < hoje,
+        }
+        for t in Tarefa.objects.filter(
+            tenant_id=tid, concluida=False, vencimento__lte=hoje
+        ).select_related('contato').order_by('vencimento')[:8]
+    ]
+
+
+def _agrupar_por_origem(negocios):
+    """Negocios agrupados por origem."""
+    total = negocios.count()
     por_origem = []
     for origem in ORIGENS:
         qs = negocios.filter(contato__origem=origem)
         n = qs.count()
         por_origem.append({
             'nome': origem, 'count': n,
-            'pct': round(n / total_negocios * 100) if total_negocios else 0,
+            'pct': round(n / total * 100) if total else 0,
             'fechados': qs.filter(stage='fechado').count(),
         })
     sem_origem = negocios.exclude(contato__origem__in=ORIGENS).count()
     if sem_origem:
         por_origem.append({
             'nome': 'Sem origem', 'count': sem_origem,
-            'pct': round(sem_origem / total_negocios * 100) if total_negocios else 0,
+            'pct': round(sem_origem / total * 100) if total else 0,
             'fechados': 0,
         })
+    return por_origem
 
+
+def _agrupar_por_segmento(negocios):
+    """Negocios agrupados por segmento (valor total)."""
     por_segmento = []
     for key, info in SEGS.items():
         qs = negocios.filter(contato__seg=key)
@@ -481,38 +505,40 @@ def index(request):
                 'total': total, 'total_label': _brl_curto(total),
             })
     por_segmento.sort(key=lambda s: s['total'], reverse=True)
+    return por_segmento
 
-    # --- Novidades da Fase C ---
 
-    # Melhores negócios (em aberto, top 5 por valor)
-    ativos_qs = negocios.exclude(stage__in=['perdido', 'fechado'])
+def _buscar_melhores_negocios(negocios, stage_map):
+    """Top 5 negocios em aberto por valor."""
+    ativos = negocios.exclude(stage__in=['perdido', 'fechado'])
     melhores = [
         {
-            'id': n.contato_id,
-            'nome': n.titulo or n.contato.nome,
-            'empresa': n.contato.empresa,
-            'valor': float(n.valor),
+            'id': n.contato_id, 'nome': n.titulo or n.contato.nome,
+            'empresa': n.contato.empresa, 'valor': float(n.valor),
             'valor_label': _brl(n.valor),
             'stage': stage_map.get(n.stage, {'name': n.stage, 'color': '#888'}),
         }
-        for n in ativos_qs.order_by('-valor')[:5]
+        for n in ativos.order_by('-valor')[:5]
     ]
     max_melhor = max([m['valor'] for m in melhores] + [1])
     for m in melhores:
         m['pct'] = round(m['valor'] / max_melhor * 100)
+    return melhores
 
-    # Atividade do time: movimentações + notas por membro (últimos 30 dias)
-    movs_atv = Movimentacao.objects.filter(created_at__gte=inicio30).select_related('autor')
-    notas_atv = Nota.objects.filter(created_at__gte=inicio30).select_related('autor')
+
+def _buscar_atividade_time(tid, inicio30):
+    """Atividade do time: movimentacoes + notas por membro (ultimos 30 dias)."""
+    movs = Movimentacao.objects.filter(created_at__gte=inicio30).select_related('autor')
+    notas = Nota.objects.filter(created_at__gte=inicio30).select_related('autor')
     if tid is not None:
-        movs_atv = movs_atv.filter(negocio__contato__tenant_id=tid)
-        notas_atv = notas_atv.filter(contato__tenant_id=tid)
+        movs = movs.filter(negocio__contato__tenant_id=tid)
+        notas = notas.filter(contato__tenant_id=tid)
     atv = {}
-    for m in movs_atv:
+    for m in movs:
         chave = m.autor_id or 0
         e = atv.setdefault(chave, {'nome': m.autor.nome if m.autor else 'Sem autor', 'movs': 0, 'notas': 0})
         e['movs'] += 1
-    for n in notas_atv:
+    for n in notas:
         chave = n.autor_id or 0
         e = atv.setdefault(chave, {'nome': n.autor.nome if n.autor else 'Sem autor', 'movs': 0, 'notas': 0})
         e['notas'] += 1
@@ -520,8 +546,11 @@ def index(request):
     for e in atividade:
         e['iniciais'] = _iniciais(e['nome'])
         e['total'] = e['movs'] + e['notas']
+    return atividade
 
-    # Velocidade média por etapa (tempo que os negócios passam em cada etapa)
+
+def _calcular_velocidade(negocios, stage_map):
+    """Tempo medio que negocios permanecem em cada etapa."""
     acum = {}
     for negocio in negocios.filter(movimentacoes__isnull=False).prefetch_related('movimentacoes'):
         movs_ord = sorted(negocio.movimentacoes.all(), key=lambda m: m.created_at)
@@ -539,161 +568,143 @@ def index(request):
         media = total / count
         info = stage_map.get(key, {'name': key, 'color': '#888'})
         velocidade.append({
-            'name': info['name'],
-            'color': info['color'],
+            'name': info['name'], 'color': info['color'],
             'label': f'{media:.1f} d',
             'pct': round(media / max_vel * 100) if max_vel else 0,
         })
     velocidade.sort(key=lambda v: float(v['label'].replace(' d', '').replace(',', '.')), reverse=True)
+    return velocidade
 
-    # --- Dados do Funil de BAII (Bem Amados Irmãos) ---
-    # Cores de azul para os 3 níveis (tema GEOD-CEOD)
-    azul_mesa = '#1a5fb4'   # Mestre de Santo André (base)
-    azul_en = '#3b7ded'     # Escudeiro Noviço (meio)
-    azul_cbcs = '#93b8f7'   # Cavaleiro Benfeitor (topo)
-    cores_baii = [azul_mesa, azul_en, azul_cbcs]
 
-    # BAII ATIVOS: todos os membros ativos por classe
+def _buscar_dados_baii():
+    """Dados do funil BAII (ativos + cadastrados no ano)."""
+    azul_mesa = '#1a5fb4'
+    azul_en = '#3b7ded'
+    azul_cbcs = '#93b8f7'
+    cores = [azul_mesa, azul_en, azul_cbcs]
+    ordem = {'Mestre de Santo Andr': 0, 'Escudeiro': 1, 'Cavaleiro': 2}
+
+    def _ordenar(lista):
+        lista.sort(key=lambda x: next((v for k, v in ordem.items() if k in x['name']), 99))
+
+    def _para_svg(lista_raw, _cores):
+        _ordenar(lista_raw)
+        total = sum(m['total'] for m in lista_raw) or 1
+        itens = [
+            {'key': m['abbr'], 'name': m['abbr'], 'count': m['total'],
+             'color': _cores[i] if i < len(_cores) else '#166534',
+             'pct': round(m['total'] / total * 100)}
+            for i, m in enumerate(lista_raw)
+        ]
+        return itens, _baii_svg(itens), total
+
     try:
-        baii_ativos_raw = membros_por_classe(apenas_ativos=True)
+        ativos_raw = membros_por_classe(apenas_ativos=True)
     except Exception as e:
         logger.error('Erro ao buscar membros por classe (ativos): %s', e)
-        baii_ativos_raw = []
+        ativos_raw = []
+    ativos_itens, ativos_svg, ativos_total = _para_svg(ativos_raw, cores)
 
-    # Ordem: MESA (base), EN (meio), CBCS (topo)
-    ordem_classes = {'Mestre de Santo Andr': 0, 'Escudeiro': 1, 'Cavaleiro': 2}
-    baii_ativos_raw.sort(key=lambda x: next(
-        (v for k, v in ordem_classes.items() if k in x['name']), 99
-    ))
-    total_ativos = sum(m['total'] for m in baii_ativos_raw) or 1
-    baii_ativos = [
-        {'key': m['abbr'], 'name': m['abbr'], 'count': m['total'],
-         'color': cores_baii[i] if i < len(cores_baii) else '#166534',
-         'pct': round(m['total'] / total_ativos * 100)}
-        for i, m in enumerate(baii_ativos_raw)
-    ]
-    baii_ativos_svg = _baii_svg(baii_ativos)
-
-    # BAII CADASTRADOS: membros cadastrados no ano corrente
-    ano_corrente = date.today().year
+    ano = date.today().year
     try:
-        baii_ano_raw = membros_por_classe(apenas_ativos=False, ano=ano_corrente)
+        ano_raw = membros_por_classe(apenas_ativos=False, ano=ano)
     except Exception as e:
         logger.error('Erro ao buscar membros por classe (ano): %s', e)
-        baii_ano_raw = []
+        ano_raw = []
+    ano_itens, ano_svg, ano_total = _para_svg(ano_raw, cores)
 
-    baii_ano_raw.sort(key=lambda x: next(
-        (v for k, v in ordem_classes.items() if k in x['name']), 99
-    ))
-    total_ano = sum(m['total'] for m in baii_ano_raw) or 1
-    baii_ano = [
-        {'key': m['abbr'], 'name': m['abbr'], 'count': m['total'],
-         'color': cores_baii[i] if i < len(cores_baii) else '#166534',
-         'pct': round(m['total'] / total_ano * 100)}
-        for i, m in enumerate(baii_ano_raw)
-    ]
-    baii_ano_svg = _baii_svg(baii_ano)
+    return {
+        'baii_ativos': ativos_itens, 'baii_ativos_svg': ativos_svg,
+        'baii_ativos_total': ativos_total,
+        'baii_ano': ano_itens, 'baii_ano_svg': ano_svg,
+        'baii_ano_total': ano_total, 'baii_ano_ano': ano,
+    }
 
-    # Grafico de linha: admisses por mes (ultimos 36 meses)
-    chart_labels, chart_valores = membros_por_mes(meses=36)
 
-    # Anualidade
-    ano_anuidade = anuidade_ano_referencia()
-    anualidade = anualidade_resumo(ano=ano_anuidade)
+def _buscar_dados_gprb(ano_corrente):
+    """Busca todos os dados GPRB do dashboard com tratamento de erro."""
+    def _safe(fn, *a, **kw):
+        try:
+            return fn(*a, **kw)
+        except Exception as e:
+            logger.error('Erro ao buscar %s: %s', fn.__name__, e)
+            return [] if fn not in (anualidade_resumo,) else {}
 
-    # Rito no simbolismo
-    try:
-        rito_dados = membros_por_rito()
-    except Exception as e:
-        logger.error('Erro ao buscar membros por rito: %s', e)
-        rito_dados = []
+    return {
+        'chart_labels': membros_por_mes(meses=36),
+            'anuidade': _safe(anualidade_resumo, ano=anuidade_ano_referencia()),
+        'rito_dados': _safe(membros_por_rito),
+        'idade_dados': _safe(membros_por_idade_faixa),
+        'potencia_dados': _safe(membros_por_potencia),
+        'tempo_maconaria_dados': _safe(membros_por_tempo_maconaria),
+        'ranking_lojas_dados': _safe(ranking_lojas),
+        'ranking_mx_dados': _safe(ranking_lojas_mx, anos=3),
+        'proximas_sessoes_dados': _safe(proximas_sessoes),
+        'agendamento_dados': _safe(agendamento_lojas),
+    }
 
-    # Idade por faixa
-    try:
-        idade_dados = membros_por_idade_faixa()
-    except Exception as e:
-        logger.error('Erro ao buscar membros por faixa etaria: %s', e)
-        idade_dados = []
 
-    # Potencia do simbolismo
-    try:
-        potencia_dados = membros_por_potencia()
-    except Exception as e:
-        logger.error('Erro ao buscar membros por potencia: %s', e)
-        potencia_dados = []
+@web_login_required
+def index(request):
+    tid = request.session.get('usuario', {}).get('tenant_id')
+    nicho = nicho_da_sessao(request)
+    stages = etapas_do_tenant(tid, nicho)
+    stage_map = etapa_map_do_tenant(tid, nicho)
+    negocios = filtro_tenant(request, Negocio.objects.select_related('contato'))
+    resumo = _resumo(request, negocios)
 
-    # Tempo na maconaria
-    try:
-        tempo_maconaria_dados = membros_por_tempo_maconaria()
-    except Exception as e:
-        logger.error('Erro ao buscar membros por tempo de macomaria: %s', e)
-        tempo_maconaria_dados = []
+    hoje = date.today()
+    inicio30 = timezone.make_aware(datetime.combine(hoje - timedelta(days=30), time.min))
+    ano_corrente = hoje.year
 
-    # Ranking lojas (top 10)
-    try:
-        ranking_lojas_dados = ranking_lojas()
-    except Exception as e:
-        logger.error('Erro ao buscar ranking de lojas: %s', e)
-        ranking_lojas_dados = []
+    ocorrencias = {s['key']: negocios.filter(stage=s['key']).count() for s in stages}
 
-    # Ranking lojas MX (top 10 — últimos 3 anos)
-    try:
-        ranking_mx_dados = ranking_lojas_mx(anos=3)
-    except Exception as e:
-        logger.error('Erro ao buscar ranking MX: %s', e)
-        ranking_mx_dados = []
-
-    # Proximas sessoes (agenda das lojas)
-    try:
-        proximas_sessoes_dados = proximas_sessoes()
-    except Exception as e:
-        logger.error('Erro ao buscar proximas sessoes: %s', e)
-        proximas_sessoes_dados = []
-
-    # Agendamento de sessoes
-    try:
-        agendamento_dados = agendamento_lojas()
-    except Exception as e:
-        logger.error('Erro ao buscar agendamento de lojas: %s', e)
-        agendamento_dados = []
+    timeline, timeline_max = _calcular_timeline(negocios, hoje)
+    conversao = _calcular_conversao(stages, ocorrencias)
+    funil = _calcular_funil(stages, ocorrencias)
+    recentes = _buscar_atividade_recente(tid, negocios, stage_map)
+    por_etapa, ticket_medio = _analise_funil_valor(stages, negocios)
+    metas_dashboard = _buscar_metas_vendedor(tid, hoje)
+    tarefas_alerta = _buscar_tarefas_alerta(tid, hoje)
+    por_origem = _agrupar_por_origem(negocios)
+    por_segmento = _agrupar_por_segmento(negocios)
+    melhores = _buscar_melhores_negocios(negocios, stage_map)
+    atividade = _buscar_atividade_time(tid, inicio30)
+    velocidade = _calcular_velocidade(negocios, stage_map)
+    baii = _buscar_dados_baii()
+    dados_gprb = _buscar_dados_gprb(ano_corrente)
+    chart_labels, chart_valores = dados_gprb['chart_labels']
 
     return render(request, 'dashboard/index.html', {
         'kpis': resumo,
         'chart_membros_labels': chart_labels,
         'chart_membros_valores': chart_valores,
-        'anualidade': anualidade,
-        'timeline': timeline,
-        'timeline_max': timeline_max,
+        'anualidade': dados_gprb['anuidade'],
+        'timeline': timeline, 'timeline_max': timeline_max,
         'timeline_svg': _timeline_svg(timeline),
-        'conversao': conversao,
-        'funil': funil,
+        'conversao': conversao, 'funil': funil,
         'funil_svg': _funnel_svg(funil),
-        'recentes': recentes,
-        'por_etapa': por_etapa,
-        'tarefas_alerta': tarefas_alerta,
-        'ticket_medio': ticket_medio,
-        'por_origem': por_origem,
-        'por_segmento': por_segmento,
-        'melhores': melhores,
-        'atividade': atividade,
-        'velocidade': velocidade,
-        'metas_dashboard': metas_dashboard,
+        'recentes': recentes, 'por_etapa': por_etapa,
+        'tarefas_alerta': tarefas_alerta, 'ticket_medio': ticket_medio,
+        'por_origem': por_origem, 'por_segmento': por_segmento,
+        'melhores': melhores, 'atividade': atividade,
+        'velocidade': velocidade, 'metas_dashboard': metas_dashboard,
         'atualizado_em': timezone.localtime().strftime('%H:%M:%S'),
-        'baii_ativos': baii_ativos,
-        'baii_ativos_svg': baii_ativos_svg,
-        'baii_ativos_total': sum(m['total'] for m in baii_ativos_raw),
-        'baii_ano': baii_ano,
-        'baii_ano_svg': baii_ano_svg,
-        'baii_ano_total': sum(m['total'] for m in baii_ano_raw),
-        'baii_ano_ano': ano_corrente,
+        'baii_ativos': baii['baii_ativos'],
+        'baii_ativos_svg': baii['baii_ativos_svg'],
+        'baii_ativos_total': baii['baii_ativos_total'],
+        'baii_ano': baii['baii_ano'],
+        'baii_ano_svg': baii['baii_ano_svg'],
+        'baii_ano_total': baii['baii_ano_total'],
+        'baii_ano_ano': baii['baii_ano_ano'],
         'ano_corrente': ano_corrente,
-        'ano_anuidade': ano_anuidade,
-        'rito_dados': rito_dados,
-        'idade_dados': idade_dados,
-        'potencia_dados': potencia_dados,
-        'tempo_maconaria_dados': tempo_maconaria_dados,
-        'ranking_lojas_dados': ranking_lojas_dados,
-        'ranking_mx_dados': ranking_mx_dados,
-        'proximas_sessoes_dados': proximas_sessoes_dados,
-        'agendamento_dados': agendamento_dados,
+        'ano_anuidade': anuidade_ano_referencia(),
+        'rito_dados': dados_gprb['rito_dados'],
+        'idade_dados': dados_gprb['idade_dados'],
+        'potencia_dados': dados_gprb['potencia_dados'],
+        'tempo_maconaria_dados': dados_gprb['tempo_maconaria_dados'],
+        'ranking_lojas_dados': dados_gprb['ranking_lojas_dados'],
+        'ranking_mx_dados': dados_gprb['ranking_mx_dados'],
+        'proximas_sessoes_dados': dados_gprb['proximas_sessoes_dados'],
+        'agendamento_dados': dados_gprb['agendamento_dados'],
     })

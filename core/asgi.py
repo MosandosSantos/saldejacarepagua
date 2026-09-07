@@ -21,7 +21,7 @@ from django.core.asgi import get_asgi_application
 django_asgi = get_asgi_application()
 
 # 2) Depois importa o FastAPI, que usa o ORM do Django ja configurado.
-from api.main import app as fastapi_app  # noqa: E402
+from api.main import app as fastapi_app
 
 _PREFIXOS_API = ('/api/', '/docs', '/redoc', '/openapi.json')
 

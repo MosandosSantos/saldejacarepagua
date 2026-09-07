@@ -6,12 +6,11 @@ Latin-1 — todos os textos passam por `_txt` para nunca quebrar o encoding.
 
 import io
 from datetime import date, timedelta
-from decimal import Decimal, ROUND_DOWN
-from xml.sax.saxutils import escape as _xml_escape
-from core.utils import brl as _brl
+from decimal import ROUND_DOWN, Decimal
+from xml.sax.saxutils import escape as _xml_escape  # nosec B406 - used to escape user text for reportlab Paragraph XML, not parsing untrusted XML
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+from reportlab.lib.enums import TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
@@ -22,6 +21,8 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
+
+from core.utils import brl as _brl
 
 COR_PRIMARIA = colors.HexColor('#0b6f74')
 COR_PRIMARIA_ESC = colors.HexColor('#075b60')

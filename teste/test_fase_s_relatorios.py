@@ -96,7 +96,6 @@ def test_produtividade_por_operador(tenant_aurora, admin_company, usuario_operac
 
 
 def tenant_beta():
-    from acesso.models import Tenant
 
     return Tenant.objects.get_or_create(nome='Clínica Beta', slug='clinica-beta')[0]
 
@@ -226,7 +225,6 @@ def _corpo_tabela_produtividade(html):
 def test_filtro_por_operador(tenant_aurora, admin_company, usuario_operacional,
                              usuario_operacional_beta):
     """`?operador=` restringe a tabela; id de outro tenant é ignorado (volta a todos)."""
-    from acesso.models import Usuario
 
     op2 = Usuario.objects.create(
         nome='Oper Dois', email='op2@aurora.com', role='operacional',

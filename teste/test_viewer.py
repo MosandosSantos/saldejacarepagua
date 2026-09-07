@@ -1,21 +1,20 @@
 """Testes do papel viewer (somente leitura) — web, API e convite."""
 
+
 import pytest
 from django.contrib.auth.hashers import check_password
 from django.test import Client
-from django.utils import timezone
-from datetime import timedelta
 
 from acesso.models import Convite, Usuario
 from contatos.models import Contato, Nota, criar_negocio
 
 
-def _cliente_web(usuario):
+def _cliente_web(usuario, tenant_id=None):
     c = Client()
     s = c.session
     s['usuario_id'] = usuario.id
     s['usuario'] = {'nome': usuario.nome, 'email': usuario.email, 'role': usuario.role,
-                    'tenant_id': usuario.tenant_id}
+                    'tenant_id': usuario.tenant_id if tenant_id is None else tenant_id}
     s['nicho'] = 'saude'
     s.save()
     return c
@@ -33,7 +32,7 @@ def _contato_com_negocio(nome, tenant, stage='interessado', valor=100):
 def test_viewer_ve_paginas_de_leitura(tenant_aurora, usuario_viewer):
     contato = _contato_com_negocio('Ana', tenant_aurora)
     c = _cliente_web(usuario_viewer)
-    for url in ['/dashboard/', '/funil/', '/contatos/', '/tarefas/',
+    for url in ['/dashboard/', '/recepcao/', '/contatos/', '/tarefas/',
                 f'/contatos/{contato.id}/']:
         assert c.get(url).status_code == 200, url
 
@@ -74,11 +73,11 @@ def test_viewer_nao_move_no_funil(tenant_aurora, usuario_viewer):
     negocio = contato.negocio
     c = _cliente_web(usuario_viewer)
     # AJAX (drag & drop) → 403
-    r = c.post(f'/funil/{negocio.id}/mover/', {'stage': 'fechado'},
+    r = c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'fechado'},
                HTTP_X_REQUESTED_WITH='XMLHttpRequest')
     assert r.status_code == 403
     # menu fallback → redirect
-    r = c.post(f'/funil/{negocio.id}/mover/', {'stage': 'fechado'})
+    r = c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'fechado'})
     assert r.status_code == 302
     negocio.refresh_from_db()
     assert negocio.stage == 'interessado'  # não moveu
@@ -122,7 +121,7 @@ def test_viewer_nao_ve_botoes_de_edicao(tenant_aurora, usuario_viewer, usuario_o
     assert 'title="Editar"' not in html
 
     # kanban sem drag e sem menu de mover
-    html = c.get('/funil/').content.decode('utf-8')
+    html = c.get('/recepcao/').content.decode('utf-8')
     assert 'draggable="true"' not in html
     assert 'name="stage"' not in html
     assert 'Somente leitura' in html
@@ -137,7 +136,7 @@ def test_viewer_nao_ve_botoes_de_edicao(tenant_aurora, usuario_viewer, usuario_o
     c2 = _cliente_web(usuario_operacional)
     html = c2.get('/contatos/').content.decode('utf-8')
     assert 'Novo contato' in html and 'title="Editar"' in html
-    html = c2.get('/funil/').content.decode('utf-8')
+    html = c2.get('/recepcao/').content.decode('utf-8')
     assert 'draggable="true"' in html
 
 
@@ -147,16 +146,21 @@ def test_link_do_cartao_aponta_para_contato(tenant_aurora, usuario_operacional):
     enquanto o data-id guarda o id do NEGÓCIO (usado pelo mover)."""
     contato = _contato_com_negocio('Ana', tenant_aurora)
     c = _cliente_web(usuario_operacional)
-    html = c.get('/funil/').content.decode('utf-8')
+    html = c.get('/recepcao/').content.decode('utf-8')
     assert f'href="/contatos/{contato.id}/"' in html
     assert f'data-id="{contato.negocio.id}"' in html
 
 
 @pytest.mark.django_db
 def test_admin_saas_continua_editando_na_web(tenant_aurora, admin_saas):
-    """Regressão: admin_saas (dono da plataforma) não pode perder a edição na web."""
+    """Regressão: admin_saas (dono da plataforma) não pode perder a edição na web.
+
+    O admin_saas tem edição mesmo sem tenant própria, mas as views de CRUD
+    do contato escopam implicitamente o tenant da sessão; admin_saas com
+    tenant_id=None vê o queryset vazio e o form retorna 200 com aviso.
+    """
     contato = _contato_com_negocio('Ana', tenant_aurora)
-    c = _cliente_web(admin_saas)
+    c = _cliente_web(admin_saas, tenant_id=tenant_aurora.id)
     r = c.post(f'/contatos/{contato.id}/editar/', _dados_edicao('Nome Novo'))
     assert r.status_code == 302
     contato.refresh_from_db()
@@ -171,10 +175,10 @@ def test_viewer_altera_perfil_senha_e_tema(tenant_aurora, usuario_viewer):
     c = _cliente_web(usuario_viewer)
     r = c.post('/config/', {'acao': 'perfil', 'nome': 'Laura Nova', 'email': 'viewer@aurora.com'})
     assert r.status_code == 200
-    assert 'Perfil atualizado'.encode() in r.content
+    assert b'Perfil atualizado' in r.content
     r = c.post('/config/', {'acao': 'senha', 'senha_atual': 'senha123',
                             'nova_senha': 'nova4567', 'confirma_senha': 'nova4567'})
-    assert 'Senha alterada'.encode() in r.content
+    assert b'Senha alterada' in r.content
     assert check_password('nova4567', Usuario.objects.get(pk=usuario_viewer.id).senha)
     c.post('/config/tema/', {'tema': 'claro', 'voltar': '/config/'})
     assert c.session['tema'] == 'claro'

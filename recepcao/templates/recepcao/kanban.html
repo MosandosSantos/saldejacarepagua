@@ -1,0 +1,864 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}GPRBRCRM — Funil{% endblock %}
+
+{% block conteudo %}
+{% if web_pode_editar %}
+<!-- Token CSRF próprio do kanban — os POSTs AJAX (mover lead / novo lead) leem o DOM -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+{% endif %}
+<div class="mb-7">
+  <h1 class="hazon-titulo">Flow de Recepção</h1>
+</div>
+
+<div class="mb-6 flex flex-wrap items-center gap-4">
+  <form method="get" action="{% url 'recepcao:kanban' %}" class="relative">
+    <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="#a6bfc7" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nome ou empresa..."
+           class="hazon-search w-72">
+  </form>
+  <select id="filtro-prefeitura" class="hazon-btn hazon-btn-ghost h-9 rounded-lg border border-white/15 bg-white/5 px-3 text-[12.5px] font-semibold text-[#bcd3da] outline-none transition hover:bg-white/10 hover:text-white">
+    <option value="">Todas as Prefeituras</option>
+    {% for pf in prefeituras %}
+    <option value="{{ pf.id }}" {% if pf.id|stringformat:"s" == prefeitura_filtro|stringformat:"s" %}selected{% endif %}>{{ pf.nome }}</option>
+    {% endfor %}
+  </select>
+  {% if web_eh_admin %}
+  <select id="filtro-categoria" class="hazon-btn hazon-btn-ghost h-9 rounded-lg border border-white/15 bg-white/5 px-3 text-[12.5px] font-semibold text-[#bcd3da] outline-none transition hover:bg-white/10 hover:text-white">
+    <option value="">Todos</option>
+    <option value="MX">MX</option>
+    <option value="EN">EN</option>
+    <option value="CBCS">CBCS</option>
+  </select>
+  {% endif %}
+  <a href="{% url 'contatos:exportar_negocios' %}" class="hazon-btn hazon-btn-ghost" title="Baixar CSV dos negócios">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Exportar
+  </a>
+  <div class="flex items-center gap-2.5 rounded-xl border border-[#5b8def]/35 bg-[#5b8def]/10 px-4 py-2.5">
+    <span class="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#bcd3da]">Total de candidatos</span>
+    <span id="total-candidatos" class="font-mono text-[17px] font-bold text-[#5b8def]">{{ total_candidatos }}</span>
+  </div>
+</div>
+
+{% if estagnados %}
+<div class="mb-6 rounded-2xl border border-[#fbbf24]/30 bg-[#fbbf24]/10 p-5 backdrop-blur-xl">
+  <div class="mb-3 flex flex-wrap items-center gap-3">
+    <span class="text-[13.5px] font-semibold text-[#fbbf24]">⏳ Negócios parados há mais de {{ dias }} dias ({{ estagnados|length }})</span>
+    <form method="get" class="ml-auto flex items-center gap-2">
+      {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+      <label class="text-[11px] text-[#bcd3da]">Mostrar parados há +</label>
+      <select name="dias" onchange="this.form.submit()"
+              class="rounded-lg border border-white/10 bg-[#0a1e3d] px-2 py-1.5 text-[11.5px] text-white outline-none">
+        {% for d in '3,7,15,30'|make_list %}
+          <option value="{{ d }}" {% if dias == d|add:0 %}selected{% endif %}>{{ d }} dias</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+  <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+    {% for n in estagnados %}
+      <a href="{% url 'contatos:detalhe' n.contato_id %}"
+         class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 transition hover:border-[#fbbf24]/40 hover:bg-white/10">
+        <div class="flex items-center justify-between gap-2">
+          <span class="truncate text-[13px] font-semibold text-white">{{ n.nome }}</span>
+          <span class="shrink-0 hazon-chip px-2" style="color:{{ n.stage.color }};background:{{ n.stage.color }}1a">{{ n.stage.name }}</span>
+        </div>
+        <div class="mt-1.5 flex items-center justify-between gap-2">
+          <span class="font-mono text-[12.5px] font-bold text-[#fbbf24]">{{ n.valor }}</span>
+          <span class="text-[11px] text-[#a6bfc7]">parado há {{ n.dias }} dia{{ n.dias|pluralize }}</span>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="flex items-stretch gap-3 overflow-x-auto pb-2">
+  {% for col in colunas %}
+  <div class="kanban-col flex w-[290px] shrink-0 flex-col overflow-hidden hazon-card transition-all duration-200"
+       data-stage="{{ col.key }}">
+    <div class="flex items-center gap-2.5 border-b border-white/10 px-4 py-3.5">
+      <span class="h-2.5 w-2.5 shrink-0 rounded" style="background:{{ col.color }};box-shadow:0 0 8px {{ col.color }}70"></span>
+      <span class="flex-1 truncate text-[12.5px] font-semibold text-[#bcd3da]">{{ col.name }}</span>
+      <span data-contador="{{ col.key }}" class="rounded-full bg-white/5 px-2.5 py-0.5 font-mono text-xs font-bold text-white">{{ col.count }}</span>
+      {% if web_pode_editar %}
+      <button type="button" data-etapa="{{ col.key }}" aria-label="Nova recepção em {{ col.name }}" title="Nova recepção nesta etapa"
+              class="btn-lead-coluna flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#bcd3da] transition hover:border-[#5b8def]/40 hover:bg-[#5b8def]/15 hover:text-[#5b8def]">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      {% endif %}
+    </div>
+    <div class="cards flex flex-1 flex-col gap-2.5 p-3">
+      {% for card in col.cards %}
+        {% if card.tipo == 'candidato' %}
+        <!-- Card de candidato (Súplica) — status: Convite / Em preenchimento / Aguardando aprovação -->
+        <div class="kanban-card group relative hazon-card-sm p-3.5 transition hover:border-[#5b8def]/40 hover:bg-white/10"
+             data-candidato="{{ card.id }}">
+          <div class="mb-1.5 flex items-start justify-between gap-2">
+            <span class="text-[13.5px] font-semibold text-white">MX {{ card.nome }}</span>
+            <div class="flex shrink-0 items-center gap-1">
+              <span class="hazon-chip px-2 text-[10px] font-bold uppercase tracking-wide"
+                    style="color:{{ card.status_cor }};background:{{ card.status_cor }}1a"
+                    title="Status da candidatura"></span>
+              {% if web_pode_editar %}
+              <button type="button" class="btn-excluir-cand flex h-6 w-6 items-center justify-center rounded-md text-[#a6bfc7] hover:bg-red-500/20 hover:text-red-300"
+                      data-pk="{{ card.pk }}" title="Excluir candidato" aria-label="Excluir candidato">
+                <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+              {% endif %}
+            </div>
+          </div>
+          <div class="mb-2 text-[11.5px] text-[#a6bfc7]">
+            <span class="inline-block rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#94a3b8]">{{ card.grau|default:"MX" }}</span>
+            {% if card.prefeitura and card.prefeitura.sigla %}{{ card.prefeitura.sigla }}{% elif card.prefeitura and card.prefeitura.nome %}{{ card.prefeitura.nome }}{% else %}—{% endif %}
+            {% if card.loja %} · {{ card.loja }}{% endif %}
+          </div>
+          <div class="flex items-center justify-between gap-2 border-t border-white/10 pt-2">
+            <span class="text-[10px] font-bold uppercase tracking-[0.14em]" style="color:{{ card.status_cor }}">{{ card.status_label }}</span>
+            {% if card.status == 'FICHA_ENVIADA' or card.status == 'EM_ANALISE' %}
+              <span class="text-[10.5px] font-medium text-[#a6bfc7]">Envio: {{ card.envio_email|default:"—" }}</span>
+            {% else %}
+              <button type="button" class="btn-ver-candidato hazon-btn hazon-btn-ghost h-8 px-3 text-[11px] font-semibold" data-pk="{{ card.pk }}">
+                <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                Visualizar
+              </button>
+            {% endif %}
+          </div>
+        </div>
+{% else %}
+        {% include 'recepcao/_card.html' %}
+        {% endif %}
+      {% empty %}
+      <p class="vazio-msg px-2 py-1 text-xs text-[#a6bfc7]">Vazio</p>
+      {% endfor %}
+      {% if col.ocultos %}
+      <p class="ocultos-msg px-2 py-1 text-[11px] font-medium text-[#a6bfc7]">+{{ col.ocultos }} não exibido{{ col.ocultos|pluralize }}</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if web_pode_editar %}
+<!-- Modal de novo candidato (Súplica) -->
+<div id="modal-candidato" class="fixed inset-0 z-40 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="candidato-titulo">
+  <div class="absolute inset-0" style="background:rgba(0,0,0,.62);backdrop-filter:blur(4px)" data-fechar-candidato></div>
+  <div class="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#0d1f3c] p-6">
+    <div class="mb-5 flex items-center justify-between gap-3">
+      <h2 id="candidato-titulo" class="font-display text-lg font-semibold text-white">Novo Candidato (Súplica)</h2>
+      <button type="button" data-fechar-candidato aria-label="Fechar"
+              class="flex h-9 w-9 items-center justify-center rounded-lg text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">✕</button>
+    </div>
+    <p class="-mt-2 mb-5 text-[12.5px] leading-relaxed text-[#a6bfc7]">
+      O candidato receberá um e-mail com link para preencher sua ficha e definir senha.
+    </p>
+    <form id="form-candidato" class="space-y-4" novalidate>
+      {% csrf_token %}
+      <div>
+        <label for="candidato-nome" class="mb-1 block text-[12px] font-semibold uppercase tracking-wider text-[#bcd3da]">Nome Completo *</label>
+        <input id="candidato-nome" name="nome" required autocomplete="name" placeholder="Nome do candidato"
+               class="w-full rounded-xl border border-white/12 bg-white/6 px-4 py-3 text-[13.5px] text-white placeholder-[#a6bfc7] outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10">
+      </div>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label for="candidato-prefeitura" class="mb-1 block text-[12px] font-semibold uppercase tracking-wider text-[#bcd3da]">Prefeitura *</label>
+          <select id="candidato-prefeitura" name="prefeitura" required
+                  class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13.5px] text-white outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div>
+          <label for="candidato-loja" class="mb-1 block text-[12px] font-semibold uppercase tracking-wider text-[#bcd3da]">Loja *</label>
+          <select id="candidato-loja" name="loja" required disabled
+                  class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13.5px] text-white outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10">
+            <option value="">Selecione a prefeitura...</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label for="candidato-cpf" class="mb-1 block text-[12px] font-semibold uppercase tracking-wider text-[#bcd3da]">CPF</label>
+          <input id="candidato-cpf" name="cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00"
+                 maxlength="14"
+                 class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13.5px] text-white placeholder-[#a6bfc7] outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10">
+        </div>
+        <div>
+          <label for="candidato-celular" class="mb-1 block text-[12px] font-semibold uppercase tracking-wider text-[#bcd3da]">Celular</label>
+          <input id="candidato-celular" name="celular" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000"
+                 class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13.5px] text-white placeholder-[#a6bfc7] outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10">
+        </div>
+      </div>
+      <div>
+        <label for="candidato-email" class="mb-1 block text-[12px] font-semibold uppercase tracking-wider text-[#bcd3da]">E-mail</label>
+        <input id="candidato-email" name="email" type="email" autocomplete="email" placeholder="email@exemplo.com"
+               class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13.5px] text-white placeholder-[#a6bfc7] outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10">
+      </div>
+      <p id="candidato-erros" class="hidden rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[12.5px] text-red-200"></p>
+      <div class="flex gap-3 pt-1">
+        <button type="submit" id="btn-candidato-salvar" class="flex-1 rounded-xl bg-[#5b8def] px-6 py-3 text-[13.5px] font-semibold text-white transition hover:brightness-110" style="min-height:44px">Criar e Enviar</button>
+        <button type="button" data-fechar-candidato class="rounded-xl border border-white/15 bg-white/5 px-5 text-[13px] text-[#bcd3da] transition hover:bg-white/10" style="min-height:44px">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% include 'candidatos/_modal_detalhe.html' %}
+{% endif %}
+
+
+{% endblock %}
+
+{% block js %}
+<style>
+  {% if web_pode_editar %}
+  .kanban-card { cursor: grab; }
+  .kanban-card:active { cursor: grabbing; }
+
+  #modal-candidato select option {
+    background: #0a1e3d;
+    color: #ffffff;
+    padding: 8px 12px;
+  }
+  #modal-candidato select {
+    color: #ffffff;
+  }
+  #modal-candidato select option[value=""] {
+    color: #a6bfc7;
+  }
+  .stage-select { cursor: pointer; }
+  .stage-select:focus { border-color: rgba(91,141,239,.5); background: rgba(255,255,255,.1); }
+  {% endif %}
+  .kanban-card.dragging { opacity: 0.35; }
+  .kanban-col.is-over {
+    border-color: rgba(91,141,239,0.55);
+    background: rgba(91,141,239,0.08);
+    box-shadow: inset 0 0 0 2px rgba(91,141,239,0.45);
+  }
+  .kanban-card.card-entrou { animation: cardEntrou 0.35s ease; }
+  @keyframes cardEntrou {
+    from { transform: scale(0.92); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+</style>
+{% if web_pode_editar %}
+<script>
+function csrftoken() {
+  var el = document.querySelector('[name=csrfmiddlewaretoken]');
+  return el ? el.value : '';
+}
+
+// Filtro de prefeitura
+var filtroPrefeitura = document.getElementById('filtro-prefeitura');
+if (filtroPrefeitura) {
+  filtroPrefeitura.addEventListener('change', function() {
+    var url = new URL(window.location.href);
+    var pf = this.value;
+    if (pf) {
+      url.searchParams.set('prefeitura', pf);
+    } else {
+      url.searchParams.delete('prefeitura');
+    }
+    window.location.href = url.toString();
+  });
+}
+
+function manterVazio(col) {
+  var cards = col.querySelector('.cards');
+  if (cards && !cards.querySelector('.vazio-msg') && !cards.querySelector('[data-id]')) {
+    var p = document.createElement('p');
+    p.className = 'vazio-msg px-2 py-1 text-xs text-[#a6bfc7]';
+    p.textContent = 'Vazio';
+    cards.appendChild(p);
+  }
+}
+
+// Aviso "+N não exibidos" só para negócios (cards sem .kanban-card[data-candidato])
+function atualizarOcultos(col, count) {
+  var cards = col.querySelector('.cards');
+  if (!cards) return;
+  var msg = cards.querySelector('.ocultos-msg');
+  var exibidos = cards.querySelectorAll('.kanban-card[data-id]:not([data-candidato])').length;
+  var ocultos = count - exibidos;
+  if (ocultos > 0) {
+    var texto = '+' + ocultos + ' não exibido' + (ocultos > 1 ? 's' : '');
+    if (!msg) {
+      msg = document.createElement('p');
+      msg.className = 'ocultos-msg px-2 py-1 text-[11px] font-medium text-[#a6bfc7]';
+      cards.appendChild(msg);
+    }
+    msg.textContent = texto;
+  } else if (msg) {
+    msg.remove();
+  }
+}
+
+function armarDrag(card) {
+  card.addEventListener('dragstart', function (e) {
+    e.dataTransfer.setData('text/plain', card.getAttribute('data-id'));
+    e.dataTransfer.effectAllowed = 'move';
+    card.classList.add('dragging');
+  });
+  card.addEventListener('dragend', function () {
+    card.classList.remove('dragging');
+    document.querySelectorAll('.is-over').forEach(function (c) { c.classList.remove('is-over'); });
+  });
+}
+document.querySelectorAll('.kanban-card').forEach(armarDrag);
+
+// ---- Seletor de fase (select no card) ----
+document.querySelectorAll('.stage-select').forEach(function(sel) {
+  sel.addEventListener('change', function() {
+    var id = sel.getAttribute('data-id');
+    var stage = sel.value;
+    if (!id || !stage) return;
+    var card = sel.closest('.kanban-card');
+    var colOrigem = card ? card.closest('.kanban-col') : null;
+    var stageOrigem = colOrigem ? colOrigem.getAttribute('data-stage') : '';
+    if (stage === stageOrigem) return; // mesma coluna
+    var fd = new FormData();
+    fd.append('stage', stage);
+    var busca = document.querySelector('input[name=q]');
+    if (busca && busca.value) fd.append('q', busca.value);
+    fetch('/recepcao/' + id + '/mover/', {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-CSRFToken': csrftoken(), 'X-Requested-With': 'XMLHttpRequest' },
+    })
+      .then(function(r) { if (!r.ok) throw new Error('falha'); return r.json(); })
+      .then(function(dados) {
+        if (!dados.ok || !card) return;
+        var colDest = document.querySelector('.kanban-col[data-stage="' + stage + '"]');
+        if (colDest) {
+          var vazio = colDest.querySelector('.vazio-msg');
+          if (vazio) vazio.remove();
+          colDest.querySelector('.cards').appendChild(card);
+          card.classList.add('card-entrou');
+          setTimeout(function(){ card.classList.remove('card-entrou'); }, 350);
+        }
+        aplicarBoard(dados);
+        manterVazio(colOrigem);
+      })
+      .catch(function() { window.location.reload(); });
+  });
+});
+
+// Atualiza contadores, somas, aviso de ocultos e total do board (após drag ou novo lead)
+function aplicarBoard(dados) {
+  if (!dados || !dados.colunas) return;
+  dados.colunas.forEach(function (c) {
+    var colEl = document.querySelector('.kanban-col[data-stage="' + c.key + '"]');
+    if (!colEl) return;
+    var contador = colEl.querySelector('[data-contador]');
+    if (contador) contador.textContent = c.count;
+    var soma = colEl.querySelector('[data-soma]');
+    if (soma) soma.textContent = c.soma;
+    var temCandidato = colEl.querySelector('[data-candidato]');
+    atualizarOcultos(colEl, c.count, !!temCandidato);
+    manterVazio(colEl);
+  });
+  var total = document.getElementById('total-candidatos');
+  if (total) total.textContent = dados.total_candidatos;
+}
+
+document.querySelectorAll('.kanban-col').forEach(function (col) {
+  col.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    col.classList.add('is-over');
+  });
+  col.addEventListener('dragleave', function (e) {
+    if (!col.contains(e.relatedTarget)) col.classList.remove('is-over');
+  });
+  col.addEventListener('drop', function (e) {
+    e.preventDefault();
+    col.classList.remove('is-over');
+    var id = e.dataTransfer.getData('text/plain');
+    var stage = col.getAttribute('data-stage');
+    if (!id || !stage) return;
+    var origem = document.querySelector('.kanban-card[data-id="' + id + '"]');
+    if (origem && origem.closest('.kanban-col').getAttribute('data-stage') === stage) return; // mesma coluna
+    var fd = new FormData();
+    fd.append('stage', stage);
+    // mantém o filtro de busca ativo no recálculo do board (contador/ocultos)
+    var busca = document.querySelector('input[name=q]');
+    if (busca && busca.value) fd.append('q', busca.value);
+    fetch('/recepcao/' + id + '/mover/', {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-CSRFToken': csrftoken(), 'X-Requested-With': 'XMLHttpRequest' },
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error('falha');
+        return r.json();
+      })
+      .then(function (dados) {
+        if (!dados.ok || !origem) return;
+        // move o cartão para a coluna de destino
+        var vazio = col.querySelector('.vazio-msg');
+        if (vazio) vazio.remove();
+        col.querySelector('.cards').appendChild(origem);
+        origem.classList.remove('dragging');
+        origem.classList.add('card-entrou');
+        setTimeout(function () { origem.classList.remove('card-entrou'); }, 350);
+        // mantém no máximo 30 cards visíveis por coluna (descarta os mais antigos)
+        var cartoes = col.querySelectorAll('.kanban-card[data-id]');
+        while (cartoes.length > 30) {
+          cartoes[0].remove();
+          cartoes = col.querySelectorAll('.kanban-card[data-id]');
+        }
+        var ocultos = col.querySelector('.ocultos-msg');
+        if (ocultos) ocultos.remove();
+        cards.querySelectorAll('.kanban-card[data-id]:not([data-candidato])').forEach(function(c){ c.remove(); });
+        ocultos = col.querySelector('.ocultos-msg');
+        if (ocultos) ocultos.remove();
+        // (o aviso correto volta no loop abaixo via atualizarOcultos)
+        // atualiza contadores, somas, aviso de ocultos e total
+        aplicarBoard(dados);
+        manterVazio(col);
+      })
+      .catch(function () { window.location.reload(); });
+  });
+});
+
+// ---- Exclusão de cards (negócios e candidatos) ----
+document.addEventListener('click', function (e) {
+  var btnNeg = e.target.closest('.btn-excluir-card');
+  var btnCand = e.target.closest('.btn-excluir-cand');
+  if (!btnNeg && !btnCand) return;
+
+  var msg = btnNeg
+    ? 'Excluir este negócio do funil? Esta ação não pode ser desfeita.'
+    : 'Excluir este candidato (Súplica)? Esta ação não pode ser desfeita.';
+  if (!window.confirm(msg)) return;
+
+  var url, card;
+  if (btnNeg) {
+    url = '/recepcao/' + btnNeg.getAttribute('data-id') + '/excluir/';
+    card = btnNeg.closest('.kanban-card');
+  } else {
+    url = '/candidato/excluir/' + btnNeg2pk(btnCand) + '/';
+    card = btnCand.closest('.kanban-card');
+  }
+  fetch(url, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrftoken(), 'X-Requested-With': 'XMLHttpRequest' },
+  })
+    .then(function (r) {
+      if (!r.ok) throw new Error('falha');
+      return r.json();
+    })
+    .then(function (dados) {
+      if (!dados.ok) return;
+      var col = card.closest('.kanban-col');
+      if (col) {
+        var contador = col.querySelector('[data-contador]');
+        if (contador) contador.textContent = Math.max(0, parseInt(contador.textContent || '0', 10) - 1);
+      }
+      card.remove();
+      if (col) manterVazio(col);
+      if (dados.colunas) aplicarBoard({ colunas: dados.colunas });
+    })
+    .catch(function () { window.location.reload(); });
+});
+function btnNeg2pk(el) { return el.getAttribute('data-pk'); }
+
+// ---- Modal de novo candidato (Súplica) ----
+var modalCandidato = document.getElementById('modal-candidato');
+var formCandidato = document.getElementById('form-candidato');
+var errosCandidato = document.getElementById('candidato-erros');
+var btnCandidatoSalvar = document.getElementById('btn-candidato-salvar');
+var selPrefeitura = document.getElementById('candidato-prefeitura');
+var selLoja = document.getElementById('candidato-loja');
+
+function abrirCandidato() {
+  if (!modalCandidato) return;
+  errosCandidato.classList.add('hidden');
+  ['candidato-nome', 'candidato-email', 'candidato-celular'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  if (selPrefeitura) selPrefeitura.value = '';
+  if (selLoja) { selLoja.value = ''; selLoja.disabled = true; selLoja.innerHTML = '<option value="">Selecione a prefeitura...</option>'; }
+  modalCandidato.classList.remove('hidden');
+  modalCandidato.classList.add('flex');
+  // Carrega prefeituras se vazio (refaz a cada abertura do modal para evitar cache vazio)
+  if (selPrefeitura) {
+    // Só recarrega se não houver opções além do placeholder
+    var temOpcoes = Array.from(selPrefeitura.options).some(function(o) { return o.value !== ''; });
+    if (!temOpcoes) {
+      selPrefeitura.innerHTML = '<option value="">Selecione...</option>';
+      fetch('{% url "candidatos:api_prefeituras" %}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.prefeituras && d.prefeituras.length > 0) {
+            d.prefeituras.forEach(function(p) {
+              var opt = document.createElement('option');
+              opt.value = p.id;
+              opt.textContent = p.nome;
+              selPrefeitura.appendChild(opt);
+            });
+          } else {
+            console.warn('Nenhuma prefeitura encontrada ou erro na API');
+          }
+        })
+        .catch(function() { console.error('Falha ao carregar prefeituras'); });
+    }
+  }
+  var nome = document.getElementById('candidato-nome');
+  if (nome) nome.focus();
+}
+function fecharCandidato() {
+  if (!modalCandidato) return;
+  modalCandidato.classList.add('hidden');
+  modalCandidato.classList.remove('flex');
+}
+
+// Cascata: ao selecionar prefeitura, carrega lojas
+if (selPrefeitura) selPrefeitura.addEventListener('change', function() {
+  var pf = selPrefeitura.value;
+  if (!pf) { selLoja.disabled = true; selLoja.innerHTML = '<option value="">Selecione a prefeitura...</option>'; return; }
+  selLoja.disabled = true;
+  selLoja.innerHTML = '<option value="">Carregando...</option>';
+  fetch('{% url "candidatos:api_lojas_por_prefeitura" %}?prefeitura_id=' + encodeURIComponent(pf), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      selLoja.innerHTML = '<option value="">Selecione...</option>';
+      (d.lojas || []).forEach(function(l) {
+        var opt = document.createElement('option');
+        opt.value = l.nome;
+        opt.textContent = l.nome;
+        selLoja.appendChild(opt);
+      });
+      selLoja.disabled = false;
+    });
+});
+
+document.querySelectorAll('.btn-lead-coluna').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var etapa = b.getAttribute('data-etapa');
+    // Só abre modal para a coluna Suplica
+    if (etapa === 'suplica') {
+      abrirCandidato();
+    }
+  });
+});
+document.querySelectorAll('[data-fechar-candidato]').forEach(function (el) {
+  el.addEventListener('click', fecharCandidato);
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && modalCandidato && !modalCandidato.classList.contains('hidden')) fecharCandidato();
+});
+
+if (formCandidato) formCandidato.addEventListener('submit', function (e) {
+  e.preventDefault();
+  if (btnCandidatoSalvar) { btnCandidatoSalvar.disabled = true; btnCandidatoSalvar.textContent = 'Criando...'; }
+  var fd = new FormData(formCandidato);
+  fetch('{% url "candidatos:criar_candidato" %}', {
+    method: 'POST',
+    body: fd,
+    headers: { 'X-CSRFToken': csrftoken(), 'X-Requested-With': 'XMLHttpRequest' },
+  })
+    .then(function (r) {
+      var ct = r.headers.get('content-type') || '';
+      if (ct.indexOf('application/json') === -1) {
+        errosCandidato.textContent = 'Resposta inesperada do servidor.';
+        errosCandidato.classList.remove('hidden');
+        return null;
+      }
+      return r.json().then(function (dados) { return { ok: r.ok, dados: dados }; });
+    })
+    .then(function (res) {
+      if (!res) return;
+      if (!res.ok) {
+        var msg = (res.dados.erros && res.dados.erros.length)
+          ? res.dados.erros.join(' · ')
+          : 'Não foi possível criar o candidato.';
+        errosCandidato.textContent = msg;
+        errosCandidato.classList.remove('hidden');
+        return;
+      }
+      errosCandidato.classList.add('hidden');
+      fecharCandidato();
+      window.location.reload();
+    })
+    .catch(function () {
+      errosCandidato.textContent = 'Falha de conexão. Tente novamente.';
+      errosCandidato.classList.remove('hidden');
+    })
+    .finally(function () {      if (btnCandidatoSalvar) { btnCandidatoSalvar.disabled = false; btnCandidatoSalvar.textContent = 'Criar e Enviar'; }
+    });
+  });
+
+
+// ---- Modal de detalhe do candidato ----
+var modalDetalhe = document.getElementById('modal-candidato-detalhe');
+var btnVerCandidato = document.querySelectorAll('.btn-ver-candidato');
+
+function abrirDetalheCandidato(pk) {
+  if (!modalDetalhe) return;
+  var feedback = document.getElementById('detalhe-feedback');
+  if (feedback) { feedback.className = 'mt-3 hidden rounded-xl border px-4 py-3 text-sm'; feedback.textContent = ''; }
+
+  // Abre o modal de imediato: o usuário vê o carregamento e qualquer erro
+  modalDetalhe.classList.remove('hidden');
+  modalDetalhe.classList.add('flex');
+
+  // Reseta o estado anterior
+  modalDetalhe.querySelectorAll('[data-campo]').forEach(function(el) {
+    if (el.tagName === 'IMG') { el.removeAttribute('src'); el.style.display = 'none'; }
+    else { el.textContent = '—'; }
+  });
+  var obsContainer = modalDetalhe.querySelector('#observacoes-list');
+  if (obsContainer) obsContainer.innerHTML = '<p class="text-sm text-slate-600">Carregando…</p>';
+  ['btn-aprovar-candidato', 'btn-devolver-candidato'].forEach(function(id) {
+    var b = document.getElementById(id);
+    if (b) { b.style.display = 'none'; b.setAttribute('data-pk', pk); }
+  });
+  var obsWrap = document.getElementById('obs-field-wrap');
+  if (obsWrap) obsWrap.style.display = 'none';
+
+  fetch('{% url "candidatos:api_modal_detalhe" 0 %}'.replace('/0/', '/' + pk + '/'), {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d.ok) {
+        feedback.className = 'mt-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700';
+        feedback.textContent = d.erro || 'Erro ao carregar.';
+        return;
+      }
+
+      var c = d.candidato;
+
+      // Preenche os campos (data-campo) — datas via Intl pt-BR
+      modalDetalhe.querySelectorAll('[data-campo]').forEach(function(el) {
+        var campo = el.getAttribute('data-campo');
+        var v = c[campo];
+        if (v === undefined) return;
+        if (el.tagName === 'IMG') {
+          el.src = v;
+          el.style.display = v ? '' : 'none';
+        } else if (campo === 'data_nascimento' && v) {
+          el.textContent = fmtData(v);
+        } else if (campo === 'created_at' && v) {
+          el.textContent = fmtData(v);
+        } else {
+          el.textContent = v || (campo === 'revisao_label' ? '' : '—');
+        }
+      });          // Observações (do mais antigo ao mais recente para manter o log linear)
+      if (obsContainer) {
+        obsContainer.innerHTML = '';
+        if (!d.observacoes || !d.observacoes.length) {
+          obsContainer.innerHTML = '<p class="text-sm text-slate-600">Nenhuma observação registrada.</p>';
+        } else {
+          var obsOrdenadas = d.observacoes.slice().sort(function(a,b) {
+            return (a.created_at || '').localeCompare(b.created_at || '');
+          });
+          obsOrdenadas.forEach(function(o) {
+            var div = document.createElement('div');
+            div.className = 'rounded-xl border border-[#5b8def]/35 bg-[#5b8def]/15 p-3';
+            div.innerHTML = '<div class="flex items-center gap-2 text-[11px]">'
+              + '<span class="font-semibold text-slate-900">' + esc(o.autor_nome) + '</span>'
+              + '<span class="font-medium text-[#2c5cbf]">(' + esc(o.autor_papel) + ')</span>'
+              + '<span class="text-slate-600">' + esc(fmtDataHora(o.created_at)) + '</span>'
+              + '</div>'
+              + '<p class="mt-1 text-sm text-slate-800">' + esc(o.texto) + '</p>';
+            obsContainer.appendChild(div);
+          });
+        }
+      }
+
+      // Badge + ponto de status — o modal agora usa o fundo escuro do board,
+      // então o chip usa a cor viva translúcida e o texto na própria cor (mesmo
+      // padrão dos cards do kanban).
+      var statusBadge = modalDetalhe.querySelector('[data-status-badge]');
+      if (statusBadge) {
+        var levelLabel = (c.revisao_label || '');
+        var statusText = c.status_label + (levelLabel ? ' · ' + levelLabel : '');
+        statusBadge.style.background = (c.status_cor || '#5b8def') + '1f';
+        statusBadge.style.color = c.status_cor || '#5b8def';
+        statusBadge.textContent = statusText;
+      }
+      var statusDot = modalDetalhe.querySelector('[data-status-dot]');
+      if (statusDot) {
+        statusDot.style.background = c.status_cor || '#94a3b8';
+        statusDot.style.boxShadow = '0 0 6px ' + (c.status_cor || '#94a3b8') + '60';
+      }
+
+      // Visibilidade dos botões de ação e do campo de observação
+      var btnAprovar = document.getElementById('btn-aprovar-candidato');
+      var btnDevolver = document.getElementById('btn-devolver-candidato');
+      if (btnAprovar) btnAprovar.style.display = d.pode_aprovar ? '' : 'none';
+      if (btnDevolver) btnDevolver.style.display = d.pode_devolver ? '' : 'none';
+      if (obsWrap) obsWrap.style.display = d.pode_observar ? '' : 'none';
+      var obsField = document.getElementById('obs-texto');
+      if (obsField) obsField.value = '';
+    })
+    .catch(function() {
+      if (feedback) {
+        feedback.className = 'mt-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700';
+        feedback.textContent = 'Falha ao carregar detalhes.';
+      }
+    });
+}
+
+function fecharDetalheCandidato() {
+  if (!modalDetalhe) return;
+  modalDetalhe.classList.add('hidden');
+  modalDetalhe.classList.remove('flex');
+
+  // Limpa os botões de ação
+  var btnAprovar = document.getElementById('btn-aprovar-candidato');
+  var btnDevolver = document.getElementById('btn-devolver-candidato');
+  if (btnAprovar) btnAprovar.onclick = null;
+  if (btnDevolver) btnDevolver.onclick = null;
+}
+
+// Abrir modal ao clicar em "Visualizar"
+document.querySelectorAll('.btn-ver-candidato').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    abrirDetalheCandidato(btn.getAttribute('data-pk'));
+  });
+});
+
+// Fechar modal
+document.querySelectorAll('[data-fechar-detalhe-candidato]').forEach(function(el) {
+  el.addEventListener('click', fecharDetalheCandidato);
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && modalDetalhe && !modalDetalhe.classList.contains('hidden')) {
+    fecharDetalheCandidato();
+  }
+});
+
+// Aprovar candidato (apenas o oficial da vez ou admin_saas)
+document.getElementById('btn-aprovar-candidato')?.addEventListener('click', function() {
+  var pk = this.getAttribute('data-pk') || modalDetalhe?.querySelector('[data-candidato-id]')?.getAttribute('data-candidato-id');
+  if (!pk) return;
+  var obs = document.getElementById('obs-texto');
+  var obsText = obs ? obs.value.trim() : '';
+  if (!obsText) {
+    var fb = document.getElementById('detalhe-feedback');
+    if (fb) {
+      fb.className = 'mt-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700';
+      fb.textContent = 'Para aprovar é obrigatório informar uma observação.';
+    }
+    return;
+  }    if (!window.confirm('Confirmar aprovação e encaminhamento para o próximo nível?')) return;
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  fetch('{% url "candidatos:api_aprovar_encaminhar" 0 %}'.replace('/0/', '/' + pk + '/'), {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrftoken(),
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'observacao=' + encodeURIComponent(obsText),
+  })
+    .then(function(r) { return r.json(); })            .then(function(d) {
+      var feedback = document.getElementById('detalhe-feedback');
+          if (d.ok) {
+        feedback.className = 'mt-3 rounded-xl border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-700';
+        feedback.textContent = d.mensagem || 'Aprovado e encaminhado!';
+        setTimeout(function() {
+          fecharDetalheCandidato();
+          window.location.reload();
+        }, 1500);
+      } else {
+        feedback.className = 'mt-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700';
+        feedback.textContent = d.erro || 'Erro ao aprovar.';
+      }
+    })
+    .catch(function() {
+      var feedback = document.getElementById('detalhe-feedback');
+      if (feedback) {
+        feedback.className = 'mt-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700';
+        feedback.textContent = 'Falha ao aprovar.';
+      }
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = '✓ Aprovar';
+    });
+});
+
+// Devolver candidato
+document.getElementById('btn-devolver-candidato')?.addEventListener('click', function() {
+  var pk = this.getAttribute('data-pk') || modalDetalhe?.querySelector('[data-candidato-id]')?.getAttribute('data-candidato-id');
+  if (!pk) return;
+  var obs = document.getElementById('obs-texto');
+  var obsText = obs ? obs.value.trim() : '';
+  if (!obsText) {
+    var fb = document.getElementById('detalhe-feedback');
+    if (fb) {
+      fb.className = 'mt-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700';
+      fb.textContent = 'Para devolver é obrigatório informar uma observação.';
+    }
+    return;
+  }
+  if (!window.confirm('Confirmar devolução deste candidato ao nível anterior?')) return;
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  fetch('{% url "candidatos:api_devolver" 0 %}'.replace('/0/', '/' + pk + '/'), {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrftoken(),
+      'X-Requested-With': 'XMLHttpRequest',
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'observacao=' + encodeURIComponent(obsText),
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var feedback = document.getElementById('detalhe-feedback');
+      if (d.ok) {
+        feedback.className = 'mt-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700';
+        feedback.textContent = d.mensagem || 'Candidato devolvido. E-mail enviado.';
+        setTimeout(function() {
+          fecharDetalheCandidato();
+          window.location.reload();
+        }, 1500);
+      } else {
+        feedback.className = 'mt-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700';
+        feedback.textContent = d.erro || 'Erro ao devolver.';
+      }
+    })
+    .catch(function() {
+      var feedback = document.getElementById('detalhe-feedback');
+      if (feedback) {
+        feedback.className = 'mt-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700';
+        feedback.textContent = 'Falha ao devolver.';
+      }
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = '✕ Devolver';
+    });
+});
+
+
+
+function esc(s) {
+  var d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+function fmtData(iso) {
+  if (!iso) return '';
+  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(iso));
+}
+
+function fmtDataHora(iso) {
+  if (!iso) return '';
+  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso));
+}
+</script>
+{% endif %}
+{% endblock %}

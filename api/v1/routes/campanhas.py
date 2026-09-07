@@ -4,7 +4,6 @@ Sprint 4 do PRD HAZON (4.1 — Estrutura de campanhas): listar e criar campanhas
 os envios vinculados alimentam os contadores do schema de saída.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
-
 from pydantic import BaseModel, Field
 
 from api.v1.deps import get_scope, require_edicao

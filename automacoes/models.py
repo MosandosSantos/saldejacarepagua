@@ -9,7 +9,6 @@ etapa ou negócio parado), o motor (`automacoes.engine`) roda as ações da auto
 
 from django.db import models
 
-
 TRIGGERS = [
     ('contato_criado', 'Contato novo'),
     ('negocio_criado', 'Negócio criado'),

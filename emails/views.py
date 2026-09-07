@@ -1,10 +1,10 @@
 """Views do e-mail marketing — modelos (ModeloEmail), campanha e rastreio de abertura."""
+from urllib.parse import urlparse
+
 from django.conf import settings
 from django.db.models import Count
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import get_object_or_404, redirect, render
-from urllib.parse import urlparse
-
 from django.urls import reverse
 from django.utils import timezone
 
@@ -97,7 +97,7 @@ def novo(request):
     if request.method == 'POST':
         erros = _erros_do_form(request)
         if not erros:
-            modelo = ModeloEmail.objects.create(
+            ModeloEmail.objects.create(
                 tenant_id=request.session.get('usuario', {}).get('tenant_id'),
                 nome=request.POST['nome'].strip(),
                 assunto=request.POST['assunto'].strip(),

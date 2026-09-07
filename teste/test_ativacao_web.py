@@ -37,7 +37,7 @@ def test_criar_pendente_sem_senha(tenant_aurora, admin_company):
 
 @pytest.mark.django_db(transaction=True)
 def test_pendente_nao_loga_antes_de_ativar(tenant_aurora, admin_company):
-    pend = criar_usuario_pendente(
+    criar_usuario_pendente(
         nome='Ana Nova', email='ana@aurora.com', papel=ROLE_OPERACIONAL,
         criado_por=admin_company, tenant_id=tenant_aurora.id,
     )

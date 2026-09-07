@@ -1,0 +1,137 @@
+- generic [active] [ref=f3e1]:
+  - banner [ref=f3e3]:
+    - generic [ref=f3e4]:
+      - link "GPRBR GPRBR SAL do RER" [ref=f3e5] [cursor=pointer]:
+        - /url: /dashboard/
+        - img "GPRBR" [ref=f3e6]
+        - generic [ref=f3e7]:
+          - generic [ref=f3e8]: GPRBR
+          - generic [ref=f3e9]: SAL do RER
+      - navigation [ref=f3e10]:
+        - link "Dashboard" [ref=f3e11] [cursor=pointer]:
+          - /url: /dashboard/
+        - link "Recepção" [ref=f3e17] [cursor=pointer]:
+          - /url: /recepcao/
+        - link "BAII" [ref=f3e20] [cursor=pointer]:
+          - /url: /contatos/
+        - link "Prefeitura" [ref=f3e26] [cursor=pointer]:
+          - /url: /contatos/prefeituras/
+        - link "Lojas" [ref=f3e29] [cursor=pointer]:
+          - /url: /contatos/lojas/
+        - link "Ranking" [ref=f3e32] [cursor=pointer]:
+          - /url: /tarefas/ranking/
+        - link "Comunicações" [ref=f3e36] [cursor=pointer]:
+          - /url: /comunicacao/
+        - link "Usuários" [ref=f3e40] [cursor=pointer]:
+          - /url: /equipe/
+      - generic [ref=f3e46]:
+        - button "Ativar tema claro" [ref=f3e48] [cursor=pointer]
+        - button "Menu do usuário" [ref=f3e53] [cursor=pointer]:
+          - generic [ref=f3e54]: TM
+          - generic [ref=f3e55]:
+            - generic [ref=f3e56]: Teste Modal
+            - generic [ref=f3e57]: Admin SaaS
+  - main [ref=f3e60]:
+    - heading "Funil de clientes" [level=1] [ref=f3e62]
+    - generic [ref=f3e63]:
+      - textbox "Buscar por nome ou empresa..." [ref=f3e65]
+      - combobox [ref=f3e66] [cursor=pointer]:
+        - option "Todos" [selected]
+        - option "MX"
+        - option "EN"
+        - option "CBCS"
+      - link "Exportar" [ref=f3e67] [cursor=pointer]:
+        - /url: /contatos/exportar/negocios/
+      - generic [ref=f3e71]:
+        - generic [ref=f3e72]: Total de candidatos
+        - generic [ref=f3e73]: "2"
+    - generic [ref=f3e74]:
+      - generic [ref=f3e75]:
+        - generic [ref=f3e76]:
+          - generic [ref=f3e78]: Suplica
+          - generic [ref=f3e79]: "2"
+          - button "Nova recepção em Suplica" [ref=f3e80] [cursor=pointer]
+        - generic [ref=f3e82]:
+          - generic [ref=f3e83]:
+            - generic [ref=f3e84]:
+              - generic [ref=f3e85]: MX Mosán Dias dos Santos
+              - generic [ref=f3e86]:
+                - generic "Status da candidatura" [ref=f3e87]
+                - button "Excluir candidato" [ref=f3e88] [cursor=pointer]
+            - generic [ref=f3e91]:
+              - generic [ref=f3e92]: MX
+              - text: PCO · Aurora Maconica
+            - generic [ref=f3e93]:
+              - generic [ref=f3e94]: Aguardando aprovação
+              - button "Visualizar" [ref=f3e95] [cursor=pointer]
+          - generic [ref=f3e99]:
+            - generic [ref=f3e100]:
+              - generic [ref=f3e101]: MX Mosán Dias dos Santos
+              - generic [ref=f3e102]:
+                - generic "Status da candidatura" [ref=f3e103]
+                - button "Excluir candidato" [ref=f3e104] [cursor=pointer]
+            - generic [ref=f3e107]:
+              - generic [ref=f3e108]: MX
+              - text: PCO · Aurora Maconica
+            - generic [ref=f3e109]:
+              - generic [ref=f3e110]: Convite
+              - generic [ref=f3e111]: "Envio: 06/09/2026"
+        - generic [ref=f3e112]: "Soma: R$ 0"
+      - generic [ref=f3e113]:
+        - generic [ref=f3e114]:
+          - generic [ref=f3e116]: Prefeito
+          - generic [ref=f3e117]: "0"
+          - button "Nova recepção em Prefeito" [ref=f3e118] [cursor=pointer]
+        - paragraph [ref=f3e121]: Vazio
+        - generic [ref=f3e122]: "Soma: R$ 0"
+      - generic [ref=f3e123]:
+        - generic [ref=f3e124]:
+          - generic [ref=f3e126]: Tesoureiro
+          - generic [ref=f3e127]: "0"
+          - button "Nova recepção em Tesoureiro" [ref=f3e128] [cursor=pointer]
+        - paragraph [ref=f3e131]: Vazio
+        - generic [ref=f3e132]: "Soma: R$ 0"
+      - generic [ref=f3e133]:
+        - generic [ref=f3e134]:
+          - generic [ref=f3e136]: Chanceler I
+          - generic [ref=f3e137]: "0"
+          - button "Nova recepção em Chanceler I" [ref=f3e138] [cursor=pointer]
+        - paragraph [ref=f3e141]: Vazio
+        - generic [ref=f3e142]: "Soma: R$ 0"
+      - generic [ref=f3e143]:
+        - generic [ref=f3e144]:
+          - generic [ref=f3e146]: Grão Prior
+          - generic [ref=f3e147]: "0"
+          - button "Nova recepção em Grão Prior" [ref=f3e148] [cursor=pointer]
+        - paragraph [ref=f3e151]: Vazio
+        - generic [ref=f3e152]: "Soma: R$ 0"
+      - generic [ref=f3e153]:
+        - generic [ref=f3e154]:
+          - generic [ref=f3e156]: Chanceler II
+          - generic [ref=f3e157]: "0"
+          - button "Nova recepção em Chanceler II" [ref=f3e158] [cursor=pointer]
+        - paragraph [ref=f3e161]: Vazio
+        - generic [ref=f3e162]: "Soma: R$ 0"
+      - generic [ref=f3e163]:
+        - generic [ref=f3e164]:
+          - generic [ref=f3e166]: Prefeito II
+          - generic [ref=f3e167]: "0"
+          - button "Nova recepção em Prefeito II" [ref=f3e168] [cursor=pointer]
+        - paragraph [ref=f3e171]: Vazio
+        - generic [ref=f3e172]: "Soma: R$ 0"
+      - generic [ref=f3e173]:
+        - generic [ref=f3e174]:
+          - generic [ref=f3e176]: Deputado II
+          - generic [ref=f3e177]: "0"
+          - button "Nova recepção em Deputado II" [ref=f3e178] [cursor=pointer]
+        - paragraph [ref=f3e181]: Vazio
+        - generic [ref=f3e182]: "Soma: R$ 0"
+      - generic [ref=f3e183]:
+        - generic [ref=f3e184]:
+          - generic [ref=f3e186]: Perdido
+          - generic [ref=f3e187]: "0"
+          - button "Nova recepção em Perdido" [ref=f3e188] [cursor=pointer]
+        - paragraph [ref=f3e191]: Vazio
+        - generic [ref=f3e192]: "Soma: R$ 0"
+    - text: "{# Modal de detalhe do candidato — incluído no kanban SEM contexto de servidor. Todos os campos são preenchidos via JS a partir de /candidato/api/modal-detalhe/"
+    - generic [ref=f3e193]: "/. Container em vidro jateado (frosted glass) + cards internos em azul. #}"

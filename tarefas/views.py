@@ -4,6 +4,8 @@ As tarefas são escopadas por tenant; o vencimento alimenta os lembretes
 (atrasadas, de hoje, próximas). Viewer só visualiza; admin exclui.
 """
 
+import locale
+import logging
 import re
 from datetime import date, time
 
@@ -20,9 +22,17 @@ from acesso.decorators import (
 )
 from acesso.models import Usuario
 from contatos.models import Contato
-from core.utils import tenant_id as _tenant_id, iniciais as _iniciais
+from core.utils import iniciais as _iniciais
+from core.utils import tenant_id as _tenant_id
 from tarefas.ical import gerar_ics, parse_ics
-from tarefas.models import PRIORIDADES, PRIORIDADE_CORES, Tarefa, concluir_tarefa, reabrir_tarefa
+from tarefas.models import (
+    PRIORIDADE_CORES,
+    PRIORIDADES,
+    Tarefa,
+    concluir_tarefa,
+)
+
+logger = logging.getLogger(__name__)
 
 
 def _usuario_id(request):
@@ -316,6 +326,7 @@ def _linhas_ranking(members, member_stats):
     estáticos (chamado com todos os membros, sem filtro de classe/loja).
     """
     from datetime import date
+
     from core.gprb import _months_between, _years_between
 
     hoje = date.today()
@@ -366,6 +377,7 @@ def _linhas_ranking(members, member_stats):
 def ranking(request):
     """Página de ranking de presença (baseada no PRD-RANKING)."""
     from datetime import date
+
     from core.gprb import ranking_dados
 
     classe = request.GET.get('classe', 'MX').upper().strip()
@@ -446,18 +458,16 @@ def ranking(request):
                     lojas_da_prefeitura = [{'id': r[0], 'nome': r[1]} for r in cur.fetchall()]
         finally:
             conn.close()
-    except Exception:
-        import logging
-        logging.getLogger(__name__).exception('GPRB indisponível ao listar prefeituras/lojas')
+    except Exception as e:
+        logger.exception('GPRB indisponível ao listar prefeituras/lojas: %s', e)
         prefeituras = []
         lojas_da_prefeitura = []
 
     # Formatar datas de recepção
-    import locale
     try:
         locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug('Locale pt_BR.UTF-8 não disponível: %s', e)
     for row in ranking_rows:
         try:
             d = date.fromisoformat(row['recepcao']) if row['recepcao'] else None

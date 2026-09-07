@@ -5,13 +5,17 @@ vencimento); o vencimento alimenta os lembretes (atrasadas/hoje/próximas),
 o badge do header e o alerta do dashboard.
 """
 
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from django.test import Client
 
 from contatos.models import Contato
 from tarefas.models import Tarefa
+
+
+def _hoje():
+    return datetime.now(tz=UTC).date()
 
 
 def _cliente_web(usuario):
@@ -40,14 +44,14 @@ def test_cria_tarefa_pela_lista(tenant_aurora, admin_company, usuario_operaciona
     c = _cliente_web(admin_company)
     r = c.post('/tarefas/', {
         'acao': 'criar', 'titulo': 'Reenviar proposta', 'prioridade': 'alta',
-        'vencimento': (date.today() + timedelta(days=2)).isoformat(),
+        'vencimento': (_hoje() + timedelta(days=2)).isoformat(),
         'responsavel_id': str(usuario_operacional.id),
     })
     assert r.status_code == 302
     t = Tarefa.objects.get(titulo='Reenviar proposta')
     assert t.tenant_id == tenant_aurora.id
     assert t.prioridade == 'alta'
-    assert t.vencimento == date.today() + timedelta(days=2)
+    assert t.vencimento == _hoje() + timedelta(days=2)
     assert t.responsavel_id == usuario_operacional.id
     assert t.criado_por_id == admin_company.id
     assert not t.concluida
@@ -69,22 +73,22 @@ def test_edita_tarefa(tenant_aurora, admin_company):
     r = c.post(f'/tarefas/{t.id}/editar/', {
         'titulo': 'Ligar pra confirmar horário',
         'prioridade': 'alta',
-        'vencimento': (date.today() + timedelta(days=5)).isoformat(),
+        'vencimento': (_hoje() + timedelta(days=5)).isoformat(),
     })
     assert r.status_code == 302
     t.refresh_from_db()
     assert t.titulo == 'Ligar pra confirmar horário'
     assert t.prioridade == 'alta'
-    assert t.vencimento == date.today() + timedelta(days=5)
+    assert t.vencimento == _hoje() + timedelta(days=5)
 
 
 # --- Lembretes: seções da lista ---
 
 @pytest.mark.django_db
 def test_lista_separa_atrasadas_hoje_proximas(tenant_aurora, admin_company):
-    _tarefa(tenant_aurora, titulo='Atrasada X', vencimento=date.today() - timedelta(days=2))
-    _tarefa(tenant_aurora, titulo='De hoje Y', vencimento=date.today())
-    _tarefa(tenant_aurora, titulo='Futura Z', vencimento=date.today() + timedelta(days=3))
+    _tarefa(tenant_aurora, titulo='Atrasada X', vencimento=_hoje() - timedelta(days=2))
+    _tarefa(tenant_aurora, titulo='De hoje Y', vencimento=_hoje())
+    _tarefa(tenant_aurora, titulo='Futura Z', vencimento=_hoje() + timedelta(days=3))
     c = _cliente_web(admin_company)
     html = c.get('/tarefas/').content.decode()
     assert 'Atrasada X' in html
@@ -98,7 +102,7 @@ def test_lista_separa_atrasadas_hoje_proximas(tenant_aurora, admin_company):
 
 @pytest.mark.django_db
 def test_concluir_e_reabrir(tenant_aurora, admin_company):
-    t = _tarefa(tenant_aurora, vencimento=date.today())
+    t = _tarefa(tenant_aurora, vencimento=_hoje())
     c = _cliente_web(admin_company)
     c.post(f'/tarefas/{t.id}/concluir/', {})
     t.refresh_from_db()
@@ -149,8 +153,9 @@ def test_tarefas_isoladas_por_tenant(tenant_aurora, tenant_beta, admin_company):
     assert 'Só da Aurora' in html
 
     # beta não enxerga a tarefa da aurora
-    from acesso.models import Usuario
     from django.contrib.auth.hashers import make_password
+
+    from acesso.models import Usuario
     beta_admin = Usuario.objects.create(
         nome='Beta', email='beta@beta.com', role='admin_company', tenant=tenant_beta,
         senha=make_password('senha123'),
@@ -171,7 +176,7 @@ def test_ficha_mostra_tarefas_e_cria_rapido(tenant_aurora, admin_company):
     assert 'Retornar orçamento' in html
 
     r = c.post(f'/tarefas/contato/{contato.id}/nova/', {
-        'titulo': 'Confirmar horário', 'vencimento': date.today().isoformat(),
+        'titulo': 'Confirmar horário',        'vencimento': _hoje().isoformat(),
     })
     assert r.status_code == 302
     t = Tarefa.objects.get(titulo='Confirmar horário')

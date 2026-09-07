@@ -119,6 +119,21 @@ def token_captura_do_tenant(tenant):
     return tenant.token_captura
 
 
+def tenant_gprb():
+    """Tenant GPRB canônico (o login espelha usuários GPRB nele).
+
+    Usado como fallback quando a sessão não tem tenant (admin_saas): criação de
+    candidatos, kanban e contadores precisam resolver para o MESMO tenant, senão
+    o candidato é gravado num tenant e exibido noutro ("some" do funil).
+    Preferência: slug 'gprb' → 'gprbr' → primeiro tenant existente.
+    """
+    return (
+        Tenant.objects.filter(slug='gprb').first()
+        or Tenant.objects.filter(slug='gprbr').first()
+        or Tenant.objects.first()
+    )
+
+
 class Usuario(models.Model):
     """Usuario do sistema. Roles: admin_saas (plataforma), por tenant admin_company/
     operacional/viewer e oficialato (Grão Prior, Grande Chanceler, ...)."""

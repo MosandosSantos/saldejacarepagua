@@ -17,7 +17,6 @@ from core.dominio import SEGS
 from emails.models import ModeloEmail
 from emails.servico import disparar_campanha
 
-
 _PAGINAS_EM_BREVE = {
     'ads': {
         'titulo': 'Ads',
@@ -189,7 +188,7 @@ def detalhe(request, pk):
     envios = campanha.envios.all()
 
     if request.method == 'POST':
-        if not request.session.get('usuario', {}).get('role') in ('admin_company', 'operacional'):
+        if request.session.get('usuario', {}).get('role') not in ('admin_company', 'operacional'):
             return redirect('campanhas:detalhe', pk=pk)
         if not campanha.ativa:
             erros.append('Campanha inativa — reative para disparar.')

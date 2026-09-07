@@ -8,9 +8,9 @@ import pytest
 from django.core.cache import cache
 from django.test import Client
 
-from acesso.models import Tenant, Usuario, token_captura_do_tenant
-from contatos.models import Contato, Negocio
-from funil.models import etapas_do_tenant, garantir_etapas
+from acesso.models import token_captura_do_tenant
+from contatos.models import Contato
+from recepcao.models import etapas_do_tenant, garantir_etapas
 
 
 def _cliente_web(usuario):
@@ -52,7 +52,7 @@ def test_post_cria_contato_e_negocio_na_primeira_etapa(tenant_aurora):
     garantir_etapas(tenant_aurora.id, 'saude')
     r = Client().post(_link(tenant_aurora), _dados(), REMOTE_ADDR='10.0.0.1')
     assert r.status_code == 200
-    assert 'Obrigado(a)'.encode() in r.content
+    assert b'Obrigado(a)' in r.content
 
     contato = Contato.objects.get(nome='Maria Lead')
     assert contato.tenant_id == tenant_aurora.id
@@ -79,14 +79,14 @@ def test_origem_configurada_e_aplicada(tenant_aurora):
 @pytest.mark.django_db
 def test_post_sem_nome_rejeitado(tenant_aurora):
     r = Client().post(_link(tenant_aurora), _dados(nome=''), REMOTE_ADDR='10.0.0.3')
-    assert 'Informe seu nome'.encode() in r.content
+    assert b'Informe seu nome' in r.content
     assert Contato.objects.count() == 0
 
 
 @pytest.mark.django_db
 def test_post_sem_telefone_e_email_rejeitado(tenant_aurora):
     r = Client().post(_link(tenant_aurora), _dados(tel='', email=''), REMOTE_ADDR='10.0.0.4')
-    assert 'telefone ou e-mail'.encode() in r.content
+    assert b'telefone ou e-mail' in r.content
     assert Contato.objects.count() == 0
 
 
@@ -96,7 +96,7 @@ def test_post_sem_telefone_e_email_rejeitado(tenant_aurora):
 def test_honeypot_preenchido_nao_cria(tenant_aurora):
     r = Client().post(_link(tenant_aurora), _dados(website='http://spam.com'), REMOTE_ADDR='10.0.0.5')
     assert r.status_code == 200
-    assert 'Obrigado(a)'.encode() in r.content  # responde sucesso pro robô
+    assert b'Obrigado(a)' in r.content  # responde sucesso pro robô
     assert Contato.objects.count() == 0
 
 
@@ -109,7 +109,7 @@ def test_token_desconhecido_404():
 def test_formulario_desativado_nao_aceita(tenant_aurora):
     tenant_aurora.captura_ativa = False
     tenant_aurora.save(update_fields=['captura_ativa'])
-    assert 'desativado'.encode() in Client().get(_link(tenant_aurora)).content
+    assert b'desativado' in Client().get(_link(tenant_aurora)).content
 
     Client().post(_link(tenant_aurora), _dados(), REMOTE_ADDR='10.0.0.6')
     assert Contato.objects.count() == 0
@@ -122,11 +122,11 @@ def test_rate_limit_por_ip(tenant_aurora):
     # telefones distintos: a dedup por telefone não interfere no rate limit
     for i in range(5):
         r = Client().post(link, _dados(nome=f'Lead {i}', tel=f'(11) 90000-000{i}'), REMOTE_ADDR='10.9.9.9')
-        assert 'Obrigado(a)'.encode() in r.content
+        assert b'Obrigado(a)' in r.content
     assert Contato.objects.count() == 5
 
     r6 = Client().post(link, _dados(nome='Lead 6', tel='(11) 90000-0006'), REMOTE_ADDR='10.9.9.9')
-    assert 'Muitos envios'.encode() in r6.content
+    assert b'Muitos envios' in r6.content
     assert Contato.objects.count() == 5  # o 6º não foi gravado
 
 
@@ -153,11 +153,11 @@ def test_erros_de_digitacao_nao_consomem_rate_limit(tenant_aurora):
     # 6 envios inválidos (sem nome) do mesmo IP
     for i in range(6):
         r = Client().post(link, _dados(nome=''), REMOTE_ADDR='10.8.8.8')
-        assert 'Informe seu nome'.encode() in r.content
+        assert b'Informe seu nome' in r.content
     # nenhum contato criado e o 7º envio VÁLIDO ainda passa
     assert Contato.objects.count() == 0
     r_ok = Client().post(link, _dados(nome='Lead Válido'), REMOTE_ADDR='10.8.8.8')
-    assert 'Obrigado(a)'.encode() in r_ok.content
+    assert b'Obrigado(a)' in r_ok.content
     assert Contato.objects.count() == 1
 
 

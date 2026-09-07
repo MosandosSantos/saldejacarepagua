@@ -1,5 +1,5 @@
 """Testes de autenticacao JWT (/api/v1/auth) — login, /me, validade de 7 dias."""
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
@@ -73,7 +73,7 @@ def test_me_com_token_invalido(client):
 
 @pytest.mark.django_db(transaction=True)
 def test_token_expirado_rejeitado(client, usuario_operacional):
-    agora = datetime.now(timezone.utc)
+    agora = datetime.now(UTC)
     expirado = jwt.encode(
         {
             'sub': str(usuario_operacional.id),
@@ -99,5 +99,5 @@ def test_token_tem_validade_de_7_dias(client, usuario_operacional):
     )
 
     exp = payload['exp']
-    assert isinstance(exp, int) or isinstance(exp, float)
+    assert isinstance(exp, (int, float))
     assert exp - payload['iat'] == 7 * 24 * 60 * 60

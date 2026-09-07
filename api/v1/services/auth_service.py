@@ -1,5 +1,5 @@
 """Servico de autenticacao — login e emissao/validacao de tokens JWT (validade 7 dias)."""
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 from django.conf import settings
@@ -27,7 +27,7 @@ class AuthService:
         return usuario
 
     def gerar_token(self, usuario) -> str:
-        agora = datetime.now(timezone.utc)
+        agora = datetime.now(UTC)
         payload = {
             'sub': str(usuario.id),
             'role': usuario.role,

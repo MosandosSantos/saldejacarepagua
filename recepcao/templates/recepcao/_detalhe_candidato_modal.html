@@ -1,0 +1,14 @@
+<div id="modal-visualizar-candidato" class="fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="visualizar-candidato-titulo">
+  <div class="absolute inset-0" style="background:rgba(0,0,0,.62);backdrop-filter:blur(4px)" data-fechar-visualizar-candidato></div>
+  <div class="relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#0d1f3c] p-6 shadow-2xl">
+    <div class="mb-5 flex items-center justify-between gap-3">
+      <h2 id="visualizar-candidato-titulo" class="font-display text-lg font-semibold text-white">Detalhe do Candidato</h2>
+      <button type="button" data-fechar-visualizar-candidato aria-label="Fechar"
+              class="flex h-9 w-9 items-center justify-center rounded-lg text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">✕</button>
+    </div>
+
+    <div id="visualizar-candidato-body" class="text-sm text-white">
+      Carregando…
+    </div>
+  </div>
+</div>

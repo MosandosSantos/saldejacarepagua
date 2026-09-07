@@ -1,0 +1,38 @@
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "UP", "B", "SIM", "RUF", "S", "DTZ", "BLE", "ISC"]
+ignore = [
+    "RUF012",  # Mutable class default - Django models use this pattern
+    "B008",    # Function call in default argument - Django uses this pattern
+    "DTZ011",  # call-date-today - acceptable in this codebase
+    "DTZ007",  # call-datetime-strptime-without-zone - acceptable
+    "S311",    # suspicious-non-cryptographic-random-usage - acceptable
+    "BLE001",  # blind-except - acceptable in some contexts
+    "B904",    # raise-without-from-inside-except - acceptable
+    "S608",    # hardcoded-sql-expression - raw SQL is intentional
+    "S105",    # hardcoded-password-string - false positives
+    "S110",    # try-except-pass - acceptable
+    "SIM108",  # if-else-block-instead-of-if-exp - readability choice
+    "SIM115",  # open-file-with-context-handler - acceptable
+    "SIM105",  # suppressible-exception - acceptable
+    "E402",    # module-import-not-at-top-of-file - Django patterns
+    "E701",    # multiple-statements-on-one-line-colon - acceptable
+    "E501",    # line-too-long - SVG icons and strings
+    "S104",    # hardcoded-bind-all-interfaces - acceptable in dev
+    "S308",    # suspicious-mark-safe-usage - acceptable
+    "B023",    # function-uses-loop-variable - acceptable
+    "SIM102",  # collapsible-if - readability choice
+    "RUF005",  # collection-literal-concatenation - readability choice
+    "UP031",   # printf-string-formatting - acceptable
+    "B007",    # unused-loop-control-variable - acceptable
+    "RUF003",  # ambiguous-unicode-character-comment - intentional
+    "RUF002",  # ambiguous-unicode-character-docstring - intentional
+    "E731",    # lambda-assignment - acceptable
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/migrations/*.py" = ["F401", "F841", "E501", "RUF012", "B008", "E701"]
+"teste/*" = ["S101", "S106"]

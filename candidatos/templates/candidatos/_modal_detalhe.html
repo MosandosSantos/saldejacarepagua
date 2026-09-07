@@ -1,0 +1,102 @@
+{% load static %}
+<div class="fixed inset-0 z-50 hidden items-center justify-center p-4" id="modal-candidato-detalhe" role="dialog" aria-modal="true" aria-labelledby="modal-candidato-detalhe-titulo">
+  <div class="absolute inset-0" style="background:rgba(0,0,0,.62);backdrop-filter:blur(4px)" data-fechar-detalhe-candidato></div>
+
+  <div class="relative flex w-full max-w-xl flex-col rounded-2xl border border-white/10 bg-[#0d1f3c] p-6 shadow-2xl" style="max-height:88vh">
+
+    <!-- Cabeçalho (fixo) -->
+    <div class="mb-5 flex shrink-0 items-start justify-between gap-3">
+      <div class="min-w-0">
+        <h2 id="modal-candidato-detalhe-titulo" class="font-display text-lg font-semibold text-white">Detalhe do Candidato</h2>
+        <p class="mt-0.5 truncate text-[12.5px] font-medium text-[#a6bfc7]">
+          <span data-campo="nome_completo">—</span>
+        </p>
+      </div>
+      <button type="button" data-fechar-detalhe-candidato aria-label="Fechar"
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#a6bfc7] transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">✕</button>
+    </div>
+
+    <!-- Corpo (rolável — nunca estoura a tela; botões ficam sempre visíveis) -->
+    <div class="-mr-2 flex-1 overflow-y-auto pr-2" style="min-height:0">
+      <!-- Foto -->
+      <div class="mb-4 flex justify-center">
+        <img data-campo="foto_url" alt="Foto do candidato" width="80" height="80" style="display:none" onerror="this.style.display='none'"
+             class="h-20 w-20 rounded-full border-2 border-white/20 object-cover shadow-lg">
+      </div>
+
+      <!-- Dados pessoais -->
+      <div class="mb-4 grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl border border-white/10 bg-white/5 p-4">
+        <div>
+          <span class="block text-[10px] font-bold uppercase tracking-wider text-[#bcd3da]">CPF</span>
+          <span class="font-mono text-[13px] text-white" data-campo="cpf">—</span>
+        </div>
+        <div>
+          <span class="block text-[10px] font-bold uppercase tracking-wider text-[#bcd3da]">E-mail</span>
+          <span class="text-[13px] text-white" style="overflow-wrap:anywhere" data-campo="email">—</span>
+        </div>
+        <div>
+          <span class="block text-[10px] font-bold uppercase tracking-wider text-[#bcd3da]">Celular</span>
+          <span class="text-[13px] text-white" data-campo="celular">—</span>
+        </div>
+        <div>
+          <span class="block text-[10px] font-bold uppercase tracking-wider text-[#bcd3da]">Nascimento</span>
+          <span class="text-[13px] text-white" data-campo="data_nascimento">—</span>
+        </div>
+        <div>
+          <span class="block text-[10px] font-bold uppercase tracking-wider text-[#bcd3da]">Prefeitura</span>
+          <span class="text-[13px] text-white" style="overflow-wrap:anywhere" data-campo="prefeitura">—</span>
+        </div>
+        <div>
+          <span class="block text-[10px] font-bold uppercase tracking-wider text-[#bcd3da]">Loja</span>
+          <span class="text-[13px] text-white" data-campo="loja">—</span>
+        </div>
+      </div>
+
+      <!-- Status e revisão -->
+      <div class="mb-4 flex flex-wrap items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+        <span data-status-dot class="h-2.5 w-2.5 shrink-0 rounded-full" style="background:#5b8def;box-shadow:0 0 6px #5b8def70"></span>
+        <span data-status-badge class="rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide" style="background:#5b8def1f;color:#5b8def">—</span>
+        <span class="text-[11.5px] font-medium text-[#a6bfc7]">Está com: <span class="font-semibold text-[#dce8f0]" data-campo="revisao_label">—</span></span>
+      </div>
+
+      <!-- Observações -->
+      <div class="mb-4">
+        <span class="mb-2 block text-[10px] font-bold uppercase tracking-wider text-[#bcd3da]">Observações</span>
+        <div id="observacoes-list" class="space-y-2"></div>
+        <style>
+          #observacoes-list .rounded-xl p {
+            color: #ffffff !important;
+          }
+          #observacoes-list .rounded-xl span {
+            color: #ffffff !important;
+          }
+        </style>
+      </div>
+
+      <!-- Campo de observação -->
+      <div id="obs-field-wrap" style="display:none" class="mb-2">
+        <label for="obs-texto" class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-[#bcd3da]">Nova Observação</label>
+        <textarea id="obs-texto" name="observacao" rows="2" autocomplete="off" spellcheck="false"
+                  class="w-full resize-none rounded-xl border border-white/15 bg-[#0a1e3d] px-4 py-3 text-[13.5px] text-white placeholder-[#a6bfc7] outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10"
+                  placeholder="Registre suas observações sobre este candidato..."></textarea>
+      </div>
+    </div>      <!-- Feedback -->
+    <div id="detalhe-feedback" class="mt-4 hidden shrink-0 rounded-xl border px-4 py-3 text-[13px]" aria-live="polite"></div>
+
+    <!-- Ações (fixas no rodapé, sempre na área útil) -->
+    <div class="mt-4 flex shrink-0 flex-wrap gap-3">
+      <button type="button" id="btn-aprovar-candidato" style="display:none;background:#16a34a;color:#fff;min-height:44px"
+              class="flex-1 rounded-xl px-5 py-2.5 text-[13.5px] font-semibold transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+        ✓ Aprovar
+      </button>
+      <button type="button" id="btn-devolver-candidato" style="display:none;background:#dc2626;color:#fff;min-height:44px"
+              class="flex-1 rounded-xl px-5 py-2.5 text-[13.5px] font-semibold transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+        ✕ Devolver
+      </button>
+      <button type="button" data-fechar-detalhe-candidato
+              class="rounded-xl border border-white/15 bg-white/5 px-5 text-[13px] font-semibold text-[#bcd3da] transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40" style="min-height:44px">
+        Fechar
+      </button>
+    </div>
+  </div>
+</div>

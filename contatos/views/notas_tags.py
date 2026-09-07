@@ -2,7 +2,12 @@
 
 from django.shortcuts import get_object_or_404, redirect
 
-from acesso.decorators import e_admin_do_tenant, filtro_tenant, web_login_required, web_requer_edicao
+from acesso.decorators import (
+    e_admin_do_tenant,
+    filtro_tenant,
+    web_login_required,
+    web_requer_edicao,
+)
 from contatos.forms import NotaForm
 from contatos.models import Contato, Tag
 from contatos.scoring import atualizar_score

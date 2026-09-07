@@ -5,7 +5,6 @@ tarefas, gestao, funil, relatorios, campanhas, automacoes e orcamento.
 """
 from contextlib import contextmanager
 
-
 # ---------------------------------------------------------------------------
 # Formatação
 # ---------------------------------------------------------------------------
@@ -14,17 +13,31 @@ def brl(n):
     """Formata valor em R$ completo: 'R$ 1.500,00'."""
     if n is None:
         return 'R$ 0,00'
-    return 'R$ {:,.2f}'.format(float(n)).replace(',', 'X').replace('.', ',').replace('X', '.')
+    return f'R$ {float(n):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
 
 
 def brl_curto(n):
     """Formata valor em R$ compacto: 'R$ 1,5k'."""
     n = float(n or 0)
     if n >= 1000000:
-        return 'R$ {:.1f}M'.format(n / 1000000).replace('.', ',')
+        return f'R$ {n / 1000000:.1f}M'.replace('.', ',')
     if n >= 1000:
-        return 'R$ {:.1f}k'.format(n / 1000).replace('.0', '').replace('.', ',')
-    return 'R$ {}'.format(int(n))
+        return f'R$ {n / 1000:.1f}k'.replace('.0', '').replace('.', ',')
+    return f'R$ {int(n)}'
+
+
+def parse_brl(raw):
+    """Converte string BRL para Decimal: '1.500,00' → Decimal('1500.00')."""
+    from decimal import Decimal, InvalidOperation
+    if not raw:
+        return Decimal(0)
+    try:
+        raw = str(raw).strip()
+        # Remove pontos de milhar e troca vírgula por ponto
+        valor = raw.replace('.', '').replace(',', '.')
+        return Decimal(valor)
+    except (InvalidOperation, ValueError):
+        return Decimal(0)
 
 
 def iniciais(nome):

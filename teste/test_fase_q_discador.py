@@ -308,7 +308,7 @@ def test_fila_nova(tenant_aurora, admin_company):
 def test_fila_nova_sem_nome_da_erro(tenant_aurora, admin_company):
     r = _cliente_web(admin_company).post('/discador/filas/nova/', {'nome': '  '})
     assert r.status_code == 200
-    assert 'Informe o nome da fila'.encode() in r.content
+    assert b'Informe o nome da fila' in r.content
     assert Fila.objects.count() == 0
 
 
@@ -364,7 +364,7 @@ def test_scripts_crud(tenant_aurora, admin_company):
 def test_script_sem_conteudo_da_erro(tenant_aurora, admin_company):
     r = _cliente_web(admin_company).post('/discador/scripts/nova/', {'nome': 'X', 'conteudo': '  '})
     assert r.status_code == 200
-    assert 'Escreva o roteiro'.encode() in r.content
+    assert b'Escreva o roteiro' in r.content
     assert Script.objects.count() == 0
 
 

@@ -15,9 +15,8 @@ from django.core.management import call_command
 from django.test import Client
 from django.utils import timezone
 
-from acesso.models import Tenant
 from automacoes.models import Automacao, PassoAutomacao, RegistroExecucao
-from contatos.models import Contato, Negocio, Nota, Tag, criar_negocio
+from contatos.models import Contato, Negocio, Nota, criar_negocio
 from emails.models import EmailEnviado, ModeloEmail
 from tarefas.models import Tarefa
 
@@ -177,11 +176,11 @@ def test_trigger_movido_filtra_por_etapa_destino(tenant_aurora, admin_company):
     c = _cliente_web(admin_company)
 
     # move para etapa errada → nada acontece
-    c.post(f'/funil/{negocio.id}/mover/', {'stage': 'avaliacao_feita'})
+    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'avaliacao_feita'})
     assert Nota.objects.count() == 0
 
     # move para o orçamento → dispara
-    c.post(f'/funil/{negocio.id}/mover/', {'stage': 'orcamento'})
+    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'orcamento'})
     nota = Nota.objects.get()
     assert nota.texto == 'Chegou no orçamento!'
     assert nota.contato_id == contato.id
@@ -195,7 +194,7 @@ def test_trigger_movido_sem_etapa_dispara_qualquer_mudanca(tenant_aurora, admin_
     contato = _contato(tenant_aurora)
     negocio = criar_negocio(contato, stage='interessado', tenant_id=tenant_aurora.id)
     c = _cliente_web(admin_company)
-    c.post(f'/funil/{negocio.id}/mover/', {'stage': 'avaliacao_feita'})
+    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'avaliacao_feita'})
     assert contato.tags.filter(nome='Movido').exists()
 
 
@@ -239,8 +238,9 @@ def test_acao_email_sem_endereco_nao_cria_envio(tenant_aurora, admin_company):
 
 @pytest.mark.django_db
 def test_acao_tarefa_descarta_responsavel_de_outro_tenant(tenant_aurora, tenant_beta, admin_company):
-    from acesso.models import Usuario
     from django.contrib.auth.hashers import make_password
+
+    from acesso.models import Usuario
     beta = Usuario.objects.create(nome='Beta', email='beta@x.com', role='admin_company',
                                   tenant=tenant_beta, senha=make_password('senha123'))
     auto = _auto(tenant_aurora, criado_por=admin_company)
@@ -258,7 +258,7 @@ def test_placeholders_de_etapa_e_valor(tenant_aurora, admin_company):
     contato = _contato(tenant_aurora, empresa='Clínica X')
     negocio = criar_negocio(contato, stage='interessado', valor=1500, tenant_id=tenant_aurora.id)
     c = _cliente_web(admin_company)
-    c.post(f'/funil/{negocio.id}/mover/', {'stage': 'orcamento'})
+    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'orcamento'})
     nota = Nota.objects.get()
     assert nota.texto == 'Ana agora em Orçamento enviado (R$ 1.500,00)'
 
@@ -268,8 +268,9 @@ def test_placeholders_de_etapa_e_valor(tenant_aurora, admin_company):
 
 @pytest.mark.django_db
 def test_automacao_de_outra_clinica_nao_dispara(tenant_aurora, tenant_beta, admin_company):
-    from acesso.models import Usuario
     from django.contrib.auth.hashers import make_password
+
+    from acesso.models import Usuario
     beta_admin = Usuario.objects.create(nome='Beta', email='beta@beta.com', role='admin_company',
                                         tenant=tenant_beta, senha=make_password('senha123'))
     _auto(tenant_aurora, criado_por=admin_company)

@@ -17,8 +17,9 @@ from django.utils import timezone
 from acesso.decorators import tenant_id_da_sessao, web_login_required
 from acesso.models import ROLE_ADMIN_COMPANY, ROLE_OPERACIONAL, Tenant, Usuario
 from contatos.models import Contato
+from core.utils import brl_curto as _brl_curto
+from core.utils import iniciais as _iniciais
 from discador.models import Chamada
-from core.utils import brl_curto as _brl_curto, iniciais as _iniciais
 
 
 def _periodo_por_chave(chave, hoje):
@@ -291,7 +292,7 @@ def index(request):
 @web_login_required
 def exportar_csv(request):
     """Exporta o relatório gerencial em CSV (7.3.1)."""
-    inicio, fim, label, chave = _periodo(request)
+    inicio, fim, label, _chave = _periodo(request)
     tid = tenant_id_da_sessao(request)
     operador = _operador_do_filtro(request, tid)
     operador_id = operador.id if operador is not None else None
@@ -325,7 +326,7 @@ def exportar_pdf(request):
     """Exporta o relatório gerencial em PDF (7.3.2)."""
     from relatorios.pdf import gerar_relatorio_pdf
 
-    inicio, fim, label, chave = _periodo(request)
+    inicio, fim, label, _chave = _periodo(request)
     tid = tenant_id_da_sessao(request)
     operador = _operador_do_filtro(request, tid)
     operador_id = operador.id if operador is not None else None

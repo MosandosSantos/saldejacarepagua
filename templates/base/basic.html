@@ -373,54 +373,6 @@
     {% block conteudo %}{% endblock %}
   </main>
 
-  <footer class="mt-auto border-t border-white/10 bg-[#081830]/60 backdrop-blur-xl">
-    <div class="mx-auto max-w-[1640px] px-4 py-6 sm:px-8">
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <!-- Direitos Reservados -->
-        <div class="hazon-card-sm p-4 backdrop-blur-xl">
-          <div class="mb-3 flex items-center gap-3">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#ef4444] to-[#b91c1c] shadow-md shadow-[#ef4444]/30">
-              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
-            </span>
-            <span class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Direitos Reservados</span>
-          </div>
-          <p class="text-[12px] leading-relaxed text-[#a6bfc7]">
-            Todos os direitos do aplicativo pertencem ao Grande Priorado Retificado do Brasil.
-          </p>
-        </div>
-
-        <!-- LGPD -->
-        <div class="hazon-card-sm p-4 backdrop-blur-xl">
-          <div class="mb-3 flex items-center gap-3">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#5b8def] to-[#1a5fb4] shadow-md shadow-[#5b8def]/30">
-              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            </span>
-            <span class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">LGPD</span>
-          </div>
-          <p class="text-[12px] leading-relaxed text-[#a6bfc7]">
-            Este aplicativo está em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018).
-          </p>
-        </div>
-
-        <!-- Desenvolvido por -->
-        <div class="hazon-card-sm p-4 backdrop-blur-xl">
-          <div class="mb-3 flex items-center gap-3">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#4ade80] to-[#16a34a] shadow-md shadow-[#4ade80]/30">
-              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </span>
-            <span class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Desenvolvido por</span>
-          </div>
-          <p class="text-[12px] font-medium text-[#bcd3da]">EN BAI MOSÁN DOS SANTOS</p>
-          <p class="mt-1 text-[12px] text-[#a6bfc7]">
-            <a href="tel:+5521999417095" class="transition hover:text-[#5b8def]">(21) 99941-7095</a>
-            <span class="mx-1.5 text-[#6f8a93]">·</span>
-            <a href="https://mosansantos.netlify.app" target="_blank" rel="noopener" class="transition hover:text-[#5b8def]">mosansantos.netlify.app</a>
-          </p>
-        </div>
-      </div>
-    </div>
-  </footer>
-
   <script>
     (function () {
       var btn = document.getElementById('hazon-menu-btn');
@@ -499,6 +451,7 @@
         });
       });
     })();
+  </script>
   <script>
     /* Confirmação destrutiva via data-confirm — o texto fica em atributo HTML
        (escapado pelo Django) em vez de ser montado dentro de onclick com

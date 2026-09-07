@@ -40,7 +40,7 @@ from contatos.scoring import atualizar_score
 from core.dominio import ORIGENS, PAGAMENTOS, SEGS, STAGES
 from discador.models import Chamada, Fila, Script
 from emails.models import EmailEnviado, ModeloEmail
-from funil.models import garantir_etapas
+from recepcao.models import garantir_etapas
 from tarefas.models import Tarefa
 
 # Etapas do pipeline na ordem do fluxo (base das cadeias de movimentação).
@@ -155,7 +155,7 @@ _MODELOS_EMAIL = [
 _SCRIPTS = [
     ('Cobrança amigável',
      'Roteiro para contato de cobrança com abordagem consultiva.',
-     '1. Cumprimentar pelo nome e confirmar identidade\n'
+     ('1. Cumprimentar pelo nome e confirmar identidade\n'
      '- Bom dia! Falo com {nome}? Aqui é da Loja Online.\n'
      '2. Contextualizar a pendência\n'
      '- Estamos ligando sobre o valor de R$ {valor}, referente a {procedimento}.\n'
@@ -163,17 +163,17 @@ _SCRIPTS = [
      '- Qual seria uma data viável para o senhor(a) regularizar?\n'
      '- Posso oferecer condições especiais para pagamento à vista.\n'
      '4. Fechar e registrar\n'
-     '- Combinado então: retorno em {retorno}. Obrigado pela atenção!'),
+     '- Combinado então: retorno em {retorno}. Obrigado pela atenção!')),
     ('Prospecção de novos leads',
      'Roteiro para qualificar leads novos e apresentar produtos.',
-     '1. Abrir com a origem do contato\n'
+     ('1. Abrir com a origem do contato\n'
      '- Vi que você nos procurou pelo {origem}. Como podemos ajudar?\n'
      '2. Descobrir o interesse\n'
      '- O que te motivou a nos procurar? Já fez algum procedimento parecido?\n'
      '3. Oferecer a avaliação\n'
      '- Posso agendar uma avaliação gratuita com nossa equipe.\n'
      '4. Registrar o próximo passo\n'
-     '- Vou anotar tudo aqui e confirmar seu horário por WhatsApp.'),
+     '- Vou anotar tudo aqui e confirmar seu horário por WhatsApp.')),
 ]
 
 _AUTOMACOES = [

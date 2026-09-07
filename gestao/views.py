@@ -1,17 +1,16 @@
 """Views do Dashboard de Inscricoes (GEOD-CEOD) e do Modulo de Comunicacao."""
 import json
 from datetime import timedelta
-from collections import defaultdict
 
 from django.conf import settings
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncMonth
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
 
 from acesso.decorators import pode_editar, web_login_required
-from core.utils import brl as _brl, brl_curto as _brl_curto
+from core.utils import brl as _brl
 from gestao.comunicacao import (
     disparar_async,
     listar_lojas,
@@ -19,14 +18,17 @@ from gestao.comunicacao import (
     montar_destinatarios,
 )
 from gestao.models import (
-    Campanha, Capitulo, Congressista, Inscricao, Pagamento, TipoInscricao,
+    Campanha,
+    Congressista,
+    Inscricao,
+    Pagamento,
 )
 from gestao.whatsapp import obter_qr_code, verificar_conexao
 
 
 def _evento_atual():
     """Retorna o evento mais recente (placeholder — por enquanto usa todos)."""
-    return None
+    return
 
 
 # _brl, _brl_curto → importados de core.utils

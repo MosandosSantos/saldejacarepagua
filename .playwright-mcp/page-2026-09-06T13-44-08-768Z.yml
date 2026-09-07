@@ -1,0 +1,23 @@
+- main [ref=e3]:
+  - generic "Arraste para posicionar · duplo-clique para centralizar" [ref=e9]:
+    - generic [ref=e10]:
+      - img "GPRBR" [ref=e11]
+      - generic [ref=e12]: GPRBRCRM
+    - generic [ref=e13]: Acesso restrito
+    - heading "Bem-vindo(a) de volta" [level=1] [ref=e15]
+    - paragraph [ref=e16]: Digite o seu celular e senha para acessar.
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]: Celular
+        - textbox "Celular" [ref=e21]:
+          - /placeholder: "21999417097"
+      - generic [ref=e22]:
+        - generic [ref=e23]: Senha
+        - generic [ref=e24]:
+          - textbox "Senha" [ref=e25]:
+            - /placeholder: ••••••••
+          - button "Mostrar senha" [ref=e26]
+      - button "Entrar no painel" [ref=e30]
+    - paragraph [ref=e31]:
+      - text: "Usuários de exemplo: admin@gprbr.com · carlos@lojavirtual.com Senhas geradas aleatoriamente — veja"
+      - code [ref=e32]: .env-seed

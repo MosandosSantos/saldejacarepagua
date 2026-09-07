@@ -3,7 +3,9 @@
 from contatos.models import Tag
 from contatos.scoring import NIVEIS, completude_do_contato, nivel_do_score
 from core.dominio import SEG_FALLBACK, SEGS
-from core.utils import brl as _brl, iniciais as _iniciais, tenant_id as _tenant_id
+from core.utils import brl as _brl
+from core.utils import iniciais as _iniciais
+from core.utils import tenant_id as _tenant_id
 
 CORES_TAG = ['#74b3c6', '#7fe3c4', '#fbbf24', '#c084fc', '#fb923c', '#60a5fa', '#4ade80', '#f472b6']
 
@@ -23,7 +25,11 @@ def _tags_do_tenant(request):
 
 
 def _membros_do_tenant(request):
-    """Membros (vendedores) do tenant da sessão para o select de responsável."""
+    """Membros (vendedores) do tenant da sessão para o select de responsável.
+
+    Admin_saas sem tenant não vê o select de responsável; admin_company/
+    operacional do tenant veem os próprios.
+    """
     tid = _tenant_id(request)
     if tid is None:
         return []

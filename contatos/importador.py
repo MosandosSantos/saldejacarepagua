@@ -12,9 +12,8 @@ import unicodedata
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
-from automacoes.engine import disparar
-from contatos.models import Contato, Tag, criar_negocio
-from contatos.scoring import atualizar_score
+from contatos.models import Contato, Tag
+from contatos.services import criar_negocio_para_contato
 from core.dominio import SEGS, STAGE_MAP, stages_do_nicho
 
 # Campos importaveis: (campo no modelo, rotulo exibido no mapeamento)
@@ -145,11 +144,11 @@ def _mapa_stage(nicho, etapas=None):
 
 
 def normalizar_stage(valor, nicho='saude', etapas=None):
-    """Nome ou chave de etapa -> chave canonica; desconhecido/vazio -> 'interessado'."""
+    """Nome ou chave de etapa -> chave canonica; desconhecido/vazio -> 'suplica'."""
     v = _sem_acento(valor)
     if not v:
-        return 'interessado'
-    return _mapa_stage(nicho, etapas).get(v, 'interessado')
+        return 'suplica'
+    return _mapa_stage(nicho, etapas).get(v, 'suplica')
 
 
 def normalizar_seg(valor):
@@ -309,15 +308,12 @@ def importar_linhas(cabecalhos, linhas, mapeamento, tenant_id, nicho='saude',
 
             contato.carteira = Carteira.objects.filter(pk=carteira_id, tenant_id=tenant_id).first()
         contato.save()
-        negocio = criar_negocio(
+        criar_negocio_para_contato(
             contato,
             stage=stage_key,
-            valor=v_valor if v_valor is not None else Decimal('0'),
+            valor=v_valor if v_valor is not None else Decimal(0),
             tenant_id=tenant_id,
         )
-        atualizar_score(contato)
-        disparar('contato_criado', tenant_id=tenant_id, contato=contato, negocio=negocio)
-        disparar('negocio_criado', tenant_id=tenant_id, contato=contato, negocio=negocio)
 
         for nome_tag in re.split(r'[,;]', valor(linha, 'tags')):
             nome_tag = nome_tag.strip()

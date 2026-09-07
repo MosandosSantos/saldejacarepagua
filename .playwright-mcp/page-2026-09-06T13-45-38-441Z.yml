@@ -1,0 +1,281 @@
+- generic [active] [ref=f1e1]:
+  - banner [ref=f1e3]:
+    - generic [ref=f1e4]:
+      - link "GPRBR GPRBR SAL do RER" [ref=f1e5] [cursor=pointer]:
+        - /url: /dashboard/
+        - img "GPRBR" [ref=f1e6]
+        - generic [ref=f1e7]:
+          - generic [ref=f1e8]: GPRBR
+          - generic [ref=f1e9]: SAL do RER
+      - navigation [ref=f1e10]:
+        - link "Dashboard" [ref=f1e11] [cursor=pointer]:
+          - /url: /dashboard/
+        - link "Recepção" [ref=f1e17] [cursor=pointer]:
+          - /url: /recepcao/
+        - link "BAII" [ref=f1e20] [cursor=pointer]:
+          - /url: /contatos/
+        - link "Prefeitura" [ref=f1e26] [cursor=pointer]:
+          - /url: /contatos/prefeituras/
+        - link "Lojas" [ref=f1e29] [cursor=pointer]:
+          - /url: /contatos/lojas/
+        - link "Ranking" [ref=f1e32] [cursor=pointer]:
+          - /url: /tarefas/ranking/
+        - link "Comunicações" [ref=f1e36] [cursor=pointer]:
+          - /url: /comunicacao/
+        - link "Usuários" [ref=f1e40] [cursor=pointer]:
+          - /url: /equipe/
+      - generic [ref=f1e46]:
+        - button "Ativar tema claro" [ref=f1e48] [cursor=pointer]
+        - button "Menu do usuário" [ref=f1e53] [cursor=pointer]:
+          - generic [ref=f1e54]: TM
+          - generic [ref=f1e55]:
+            - generic [ref=f1e56]: Teste Modal
+            - generic [ref=f1e57]: Admin SaaS
+  - main [ref=f1e60]:
+    - generic [ref=f1e61]:
+      - generic [ref=f1e62]:
+        - heading "VisÃ£o geral" [level=1] [ref=f1e63]
+        - paragraph [ref=f1e64]: Resumo dos seus clientes, negÃ³cios e do desempenho do time.
+      - generic [ref=f1e65]:
+        - generic [ref=f1e66]: atualizado Ã s 10:45:35
+        - button "Atualizar" [ref=f1e67] [cursor=pointer]
+    - generic [ref=f1e71]:
+      - generic [ref=f1e72]:
+        - generic [ref=f1e73]: "11"
+        - generic [ref=f1e80]: Lojas Ativas
+        - generic [ref=f1e81]: "11"
+        - generic [ref=f1e82]: "lojas do cadastro: 11"
+      - generic [ref=f1e83]:
+        - generic [ref=f1e84]: "415"
+        - generic [ref=f1e93]: Novos Membros em 2026
+        - generic [ref=f1e94]: "415"
+        - generic [ref=f1e95]: congressistas vinculados
+      - generic [ref=f1e96]:
+        - generic [ref=f1e97]: "0"
+        - generic [ref=f1e103]: Sessões no Ano
+        - generic [ref=f1e104]: "0"
+        - generic [ref=f1e105]: inscrições em 2026
+      - generic [ref=f1e106]:
+        - generic [ref=f1e107]: confirmados
+        - generic [ref=f1e113]: Caixa
+        - generic [ref=f1e114]: R$ 0,00
+        - generic [ref=f1e115]: pagamentos confirmados
+    - generic [ref=f1e116]:
+      - generic [ref=f1e117]:
+        - generic [ref=f1e118]:
+          - heading "BAIIS Ativos" [level=2] [ref=f1e119]
+          - text: "(BAIIS Cadastrados) total: 751"
+        - generic [ref=f1e121]:
+          - img [ref=f1e123]:
+            - generic [ref=f1e127]: "291"
+            - generic [ref=f1e132]: "227"
+            - generic [ref=f1e135]: "233"
+          - generic [ref=f1e136]:
+            - generic [ref=f1e137]:
+              - generic [ref=f1e139]: MX
+              - generic [ref=f1e140]: "291"
+              - generic [ref=f1e141]: 39%
+            - generic [ref=f1e142]:
+              - generic [ref=f1e144]: EN
+              - generic [ref=f1e145]: "227"
+              - generic [ref=f1e146]: 30%
+            - generic [ref=f1e147]:
+              - generic [ref=f1e149]: CBCS
+              - generic [ref=f1e150]: "233"
+              - generic [ref=f1e151]: 31%
+            - generic [ref=f1e152]:
+              - generic [ref=f1e153]: Total
+              - generic [ref=f1e154]: "751"
+      - generic [ref=f1e155]:
+        - generic [ref=f1e156]:
+          - heading "Anuidade 2026" [level=2] [ref=f1e157]
+          - text: Pagantes vs. Inadimplentes
+        - img [ref=f1e159]:
+          - generic [ref=f1e169]: 65%
+          - generic [ref=f1e170]: pagantes
+          - generic [ref=f1e171]: "0"
+          - generic [ref=f1e172]: "100"
+        - generic [ref=f1e173]:
+          - generic [ref=f1e174]:
+            - text: "Pagantes:"
+            - generic [ref=f1e176]: "488"
+          - generic [ref=f1e177]:
+            - text: "Inadimplentes:"
+            - generic [ref=f1e179]: "263"
+    - generic [ref=f1e180]:
+      - generic [ref=f1e183]:
+        - heading "Potência no Simbolismo" [level=2] [ref=f1e184]
+        - generic [ref=f1e185]: distribuição dos membros
+      - generic [ref=f1e190]:
+        - heading "Tempo na Maçonaria" [level=2] [ref=f1e191]
+        - generic [ref=f1e192]: por tempo de iniciação
+    - generic [ref=f1e195]:
+      - generic [ref=f1e197]:
+        - heading "Rito no Simbolismo" [level=2] [ref=f1e198]
+        - text: membros ativos por rito
+      - generic [ref=f1e202]:
+        - heading "Faixa Etária" [level=2] [ref=f1e203]
+        - text: membros com idade declarada (10 em 10 anos)
+    - generic [ref=f1e207]:
+      - heading "Admissões" [level=2] [ref=f1e208]
+      - generic [ref=f1e209]: últimos 36 meses
+    - generic [ref=f1e212]:
+      - generic [ref=f1e213]:
+        - generic [ref=f1e214]:
+          - heading "Ranking das Lojas" [level=3] [ref=f1e215]
+          - paragraph [ref=f1e216]: top 10 por membros
+        - generic [ref=f1e217]:
+          - generic [ref=f1e218]:
+            - generic [ref=f1e219]: "1."
+            - generic [ref=f1e220]: O Sanctuario da Paz
+            - generic [ref=f1e221]: "85"
+          - generic [ref=f1e222]:
+            - generic [ref=f1e223]: "2."
+            - generic [ref=f1e224]: Arte Real Regeneradora 11
+            - generic [ref=f1e225]: "84"
+          - generic [ref=f1e226]:
+            - generic [ref=f1e227]: "3."
+            - generic [ref=f1e228]: Cavaleiros da Luz e da Virtude
+            - generic [ref=f1e229]: "74"
+          - generic [ref=f1e230]:
+            - generic [ref=f1e231]: "4."
+            - generic [ref=f1e232]: Beneficente Espirita
+            - generic [ref=f1e233]: "73"
+          - generic [ref=f1e234]:
+            - generic [ref=f1e235]: "5."
+            - generic [ref=f1e236]: Estrela do Norte
+            - generic [ref=f1e237]: "72"
+          - generic [ref=f1e238]:
+            - generic [ref=f1e239]: "6."
+            - generic [ref=f1e240]: Loja Maconica do Oriente
+            - generic [ref=f1e241]: "63"
+          - generic [ref=f1e242]:
+            - generic [ref=f1e243]: "7."
+            - generic [ref=f1e244]: Aurora Maconica
+            - generic [ref=f1e245]: "62"
+          - generic [ref=f1e246]:
+            - generic [ref=f1e247]: "8."
+            - generic [ref=f1e248]: Harmonia e Progresso
+            - generic [ref=f1e249]: "61"
+          - generic [ref=f1e250]:
+            - generic [ref=f1e251]: "9."
+            - generic [ref=f1e252]: Loja da Estrela do Amanhecer
+            - generic [ref=f1e253]: "60"
+          - generic [ref=f1e254]:
+            - generic [ref=f1e255]: "10."
+            - generic [ref=f1e256]: Filantropia e Trabalho
+            - generic [ref=f1e257]: "59"
+      - generic [ref=f1e258]:
+        - generic [ref=f1e259]:
+          - heading "Ranking MX" [level=3] [ref=f1e260]
+          - paragraph [ref=f1e261]: lojas com mais mestres
+        - generic [ref=f1e262]:
+          - generic [ref=f1e263]:
+            - generic [ref=f1e264]: "1."
+            - generic [ref=f1e265]: Loja Maconica do Oriente
+            - generic [ref=f1e266]: "22"
+          - generic [ref=f1e267]:
+            - generic [ref=f1e268]: "2."
+            - generic [ref=f1e269]: O Sanctuario da Paz
+            - generic [ref=f1e270]: "22"
+          - generic [ref=f1e271]:
+            - generic [ref=f1e272]: "3."
+            - generic [ref=f1e273]: Harmonia e Progresso
+            - generic [ref=f1e274]: "21"
+          - generic [ref=f1e275]:
+            - generic [ref=f1e276]: "4."
+            - generic [ref=f1e277]: Arte Real Regeneradora 11
+            - generic [ref=f1e278]: "21"
+          - generic [ref=f1e279]:
+            - generic [ref=f1e280]: "5."
+            - generic [ref=f1e281]: Estrela do Norte
+            - generic [ref=f1e282]: "21"
+          - generic [ref=f1e283]:
+            - generic [ref=f1e284]: "6."
+            - generic [ref=f1e285]: Cavaleiros da Luz e da Virtude
+            - generic [ref=f1e286]: "19"
+          - generic [ref=f1e287]:
+            - generic [ref=f1e288]: "7."
+            - generic [ref=f1e289]: Loja da Estrela do Amanhecer
+            - generic [ref=f1e290]: "19"
+          - generic [ref=f1e291]:
+            - generic [ref=f1e292]: "8."
+            - generic [ref=f1e293]: Luzeiros do Sul
+            - generic [ref=f1e294]: "17"
+          - generic [ref=f1e295]:
+            - generic [ref=f1e296]: "9."
+            - generic [ref=f1e297]: Filantropia e Trabalho
+            - generic [ref=f1e298]: "16"
+          - generic [ref=f1e299]:
+            - generic [ref=f1e300]: "10."
+            - generic [ref=f1e301]: Beneficente Espirita
+            - generic [ref=f1e302]: "15"
+      - generic [ref=f1e303]:
+        - generic [ref=f1e304]:
+          - heading "Próximas Sessões" [level=3] [ref=f1e305]
+          - paragraph [ref=f1e306]: próximas 6 sessões na agenda das lojas
+        - generic [ref=f1e307]:
+          - paragraph [ref=f1e310]: Nenhuma sessão agendada
+          - paragraph [ref=f1e311]: As próximas sessões da agenda das lojas aparecem aqui.
+      - generic [ref=f1e312]:
+        - generic [ref=f1e313]:
+          - heading "Agendamento" [level=3] [ref=f1e314]
+          - paragraph [ref=f1e315]: sessões realizadas · agendadas
+        - table [ref=f1e317]:
+          - rowgroup [ref=f1e318]:
+            - row [ref=f1e319]:
+              - columnheader "Loja" [ref=f1e320]
+              - columnheader "Realizadas" [ref=f1e321]
+              - columnheader "Agendadas" [ref=f1e322]
+          - rowgroup [ref=f1e323]:
+            - row [ref=f1e324]:
+              - cell "Arte Real Regeneradora 11" [ref=f1e325]
+              - cell "3" [ref=f1e326]
+              - cell "0" [ref=f1e327]
+            - row [ref=f1e328]:
+              - cell "Aurora Maconica" [ref=f1e329]
+              - cell "3" [ref=f1e330]
+              - cell "0" [ref=f1e331]
+            - row [ref=f1e332]:
+              - cell "Estrela do Norte" [ref=f1e333]
+              - cell "3" [ref=f1e334]
+              - cell "0" [ref=f1e335]
+            - row [ref=f1e336]:
+              - cell "O Sanctuario da Paz" [ref=f1e337]
+              - cell "2" [ref=f1e338]
+              - cell "0" [ref=f1e339]
+            - row [ref=f1e340]:
+              - cell "Cavaleiros da Luz e da Virtude" [ref=f1e341]
+              - cell "1" [ref=f1e342]
+              - cell "0" [ref=f1e343]
+            - row [ref=f1e344]:
+              - cell "Beneficente Espirita" [ref=f1e345]
+              - cell "0" [ref=f1e346]
+              - cell "0" [ref=f1e347]
+            - row [ref=f1e348]:
+              - cell "Filantropia e Trabalho" [ref=f1e349]
+              - cell "0" [ref=f1e350]
+              - cell "0" [ref=f1e351]
+            - row [ref=f1e352]:
+              - cell "Harmonia e Progresso" [ref=f1e353]
+              - cell "0" [ref=f1e354]
+              - cell "0" [ref=f1e355]
+        - generic [ref=f1e356]:
+          - button "1" [ref=f1e357] [cursor=pointer]
+          - button "2" [ref=f1e358] [cursor=pointer]
+    - generic [ref=f1e359]:
+      - generic [ref=f1e360]:
+        - generic [ref=f1e361]: Direitos Reservados
+        - paragraph [ref=f1e367]: Todos os direitos do aplicativo pertencem ao Grande Priorado Retificado do Brasil.
+      - generic [ref=f1e368]:
+        - generic [ref=f1e369]: LGPD
+        - paragraph [ref=f1e374]: Este aplicativo estÃ¡ em conformidade com a Lei Geral de ProteÃ§Ã£o de Dados (Lei nÂº 13.709/2018).
+      - generic [ref=f1e375]:
+        - generic [ref=f1e376]: Desenvolvido por
+        - paragraph [ref=f1e382]: "EN BAI MOSÃ\x81N DOS SANTOS"
+        - paragraph [ref=f1e383]:
+          - link "(21) 99941-7095" [ref=f1e384] [cursor=pointer]:
+            - /url: tel:+5521999417095
+          - text: Â·
+          - link "mosansantos.netlify.app" [ref=f1e385] [cursor=pointer]:
+            - /url: https://mosansantos.netlify.app

@@ -111,7 +111,7 @@ def operador(request):
         for linha in script.conteudo.splitlines():
             linha = linha.strip()
             if linha:
-                script_passos.append(linha[2:] if linha.startswith('- ') else linha)
+                script_passos.append(linha.removeprefix('- '))
 
     return render(request, 'discador/operador.html', {
         'filas': filas,

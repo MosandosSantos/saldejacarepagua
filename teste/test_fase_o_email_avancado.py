@@ -9,7 +9,7 @@ do contato ganham convertido_em (funil, formulário web e API).
 import pytest
 from django.test import Client
 
-from contatos.models import Contato, Negocio, criar_negocio
+from contatos.models import Contato, criar_negocio
 from emails.models import EmailEnviado, ModeloEmail
 from emails.servico import _encurtar_url, reescrever_links
 
@@ -192,7 +192,7 @@ def test_campanha_envia_um_por_contato(tenant_aurora, admin_company):
 
 @pytest.mark.django_db
 def test_fechar_no_funil_marca_conversao(tenant_aurora, admin_company):
-    from funil.models import garantir_etapas
+    from recepcao.models import garantir_etapas
 
     garantir_etapas(tenant_aurora.id, 'saude')
     modelo = _modelo(tenant_aurora)
@@ -200,7 +200,7 @@ def test_fechar_no_funil_marca_conversao(tenant_aurora, admin_company):
     envio = _envio(contato, modelo)
     negocio = criar_negocio(contato, stage='interessado', tenant_id=tenant_aurora.id)
     c = _cliente_web(admin_company)
-    r = c.post(f'/funil/{negocio.id}/mover/', {'stage': 'fechado'})
+    r = c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'fechado'})
     assert r.status_code in (200, 302)  # redirect sem AJAX; JSON com X-Requested-With
     envio.refresh_from_db()
     assert envio.convertido_em is not None
@@ -213,14 +213,14 @@ def test_nao_marca_conversao_sem_fechamento(tenant_aurora, admin_company):
     envio = _envio(contato, modelo)
     negocio = criar_negocio(contato, stage='interessado', tenant_id=tenant_aurora.id)
     c = _cliente_web(admin_company)
-    c.post(f'/funil/{negocio.id}/mover/', {'stage': 'orcamento'})
+    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'orcamento'})
     envio.refresh_from_db()
     assert envio.convertido_em is None
 
 
 @pytest.mark.django_db
 def test_fechar_no_formulario_marca_conversao(tenant_aurora, admin_company):
-    from funil.models import garantir_etapas
+    from recepcao.models import garantir_etapas
 
     garantir_etapas(tenant_aurora.id, 'saude')
     modelo = _modelo(tenant_aurora)
@@ -238,7 +238,7 @@ def test_fechar_no_formulario_marca_conversao(tenant_aurora, admin_company):
 
 @pytest.mark.django_db
 def test_negocio_novo_em_fechado_marca_conversao(tenant_aurora, admin_company):
-    from funil.models import garantir_etapas
+    from recepcao.models import garantir_etapas
 
     garantir_etapas(tenant_aurora.id, 'saude')
     modelo = _modelo(tenant_aurora)
@@ -254,7 +254,7 @@ def test_negocio_novo_em_fechado_marca_conversao(tenant_aurora, admin_company):
 
 @pytest.mark.django_db
 def test_fechar_negocio_no_formulario_marca_conversao(tenant_aurora, admin_company):
-    from funil.models import garantir_etapas
+    from recepcao.models import garantir_etapas
 
     garantir_etapas(tenant_aurora.id, 'saude')
     modelo = _modelo(tenant_aurora)
@@ -279,7 +279,7 @@ def _login(client, usuario):
 
 @pytest.mark.django_db(transaction=True)
 def test_api_fechar_marca_conversao(client, tenant_aurora, usuario_operacional):
-    from funil.models import garantir_etapas
+    from recepcao.models import garantir_etapas
 
     garantir_etapas(tenant_aurora.id, 'saude')
     modelo = _modelo(tenant_aurora)
@@ -298,7 +298,7 @@ def test_api_fechar_marca_conversao(client, tenant_aurora, usuario_operacional):
 
 @pytest.mark.django_db(transaction=True)
 def test_api_atualizar_para_fechado_marca_conversao(client, tenant_aurora, usuario_operacional):
-    from funil.models import garantir_etapas
+    from recepcao.models import garantir_etapas
 
     garantir_etapas(tenant_aurora.id, 'saude')
     modelo = _modelo(tenant_aurora)
@@ -321,7 +321,7 @@ def test_lista_mostra_kpis(tenant_aurora, admin_company):
     c1 = _contato(tenant_aurora, email='c1@x.com')
     c2 = _contato(tenant_aurora, email='c2@x.com')
     e1 = _envio(c1, modelo)
-    e2 = _envio(c2, modelo)
+    _envio(c2, modelo)
     # e1 foi aberto e clicado; e2 nada
     from django.utils import timezone
 

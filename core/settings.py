@@ -23,7 +23,7 @@ DEBUG = _env_bool('DJANGO_DEBUG') or _env_bool('DEBUG', '0')
 # --- Secrets fail-fast em producao ---------------------------------------
 # S8/C2 — fallback so em DEBUG=1; em producao a ausencia das env vars aborta
 # o boot em vez de rodar com chave publica/estatica forjavel.
-_DEV_SECRET = 'chave-dev-nao-usar-em-producao'
+_DEV_SECRET = 'chave-dev-nao-usar-em-producao'  # nosec B105 - guarded by DEBUG check below
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY') or os.getenv('SECRET_KEY') or _DEV_SECRET
 
 
@@ -84,7 +84,7 @@ INSTALLED_APPS = [
     'acesso',
     'contatos',
     'dashboard',
-    'funil',
+    'recepcao',
     'emails',
     'tarefas',
     'automacoes',
@@ -92,6 +92,7 @@ INSTALLED_APPS = [
     'discador',
     'relatorios',
     'gestao',  # Dashboard de inscricoes (GEOD-CEOD)
+    'candidatos',
     # Tailwind (gera o CSS com classes utilitarias)
     'tailwind',
     'theme',
@@ -196,7 +197,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 DEFAULT_PORT = os.getenv('DJANGO_PORT', '8000')
 
 # Autenticacao JWT (camada REST/FastAPI)
-JWT_SECRET = os.getenv('JWT_SECRET', 'jwt-dev-secret-nao-usar-em-producao')
+JWT_SECRET = os.getenv('JWT_SECRET', 'jwt-dev-secret-nao-usar-em-producao')  # nosec B105 - guarded by DEBUG check below
 if not DEBUG and JWT_SECRET == 'jwt-dev-secret-nao-usar-em-producao':
     raise ImproperlyConfigured('JWT_SECRET e obrigatoria em producao (DEBUG=0).')
 TOKEN_TTL_DIAS = int(os.getenv('TOKEN_TTL_DIAS', '7'))
@@ -288,18 +289,20 @@ CSP_DIRETIVAS = {
     'form-action': "'self'",
 }
 
+# Arquivos enviados por usuários (fotos de candidatos, quitações, comprovantes)
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
+
 # ---------------------------------------------------------------------------
 # Fase E — E-mail marketing (SMTP opcional)
 # ---------------------------------------------------------------------------
-# Sem EMAIL_HOST configurado, o envio roda em MODO SIMULAÇÃO: os e-mails são
-# registrados e rastreados (pixel de abertura) mas não saem de verdade.
 EMAIL_HOST = os.getenv('EMAIL_HOST', '')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', '1') == '1'
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'GPRBRCRM <nao-responder@esferadatasci.com.br>')
-EMAIL_CONFIGURADO = bool(EMAIL_HOST)
+EMAIL_CONFIGURADO = bool(EMAIL_HOST and EMAIL_HOST_PASSWORD)
 
 # ---------------------------------------------------------------------------
 # Sprint 5 — Discador (Nation Dialer): integração com o softphone
@@ -368,3 +371,19 @@ LOGGING = {
         },
     },
 }
+
+# ---------------------------------------------------------------------------
+# Sentry — Error Tracking (opcional, so em producao)
+# ---------------------------------------------------------------------------
+SENTRY_DSN = os.getenv('SENTRY_DSN', '')
+if SENTRY_DSN and not DEBUG:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=0.1,  # 10% das transacoes
+        send_default_pii=True,
+        environment='production' if not DEBUG else 'development',
+    )

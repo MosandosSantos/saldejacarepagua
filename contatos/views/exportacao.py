@@ -9,7 +9,7 @@ from acesso.decorators import filtro_tenant, nicho_da_sessao, web_login_required
 from contatos.models import Contato, Negocio
 from contatos.views.helpers import _tenant_id
 from core.dominio import SEG_FALLBACK, SEGS
-from funil.models import etapa_map_do_tenant
+from recepcao.models import etapa_map_do_tenant
 
 
 def _resposta_csv(nome_arquivo):

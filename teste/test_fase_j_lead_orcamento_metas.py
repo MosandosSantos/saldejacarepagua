@@ -113,14 +113,14 @@ def test_mover_etapa_atualiza_score_e_kanban(tenant_aurora, usuario_operacional)
     cliente = Client()
     _sessao_web(cliente, usuario_operacional)
     r = cliente.post(
-        f'/funil/{c.negocio.id}/mover/', {'stage': 'orcamento'},
+        f'/recepcao/{c.negocio.id}/mover/', {'stage': 'orcamento'},
         HTTP_X_REQUESTED_WITH='XMLHttpRequest',
     )
     assert r.status_code == 200
     c.refresh_from_db()
     assert c.lead_score > 0
     # card do kanban mostra o nível do score (caixa baixa no template)
-    html = cliente.get('/funil/').content.decode()
+    html = cliente.get('/recepcao/').content.decode()
     assert 'quente' in html or 'morno' in html
 
 

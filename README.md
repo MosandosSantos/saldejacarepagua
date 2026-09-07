@@ -85,3 +85,70 @@ aleatoriamente e salvas em `.env-seed` (não versionado).
 
 - Domínios compartilhados (etapas do funil, segmentos) em `core/dominio.py`.
 - O antigo front estático (`index.html`, `server.js`) permanece no repositório como referência/legado.
+
+## API Reference
+
+### Endpoints Principais
+
+| Método | Endpoint | Descrição | Auth |
+|--------|----------|-----------|------|
+| POST | `/api/v1/auth/login` | Login e obter JWT | Não |
+| GET | `/api/v1/contatos/` | Listar contatos | JWT |
+| POST | `/api/v1/contatos/` | Criar contato | JWT |
+| GET | `/api/v1/negocios/` | Listar negócios | JWT |
+| POST | `/api/v1/negocios/` | Criar negócio | JWT |
+| GET | `/api/v1/tarefas/` | Listar tarefas | JWT |
+
+### Autenticação
+
+```bash
+# Login
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "senha": "senha123"}'
+
+# Resposta
+{"access_token": "eyJ...", "token_type": "bearer"}
+```
+
+### Exemplos de Uso
+
+```bash
+# Listar contatos
+curl -H "Authorization: Bearer <token>" \
+  http://localhost:8000/api/v1/contatos/
+
+# Criar contato
+curl -X POST http://localhost:8000/api/v1/contatos/ \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"nome": "João Silva", "email": "joao@example.com"}'
+```
+
+### Documentação Interativa
+
+- **Swagger UI**: `http://localhost:8000/docs`
+- **ReDoc**: `http://localhost:8000/redoc`
+
+## Health Check
+
+```bash
+# Verificar status do sistema
+curl http://localhost:8000/healthz/
+
+# Resposta (200 OK)
+{"status": "ok", "servico": "gprbr", "database": "ok"}
+```
+
+## Testes
+
+```bash
+# Rodar todos os testes
+python -m pytest teste/ -v
+
+# Rodar com coverage
+python -m pytest teste/ --cov=. --cov-report=term-missing
+
+# Verificar complexidade ciclomática
+python -m radon cc recepcao/ -s
+```

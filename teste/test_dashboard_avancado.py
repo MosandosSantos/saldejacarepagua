@@ -7,7 +7,13 @@ import pytest
 from django.test import Client
 from django.utils import timezone
 
-from contatos.models import Contato, Negocio, Nota, criar_negocio, registrar_movimentacao
+from contatos.models import (
+    Contato,
+    Negocio,
+    Nota,
+    criar_negocio,
+    registrar_movimentacao,
+)
 
 
 def _cliente_web(usuario):
@@ -61,7 +67,7 @@ def test_receita_projetada_ponderada(tenant_aurora, usuario_operacional):
 
 @pytest.mark.django_db
 def test_meta_do_mes_progresso(tenant_aurora, admin_company):
-    tenant_aurora.meta_mensal = Decimal('10000')
+    tenant_aurora.meta_mensal = Decimal(10000)
     tenant_aurora.save(update_fields=['meta_mensal'])
     _contato_com_negocio('Ana', tenant_aurora, stage='fechado', valor=2500)
     c = _cliente_web(admin_company)
@@ -84,9 +90,9 @@ def test_admin_salva_meta_no_config(tenant_aurora, admin_company):
     c = _cliente_web(admin_company)
     r = c.post('/config/', {'acao': 'meta', 'meta_mensal': '50.000,00'})
     assert r.status_code == 200
-    assert 'Meta de faturamento atualizada'.encode() in r.content
+    assert b'Meta de faturamento atualizada' in r.content
     tenant_aurora.refresh_from_db()
-    assert tenant_aurora.meta_mensal == Decimal('50000')
+    assert tenant_aurora.meta_mensal == Decimal(50000)
 
 
 @pytest.mark.django_db

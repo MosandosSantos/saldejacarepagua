@@ -1,0 +1,388 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ficha de Súplica — SAL do RER</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: #f4f1ec;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+  .cabecalho {
+    background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 55%, #dc2626 100%);
+    padding: 48px 24px 40px;
+    text-align: center;
+  }
+  .cabecalho img {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,.85);
+    background: #fff;
+    padding: 5px;
+  }
+  .cabecalho h1 {
+    margin-top: 18px;
+    color: #fff; font-size: 21px; font-weight: 400; letter-spacing: 2.5px;
+  }
+  .cabecalho p {
+    margin-top: 4px;
+    color: rgba(255,255,255,.8); font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+  }
+  .faixa {
+    height: 4px;
+    background: repeating-linear-gradient(90deg, #fff 0, #fff 12px, transparent 12px, transparent 20px);
+    background-color: #991b1b;
+  }
+  .container { max-width: 760px; margin: 0 auto; padding: 36px 16px 60px; }
+
+  .boas-vindas {
+    background: #fff; border-radius: 10px; padding: 28px 30px; margin-bottom: 24px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.06);
+  }
+  .boas-vindas h2 { font-size: 20px; font-weight: 400; color: #7f1d1d; margin-bottom: 10px; }
+  .boas-vindas p { font-size: 14.5px; line-height: 1.7; color: #374151; }
+  .boas-vindas .primeiro-nome { color: #991b1b; font-weight: bold; }
+
+  form section {
+    background: #fff; border-radius: 10px; padding: 28px 30px; margin-bottom: 18px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.06);
+  }
+  .sec-titulo {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; letter-spacing: 3px; text-transform: uppercase;
+    color: #991b1b; margin-bottom: 20px; padding-bottom: 12px;
+    border-bottom: 1px solid #f0e4e4;
+  }
+  .sec-titulo::before { content: "✦"; font-size: 13px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px 18px; }
+  .campo-full { grid-column: 1 / -1; }
+  @media (max-width: 640px) {
+    .grid, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  .campo label {
+    display: block; font-size: 11px; font-weight: bold;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: #6b7280; margin-bottom: 5px;
+  }
+  .campo label .obr { color: #dc2626; }
+  .campo input, .campo select {
+    width: 100%; padding: 11px 13px;
+    border: 1px solid #d8d2cb; border-radius: 7px;
+    font-family: Georgia, serif; font-size: 14.5px; color: #1a1a1a;
+    background: #fdfcfa; outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .campo input:focus, .campo select:focus {
+    border-color: #b91c1c;
+    box-shadow: 0 0 0 3px rgba(153,27,27,.1);
+  }
+
+  /* Upload de foto */
+  .foto-area {
+    display: flex; align-items: center; gap: 18px;
+    padding: 14px; background: #fdf5f5; border: 1px dashed #d4a0a0;
+    border-radius: 8px;
+  }
+  .foto-preview {
+    width: 84px; height: 84px; border-radius: 50%;
+    border: 2px solid #d4a0a0; object-fit: cover; background: #f4e4e4;
+    display: flex; align-items: center; justify-content: center;
+    color: #b91c1c; font-size: 10px; text-align: center;
+  }
+  .foto-info p { font-size: 12px; color: #6b7280; line-height: 1.5; }
+  .foto-btn {
+    display: inline-block; margin-top: 6px;
+    background: #991b1b; color: #fff; padding: 8px 16px;
+    border-radius: 6px; font-size: 12px; cursor: pointer;
+    font-family: Georgia, serif; letter-spacing: .5px;
+  }
+  .foto-btn:hover { background: #7f1d1d; }
+
+  /* Erros */
+  .erros-box {
+    background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+    border-radius: 8px; padding: 14px 18px; margin-bottom: 18px;
+    font-size: 13.5px; line-height: 1.6;
+  }
+  .erros-box ul { margin-left: 18px; }
+
+  /* Botão enviar */
+  .acoes { text-align: center; padding: 8px 0 0; }
+  .btn-enviar {
+    background: linear-gradient(135deg, #7f1d1d, #b91c1c);
+    color: #fff; border: none; cursor: pointer;
+    padding: 17px 54px; border-radius: 8px;
+    font-family: Georgia, serif; font-size: 15px; letter-spacing: 1.5px;
+    transition: filter .15s, transform .1s;
+  }
+  .btn-enviar:hover { filter: brightness(1.12); }
+  .btn-enviar:active { transform: scale(.98); }
+  .btn-enviar:disabled { opacity: .6; cursor: wait; }
+  .nota-rodape {
+    margin-top: 16px; font-size: 12px; color: #9ca3af; font-style: italic;
+  }
+
+  .rodape {
+    text-align: center; padding: 30px 16px 40px;
+    color: #9ca3af; font-size: 11px; line-height: 1.7;
+  }
+  .rodape b { color: #991b1b; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+
+<div class="cabecalho">
+  <img src="{% static 'img/gprbr.png' %}" alt="Símbolo do Priorado">
+  <h1>GRANDE PRIORADO RETIFICADO</h1>
+  <p>do Brasil — SAL do RER</p>
+</div>
+<div class="faixa"></div>
+
+<div class="container">
+
+  <div class="boas-vindas">
+    <h2>Bem-vindo(a), <span class="primeiro-nome">{{ primeiro_nome }}</span></h2>
+    <p>
+      Recebemos com alegria a sua indicação. A partir de agora, você fará parte de um
+      processo de admissão conduzido com o cuidado e a solenidade que a Ordem exige.
+      Preencha a ficha abaixo com atenção — estes dados seguirão para análise das
+      autoridades do Priorado.
+    </p>
+  </div>
+
+  {% if erros %}
+  <div class="erros-box">
+    <b>Verifique os seguintes itens:</b>
+    <ul>
+      {% for erro in erros %}<li>{{ erro }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="token" value="{{ token }}">
+
+    <!-- 1. Dados pessoais -->
+    <section>
+      <div class="sec-titulo">I · Dados Pessoais</div>
+      <div class="grid">
+        <div class="campo campo-full">
+          <label>Nome Completo <span class="obr">*</span></label>
+          <input type="text" name="nome_completo" required value="{{ candidato.nome_completo }}">
+        </div>
+        <div class="campo">
+          <label>CPF <span class="obr">*</span></label>
+          <input type="text" name="cpf" required maxlength="14" placeholder="000.000.000-00" value="{{ candidato.cpf }}">
+        </div>
+        <div class="campo">
+          <label>Data de Nascimento</label>
+          <input type="date" name="data_nascimento" value="{{ candidato.data_nascimento|date:'Y-m-d' }}">
+        </div>
+        <div class="campo">
+          <label>Estado Civil</label>
+          <select name="estado_civil">
+            <option value="">Selecione...</option>
+            <option value="SOLTEIRO" {% if candidato.estado_civil == 'SOLTEIRO' %}selected{% endif %}>Solteiro(a)</option>
+            <option value="CASADO" {% if candidato.estado_civil == 'CASADO' %}selected{% endif %}>Casado(a)</option>
+            <option value="DIVORCIADO" {% if candidato.estado_civil == 'DIVORCIADO' %}selected{% endif %}>Divorciado(a)</option>
+            <option value="VIUVO" {% if candidato.estado_civil == 'VIUVO' %}selected{% endif %}>Viúvo(a)</option>
+            <option value="UNIAO_ESTAVEL" {% if candidato.estado_civil == 'UNIAO_ESTAVEL' %}selected{% endif %}>União Estável</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label>Nacionalidade</label>
+          <input type="text" name="nacionalidade" value="{{ candidato.nacionalidade|default:'Brasileira' }}">
+        </div>
+        <div class="campo">
+          <label>Naturalidade (cidade)</label>
+          <input type="text" name="natural_cidade" value="{{ candidato.natural_cidade }}">
+        </div>
+        <div class="campo">
+          <label>Nome do Pai</label>
+          <input type="text" name="pai" value="{{ candidato.pai }}">
+        </div>
+        <div class="campo">
+          <label>Nome da Mãe</label>
+          <input type="text" name="mae" value="{{ candidato.mae }}">
+        </div>
+        <div class="campo">
+          <label>E-mail</label>
+          <input type="email" name="email" value="{{ candidato.email }}">
+        </div>
+        <div class="campo">
+          <label>Celular</label>
+          <input type="text" name="celular" maxlength="15" placeholder="(00) 00000-0000" value="{{ candidato.celular }}">
+        </div>
+        <div class="campo">
+          <label>Telefone de Urgência</label>
+          <input type="text" name="telefone_urgencia" maxlength="15" value="{{ candidato.telefone_urgencia }}">
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Documentos -->
+    <section>
+      <div class="sec-titulo">II · Documentos</div>
+      <div class="grid">
+        <div class="campo">
+          <label>Nº da Identidade</label>
+          <input type="text" name="identidade_numero" value="{{ candidato.identidade_numero }}">
+        </div>
+        <div class="campo">
+          <label>Órgão Emissor</label>
+          <input type="text" name="orgao_emissor" value="{{ candidato.orgao_emissor }}" placeholder="Ex.: IFP">
+        </div>
+        <div class="campo">
+          <label>Data de Emissão</label>
+          <input type="date" name="data_emissao" value="{{ candidato.data_emissao|date:'Y-m-d' }}">
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Endereço -->
+    <section>
+      <div class="sec-titulo">III · Endereço</div>
+      <div class="grid">
+        <div class="campo" style="grid-column: span 2 / 4;">
+          <label>Logradouro</label>
+          <input type="text" name="endereco_logradouro" value="{{ candidato.endereco_logradouro }}">
+        </div>
+        <div class="campo">
+          <label>Número</label>
+          <input type="text" name="endereco_numero" value="{{ candidato.endereco_numero }}">
+        </div>
+        <div class="campo">
+          <label>Complemento</label>
+          <input type="text" name="endereco_complemento" value="{{ candidato.endereco_complemento }}">
+        </div>
+        <div class="campo">
+          <label>Bairro</label>
+          <input type="text" name="endereco_bairro" value="{{ candidato.endereco_bairro }}">
+        </div>
+        <div class="campo">
+          <label>CEP</label>
+          <input type="text" name="endereco_cep" maxlength="9" placeholder="00000-000" value="{{ candidato.endereco_cep }}">
+        </div>
+        <div class="campo">
+          <label>Cidade</label>
+          <input type="text" name="endereco_cidade" value="{{ candidato.endereco_cidade }}">
+        </div>
+        <div class="campo">
+          <label>UF</label>
+          <input type="text" name="endereco_uf" maxlength="2" placeholder="RJ" value="{{ candidato.endereco_uf }}" style="text-transform:uppercase;">
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Loja simbólica -->
+    <section>
+      <div class="sec-titulo">IV · Loja Simbólica</div>
+      <div class="grid">
+        <div class="campo">
+          <label>Nome da Loja</label>
+          <input type="text" name="loja_simbolo" value="{{ candidato.loja_simbolo }}">
+        </div>
+        <div class="campo">
+          <label>Número da Loja</label>
+          <input type="text" name="numero_loja_simbolo" value="{{ candidato.numero_loja_simbolo }}">
+        </div>
+        <div class="campo">
+          <label>Data de Exaltação</label>
+          <input type="date" name="data_exaltacao" value="{{ candidato.data_exaltacao|date:'Y-m-d' }}">
+        </div>
+        <div class="campo">
+          <label>Potência do Simbolismo</label>
+          <select name="potencia_simbolo">
+            <option value="">Potência...</option>
+            <option value="COMAB" {% if candidato.potencia_simbolo == 'COMAB' %}selected{% endif %}>COMAB</option>
+            <option value="CSMMD" {% if candidato.potencia_simbolo == 'CSMMD' %}selected{% endif %}>CSMMD</option>
+            <option value="GOB" {% if candidato.potencia_simbolo == 'GOB' %}selected{% endif %}>GOB</option>
+          </select>
+        </div>
+        <div class="campo campo-full">
+          <label>Rito da Loja Simbólica</label>
+          <input type="text" name="rito_loja_simbolo" value="{{ candidato.rito_loja_simbolo }}" placeholder="Ex.: REAA, RER...">
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Fotografia e documentos -->
+    <section>
+      <div class="sec-titulo">V · Fotografia e Documentos</div>
+
+      <div class="foto-area" style="margin-bottom:16px;">
+        <img id="foto-preview" class="foto-preview" src="" alt="" style="display:none;">
+        <div id="foto-placeholder" class="foto-preview">SEM<br>FOTO</div>
+        <div class="foto-info">
+          <p><b>Fotografia oficial</b> — rosto visível, fundo neutro (obrigatória)</p>
+          <label class="foto-btn" for="id-foto">Enviar fotografia</label>
+          <input type="file" id="id-foto" name="foto" accept="image/*" style="display:none;" required>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="campo">
+          <label>Recibo de Quitação (recepção ao grau)</label>
+          <input type="file" name="quitacao" accept="image/*,application/pdf">
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Senha -->
+    <section>
+      <div class="sec-titulo">VI · Senha de Acesso</div>
+      <p style="font-size:13px;color:#6b7280;margin-bottom:16px;line-height:1.6;">
+        Defina uma senha para acompanhar o andamento da sua candidatura no portal.
+      </p>
+      <div class="grid">
+        <div class="campo">
+          <label>Senha <span class="obr">*</span></label>
+          <input type="password" name="senha" required minlength="8" placeholder="Mínimo 8 caracteres">
+        </div>
+        <div class="campo">
+          <label>Confirmar Senha <span class="obr">*</span></label>
+          <input type="password" name="confirmar_senha" required minlength="8">
+        </div>
+      </div>
+    </section>
+
+    <div class="acoes">
+      <button type="submit" class="btn-enviar">✦ &nbsp;ENVIAR SÚPLICA&nbsp; ✦</button>
+      <p class="nota-rodape">
+        Ao enviar, sua ficha seguirá para análise das autoridades do Priorado.<br>
+        Após o envio, os dados não poderão mais ser editados.
+      </p>
+    </div>
+  </form>
+
+</div>
+
+<div class="rodape">
+  <b>GRANDE PRIORADO RETIFICADO DO BRASIL</b><br>
+  SAL do RER · Ficha de Súplica
+</div>
+
+<script>
+  // Preview da foto antes do upload
+  document.getElementById('id-foto').addEventListener('change', function (e) {
+    var f = e.target.files[0];
+    if (!f) return;
+    var img = document.getElementById('foto-preview');
+    var ph = document.getElementById('foto-placeholder');
+    img.src = URL.createObjectURL(f);
+    img.style.display = 'block';
+    ph.style.display = 'none';
+  });
+</script>
+
+</body>
+</html>

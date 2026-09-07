@@ -3,16 +3,15 @@
 from django.urls import reverse
 
 from acesso.models import (
-    ROLE_ADMIN_COMPANY,
-    ROLES_ADMINISTRATIVOS,
     ROLE_DEPUTADO_MESTRE,
-    ROLES_GESTORES_USUARIOS,
-    ROLES_QUE_EDITAM,
     ROLE_GRANDE_CHANCELER,
-    ROLE_GRANDE_TESOUREIRO,
     ROLE_GRANDE_PRIOR,
     ROLE_GRANDE_SECRETARIO,
+    ROLE_GRANDE_TESOUREIRO,
     ROLE_PREFEITO,
+    ROLES_ADMINISTRATIVOS,
+    ROLES_GESTORES_USUARIOS,
+    ROLES_QUE_EDITAM,
 )
 from tarefas.models import resumo_tarefas
 
@@ -68,7 +67,7 @@ _CAMPANHA_SUBS = [
 #   carteiras ficam com 'Carteiras' ativo, não 'Contatos')
 _ROTAS = [
     ('Dashboard', 'dashboard', 'dashboard:index', _ICONE_DASH, None, set()),
-    ('Funil', 'funil', 'funil:kanban', _ICONE_FUNIL, None, set()),
+    ('Recepção', 'recepcao', 'recepcao:kanban', _ICONE_FUNIL, None, set()),
     ('BAII', 'contatos', 'contatos:lista', _ICONE_CONTATOS, None, {'carteiras', 'carteira_detalhe'}),
     ('Prefeitura', 'contatos', 'contatos:prefeituras', _ICONE_CARTEIRA, {'prefeituras'}, set()),
     ('Lojas', 'contatos', 'contatos:lojas', _ICONE_CARTEIRA, {'lojas', 'loja_detalhe'}, set()),
@@ -134,6 +133,7 @@ def _css_versao():
     """Versão do CSS compilado (mtime) — busta o cache do navegador quando o
     Tailwind regenera o arquivo durante o desenvolvimento."""
     import os
+
     from django.conf import settings
     caminho = os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'dist', 'styles.css')
     try:

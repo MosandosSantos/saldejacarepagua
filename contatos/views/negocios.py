@@ -14,23 +14,31 @@ from acesso.decorators import (
 )
 from acesso.models import Tenant
 from automacoes.engine import disparar
-from contatos.models import Contato, criar_negocio, registrar_movimentacao, tornar_principal
+from contatos.models import (
+    Contato,
+    criar_negocio,
+    registrar_movimentacao,
+    tornar_principal,
+)
 from contatos.scoring import atualizar_score
-from contatos.views.helpers import _decorar, _membros_do_tenant, _responsavel_do_post, _tenant_id
-from funil.models import etapa_map_do_tenant, etapas_do_tenant
+from contatos.views.helpers import (
+    _decorar,
+    _membros_do_tenant,
+    _responsavel_do_post,
+    _tenant_id,
+)
+from core.utils import parse_brl
+from recepcao.models import etapa_map_do_tenant, etapas_do_tenant
 
 
 def _valor_do_post(request, negocio=None):
     """Lê e valida o valor (R$) vindo do formulário de negócio; devolve (Decimal, erro)."""
     raw = (request.POST.get('valor', '') or '').strip()
     if not raw:
-        return Decimal('0'), None
-    try:
-        v = Decimal(raw.replace('.', '').replace(',', '.')) if ',' in raw else Decimal(raw)
-    except Exception:
-        return (negocio.valor if negocio else Decimal('0')), 'Informe um valor válido (ex.: 1.500,00).'
+        return Decimal(0), None
+    v = parse_brl(raw)
     if v < 0:
-        return (negocio.valor if negocio else Decimal('0')), 'O valor não pode ser negativo.'
+        return (negocio.valor if negocio else Decimal(0)), 'O valor não pode ser negativo.'
     return v, None
 
 

@@ -18,14 +18,13 @@ from django.contrib.auth.hashers import make_password
 from django.urls import reverse
 from django.utils import timezone
 
-from emails.servico import enviar_mensagem
-
 from acesso.models import (
     SENHA_PENDENTE,
-    USUARIO_PENDENTE_SENHA,
     USUARIO_ATIVO,
+    USUARIO_PENDENTE_SENHA,
     Usuario,
 )
+from emails.servico import enviar_mensagem
 
 logger = logging.getLogger(__name__)
 

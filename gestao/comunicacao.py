@@ -15,8 +15,8 @@ import logging
 import re
 import threading
 
-from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.utils import timezone
 
 from emails.servico import enviar_mensagem

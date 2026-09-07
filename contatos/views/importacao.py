@@ -5,7 +5,11 @@ import csv
 from django.http import HttpResponse
 from django.shortcuts import render
 
-from acesso.decorators import filtro_tenant, nicho_da_sessao, web_login_required, web_requer_edicao
+from acesso.decorators import (
+    nicho_da_sessao,
+    web_login_required,
+    web_requer_edicao,
+)
 from contatos.importador import (
     CAMPOS_IMPORTAVEIS,
     LIMITE_TAMANHO,
@@ -15,7 +19,7 @@ from contatos.importador import (
 )
 from contatos.models import Carteira
 from contatos.views.helpers import _tenant_id
-from funil.models import etapas_do_tenant
+from recepcao.models import etapas_do_tenant
 
 
 def _coluna_post(request, campo):

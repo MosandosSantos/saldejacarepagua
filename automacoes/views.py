@@ -20,10 +20,16 @@ from acesso.decorators import (
 )
 from acesso.models import Usuario
 from automacoes.engine import disparar, executar_estagnados
-from automacoes.models import ACOES, TRIGGERS, Automacao, PassoAutomacao, RegistroExecucao
+from automacoes.models import (
+    ACOES,
+    TRIGGERS,
+    Automacao,
+    PassoAutomacao,
+    RegistroExecucao,
+)
 from contatos.models import Contato
 from emails.models import ModeloEmail
-from funil.models import etapa_map_do_tenant, etapas_do_tenant
+from recepcao.models import etapa_map_do_tenant, etapas_do_tenant
 from tarefas.models import PRIORIDADES
 
 LIMITE_PASSOS = 20

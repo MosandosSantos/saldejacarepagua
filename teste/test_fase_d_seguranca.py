@@ -38,9 +38,8 @@ class TestCriptografia:
 
     def test_chave_diferente_falha(self):
         token = segredos.encriptar('segredo')
-        with override_settings(CRYPTO_KEY='outra-chave-mestra'):
-            with pytest.raises(ValueError):
-                segredos.desencriptar(token)
+        with override_settings(CRYPTO_KEY='outra-chave-mestra'), pytest.raises(ValueError):
+            segredos.desencriptar(token)
 
     def test_formato_invalido_falha(self):
         for lixo in ('', 'abc', 'v2:xyz', 'v1:###'):

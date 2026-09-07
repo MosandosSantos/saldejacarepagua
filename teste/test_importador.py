@@ -17,21 +17,21 @@ from contatos.models import Contato
 
 @pytest.mark.django_db
 def test_parse_csv_ponto_e_virgula():
-    cab, linhas = parse_csv('Nome;Telefone\nAna;11999999999\n'.encode())
+    cab, linhas = parse_csv(b'Nome;Telefone\nAna;11999999999\n')
     assert cab == ['Nome', 'Telefone']
     assert linhas == [['Ana', '11999999999']]
 
 
 @pytest.mark.django_db
 def test_parse_csv_virgula_com_aspas():
-    cab, linhas = parse_csv('nome,email\n"Silva, Ana",ana@x.com\n'.encode())
+    cab, linhas = parse_csv(b'nome,email\n"Silva, Ana",ana@x.com\n')
     assert cab == ['nome', 'email']
     assert linhas == [['Silva, Ana', 'ana@x.com']]
 
 
 @pytest.mark.django_db
 def test_parse_csv_sem_cabecalho():
-    cab, linhas = parse_csv('Ana;11999999999\n'.encode(), tem_cabecalho=False)
+    cab, linhas = parse_csv(b'Ana;11999999999\n', tem_cabecalho=False)
     assert cab == ['Coluna 1', 'Coluna 2']
     assert len(linhas) == 1
 
@@ -39,13 +39,13 @@ def test_parse_csv_sem_cabecalho():
 @pytest.mark.django_db
 def test_parse_csv_vazio_erro():
     with pytest.raises(ValueError):
-        parse_csv(''.encode())
+        parse_csv(b'')
 
 
 @pytest.mark.django_db
 def test_parse_csv_so_cabecalho_erro():
     with pytest.raises(ValueError):
-        parse_csv('Nome;Telefone\n'.encode())
+        parse_csv(b'Nome;Telefone\n')
 
 
 def test_normalizar_valor():
@@ -59,17 +59,17 @@ def test_normalizar_valor():
 
 
 def test_normalizar_stage():
-    assert normalizar_stage('Avaliação agendada') == 'avaliacao_agendada'
-    assert normalizar_stage('avaliacao_agendada') == 'avaliacao_agendada'
-    assert normalizar_stage('Orçamento enviado') == 'orcamento'
-    assert normalizar_stage('Desconhecido') == 'interessado'
-    assert normalizar_stage('') == 'interessado'
+    assert normalizar_stage('Suplica') == 'suplica'
+    assert normalizar_stage('suplica') == 'suplica'
+    assert normalizar_stage('Prefeito') == 'prefeito'
+    assert normalizar_stage('Desconhecido') == 'suplica'
+    assert normalizar_stage('') == 'suplica'
 
 
 def test_normalizar_seg():
-    assert normalizar_seg('Estética') == 'estetica'
-    assert normalizar_seg('estetica') == 'estetica'
-    assert normalizar_seg('Odontologia') == 'odonto'
+    assert normalizar_seg('Eletrônicos') == 'eletronicos'
+    assert normalizar_seg('eletronicos') == 'eletronicos'
+    assert normalizar_seg('Moda') == 'moda'
     assert normalizar_seg('') == ''
 
 
@@ -106,7 +106,7 @@ def test_importa_e_deduplica(tenant_aurora):
     assert Contato.objects.filter(tenant=tenant_aurora).count() == 2
     novo = Contato.objects.get(nome='Novo3')
     assert novo.stage == 'perdido'
-    assert novo.valor == Decimal('0')
+    assert novo.valor == Decimal(0)
 
 
 @pytest.mark.django_db
@@ -149,13 +149,13 @@ def test_nao_pula_duplicado_quando_desligado(tenant_aurora):
 @pytest.mark.django_db
 def test_importa_com_tags_e_segmento(tenant_aurora):
     cab = ['Nome', 'Segmento', 'Tags']
-    linhas = [['Ana', 'Estética', 'VIP, Retorno']]
+    linhas = [['Ana', 'Eletrônicos', 'VIP, Retorno']]
     rel = importar_linhas(
         cab, linhas, {'nome': 0, 'seg': 1, 'tags': 2}, tenant_aurora.id,
     )
     assert rel['importados'] == 1
     contato = Contato.objects.get(nome='Ana')
-    assert contato.seg == 'estetica'
+    assert contato.seg == 'eletronicos'
     assert sorted(contato.tags.values_list('nome', flat=True)) == ['Retorno', 'VIP']
 
 

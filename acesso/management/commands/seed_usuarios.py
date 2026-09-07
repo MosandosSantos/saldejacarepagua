@@ -11,7 +11,7 @@ from django.contrib.auth.hashers import make_password
 from django.core.management.base import BaseCommand
 
 from acesso.models import Tenant, Usuario
-from funil.models import garantir_etapas
+from recepcao.models import garantir_etapas
 
 
 class Command(BaseCommand):

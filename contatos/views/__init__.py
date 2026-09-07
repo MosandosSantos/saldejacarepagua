@@ -7,8 +7,24 @@ funcionando nos urls.py (core e do app).
 from contatos.views.campos import campos_personalizados, editar_campo, excluir_campo
 from contatos.views.captura import captura_lead
 from contatos.views.carteiras import carteira_detalhe, carteiras
-from contatos.views.crud import detalhe, editar, excluir, leads_pobres, lista, novo, membro_detalhe, membro_editar, membro_excluir, prefeituras, prefeitura_nova, prefeitura_editar, prefeitura_excluir, prefeitura_lojas_json, loja_membros_json, lojas, loja_nova, loja_detalhe, loja_editar, loja_excluir
+from contatos.views.crud import detalhe, editar, excluir, leads_pobres, lista, novo
 from contatos.views.exportacao import exportar_csv, exportar_negocios_csv
+from contatos.views.gprb_lojas import (
+    loja_detalhe,
+    loja_editar,
+    loja_excluir,
+    loja_membros_json,
+    loja_nova,
+    lojas,
+)
+from contatos.views.gprb_membros import membro_detalhe, membro_editar, membro_excluir
+from contatos.views.gprb_prefeituras import (
+    prefeitura_editar,
+    prefeitura_excluir,
+    prefeitura_lojas_json,
+    prefeitura_nova,
+    prefeituras,
+)
 from contatos.views.importacao import baixar_modelo, importar
 from contatos.views.negocios import (
     negocio_editar,
@@ -17,7 +33,12 @@ from contatos.views.negocios import (
     negocio_tornar_principal,
     orcamento_pdf,
 )
-from contatos.views.notas_tags import adicionar_nota, adicionar_tag, excluir_nota, remover_tag
+from contatos.views.notas_tags import (
+    adicionar_nota,
+    adicionar_tag,
+    excluir_nota,
+    remover_tag,
+)
 
 __all__ = [
     'adicionar_nota',
@@ -38,6 +59,12 @@ __all__ = [
     'importar',
     'leads_pobres',
     'lista',
+    'loja_detalhe',
+    'loja_editar',
+    'loja_excluir',
+    'loja_membros_json',
+    'loja_nova',
+    'lojas',
     'membro_detalhe',
     'membro_editar',
     'membro_excluir',
@@ -47,16 +74,10 @@ __all__ = [
     'negocio_tornar_principal',
     'novo',
     'orcamento_pdf',
-    'prefeituras',
-    'prefeitura_nova',
     'prefeitura_editar',
     'prefeitura_excluir',
     'prefeitura_lojas_json',
-    'loja_membros_json',
-    'lojas',
-    'loja_nova',
-    'loja_detalhe',
-    'loja_editar',
-    'loja_excluir',
+    'prefeitura_nova',
+    'prefeituras',
     'remover_tag',
 ]

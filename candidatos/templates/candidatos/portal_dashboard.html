@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal — SAL do RER</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Manrope', 'Segoe UI', sans-serif;
+    background: #0a1e3d; color: #f4fafb; min-height: 100vh;
+  }
+  .bg-fundo {
+    position: fixed; inset: 0; -webkit-backdrop-filter: blur(8px);
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(26,95,180,0.25), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 85% 90%, rgba(10,30,61,0.45), transparent 55%),
+      linear-gradient(150deg,#0f2a52 0%,#0a1e3d 55%,#0a1e3d 100%);
+  }
+  .cabecalho {
+    background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 55%, #dc2626 100%);
+    padding: 48px 24px 40px; text-align: center; position: relative; z-index: 1;
+  }
+  .cabecalho img { width: 88px; height: 88px; border-radius: 50%;
+    border: 3px solid rgba(255,255,255,.85); background: #fff; padding: 5px; }
+  .cabecalho h1 { margin-top: 18px; color: #fff; font-size: 21px; font-weight: 400; letter-spacing: 2.5px; }
+  .cabecalho p { margin-top: 4px; color: rgba(255,255,255,.8); font-size: 11px; letter-spacing: 4px; text-transform: uppercase; }
+  .faixa { height: 4px; position: relative; z-index: 1;
+    background: repeating-linear-gradient(90deg, #fff 0, #fff 12px, transparent 12px, transparent 20px);
+    background-color: #991b1b; }
+  .container { max-width: 640px; margin: 0 auto; padding: 44px 16px 60px; position: relative; z-index: 1; }
+  .card {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px; padding: 32px 28px; backdrop-filter: blur(20px);
+    box-shadow: 0 1px 6px rgba(0,0,0,.2);
+  }
+  .status-box {
+    display: inline-block; margin: 10px 0 22px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; padding: 14px 26px; font-size: 13px; color: #f4fafb;
+  }
+  .status-box b { letter-spacing: 1px; }
+  .cta { text-align: center; margin-top: 22px; }
+  .btn-enviar {
+    background: linear-gradient(135deg, #7f1d1d, #b91c1c);
+    color: #fff; border: none; cursor: pointer;
+    padding: 17px 54px; border-radius: 8px; font-size: 15px; letter-spacing: 1.5px;
+    transition: filter .15s, transform .1s;
+  }
+  .btn-enviar:hover { filter: brightness(1.12); }
+  .btn-enviar:active { transform: scale(.98); }
+  .nota { margin-top: 16px; font-size: 12px; color: #9ca3af; font-style: italic; text-align: center; }
+  .rodape { text-align: center; padding: 30px 16px 40px; color: #9ca3af; font-size: 11px; line-height: 1.7; position: relative; z-index: 1; }
+  .rodape b { color: #991b1b; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+<div class="bg-fundo"></div>
+
+<div class="cabecalho">
+  <img src="{% static 'img/gprbr.png' %}" alt="Símbolo do Priorado">
+  <h1>GRANDE PRIORADO RETIFICADO</h1>
+  <p>do Brasil — SAL do RER</p>
+</div>
+<div class="faixa"></div>
+
+<div class="container">
+  <div class="card">
+    <h2 style="font-size: 23px; font-weight: 400; color: #ef4444; margin-bottom: 14px;">
+      Olá, {{ candidato.nome_completo|default:'Candidato' }}
+    </h2>
+    <div class="status-box">
+      STATUS ATUAL: <b>{{ candidato.get_status_display }}</b>
+    </div>
+    {% if candidato.data_inscricao %}
+      <p><b>Inscrição:</b> {{ candidato.data_inscricao|date:'d/m/Y H:i' }}</p>
+    {% endif %}
+    {% if candidato.data_aprovacao %}
+      <p><b>Aprovação:</b> {{ candidato.data_aprovacao|date:'d/m/Y H:i' }}</p>
+    {% endif %}
+    {% if candidato.token_used_at %}
+      <div class="cta">
+        <a href="{% url 'candidatos:portal_suplica' token %}" class="btn-enviar">
+          ✦ Terminar a Súplica ✦
+        </a>
+        <p class="nota">
+          Você poderá acompanhar o andamento da sua candidatura pelo portal.<br>
+          Em breve você será contactado com orientações sobre a cerimônia de recepção.
+        </p>
+      </div>
+    {% else %}
+      <div class="cta">
+        <a href="{% url 'candidatos:portal_definir_senha' token %}" class="btn-enviar">
+          ✦ Definir Senha ✦
+        </a>
+        <p class="nota">
+          Defina uma senha para acompanhar o andamento da sua candidatura pelo portal.
+        </p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="rodape">
+  <b>GRANDE PRIORADO RETIFICADO DO BRASIL</b><br>
+  SAL do RER · Portal do Candidato
+</div>
+
+</body>
+</html>

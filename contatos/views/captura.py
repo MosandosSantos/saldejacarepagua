@@ -3,12 +3,12 @@
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404, render
 
-from automacoes.engine import disparar
 from acesso.models import Tenant
+from automacoes.engine import disparar
 from contatos.models import Contato, criar_negocio, so_digitos
 from contatos.scoring import atualizar_score
 from core.dominio import SEGS
-from funil.models import etapas_do_tenant
+from recepcao.models import etapas_do_tenant
 
 LIMITE_ENVIOS_POR_IP = 5
 
@@ -39,7 +39,8 @@ def captura_lead(request, token):
             if not erros:
                 # Rate limit: só conta envios válidos (5/hora por IP) — erros de
                 # digitação não bloqueiam o lead legítimo.
-                ip = request.META.get('REMOTE_ADDR', '0.0.0.0')
+                # '0.0.0.0' é fallback seguro quando REMOTE_ADDR ausente (não é bind de interface).
+                ip = request.META.get('REMOTE_ADDR', '0.0.0.0')  # nosec B104
                 chave = f'captura:{ip}'
                 enviados = int(cache.get(chave, 0) or 0)
                 if enviados >= LIMITE_ENVIOS_POR_IP:

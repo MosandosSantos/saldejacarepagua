@@ -1,11 +1,14 @@
 """Regras de negocio do tema 'contatos'."""
-from automacoes.engine import disparar
-from contatos.models import Carteira, Contato, criar_negocio, registrar_movimentacao
-from contatos.scoring import atualizar_score
 from api.v1.repositories.contato_repository import ContatoRepository
 from api.v1.schemas.contato import ContatoPayload, StageUpdate
+from contatos.models import Carteira, Contato
+from contatos.services import (
+    atualizar_negocio_do_contato,
+    criar_negocio_para_contato,
+    mover_negocio_de_etapa,
+)
 from core.dominio import NICHO_PADRAO
-from funil.models import etapa_map_do_tenant
+from recepcao.models import etapa_map_do_tenant
 
 VAZIO = '—'
 
@@ -39,6 +42,16 @@ def normalizar(dados: dict) -> dict:
     dados['valor'] = float(dados.get('valor') or 0)
     dados['cargo'] = (dados.get('cargo') or '').strip()
     return dados
+
+
+def _preparar_dados(payload, tenant_id):
+    """Normaliza, extrai stage/valor e valida — compartilhado por criar/atualizar."""
+    dados = normalizar(payload.model_dump())
+    stage = dados.pop('stage', 'interessado')
+    _validar_stage(stage, tenant_id)
+    valor = dados.pop('valor', 0)
+    dados['carteira_id'] = _validar_carteira(dados.get('carteira_id'), tenant_id)
+    return dados, stage, valor
 
 
 def _validar_carteira(carteira_id, tenant_id: int | None) -> int | None:
@@ -80,82 +93,36 @@ class ContatoService:
         """Negócio do contato; cria um padrão quando o contato ainda não tem."""
         negocio = getattr(contato, 'negocio', None)
         if negocio is None:
-            negocio = criar_negocio(contato, tenant_id=tenant_id)
+            criar_negocio_para_contato(contato, stage='novo', tenant_id=tenant_id)
+            negocio = getattr(contato, 'negocio', None)
         return negocio
 
     def criar(self, payload: ContatoPayload, tenant_id: int | None = None) -> Contato:
-        dados = normalizar(payload.model_dump())
-        stage = dados.pop('stage', 'interessado')
-        _validar_stage(stage, tenant_id)
-        valor = dados.pop('valor', 0)
-        dados['carteira_id'] = _validar_carteira(dados.get('carteira_id'), tenant_id)
+        dados, stage, valor = _preparar_dados(payload, tenant_id)
         dados['tenant_id'] = tenant_id
         contato = self._repository.create(dados)
-        negocio = criar_negocio(contato, stage=stage, valor=valor, tenant_id=tenant_id)
-        atualizar_score(contato)
-        disparar('contato_criado', tenant_id=tenant_id, contato=contato, negocio=negocio)
-        disparar('negocio_criado', tenant_id=tenant_id, contato=contato, negocio=negocio)
-        if stage == 'fechado':
-            from emails.servico import marcar_conversoes
-
-            marcar_conversoes(contato)
+        criar_negocio_para_contato(contato, stage=stage, valor=valor, tenant_id=tenant_id)
         return contato
 
     def atualizar(self, contato_id: int, payload: ContatoPayload, tenant_id: int | None = None) -> Contato:
         contato = self.obter(contato_id, tenant_id=tenant_id)
-        dados = normalizar(payload.model_dump())
-        stage = dados.pop('stage', 'interessado')
-        _validar_stage(stage, tenant_id)
-        valor = dados.pop('valor', 0)
-        dados['carteira_id'] = _validar_carteira(dados.get('carteira_id'), tenant_id)
+        dados, stage, valor = _preparar_dados(payload, tenant_id)
         atualizado = self._repository.update(contato, dados)
         negocio = self._negocio_do(atualizado, tenant_id)
-        stage_antigo = negocio.stage
-        if negocio.stage != stage:
-            # Sem usuario na API, o autor fica vazio; o histórico continua completo.
-            registrar_movimentacao(negocio, negocio.stage, stage, None)
-        negocio.stage = stage
-        negocio.valor = valor
-        negocio.titulo = atualizado.nome
-        negocio.save()
-        atualizar_score(atualizado)
-        if stage_antigo != stage:
-            disparar(
-                'negocio_movido',
-                tenant_id=tenant_id,
-                contato=atualizado,
-                negocio=negocio,
-                de_etapa=stage_antigo,
-                para_etapa=stage,
-            )
-        if stage == 'fechado':
-            from emails.servico import marcar_conversoes
-
-            marcar_conversoes(atualizado)
+        atualizar_negocio_do_contato(
+            atualizado, negocio, stage, valor,
+            tenant_id=tenant_id, stage_antigo=negocio.stage,
+        )
         return atualizado
 
     def mover_etapa(self, contato_id: int, payload: StageUpdate, tenant_id: int | None = None) -> Contato:
         _validar_stage(payload.stage, tenant_id)
         contato = self.obter(contato_id, tenant_id=tenant_id)
         negocio = self._negocio_do(contato, tenant_id)
-        if negocio.stage != payload.stage:
-            de_etapa = negocio.stage
-            registrar_movimentacao(negocio, negocio.stage, payload.stage, None)
-            negocio.stage = payload.stage
-            negocio.save(update_fields=['stage', 'updated_at'])
-            atualizar_score(contato)
-            disparar(
-                'negocio_movido',
-                tenant_id=tenant_id,
-                contato=contato,
-                negocio=negocio,
-                de_etapa=de_etapa,
-                para_etapa=payload.stage,
-            )
-            if payload.stage == 'fechado':
-                from emails.servico import marcar_conversoes
-
-                marcar_conversoes(contato)
+        mover_negocio_de_etapa(
+            negocio, contato, payload.stage,
+            usuario_id=None, tenant_id=tenant_id,
+        )
         return contato
 
     def excluir(self, contato_id: int, tenant_id: int | None = None) -> None:

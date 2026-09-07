@@ -1,6 +1,6 @@
 """Schemas Pydantic do tema 'acesso' — autenticacao, usuarios, tenants."""
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -17,7 +17,7 @@ class UsuarioCreate(BaseModel):
     email: EmailStr
     senha: str = Field(min_length=8)
     role: Role
-    tenant_id: Optional[int] = None
+    tenant_id: int | None = None
 
 
 class UsuarioOut(BaseModel):
@@ -27,7 +27,7 @@ class UsuarioOut(BaseModel):
     nome: str
     email: str
     role: str
-    tenant_id: Optional[int] = None
+    tenant_id: int | None = None
     created_at: datetime
 
 

@@ -1,5 +1,6 @@
 ﻿"""Testes dos endpoints de contatos (/api/v1/contatos) — auth obrigatoria + isolamento por tenant."""
 import pytest
+
 from contatos.models import Contato, Negocio
 
 

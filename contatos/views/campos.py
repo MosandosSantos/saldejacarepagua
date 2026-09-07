@@ -5,8 +5,6 @@ import re
 from django.shortcuts import get_object_or_404, redirect, render
 
 from acesso.decorators import (
-    filtro_tenant,
-    nicho_da_sessao,
     web_login_required,
     web_requer_admin,
 )
