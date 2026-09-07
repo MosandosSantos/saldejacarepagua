@@ -1,43 +1,86 @@
-# Contexto do build Docker — manter a imagem enxuta e sem segredos.
-.git
-.gitignore
-.venv
-venv
-env
-__pycache__
+# Python
+__pycache__/
 *.py[cod]
-*.egg-info
-.pytest_cache
-.mypy_cache
-.coverage
-htmlcov
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Node (legado + tailwind)
-node_modules
-theme/static_src/node_modules
-
-# Artefatos de build / coletados (regenerados no Dockerfile)
-staticfiles
-theme/static/css/dist
-
-# Ambiente / segredos
+# Virtual environments
+venv/
 .env
-.env.*
-*.log
-*.sqlite3
-db.sqlite3
-*.pem
-*.key
+.venv/
+env/
+.env.local
+.env.*.local
 
-# Editores / SO
-.vscode
-.idea
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# OS
 .DS_Store
 Thumbs.db
+*.lnk
 
-# Conteudo nao necessario na imagem
-teste
-DOCS
-.codex
-.agents
-.impeccable
+# Git
+.git/
+.gitignore
+
+# Docker (não copiar para dentro do container)
+docker-compose*.yml
+Dockerfile*
+entrypoint.sh
+nginx.conf
+*.md
+!README.md
+LICENSE
+AUTHORS
+
+# Tests
+test/
+tests/
+teste/
+.coverage
+htmlcov/
+.pytest_cache/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+
+# Mídia não committed
+media/*
+
+# Arquivos temporários
+*.tmp
+*.temp

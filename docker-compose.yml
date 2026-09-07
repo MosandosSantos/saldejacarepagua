@@ -1,0 +1,149 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # PostgreSQL - Banco de Dados
+  # ============================================
+  db:
+    image: postgres:15-alpine
+    container_name: gprbr-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-gprbr}
+      POSTGRES_USER: ${DB_USER:-gprbr}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-securepassword123}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-gprbr} -d ${DB_NAME:-gprbr}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gprbr-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # Redis - Cache e Sessões
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: gprbr-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gprbr-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # Aplicação Django + FastAPI
+  # ============================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.13}
+    container_name: gprbr-app
+    restart: unless-stopped
+    environment:
+      # Django
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-core.settings}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-change-this-in-production}
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
+      
+      # Database
+      - DATABASE_URL=postgresql://${DB_USER:-gprbr}:${DB_PASSWORD:-securepassword123}@db:5432/${DB_NAME:-gprbr}
+      
+      # Redis
+      - REDIS_URL=redis://redis:6379/0
+      
+      # Email (opcional)
+      - EMAIL_HOST=${EMAIL_HOST:-}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
+      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-True}
+      
+      # Tenant
+      - GPRB_TENANT_ID=${GPRB_TENANT_ID:-}
+      - GPRB_TENANT_NAME=${GPRB_TENANT_NAME:-}
+      
+      # Segurança
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-*}
+    volumes:
+      - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+      - ./logs:/app/logs
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gprbr-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  # ============================================
+  # Nginx - Reverse Proxy (Opcional)
+  # ============================================
+  nginx:
+    image: nginx:alpine
+    container_name: gprbr-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./media:/app/media:ro
+      - ./staticfiles:/app/staticfiles:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - app
+    networks:
+      - gprbr-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  gprbr-network:
+    driver: bridge

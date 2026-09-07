@@ -1,48 +1,89 @@
-# =============================================================================
-# GPRBRCRM — imagem de producao (Railway)
-#
-# Servidor: uvicorn (ASGI) servindo Django (painel web) + FastAPI (/api/v1)
-# no mesmo processo e porta (core.asgi).
-# Build: instala Node.js para compilar o CSS do Tailwind e coleta os estaticos
-# (servidos pelo WhiteNoise em runtime).
-# =============================================================================
-FROM python:3.12-slim
+# ============================================
+# STAGE 1: Build - Instala dependências
+# ============================================
+FROM python:${PYTHON_VERSION:-3.13}-slim AS builder
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    NPM_CONFIG_FUND=false \
-    NPM_CONFIG_AUDIT=false
+# Evita warnings de buffer
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
-WORKDIR /app
-
-# Node.js 20 — necessario apenas para o build do Tailwind (django-tailwind).
-# Chromium + Xvfb — WhatsApp Web via PyWhatKit (modulo de Comunicacao, PRD_comunicacao):
-# o pywhatkit abre o navegador padrao (BROWSER) e o pyautogui precisa de display (Xvfb).
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl ca-certificates chromium xvfb python3-xlib fonts-liberation \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
+# Instala dependências do sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    postgresql-client \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Dependencias Python (camada em cache: so muda quando requirements.txt muda).
+# Cria diretório de trabalho
+WORKDIR /build
+
+# Copia e instala dependências Python
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --user -r requirements.txt
 
-# Codigo-fonte do projeto (ver .dockerignore).
-COPY . .
+# ============================================
+# STAGE 2: Runtime - Imagem leve de produção
+# ============================================
+FROM python:${PYTHON_VERSION:-3.13}-slim
 
-# Compila o Tailwind e coleta estaticos. DJANGO_DEBUG=1 SOMENTE neste RUN: as
-# env vars de segredo ainda nao existem no build; em runtime o Railway injeta as
-# reais (DJANGO_SECRET_KEY/JWT_SECRET), preservando o fail-fast em producao.
-RUN DJANGO_DEBUG=1 python manage.py tailwind install \
-    && DJANGO_DEBUG=1 python manage.py tailwind build \
-    && DJANGO_DEBUG=1 python manage.py collectstatic --noinput
+# Evita warnings de buffer
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    # Diretórios
+    APP_HOME=/app \
+    # Arquitetura de pasta
+    PJ_VERSION=1.0.0
 
-ENV BROWSER="chromium --no-sandbox %s"
+# Cria usuário não-root para segurança
+RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
 
+# Instala dependências mínimas do sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Cria estrutura de diretórios
+RUN mkdir -p ${APP_HOME}/{media,staticfiles,logs} \
+    && chown -R appuser:appuser ${APP_HOME}
+
+WORKDIR ${APP_HOME}
+
+# Copia dependências instaladas do stage de build
+COPY --from=builder /root/.local /root/.local
+ENV PATH=/root/.local/bin:$PATH
+
+# Copia código da aplicação
+COPY --chown=appuser:appuser . .
+
+# Permissões
+RUN chmod +x manage.py \
+    && find . -name "*.py" -exec chmod 644 {} \; \
+    && find . -type d -exec chmod 755 {} \;
+
+# Troca para usuário não-root
+USER appuser
+
+# Expose port
 EXPOSE 8000
 
-# $PORT e injetado pelo Railway; fallback 8000 para rodar fora da plataforma.
-# xvfb-run da display ao pyautogui (envio de WhatsApp via PyWhatKit) no headless.
-CMD ["sh", "-c", "xvfb-run -a uvicorn core.asgi:application --host 0.0.0.0 --port ${PORT:-8000} --workers 2"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/')" || exit 1
+
+# ============================================
+# Comandos disponíveis
+# ============================================
+
+# Development: rodar servidor de desenvolvimento
+# docker run -p 8000:8000 -e DJANGO_DEBUG=True gprbr-app:latest
+
+# Production: rodar com Gunicorn + Uvicorn
+# docker run -p 8000:8000 gprbr-app:latest
+
+# ============================================
+# Default: Entrypoint com migrações e servidor
+# ============================================
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
