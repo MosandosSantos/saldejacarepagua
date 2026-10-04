@@ -1,0 +1,31 @@
+[run]
+source = .
+omit =
+    .venv/*
+    staticfiles/*
+    logs/*
+    htmlcov/*
+    theme/static_src/*
+    */migrations/*
+    teste/*
+    manage.py
+    core/wsgi.py
+    core/asgi.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    raise NotImplementedError
+show_missing = True
+skip_empty = True
+
+# Quality gate: `coverage report` falha (exit != 0) abaixo deste piso.
+# Baseline = 68% (suíte completa de out/2026, após remoção de campanhas/
+# discador/relatorios — os piores são core/gprb/members.py e ranking.py).
+# Subir gradualmente conforme novos testes cobrem os gaps (meta: 80%).
+fail_under = 68
+precision = 1
+
+[html]
+directory = htmlcov

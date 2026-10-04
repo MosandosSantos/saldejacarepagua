@@ -2,7 +2,7 @@
 # GPRBR CRM - Makefile de Docker
 # ============================================
 
-.PHONY: help build up down restart logs shell migrate createsuperuser test health
+.PHONY: help build up down restart logs shell migrate createsuperuser test health test-local coverage quality-gate coverage-html
 
 # Variáveis
 COMPOSE_FILE := docker-compose.yml
@@ -88,6 +88,25 @@ test:  ## 🧪  Roda testes Django
 
 lint:  ## 🔍  Roda linting (se configurado)
 	docker-compose -f $(COMPOSE_FILE) exec app python -m flake8 .
+
+# ============================================
+# Qualidade (local, sem Docker)
+# ============================================
+
+PYTHON := .venv/Scripts/python.exe
+REGRESSAO := teste/test_rbac_web.py teste/test_gprb_writes.py teste/test_potencia_web.py teste/test_gprb_transaction.py teste/test_loja_web.py teste/test_membro_web.py
+
+test-local:  ## 🧪  Suíte de regressão do módulo GPRB (local, rápido)
+	$(PYTHON) -m pytest $(REGRESSAO) -q
+
+coverage:  ## 📊  Suíte completa com medição de cobertura (coverage run)
+	$(PYTHON) -m coverage run -m pytest teste/ -q
+
+quality-gate:  ## 🚦  Quality gate: falha se cobertura < fail_under do .coveragerc
+	$(PYTHON) -m coverage report
+
+coverage-html:  ## 📈  Gera relatório HTML (htmlcov/index.html)
+	$(PYTHON) -m coverage html
 
 # ============================================
 # Health checks
