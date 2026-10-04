@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Lojas{% endblock %}
+{% block titulo %}SAL DA BRITÂNEA CRM — Lojas{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7 flex items-end justify-between">
@@ -24,16 +24,17 @@
 </div>
 
 <div class="overflow-x-auto hazon-card">
-  <table class="w-full min-w-[900px] border-collapse">
+  <table class="w-full min-w-[1100px] border-collapse">
     <thead>
       <tr class="border-b border-white/10 text-left">
         <th class="w-10 px-3 py-4"></th>
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Nome</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Prefeitura</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Deputado Mestre</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Regiao</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Potência</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Presidente</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Secretário</th>
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Cidade/UF</th>
         <th class="px-5 py-4 text-center text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Membros</th>
+        <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Mensalidade</th>
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Situacao</th>
         <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Acoes</th>
       </tr>
@@ -53,13 +54,10 @@
         </td>
         <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ l.prefeitura }}</td>
         <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ l.deputado_mestre }}</td>
-        <td class="px-5 py-3.5">
-          {% if l.regiao %}
-            <span class="inline-flex items-center gap-1.5 rounded-full border border-[#5b8def]/25 bg-[#5b8def]/10 px-2.5 py-1 text-[11px] font-semibold text-[#5b8def]">{{ l.regiao }}</span>
-          {% endif %}
-        </td>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ l.secretario }}</td>
         <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ l.cidade }}{% if l.uf %}/{{ l.uf }}{% endif %}</td>
         <td class="px-5 py-3.5 text-center font-mono text-[14px] font-bold text-white">{{ l.total_membros }}</td>
+        <td class="px-5 py-3.5 text-right font-mono text-[13px] {% if l.mensalidade %}text-[#4ade80]{% else %}text-[#6f8a93]{% endif %}">{% if l.mensalidade %}R$ {{ l.mensalidade }}{% else %}—{% endif %}</td>
         <td class="px-5 py-3.5">
           {% if l.situacao == 'ATIVA' %}
             <span class="inline-flex items-center gap-1.5 rounded-full border border-[#4ade80]/25 bg-[#4ade80]/10 px-2.5 py-1 text-[11px] font-semibold text-[#4ade80]">
@@ -87,7 +85,7 @@
       </tr>
       <!-- Drill-down container for membros -->
       <tr class="drill-membros-loja" data-loja-id="{{ l.id }}" style="display:none;">
-        <td colspan="9" class="px-0 py-0">
+        <td colspan="10" class="px-0 py-0">
           <div class="bg-white/[0.02] px-12 py-3">
             <div class="membros-container-loja" data-loja-id="{{ l.id }}">
               <p class="py-4 text-center text-[12px] text-[#6f8a93]">Carregando membros...</p>
@@ -97,7 +95,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="9" class="px-5 py-12 text-center text-[14px] text-[#a6bfc7]">Nenhuma loja encontrada.</td>
+        <td colspan="10" class="px-5 py-12 text-center text-[14px] text-[#a6bfc7]">Nenhuma loja encontrada.</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -110,7 +108,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-  var classColors = { 'MX': '#3b82f6', 'EN': '#5b8def', 'CBCS': '#93b8f7' };
 
   document.querySelectorAll('.btn-expand-loja').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -144,11 +141,10 @@ document.addEventListener('DOMContentLoaded', function () {
           }
 
           // Calcular totais
-          var totais = { MX: 0, EN: 0, CBCS: 0, ativos: 0, inativos: 0 };
+          var totais = { ativos: 0, inativos: 0 };
           membros.forEach(function (m) {
             if (m.situacao === 'ATIVO') {
               totais.ativos++;
-              if (totais[m.classe] !== undefined) totais[m.classe]++;
             } else {
               totais.inativos++;
             }
@@ -159,17 +155,14 @@ document.addEventListener('DOMContentLoaded', function () {
           // Header
           html += '<thead><tr class="border-b border-white/10 text-left">';
           html += '<th class="px-4 py-2.5 text-[12px] font-bold uppercase tracking-wider text-[#a6bfc7]">Nome</th>';
-          html += '<th class="px-4 py-2.5 text-center text-[12px] font-bold uppercase tracking-wider text-[#a6bfc7]">Classe</th>';
           html += '<th class="px-4 py-2.5 text-center text-[12px] font-bold uppercase tracking-wider text-[#a6bfc7]">Situacao</th>';
           html += '</tr></thead><tbody>';
 
           // Membros rows
           membros.forEach(function (m) {
-            var cor = classColors[m.classe] || '#a6bfc7';
             var corSituacao = m.situacao === 'ATIVO' ? '#4ade80' : '#ef4444';
             html += '<tr class="border-b border-white/[0.03] hover:bg-white/[0.03]">';
             html += '<td class="px-4 py-2 text-[12px] text-[#bcd3da]">' + m.nome + '</td>';
-            html += '<td class="px-4 py-2 text-center"><span class="inline-block rounded px-2 py-0.5 text-[10px] font-bold" style="background:' + cor + '20;color:' + cor + '">' + m.classe + '</span></td>';
             html += '<td class="px-4 py-2 text-center"><span class="inline-block rounded-full px-2 py-0.5 text-[10px] font-bold" style="background:' + corSituacao + '20;color:' + corSituacao + '">' + m.situacao + '</span></td>';
             html += '</tr>';
           });
@@ -178,9 +171,8 @@ document.addEventListener('DOMContentLoaded', function () {
           html += '<tr class="border-t-2 border-white/10 bg-white/[0.03] font-bold">';
           html += '<td class="px-4 py-2.5 text-[11px] text-[#a6bfc7]" colspan="1">TOTAL</td>';
           html += '<td class="px-4 py-2.5 text-center text-[11px]">';
-          html += '<span style="color:#3b82f6">MX:' + totais.MX + '</span> &middot; ';
-          html += '<span style="color:#5b8def">EN:' + totais.EN + '</span> &middot; ';
-          html += '<span style="color:#93b8f7">CBCS:' + totais.CBCS + '</span>';
+          html += '<span style="color:#4ade80">' + totais.ativos + ' ativos</span> &middot; ';
+          html += '<span style="color:#ef4444">' + totais.inativos + ' inativos</span>';
           html += '</td>';
           html += '<td class="px-4 py-2.5 text-center text-[11px]">';
           html += '<span style="color:#4ade80">' + totais.ativos + ' ativos</span> &middot; ';

@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — {{ loja.nome }}{% endblock %}
+{% block titulo %}SAL DA BRITÂNEA CRM — {{ loja.nome }}{% endblock %}
 
 {% block conteudo %}
 <div class="mb-6">
@@ -22,11 +22,6 @@
           {% if loja.prefeitura and loja.prefeitura != '—' %}
           <span class="inline-flex items-center gap-1.5 rounded-full border border-[#5b8def]/25 bg-[#5b8def]/10 px-2.5 py-1 text-[11px] font-semibold text-[#5b8def]">
             {{ loja.prefeitura }}
-          </span>
-          {% endif %}
-          {% if loja.regiao %}
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-[#a6bfc7]">
-            {{ loja.regiao }}
           </span>
           {% endif %}
           {% if loja.situacao == 'ATIVA' %}
@@ -81,17 +76,9 @@
     <div class="rounded-xl border border-white/10 bg-white/5 p-4">
       <div class="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">
         <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Prefeitura
+        Potência
       </div>
       <div class="text-[14px] text-white">{{ loja.prefeitura }}</div>
-    </div>
-
-    <div class="rounded-xl border border-white/10 bg-white/5 p-4">
-      <div class="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">
-        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        Regiao
-      </div>
-      <div class="text-[14px] text-white">{{ loja.regiao|default:"—" }}</div>
     </div>
 
     <div class="rounded-xl border border-white/10 bg-white/5 p-4">
@@ -105,9 +92,35 @@
     <div class="rounded-xl border border-[#fbbf24]/15 bg-white/5 p-4">
       <div class="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">
         <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Deputado Mestre
+        Presidente
       </div>
       <div class="text-[14px] text-[#fbbf24]">{{ loja.deputado_mestre }}</div>
+    </div>
+
+    <div class="rounded-xl border border-[#5b8def]/15 bg-white/5 p-4">
+      <div class="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">
+        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Secretario
+      </div>
+      <div class="text-[14px] text-[#5b8def]">{{ loja.secretario|default:"—" }}</div>
+      {% if loja.secretario_telefone %}<div class="mt-0.5 text-[12px] text-[#a6bfc7]">{{ loja.secretario_telefone }}</div>{% endif %}
+    </div>
+
+    <div class="rounded-xl border border-[#5b8def]/15 bg-white/5 p-4">
+      <div class="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">
+        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Tesoureiro
+      </div>
+      <div class="text-[14px] text-[#5b8def]">{{ loja.tesoureiro|default:"—" }}</div>
+      {% if loja.tesoureiro_telefone %}<div class="mt-0.5 text-[12px] text-[#a6bfc7]">{{ loja.tesoureiro_telefone }}</div>{% endif %}
+    </div>
+
+    <div class="rounded-xl border border-[#4ade80]/15 bg-white/5 p-4">
+      <div class="mb-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">
+        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Mensalidade
+      </div>
+      <div class="font-mono text-[16px] font-bold text-[#4ade80]">{% if loja.mensalidade %}R$ {{ loja.mensalidade }}{% else %}—{% endif %}</div>
     </div>
 
     <div class="rounded-xl border border-white/10 bg-white/5 p-4">

@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Editar {{ loja.nome }}{% endblock %}
+{% block titulo %}SAL DA BRITÂNEA CRM — Editar {{ loja.nome }}{% endblock %}
 
 {% block conteudo %}
 <div class="mb-6">
@@ -62,18 +62,18 @@
     </div>
 
     <div class="mt-5">
-      <label for="prefeitura" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Prefeitura</label>
+      <label for="prefeitura" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Potência</label>
       <select id="prefeitura" name="prefeitura"
               class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
         <option value="" class="bg-[#0a1e3d]">— Selecione —</option>
         {% for pf in prefeituras %}
-          <option value="{{ pf.id }}" {% if pf.id == loja.prefeitura_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ pf.nome }}{% if pf.regiao %} ({{ pf.regiao }}){% endif %}</option>
+          <option value="{{ pf.id }}" {% if pf.id == loja.prefeitura_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ pf.nome }}</option>
         {% endfor %}
       </select>
     </div>
 
     <div class="mt-5">
-      <label for="deputado_mestre" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Deputado Mestre</label>
+      <label for="deputado_mestre" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Presidente</label>
       <select id="deputado_mestre" name="deputado_mestre"
               class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
         <option value="" class="bg-[#0a1e3d]">— Selecione um membro da loja —</option>
@@ -81,19 +81,76 @@
           <option value="{{ m.id }}" {% if m.id == loja.deputado_mestre_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ m.nome }}</option>
         {% endfor %}
       </select>
-      <p class="mt-1.5 text-[11.5px] text-[#a6bfc7]">Recebe as comunicações enviadas para esta loja (e-mail/Zap do Deputado Mestre).</p>
+      <p class="mt-1.5 text-[11.5px] text-[#a6bfc7]">Recebe as comunicações enviadas para esta loja (e-mail/Zap do Presidente).</p>
     </div>
 
-    <div class="mt-5 grid gap-5 sm:grid-cols-2">
-      <div>
-        <label for="cidade" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Cidade</label>
-        <input type="text" id="cidade" name="cidade" value="{{ loja.cidade }}"
-               class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+    <div class="mt-5 border-t border-white/10 pt-5">
+      <p class="mb-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#5b8def]">Secretaria</p>
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <label for="secretario_nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Secretário</label>
+          <input type="text" id="secretario_nome" name="secretario_nome" value="{{ loja.secretario_nome }}" placeholder="Nome do secretário"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+        </div>
+        <div>
+          <label for="secretario_telefone" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone do Secretário</label>
+          <input type="tel" id="secretario_telefone" name="secretario_telefone" value="{{ loja.secretario_telefone }}" placeholder="(21) 99999-9999"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+        </div>
       </div>
-      <div>
-        <label for="uf" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">UF</label>
-        <input type="text" id="uf" name="uf" value="{{ loja.uf }}" maxlength="2" placeholder="PR"
-               class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white uppercase outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+    </div>
+
+    <div class="mt-5">
+      <p class="mb-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#5b8def]">Tesouraria</p>
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <label for="tesoureiro_nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Tesoureiro</label>
+          <input type="text" id="tesoureiro_nome" name="tesoureiro_nome" value="{{ loja.tesoureiro_nome }}" placeholder="Nome do tesoureiro"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+        </div>
+        <div>
+          <label for="tesoureiro_telefone" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone do Tesoureiro</label>
+          <input type="tel" id="tesoureiro_telefone" name="tesoureiro_telefone" value="{{ loja.tesoureiro_telefone }}" placeholder="(21) 99999-9999"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5 border-t border-white/10 pt-5">
+      <p class="mb-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#4ade80]">Mensalidade</p>
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <label for="mensalidade" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Valor da Mensalidade (R$)</label>
+          <input type="text" id="mensalidade" name="mensalidade" value="{{ loja.mensalidade }}" placeholder="Ex: 150,00" inputmode="decimal"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#4ade80]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#4ade80]/15">
+        </div>
+        <div class="flex items-end">
+          <p class="text-[12px] leading-relaxed text-[#a6bfc7]">Valor mensal cobrado da loja. Deixe em branco se ainda não houver valor definido.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5 border-t border-white/10 pt-5">
+      <p class="mb-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#5b8def]">Localização</p>
+      <div class="grid gap-5">
+        <div>
+          <label for="endereco" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Endereço</label>
+          <input type="text" id="endereco" name="endereco" value="{{ loja.endereco }}" placeholder="Ex: Rua das Flores, 123, Centro"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          <p class="mt-1.5 text-[11.5px] text-[#a6bfc7]">Rua, número e bairro — tudo junto, em um só campo.</p>
+        </div>
+      </div>
+      <div class="mt-5 grid gap-5 sm:grid-cols-2">
+        <div>
+          <label for="cidade" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Cidade</label>
+          <input type="text" id="cidade" name="cidade" value="{{ loja.cidade }}"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+        </div>
+        <div>
+          <label for="uf" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">UF</label>
+          <input type="text" id="uf" name="uf" value="{{ loja.uf }}" maxlength="2" placeholder="PR"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white uppercase outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+        </div>
       </div>
     </div>
 
