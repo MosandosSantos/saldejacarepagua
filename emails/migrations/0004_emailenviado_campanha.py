@@ -1,24 +1,23 @@
-"""Adiciona a FK `campanha` ao EmailEnviado.
+"""Remove a coluna `campanha_id` do banco (app campanhas excluido do projeto).
 
-S4 do PRD HAZON — Estrutura de campanhas (4.1): os envios disparados por uma
-campanha ficam vinculados a ela para exibir KPIs no detalhe.
+O app campanhas nao existe mais; a FK emails→campanhas.Campanha foi removida
+dos models. Operacao apenas de banco (RunSQL nao toca no estado dos models —
+que nunca devem ter tido o campo em bancos novos). `IF EXISTS` torna a
+operacao segura tanto para bancos que tinham a coluna quanto para novos.
 """
 
-import django.db.models.deletion
-from django.db import migrations, models
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('campanhas', '0001_initial'),
         ('emails', '0003_emailenviado_cliques_convertido_em'),
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='emailenviado',
-            name='campanha',
-            field=models.ForeignKey(blank=True, help_text='Campanha de origem deste envio (S4 do PRD HAZON)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='envios', to='campanhas.campanha'),
+        migrations.RunSQL(
+            sql='ALTER TABLE emails_enviados DROP COLUMN IF EXISTS "campanha_id"',
+            reverse_sql=migrations.RunSQL.noop,
         ),
     ]

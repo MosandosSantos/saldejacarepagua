@@ -1,9 +1,8 @@
 """Carga de dados de demonstração/testes.
 
 Semeia um volume realista para o tenant de destino: contatos, negócios em todas
-as etapas do funil (com movimentações e notas), tarefas, carteiras, campanhas
-(com e-mails enviados), discador (filas, scripts e chamadas), metas de vendedores
-e automações.
+as etapas do funil (com movimentações e notas), tarefas, carteiras, modelos de
+e-mail, metas de vendedores e automações.
 
 Uso:
     python manage.py seed_dados
@@ -26,7 +25,6 @@ from acesso.models import (
     Usuario,
 )
 from automacoes.models import Automacao, PassoAutomacao
-from campanhas.models import Campanha
 from contatos.models import (
     Carteira,
     Contato,
@@ -38,7 +36,6 @@ from contatos.models import (
 )
 from contatos.scoring import atualizar_score
 from core.dominio import ORIGENS, PAGAMENTOS, SEGS, STAGES
-from discador.models import Chamada, Fila, Script
 from emails.models import EmailEnviado, ModeloEmail
 from recepcao.models import garantir_etapas
 from tarefas.models import Tarefa
@@ -134,15 +131,6 @@ _TITULOS_TAREFAS = [
     'Atualizar dados cadastrais',
 ]
 
-_CAMPANHAS = [
-    ('Boas-vindas', 'E-mail de boas-vindas para novos clientes', 'email', True),
-    ('Black Friday', 'Divulgação de ofertas da Black Friday', 'email', True),
-    ('Carrinho abandonado', 'Lembrete de carrinho abandonado', 'whatsapp', True),
-    ('Lançamento de produto', 'Anúncio de novos produtos', 'whatsapp', True),
-    ('Recompra', 'Contato para recompra de produtos', 'telefone', True),
-    ('Fidelização', 'Campanha de retenção de clientes', 'telefone', False),
-]
-
 _MODELOS_EMAIL = [
     ('Boas-vindas', 'Seja bem-vindo(a), {{nome}}!',
      'Olá {{nome}}, é um prazer ter você conosco. Aproveite nossas ofertas exclusivas!'),
@@ -150,30 +138,6 @@ _MODELOS_EMAIL = [
      'Olá {{nome}}, seu pedido na {{empresa}} foi confirmado. Acompanhe pelo código de rastreio.'),
     ('Proposta', 'Sua proposta personalizada, {{nome}}',
      'Olá {{nome}}, preparamos uma proposta especial para o produto de R$ {{valor}}. Aproveite!'),
-]
-
-_SCRIPTS = [
-    ('Cobrança amigável',
-     'Roteiro para contato de cobrança com abordagem consultiva.',
-     ('1. Cumprimentar pelo nome e confirmar identidade\n'
-     '- Bom dia! Falo com {nome}? Aqui é da Loja Online.\n'
-     '2. Contextualizar a pendência\n'
-     '- Estamos ligando sobre o valor de R$ {valor}, referente a {procedimento}.\n'
-     '3. Ouvir e negociar\n'
-     '- Qual seria uma data viável para o senhor(a) regularizar?\n'
-     '- Posso oferecer condições especiais para pagamento à vista.\n'
-     '4. Fechar e registrar\n'
-     '- Combinado então: retorno em {retorno}. Obrigado pela atenção!')),
-    ('Prospecção de novos leads',
-     'Roteiro para qualificar leads novos e apresentar produtos.',
-     ('1. Abrir com a origem do contato\n'
-     '- Vi que você nos procurou pelo {origem}. Como podemos ajudar?\n'
-     '2. Descobrir o interesse\n'
-     '- O que te motivou a nos procurar? Já fez algum procedimento parecido?\n'
-     '3. Oferecer a avaliação\n'
-     '- Posso agendar uma avaliação gratuita com nossa equipe.\n'
-     '4. Registrar o próximo passo\n'
-     '- Vou anotar tudo aqui e confirmar seu horário por WhatsApp.')),
 ]
 
 _AUTOMACOES = [
@@ -184,12 +148,6 @@ _AUTOMACOES = [
     ('Negócio parado ganha nota', 'negocio_estagnado', {'dias': 7, 'etapa': ''},
      [('nota', {'texto': 'Negócio parado há 7 dias — retomar contato'})]),
 ]
-
-_STATUS_CHAMADAS = (
-    ['realizada'] * 30 + ['nao_atendeu'] * 20 + ['ocupado'] * 10 +
-    ['retornar'] * 12 + ['sem_interesse'] * 10 + ['discada'] * 8 +
-    ['acordo'] * 5 + ['erro'] * 5
-)
 
 
 def _sem_acento(s):
@@ -246,7 +204,7 @@ def _cadeia_movimentacoes(stage):
 
 class Command(BaseCommand):
     help = ('Carga de dados de demonstração/testes: contatos, negócios em todas as etapas '
-            'do funil, tarefas, carteiras, campanhas e dados de apoio.')
+            'do funil, tarefas, carteiras e dados de apoio.')
 
     def add_arguments(self, parser):
         parser.add_argument('--tenant', default='loja-virtual',
@@ -291,10 +249,8 @@ class Command(BaseCommand):
         contatos = self._seed_contatos(tenant, total, carteiras, tags, vendedores, agora)
         self._seed_tarefas(tenant, contatos, usuarios, agora)
         self._seed_metas(tenant, vendedores)
-        campanhas = self._seed_campanhas(tenant, agora)
         modelos = self._seed_modelos_email(tenant)
-        self._seed_envios(tenant, campanhas, modelos, contatos, agora)
-        self._seed_discador(tenant, carteiras, contatos, vendedores, agora)
+        self._seed_envios(tenant, modelos, contatos, agora)
         self._seed_automacoes(tenant, admin, modelos)
 
         self._resumo(tenant)
@@ -303,7 +259,6 @@ class Command(BaseCommand):
     def _garantir_usuarios(self, tenant):
         import secrets as _secrets
         padrao = [
-            ('Admin SaaS', 'admin@gprbr.com', 'admin_saas', None),
             ('Dona Aurora', 'dona@aurora.com', 'admin_company', tenant),
             ('Ana Souza', 'ana@aurora.com', 'operacional', tenant),
             ('Laura Leitura', 'laura@aurora.com', 'viewer', tenant),
@@ -320,12 +275,9 @@ class Command(BaseCommand):
                 u.save(update_fields=['senha'])
 
     def _limpar(self, tenant):
-        tenant.contatos.all().delete()  # cascata: negocios, notas, movimentacoes, envios, chamadas
+        tenant.contatos.all().delete()  # cascata: negocios, notas, movimentacoes, envios
         tenant.tarefas.all().delete()
-        tenant.campanhas.all().delete()
         tenant.modelos_email.all().delete()
-        tenant.scripts.all().delete()
-        tenant.filas.all().delete()
         tenant.automacoes.all().delete()
         tenant.tags.all().delete()
         tenant.carteiras.all().delete()
@@ -477,18 +429,6 @@ class Command(BaseCommand):
                 usuario=v, mes=mes,
                 defaults={'valor': Decimal(random.randint(25000, 60000))})
 
-    # -------------------------------------------------------------- campanhas
-    def _seed_campanhas(self, tenant, agora):
-        criadas = []
-        for i, (nome, desc, canal, ativa) in enumerate(_CAMPANHAS):
-            campanha, _ = Campanha.objects.get_or_create(
-                tenant=tenant, nome=nome,
-                defaults={'descricao': desc, 'canal': canal, 'ativa': ativa})
-            _backdate(campanha, agora - timedelta(days=random.randint(1, 30)))
-            criadas.append(campanha)
-        self.stdout.write(self.style.SUCCESS(f'Campanhas: {len(criadas)}'))
-        return criadas
-
     def _seed_modelos_email(self, tenant):
         criados = []
         for nome, assunto, corpo in _MODELOS_EMAIL:
@@ -497,17 +437,14 @@ class Command(BaseCommand):
             criados.append(modelo)
         return criados
 
-    def _seed_envios(self, tenant, campanhas, modelos, contatos, agora):
+    def _seed_envios(self, tenant, modelos, contatos, agora):
         contatos_validos = [c for c in contatos if c.email and c.email != '—']
         if not contatos_validos or not modelos:
             self.stdout.write(self.style.SUCCESS('E-mails enviados: 0 (sem contatos com e-mail)'))
             return
         enviados = 0
-        for campanha in campanhas:
-            if campanha.canal != 'email':
-                continue
+        for modelo in modelos:
             for contato in random.sample(contatos_validos, k=min(12, len(contatos_validos))):
-                modelo = random.choice(modelos)
                 enviado_em = agora - timedelta(days=random.randint(1, 15), hours=random.randint(0, 23))
                 aberto = random.random() < 0.55
                 cliques = random.randint(0, 4) if aberto else 0
@@ -516,7 +453,6 @@ class Command(BaseCommand):
                     tenant=tenant,
                     contato=contato,
                     modelo=modelo,
-                    campanha=campanha,
                     assunto=modelo.assunto,
                     corpo=modelo.corpo,
                     destinatario=contato.email,
@@ -530,47 +466,6 @@ class Command(BaseCommand):
                 _backdate(envio, enviado_em)
                 enviados += 1
         self.stdout.write(self.style.SUCCESS(f'E-mails enviados: {enviados}'))
-
-    # ---------------------------------------------------------------- discador
-    def _seed_discador(self, tenant, carteiras, contatos, vendedores, agora):
-        scripts = [
-            Script.objects.get_or_create(tenant=tenant, nome=nome,
-                                         defaults={'descricao': desc, 'conteudo': conteudo})[0]
-            for nome, desc, conteudo in _SCRIPTS
-        ]
-        fila_cobranca = Fila.objects.get_or_create(
-            tenant=tenant, nome='Cobrança',
-            defaults={'descricao': 'Fila de cobrança da operação', 'carteira': carteiras[0],
-                      'script': scripts[0], 'ordem': 'score'})[0]
-        Fila.objects.get_or_create(
-            tenant=tenant, nome='Prospecção',
-            defaults={'descricao': 'Leads novos para qualificação', 'carteira': carteiras[1],
-                      'script': scripts[1], 'ordem': 'score'})
-        Fila.objects.get_or_create(
-            tenant=tenant, nome='Ativos',
-            defaults={'descricao': 'Clientes ativos para recall', 'carteira': carteiras[4],
-                      'script': scripts[0], 'ordem': 'criacao_desc'})
-
-        contatos_com_tel = [c for c in contatos if c.tel_normalizado]
-        if not contatos_com_tel:
-            self.stdout.write(self.style.SUCCESS('Chamadas: 0'))
-            return
-        chamadas = 0
-        for _ in range(min(45, len(contatos_com_tel) * 2)):
-            status = random.choice(_STATUS_CHAMADAS)
-            retorno_em = (agora + timedelta(days=random.randint(1, 7))) if status == 'retornar' else None
-            chamada = Chamada.objects.create(
-                fila=fila_cobranca,
-                contato=random.choice(contatos_com_tel),
-                operador=random.choice(vendedores) if vendedores else None,
-                status=status,
-                observacao=random.choice(_NOTAS) if status in ('realizada', 'retornar') else '',
-                retorno_em=retorno_em,
-                tenant=tenant,
-            )
-            _backdate(chamada, agora - timedelta(days=random.randint(0, 20)))
-            chamadas += 1
-        self.stdout.write(self.style.SUCCESS(f'Scripts: {len(scripts)} | Filas: 3 | Chamadas: {chamadas}'))
 
     # -------------------------------------------------------------- automacoes
     def _seed_automacoes(self, tenant, admin, modelos):
@@ -600,9 +495,7 @@ class Command(BaseCommand):
         self.stdout.write(f'  Negócios: {contagem(Negocio)}')
         self.stdout.write(f'  Tarefas: {contagem(Tarefa)}')
         self.stdout.write(f'  Carteiras: {contagem(Carteira)}')
-        self.stdout.write(f'  Campanhas: {contagem(Campanha)}')
         self.stdout.write(f'  E-mails enviados: {contagem(EmailEnviado)}')
-        self.stdout.write(f'  Chamadas: {contagem(Chamada)}')
         self.stdout.write('')
         por_etapa = ', '.join(
             f'{e}: {Negocio.objects.filter(tenant=tenant, stage=e).count()}'

@@ -56,8 +56,8 @@ if not ALLOWED_HOSTS:
 # Origem permitida no check de CSRF via header Origin (deploy atras de proxy
 # HTTPS — Railway). Aceita coringa de subdominio (*.) no padrao.
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
-if not CSRF_TRUSTED_ORIGINS and not DEBUG:
-    CSRF_TRUSTED_ORIGINS = ['https://*.up.railway.app', 'https://*.railway.app']
+if not CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = ['http://localhost:8111', 'http://127.0.0.1:8111']
 
 # --- Password validators (aplicados via validate_password nas views) -----
 # A2 — politica minima de senha. Mensagens em pt-br (acesso.validators).
@@ -88,9 +88,6 @@ INSTALLED_APPS = [
     'emails',
     'tarefas',
     'automacoes',
-    'campanhas',
-    'discador',
-    'relatorios',
     'gestao',  # Dashboard de inscricoes (GEOD-CEOD)
     'candidatos',
     # Tailwind (gera o CSS com classes utilitarias)
@@ -194,7 +191,7 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Porta padrao do web server Django (evita conflito com o FastAPI em 8000)
-DEFAULT_PORT = os.getenv('DJANGO_PORT', '8000')
+DEFAULT_PORT = os.getenv('DJANGO_PORT', '8111')
 
 # Autenticacao JWT (camada REST/FastAPI)
 JWT_SECRET = os.getenv('JWT_SECRET', 'jwt-dev-secret-nao-usar-em-producao')  # nosec B105 - guarded by DEBUG check below

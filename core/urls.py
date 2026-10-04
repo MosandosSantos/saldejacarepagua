@@ -63,9 +63,6 @@ urlpatterns = [
     path('emails/', include('emails.urls')),
     path('tarefas/', include('tarefas.urls')),
     path('automacoes/', include('automacoes.urls')),
-    path('campanhas/', include('campanhas.urls')),
-    path('discador/', include('discador.urls')),
-    path('relatorios/', include('relatorios.urls')),
     path('gestao/', include('gestao.urls')),  # Dashboard de inscricoes (GEOD-CEOD)
     path('candidato/', include('candidatos.urls')),
     path('comunicacao/', gestao_views.comunicacoes, name='comunicacoes'),

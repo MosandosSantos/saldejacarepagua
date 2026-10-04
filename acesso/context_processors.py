@@ -27,9 +27,6 @@ _ICONE_CONTATOS = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke=
 _ICONE_CONFIG = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
                  'stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/>'
                  '<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>')
-_ICONE_EMAIL = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
-                'stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/>'
-                '<path d="m22 7-10 6L2 7"/></svg>')
 _ICONE_TAREFAS = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
                   'stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/>'
                   '<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>')
@@ -38,40 +35,26 @@ _ICONE_EQUIPE = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="c
                  '<circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>')
 _ICONE_CARTEIRA = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
                    'stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>')
+_ICONE_FINANCEIRO = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
+                     'stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/>'
+                     '<path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>')
 _ICONE_CAMPANHA = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
                    'stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>')
-_ICONE_DISCADOR = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
-                   'stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>')
-_ICONE_ADS = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
-              'stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>'
-              '<polyline points="17 6 23 6 23 12"/></svg>')
-_ICONE_INSTAGRAM = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
-                     'stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/>'
-                     '<path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>')
-_ICONE_CRIATIVOS = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
-                     'stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/>'
-                     '<circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>')
 
 # (label, app, rota, icone, match_urls, excluir_urls, [subitens])
-# - subitens (opcional): lista de dicts com 'label', 'app', 'rota', 'match' e 'icone' —
-#   transforma o item em um menu dropdown/accordion (ex.: Campanhas > Ads/E-mails/...).
-_CAMPANHA_SUBS = [
-    {'label': 'Campanhas', 'app': 'campanhas', 'rota': 'campanhas:lista', 'match': {'lista', 'novo', 'detalhe', 'editar', 'excluir'}, 'icone': None},
-    {'label': 'Ads', 'app': 'campanhas', 'rota': 'campanhas:ads', 'match': {'ads'}, 'icone': _ICONE_ADS},
-    {'label': 'E-mails', 'app': 'emails', 'rota': 'emails:lista', 'match': {'lista', 'novo', 'editar', 'excluir', 'campanha', 'enviar_contato'}, 'icone': _ICONE_EMAIL},
-    {'label': 'Instagram', 'app': 'campanhas', 'rota': 'campanhas:instagram', 'match': {'instagram'}, 'icone': _ICONE_INSTAGRAM},
-    {'label': 'Criativos', 'app': 'campanhas', 'rota': 'campanhas:criativos', 'match': {'criativos'}, 'icone': _ICONE_CRIATIVOS},
-]
 # - match_urls  (None = destaque por app): urls que destacam este item
 # - excluir_urls: urls do MESMO app que NÃO devem destacar (ex.: páginas de
 #   carteiras ficam com 'Carteiras' ativo, não 'Contatos')
 _ROTAS = [
     ('Dashboard', 'dashboard', 'dashboard:index', _ICONE_DASH, None, set()),
     ('Recepção', 'recepcao', 'recepcao:kanban', _ICONE_FUNIL, None, set()),
-    ('BAII', 'contatos', 'contatos:lista', _ICONE_CONTATOS, None, {'carteiras', 'carteira_detalhe'}),
-    ('Prefeitura', 'contatos', 'contatos:prefeituras', _ICONE_CARTEIRA, {'prefeituras'}, set()),
+    ('Membros', 'contatos', 'contatos:lista', _ICONE_CONTATOS, None, {'carteiras', 'carteira_detalhe'}),
+    ('Potências', 'contatos', 'contatos:prefeituras', _ICONE_CARTEIRA, {'prefeituras'}, set()),
     ('Lojas', 'contatos', 'contatos:lojas', _ICONE_CARTEIRA, {'lojas', 'loja_detalhe'}, set()),
-    ('Ranking', 'tarefas', 'tarefas:ranking', _ICONE_TAREFAS, None, set()),
+    ('Financeiro', 'contatos', 'contatos:financeiro', _ICONE_FINANCEIRO, {'financeiro'}, set()),
+    ('Emolumentos', 'contatos', 'contatos:emolumentos', _ICONE_FINANCEIRO,
+     {'emolumentos', 'emolumento_novo', 'emolumento_editar'}, set()),
+    ('Agenda', 'tarefas', 'tarefas:ranking', _ICONE_TAREFAS, None, set()),
     ('Comunicações', 'gestao', 'comunicacoes', _ICONE_CAMPANHA, {'comunicacoes'}, set()),
     # Equipe/Usuários: gestão — oficialato (Grão Prior, Grande Chanceler, ...) + admin da empresa.
     ('Usuários', 'acesso', 'equipe', _ICONE_EQUIPE, {'equipe', 'equipe_novo'}, set(), None, ROLES_GESTORES_USUARIOS),

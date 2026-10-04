@@ -131,7 +131,7 @@ def _anexar_pixel_e_links(registro, base_url):
     registro.corpo = registro.corpo + pixel
 
 
-def registrar_e_enviar(modelo, contato, base_url, campanha=None):
+def registrar_e_enviar(modelo, contato, base_url):
     """Cria um EmailEnviado para o contato (render + pixel/links) e dispara.
 
     Rotina única de "criar registro + anexar pixel + salvar + enviar" (PRD 4.1),
@@ -144,7 +144,6 @@ def registrar_e_enviar(modelo, contato, base_url, campanha=None):
         tenant_id=modelo.tenant_id,
         contato=contato,
         modelo=modelo,
-        campanha=campanha,
         assunto=renderizar(modelo.assunto, contato),
         corpo=renderizar(modelo.corpo, contato),
         destinatario=contato.email,
@@ -156,14 +155,14 @@ def registrar_e_enviar(modelo, contato, base_url, campanha=None):
     return registro
 
 
-def disparar_campanha(modelo, contatos, base_url, campanha=None):
+def disparar_campanha(modelo, contatos, base_url):
     """Cria e dispara um EmailEnviado por contato com e-mail (pixel + links rastreados).
 
-    `campanha` (opcional, S4): quando informada, os envios ficam vinculados à
-    campanha — o detalhe da campanha mostra os KPIs (enviados/abertos/cliques/convertidos).
+    O nome mantém o vocabulário da UI ("Nova campanha" em E-mails); não há
+    vínculo com o antigo app campanhas (excluído do projeto).
     """
     criados = 0
     for contato in contatos:
-        if registrar_e_enviar(modelo, contato, base_url, campanha) is not None:
+        if registrar_e_enviar(modelo, contato, base_url) is not None:
             criados += 1
     return criados

@@ -57,14 +57,6 @@ class EmailEnviado(models.Model):
         blank=True,
         related_name='envios',
     )
-    campanha = models.ForeignKey(
-        'campanhas.Campanha',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='envios',
-        help_text='Campanha de origem deste envio (S4 do PRD HAZON)',
-    )
     assunto = models.TextField()
     corpo = models.TextField()
     destinatario = models.EmailField()
