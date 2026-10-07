@@ -2,7 +2,7 @@
 {% load static %}
 {% load seguranca %}
 
-{% block titulo %}SAL DA BRITÂNEA CRM â VisÃ£o geral{% endblock %}
+{% block titulo %}SAL DA BRITÂNEA CRM — Visão geral{% endblock %}
 
 {% block extra_head %}
 <script src="{% static 'js/vendor/chart.umd.min.js' %}"></script>
@@ -11,11 +11,11 @@
 {% block conteudo %}
 <div class="mb-7 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <h1 class="hazon-titulo">VisÃ£o geral</h1>
-    <p class="hazon-sub mt-2">Resumo dos seus clientes, negÃ³cios e do desempenho do time.</p>
+    <h1 class="hazon-titulo">Visão geral</h1>
+    <p class="hazon-sub mt-2">Resumo dos seus clientes, negócios e do desempenho do time.</p>
   </div>
   <div class="flex items-center gap-3">
-    <span class="text-[11.5px] text-[#a6bfc7]">atualizado Ã s <b id="atualizado-em" class="font-mono text-[#bcd3da]">{{ atualizado_em }}</b></span>
+    <span class="text-[11.5px] text-[#a6bfc7]">atualizado às <b id="atualizado-em" class="font-mono text-[#bcd3da]">{{ atualizado_em }}</b></span>
     <button type="button" id="btn-refresh"
             class="flex h-8 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 text-[11.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">
       <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
@@ -39,7 +39,7 @@
     </div>
   </div>
 
-  <!-- ANUALIDADE PAGA â Gauge 3D -->
+  <!-- ANUALIDADE PAGA — Gauge 3D -->
   <div class="hazon-card-sm flex flex-col p-7 backdrop-blur-xl" style="min-height:300px;">
     <div class="mb-4">
       <h2 class="font-display text-lg font-semibold text-white">Anuidade {{ ano_anuidade }}</h2>
@@ -83,10 +83,10 @@
         <!-- Brilho no topo do arco -->
         <path d="M 35 160 A 125 125 0 0 1 285 160" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2" stroke-linecap="round"/>
 
-        <!-- Sombra elÃ­ptica no chÃ£o -->
+        <!-- Sombra elíptica no chão -->
         <ellipse cx="160" cy="172" rx="85" ry="10" fill="rgba(0,0,0,0.45)"/>
 
-        <!-- Agulha (velocÃ­metro) -->
+        <!-- Agulha (velocímetro) -->
         <g id="gauge-needle" transform="rotate(-90 160 160)">
           <!-- Sombra da agulha -->
           <line x1="160" y1="160" x2="160" y2="45" stroke="rgba(0,0,0,0.3)" stroke-width="4" stroke-linecap="round" transform="translate(2,2)"/>
@@ -185,7 +185,7 @@
   {% include 'dashboard/partials/_agendamento.html' %}
 </div>
 
-<!-- CARDS DO FOOTER (apÃ³s os 4 cards de ranking) -->
+<!-- CARDS DO FOOTER (após os 4 cards de ranking) -->
 <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
   <!-- Direitos Reservados -->
   <div class="hazon-card-sm p-4 backdrop-blur-xl">
@@ -209,7 +209,7 @@
       <span class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">LGPD</span>
     </div>
     <p class="text-[12px] leading-relaxed text-[#a6bfc7]">
-      Este aplicativo estÃ¡ em conformidade com a Lei Geral de ProteÃ§Ã£o de Dados (Lei nÂº 13.709/2018).
+      Este aplicativo está em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018).
     </p>
   </div>
 
@@ -221,10 +221,10 @@
       </span>
       <span class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Desenvolvido por</span>
     </div>
-    <p class="text-[12px] font-medium text-[#bcd3da]">EN BAI MOSÃN DOS SANTOS</p>
+    <p class="text-[12px] font-medium text-[#bcd3da]">MI MOSÁN DOS SANTOS</p>
     <p class="mt-1 text-[12px] text-[#a6bfc7]">
       <a href="tel:+5521999417095" class="transition hover:text-[#5b8def]">(21) 99941-7095</a>
-      <span class="mx-1.5 text-[#6f8a93]">Â·</span>
+      <span class="mx-1.5 text-[#6f8a93]">·</span>
       <a href="https://mosansantos.netlify.app" target="_blank" rel="noopener" class="transition hover:text-[#5b8def]">mosansantos.netlify.app</a>
     </p>
   </div>
@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return r.json();
       })
       .then(function (d) {
-        // nÃºmeros dos KPIs (textContent)
+        // números dos KPIs (textContent)
         document.querySelectorAll('[data-kpi]').forEach(function (el) {
           var k = el.getAttribute('data-kpi');
           if (d[k] !== undefined && d[k] !== null) el.textContent = d[k];
@@ -263,12 +263,12 @@ document.addEventListener('DOMContentLoaded', function () {
         var ts = document.getElementById('atualizado-em');
         if (ts && d.atualizado_em) ts.textContent = d.atualizado_em;
       })
-      .catch(function () { /* mantÃ©m os valores atuais em caso de falha */ })
+      .catch(function () { /* mantém os valores atuais em caso de falha */ })
       .finally(function () { btn.disabled = false; });
   }
 
   btn.addEventListener('click', atualizar);
-  setInterval(atualizar, 45000); // quase-realtime: atualiza os nÃºmeros a cada 45s
+  setInterval(atualizar, 45000); // quase-realtime: atualiza os números a cada 45s
 });
 
 // Grafico de linha: admissoes no priorado (ultimos 36 meses)
@@ -294,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function () {
     data: {
       labels: labelsBR,
       datasets: [{
-        label: 'AdmissÃµes',
+        label: 'Admissões',
         data: valores,
         borderColor: '#5b8def',
         backgroundColor: gradiente,
@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var labels = dados.map(function (d) { return d.label; });
   var valores = dados.map(function (d) { return d.total; });
 
-  // Gradiente 3D azul escuro â azul mÃ©dio â azul claro
+  // Gradiente 3D azul escuro → azul médio → azul claro
   var gradiente = ctx.getContext('2d').createLinearGradient(0, 0, 0, 260);
   gradiente.addColorStop(0, '#93b8f7');
   gradiente.addColorStop(0.4, '#5b8def');
@@ -652,7 +652,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var totalLen = 408; // comprimento total do arco semicircular (r=130)
   var estado = { dash: 0, ang: -90 };
 
-  // AnimaÃ§Ã£o suave — reusÃ¡vel para os filtros do card
+  // Animação suave — reusável para os filtros do card
   function animarPara(percentual) {
     var targetDash = totalLen * (percentual / 100);
     var targetAngle = -90 + 180 * (percentual / 100);
@@ -705,7 +705,7 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(function (r) { return r.json(); })
       .then(function (d) {
         atualizarNumeros(d);
-        // Cascata: o select de lojas mostra sÃ³ as lojas do escopo (Potencia)
+        // Cascata: o select de lojas mostra só as lojas do escopo (Potencia)
         var selecionada = selLoja.value;
         selLoja.innerHTML = '<option value="">Todas as lojas</option>';
         (d.lojas || []).forEach(function (l) {
