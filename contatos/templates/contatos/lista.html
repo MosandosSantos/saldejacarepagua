@@ -140,15 +140,13 @@
       <tr id="lojas-{{ m.id }}" class="hidden border-b border-white/5 bg-white/[0.03]">
         <td colspan="6" class="px-5 py-4">
           <div class="mb-2 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Lojas do membro e suas potências</div>
-          <div class="mb-3 flex flex-wrap items-center gap-2">
-            {% if m.ativo %}<span class="rounded-full border border-[#4ade80]/30 bg-[#4ade80]/10 px-3 py-1 text-[11px] font-bold text-[#4ade80]">Ativo</span>{% else %}<span class="rounded-full border border-[#6f8a93]/30 bg-[#6f8a93]/10 px-3 py-1 text-[11px] font-bold text-[#a6bfc7]">Inativo</span>{% endif %}
-            {% if m.anuidade_cor == 'green' %}<span class="rounded-full border border-[#4ade80]/30 bg-[#4ade80]/10 px-3 py-1 text-[11px] font-bold text-[#4ade80]">Anuidade {{ m.anuidade }} paga</span>{% elif m.anuidade_cor == 'orange' %}<span class="rounded-full border border-[#fb923c]/30 bg-[#fb923c]/10 px-3 py-1 text-[11px] font-bold text-[#fb923c]">Anuidade {{ m.anuidade }} paga · corrente pendente</span>{% else %}<span class="rounded-full border border-[#ef4444]/30 bg-[#ef4444]/10 px-3 py-1 text-[11px] font-bold text-[#ef4444]">Anuidade em aberto</span>{% endif %}
-            <span class="rounded-full border border-[#5b8def]/30 bg-[#5b8def]/10 px-3 py-1 text-[11px] font-bold text-[#5b8def]">Presenças no ano: {{ m.presencas_ano }}</span>
-          </div>
           <table class="w-full border-collapse">
             <thead>
               <tr class="border-b border-white/10 text-left text-[10.5px] uppercase tracking-[0.09em] text-[#a6bfc7]">
                 <th class="px-3 py-2">Loja e potência</th>
+                <th class="px-3 py-2 text-center">Ativo</th>
+                <th class="px-3 py-2 text-center">Anuidade</th>
+                <th class="px-3 py-2 text-center">Presenças</th>
               </tr>
             </thead>
             <tbody>
@@ -169,6 +167,13 @@
                     </button>
                   </div>
                 </td>
+                <td class="px-3 py-2 text-center">
+                  {% if m.ativo %}<span class="rounded-full border border-[#4ade80]/30 bg-[#4ade80]/10 px-2.5 py-1 text-[10.5px] font-bold text-[#4ade80]">Ativo</span>{% else %}<span class="rounded-full border border-[#6f8a93]/30 bg-[#6f8a93]/10 px-2.5 py-1 text-[10.5px] font-bold text-[#a6bfc7]">Inativo</span>{% endif %}
+                </td>
+                <td class="px-3 py-2 text-center">
+                  {% if l.anuidade_loja %}<span class="rounded-full border border-[#4ade80]/30 bg-[#4ade80]/10 px-2.5 py-1 text-[10.5px] font-bold text-[#4ade80]">Paga {{ l.anuidade_loja }}</span>{% else %}<span class="text-[12px] text-[#6f8a93]">—</span>{% endif %}
+                </td>
+                <td class="px-3 py-2 text-center font-mono text-[12px] text-[#5b8def]">{{ l.presencas_loja|default:0 }}</td>
               </tr>
               {% endfor %}
             </tbody>

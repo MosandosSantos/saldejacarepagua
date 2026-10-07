@@ -303,7 +303,15 @@ def listar_membros(filtros):
            (SELECT COALESCE(json_agg(json_build_object(
                         'loja', COALESCE(l2."nomeFantasia", l2."lojaMX",
                                  'Loja ' || COALESCE(l2.numero::text, '')),
-                        'potencia', p2.nome, 'sigla', p2.sigla)
+                        'potencia', p2.nome, 'sigla', p2.sigla,
+                        'anuidade_loja', (SELECT MAX(pay.year) FROM payment pay
+                              WHERE pay."memberId" = m.id AND pay."lojaId" = l2.id
+                               AND UPPER(pay.type) LIKE 'ANUA%%' AND UPPER(pay.status) = 'PAID'),
+                        'presencas_loja', (SELECT COUNT(*) FROM attendance a3
+                              JOIN meeting mt3 ON a3."meetingId" = mt3.id
+                             WHERE a3."memberId" = m.id AND mt3."lojaId" = l2.id
+                               AND a3.status = 'PRESENTE'
+                               AND EXTRACT(YEAR FROM mt3."dataSessao") = {ano_presencas}))
                     ORDER BY l2."nomeFantasia"), '[]'::json)
               FROM member_loja ml2
               JOIN loja l2 ON ml2."lojaId" = l2.id
