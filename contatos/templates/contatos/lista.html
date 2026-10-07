@@ -81,7 +81,6 @@
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Nome</th>
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Telefone</th>
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Email</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Dados pessoais</th>
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Lojas</th>
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Anuidade</th>
         <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">A&ccedil;&otilde;es</th>
@@ -100,12 +99,6 @@
         </td>
         <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ m.celular|default:"—" }}</td>
         <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ m.email|default:"—" }}</td>
-        <td class="px-5 py-3.5 text-[12.5px] leading-relaxed text-[#bcd3da]">
-          {% if m.cpf %}<div>CPF {{ m.cpf }}</div>{% endif %}
-          {% if m.nascimento %}<div>Nasc. {{ m.nascimento|date:"d/m/Y" }}</div>{% endif %}
-          {% if m.cidade %}<div>{{ m.cidade }}{% if m.uf %} / {{ m.uf }}{% endif %}</div>{% endif %}
-          {% if not m.cpf and not m.nascimento and not m.cidade %}—{% endif %}
-        </td>
         <td class="px-5 py-3.5">
           {% if m.lojas %}
           <button type="button" onclick="alternarLojas('{{ m.id|escapejs }}')" title="Ver lojas e potências"
@@ -145,7 +138,7 @@
       </tr>
       {% if m.lojas %}
       <tr id="lojas-{{ m.id }}" class="hidden border-b border-white/5 bg-white/[0.03]">
-        <td colspan="7" class="px-5 py-4">
+        <td colspan="6" class="px-5 py-4">
           <div class="mb-2 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Lojas do membro e suas potências</div>
           <table class="w-full border-collapse">
             <thead>
@@ -168,7 +161,7 @@
       {% endif %}
       {% empty %}
       <tr>
-        <td colspan="7" class="px-5 py-12 text-center text-[14px] text-[#a6bfc7]">Nenhum membro encontrado.</td>
+        <td colspan="6" class="px-5 py-12 text-center text-[14px] text-[#a6bfc7]">Nenhum membro encontrado.</td>
       </tr>
       {% endfor %}
     </tbody>
