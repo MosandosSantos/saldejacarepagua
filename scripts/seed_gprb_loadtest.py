@@ -30,7 +30,6 @@ def _limpar(cur):
     cur.execute("DELETE FROM member WHERE id LIKE 'lt_%'")
     cur.execute("DELETE FROM loja WHERE id LIKE 'lt_%'")
     cur.execute("DELETE FROM prefeitura WHERE id LIKE 'lt_%'")
-    cur.execute("DELETE FROM tenant WHERE code LIKE 'lt_%'")
     cur.execute("DELETE FROM potencia WHERE id LIKE 'lt_%'")
 
 
@@ -45,22 +44,22 @@ def _criar_potencias(cur):
 
 
 def _criar_lojas(cur):
-    """5 tenants lt_ × 2 lojas = 10 lojas; cada loja ancorada numa potência lt_."""
+    """10 lojas (2 por potência lt_) todas no tenant GPRB.
+
+    As listagens (listar_lojas, membros por precisa) filtram
+    l."tenantId" = tenant GPRB — lojas em tenants próprios não aparecem.
+    As prefeituras lt_ (sigla LTxxP) também viram do tenant GPRB.
+    """
     hoje = dt.datetime.now()
     siglas = ['LTALFA', 'LTBRAVO', 'LTCHARLIE', 'LTDELTA', 'LTECHO']
     lojas = []  # [(loja_id, potencia_id)]
+    tenant_id = TENANT_GPRB_ID
     for i in range(1, 6):
-        tenant_id = f'lt_ten_{i:04d}'
-        cur.execute(
-            'INSERT INTO tenant (id, name, code, "createdAt", "updatedAt") '
-            'VALUES (%s, %s, %s, %s, %s)',
-            (tenant_id, f'Tenant Load Test {i}', f'lt_ten{i:04d}', hoje, hoje),
-        )
         cur.execute(
             'INSERT INTO prefeitura (id, "tenantId", nome, sigla, status, '
             '"createdAt", "updatedAt") VALUES (%s, %s, %s, %s, %s, %s, %s)',
             (
-                f'lt_pref_{i:04d}', TENANT_GPRB_ID,
+                f'lt_pref_{i:04d}', tenant_id,
                 f'Prefeitura Load Test {i}', f'{siglas[i - 1]}P', 'ATIVA',
                 hoje, hoje,
             ),
@@ -68,12 +67,12 @@ def _criar_lojas(cur):
         for j in (1, 2):
             loja_id = f'lt_loja_{(i - 1) * 2 + j:04d}'
             cur.execute(
-                'INSERT INTO loja (id, "tenantId", "lojaMX", numero, situacao, '
-                '"prefeituraId", "createdAt", "updatedAt") '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
+                'INSERT INTO loja (id, "tenantId", "nomeFantasia", "lojaMX", '
+                'numero, situacao, "prefeituraId", "createdAt", "updatedAt") '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)',
                 (
-                    loja_id, tenant_id, f'Loja LT {i}-{j}', i * 1000 + j,
-                    'ATIVA', f'lt_pref_{i:04d}', hoje, hoje,
+                    loja_id, tenant_id, f'Loja LT {i}-{j}', f'Loja LT {i}-{j}',
+                    i * 1000 + j, 'ATIVA', f'lt_pref_{i:04d}', hoje, hoje,
                 ),
             )
             lojas.append((loja_id, f'lt_pot_{i:04d}'))
