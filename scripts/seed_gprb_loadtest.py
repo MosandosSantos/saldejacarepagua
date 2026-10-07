@@ -17,6 +17,7 @@ import datetime as dt
 import os
 import random
 import string
+import sys
 
 import psycopg
 
@@ -158,6 +159,12 @@ def main():
         f"user={os.environ.get('GPRB_DB_USER', 'postgres')} "
         f"password={os.environ.get('GPRB_DB_PASSWORD', '')}"
     )
+    if '--clean' in sys.argv:
+        with psycopg.connect(dsn, autocommit=True) as conn:
+            with conn.cursor() as cur:
+                _limpar(cur)
+            print('SEED REMOVIDO (todos os artefatos lt_)')
+        return
     with psycopg.connect(dsn, autocommit=False) as conn:
         with conn.cursor() as cur:
             _limpar(cur)
