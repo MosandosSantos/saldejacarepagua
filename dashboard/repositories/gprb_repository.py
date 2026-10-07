@@ -336,25 +336,6 @@ class GprbRepository:
             for i, r in enumerate(rows)
         ]
 
-    def ranking_lojas_mx(self, tenant_code='GPRB', anos=3):
-        """Ranking de lojas por novos mestres (apresentacao_mx) nos ultimos N anos."""
-        ano_atual = date.today().year
-        rows = self._fetch_all(
-            "SELECT COALESCE(l.\"nomeFantasia\", l.\"lojaMX\", 'Loja ' || l.numero::text) as name, "
-            "COUNT(m.id) as total "
-            "FROM member m "
-            "JOIN loja l ON m.\"lojaId\" = l.id "
-            "JOIN tenant t ON m.\"tenantId\" = t.id "
-            "WHERE t.code = %s AND m.\"apresentacao_mx\" IS NOT NULL "
-            "AND EXTRACT(YEAR FROM m.\"apresentacao_mx\") >= %s "
-            "GROUP BY l.id, 1 ORDER BY total DESC LIMIT 10",
-            (tenant_code, ano_atual - anos),
-        )
-        return [
-            {'rank': i + 1, 'nome': r['name'], 'total_mx': r['total']}
-            for i, r in enumerate(rows)
-        ]
-
     def proximas_sessoes(self, tenant_code='GPRB'):
         """Proximas sessoes das lojas (tabela meeting)."""
         rows = self._fetch_all(

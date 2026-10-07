@@ -666,7 +666,6 @@ def _buscar_dados_gprb(ano_corrente, gprb_repo=None):
         'potencia_dados': _safe(repo.membros_por_potencia),
         'tempo_maconaria_dados': _safe(repo.membros_por_tempo_maconaria),
         'ranking_lojas_dados': _safe(repo.ranking_lojas),
-        'ranking_mx_dados': _safe(repo.ranking_lojas_mx, anos=3),
         'proximas_sessoes_dados': _safe(repo.proximas_sessoes),
         'agendamento_dados': _safe(repo.agendamento_lojas),
     }
@@ -761,7 +760,6 @@ def index(request):
         'potencia_dados': dados_gprb['potencia_dados'],
         'tempo_maconaria_dados': dados_gprb['tempo_maconaria_dados'],
         'ranking_lojas_dados': dados_gprb['ranking_lojas_dados'],
-        'ranking_mx_dados': dados_gprb['ranking_mx_dados'],
         'proximas_sessoes_dados': dados_gprb['proximas_sessoes_dados'],
         'agendamento_dados': dados_gprb['agendamento_dados'],
     })
