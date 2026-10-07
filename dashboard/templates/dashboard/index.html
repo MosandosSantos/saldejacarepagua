@@ -179,10 +179,13 @@
   </div>
 </div>
 
-<div class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-4">
+<div class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3 xl:grid-cols-5">
   {% include 'dashboard/partials/_analise.html' %}
   {% include 'dashboard/partials/_ranking_mx.html' %}
-  {% include 'dashboard/partials/_proximas_sessoes.html' %}  {% include 'dashboard/partials/_agendamento.html' %}
+  <div class="xl:col-span-2">
+    {% include 'dashboard/partials/_proximas_sessoes.html' %}
+  </div>
+  {% include 'dashboard/partials/_agendamento.html' %}
 </div>
 
 <!-- CARDS DO FOOTER (apÃ³s os 4 cards de ranking) -->

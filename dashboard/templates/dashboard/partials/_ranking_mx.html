@@ -5,12 +5,14 @@
   </div>
   <div class="space-y-1">
     {% for l in ranking_mx_dados %}
+      {% if l.rank <= 3 %}
       <div class="flex items-center gap-2 py-1">
         <span class="w-4 shrink-0 text-right font-mono text-[11px]
           {% if l.rank <= 3 %}font-bold text-[#fbbf24]{% else %}text-[#6f8a93]{% endif %}">{{ l.rank }}.</span>
         <span class="min-w-0 flex-1 truncate text-[12px] text-[#a6bfc7]">{{ l.nome }}</span>
         <span class="font-mono text-[12px] font-bold text-[#3b82f6]">{{ l.total_mx }}</span>
       </div>
+      {% endif %}
     {% endfor %}
   </div>
 </div>
