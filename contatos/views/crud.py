@@ -63,20 +63,19 @@ def _parse_filtros_lista(request):
     loja_id = request.GET.get('loja', '').strip()
     uf = request.GET.get('uf', '').strip().upper()
     cidade = _limpar_texto(request.GET.get('cidade'))
-    grau = request.GET.get('grau', '').strip().upper()
     anuidade = request.GET.get('anuidade', '').strip()
     if anuidade not in ('em_dia', 'atrasada', 'nunca'):
         anuidade = ''
 
     filtros_ativos = bool(termo or situacao or prefeitura_id or loja_id
-                          or uf or cidade or grau or anuidade)
+                          or uf or cidade or anuidade)
 
     qs_base = request.GET.copy()
     qs_base.pop('page', None)
 
     return {
         'termo': termo, 'situacao': situacao, 'prefeitura_id': prefeitura_id,
-        'loja_id': loja_id, 'uf': uf, 'cidade': cidade, 'grau': grau,
+        'loja_id': loja_id, 'uf': uf, 'cidade': cidade,
         'anuidade': anuidade, 'filtros_ativos': filtros_ativos,
         'qs': qs_base.urlencode(),
     }
@@ -104,17 +103,16 @@ def _cor_anuidade(ultima_anuidade, ano_corrente, em_q1):
 
 def _formatar_membro_lista(row, ano_corrente, em_q1):
     """Converte uma tupla do repository em dict para o template."""
-    ultima = row[15]
+    ultima = row[13]
     cor, label = _cor_anuidade(ultima, ano_corrente, em_q1)
     return {
         'id': row[0], 'nome': row[1] or '', 'email': row[2] or '',
         'celular': row[3] or '', 'cpf': row[4] or '',
         'cidade': row[5] or '', 'uf': row[6] or '',
-        'situacao': row[7] or '', 'classe': row[8] or '',
-        'classe_abbr': row[9] or '',
-        'loja': row[10] or (f'Loja {row[11]}' if row[11] else '—'),
-        'prefeitura': row[12] or row[13] or '—',
-        'criado_em': row[14],
+        'situacao': row[7] or '',
+        'lojas': row[14] or [],
+        'nascimento': row[15],
+        'criado_em': row[12],
         'anuidade': label, 'anuidade_cor': cor,
     }
 
@@ -132,12 +130,12 @@ def lista(request):
     todos = repo.listar_membros({
         'termo': filtros['termo'], 'situacao': filtros['situacao'],
         'prefeitura_id': filtros['prefeitura_id'], 'loja_id': filtros['loja_id'],
-        'uf': filtros['uf'], 'cidade': filtros['cidade'], 'grau': filtros['grau'],
+        'uf': filtros['uf'], 'cidade': filtros['cidade'],
     })
 
     if filtros['anuidade']:
         todos = [r for r in todos
-                 if _categoria_anuidade(r[15], ano_corrente, em_q1) == filtros['anuidade']]
+                 if _categoria_anuidade(r[13], ano_corrente, em_q1) == filtros['anuidade']]
 
     total = len(todos)
     page_num = request.GET.get('page', 1)
@@ -151,11 +149,11 @@ def lista(request):
         'mostrados': len(membros), 'total': total, 'eh_membros': True,
         'situacao': filtros['situacao'], 'prefeitura': filtros['prefeitura_id'],
         'loja': filtros['loja_id'], 'uf': filtros['uf'],
-        'cidade': filtros['cidade'], 'grau': filtros['grau'],
+        'cidade': filtros['cidade'],
         'anuidade': filtros['anuidade'], 'filtros_ativos': filtros['filtros_ativos'],
         'opcoes_prefeituras': opcoes['prefeituras'],
         'opcoes_lojas': opcoes['lojas'], 'opcoes_ufs': opcoes['ufs'],
-        'opcoes_cidades': opcoes['cidades'], 'opcoes_graus': opcoes['graus'],
+        'opcoes_cidades': opcoes['cidades'],
         'qs': filtros['qs'],
     })
 

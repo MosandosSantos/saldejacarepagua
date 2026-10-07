@@ -23,6 +23,7 @@ def gprb_cursor():
 
 class _DummyCursor:
     """Cursor fictício — retorna vazio quando o banco GPRB indisponível."""
+    description = None  # DB-API: sem conjunto de resultados (modo degradado)
     def execute(self, *a, **kw): pass
     def fetchone(self): return (0,)
     def fetchall(self): return []
@@ -298,14 +299,16 @@ def listar_membros(filtros):
             JOIN payment_period pp ON ps2."periodId" = pp.id
             WHERE ps2."memberId" = m.id AND pp.type = 'ANNUAL'
               AND ps2.status = 'PAID') as ultima_anuidade,
-           (SELECT string_agg(COALESCE(l2."nomeFantasia", l2."lojaMX", 'Loja ' || COALESCE(l2.numero::text, '')), ' · ')
-              FROM member_loja ml2 JOIN loja l2 ON ml2."lojaId" = l2.id
-             WHERE ml2."memberId" = m.id) as lojas_nomes,
-           (SELECT string_agg(DISTINCT p2.nome, ' · ')
-              FROM member_loja ml3
-              JOIN loja l3 ON ml3."lojaId" = l3.id
-              JOIN prefeitura p2 ON l3."prefeituraId" = p2.id
-             WHERE ml3."memberId" = m.id) as potencias_nomes
+           (SELECT COALESCE(json_agg(json_build_object(
+                        'loja', COALESCE(l2."nomeFantasia", l2."lojaMX",
+                                 'Loja ' || COALESCE(l2.numero::text, '')),
+                        'potencia', p2.nome, 'sigla', p2.sigla)
+                    ORDER BY l2."nomeFantasia"), '[]'::json)
+              FROM member_loja ml2
+              JOIN loja l2 ON ml2."lojaId" = l2.id
+              LEFT JOIN prefeitura p2 ON l2."prefeituraId" = p2.id
+             WHERE ml2."memberId" = m.id) as lojas_drill,
+           m."dataNascimento"
         FROM member m
         JOIN tenant t ON m."tenantId" = t.id
         LEFT JOIN loja l ON m."lojaId" = l.id

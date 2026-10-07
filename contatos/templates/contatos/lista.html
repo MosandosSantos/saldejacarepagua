@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Membros{% endblock %}
+{% block titulo %}SAL DA BRITÂNEA CRM — Membros{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7">
@@ -23,9 +23,9 @@
     <option value="INATIVO" {% if situacao == 'INATIVO' %}selected{% endif %}>Inativo</option>
   </select>
 
-  <select name="prefeitura" aria-label="Prefeitura" onchange="this.form.submit()"
+  <select name="prefeitura" aria-label="Potência" onchange="this.form.submit()"
           class="h-9 min-w-[130px] max-w-[230px] rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60">
-    <option value="">Prefeitura: todas</option>
+    <option value="">Potência: todas</option>
     {% for pf in opcoes_prefeituras %}
       <option value="{{ pf.id }}" {% if prefeitura == pf.id %}selected{% endif %}>{{ pf.nome }}</option>
     {% endfor %}
@@ -55,14 +55,6 @@
     {% endfor %}
   </select>
 
-  <select name="grau" aria-label="Grau" onchange="this.form.submit()"
-          class="h-9 min-w-[110px] rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60">
-    <option value="">Grau: todos</option>
-    {% for g in opcoes_graus %}
-      <option value="{{ g }}" {% if grau == g %}selected{% endif %}>{{ g }}</option>
-    {% endfor %}
-  </select>
-
   <select name="anuidade" aria-label="Anuidade" onchange="this.form.submit()"
           class="h-9 min-w-[140px] rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60">
     <option value="">Anuidade: todas</option>
@@ -87,10 +79,10 @@
     <thead>
       <tr class="border-b border-white/10 text-left">
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Nome</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Grau</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Prefeitura</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Loja</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Situa&ccedil;&atilde;o</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Telefone</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Email</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Dados pessoais</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Lojas</th>
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Anuidade</th>
         <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">A&ccedil;&otilde;es</th>
       </tr>
@@ -106,36 +98,22 @@
             <span class="text-[13.5px] font-medium text-white">{{ m.nome }}</span>
           </div>
         </td>
-        <td class="px-5 py-3.5">
-          {% if m.classe_abbr == 'MX' %}
-            <span class="inline-flex items-center gap-1.5 rounded-full border border-hazon-success/25 bg-hazon-success/10 px-2.5 py-1 text-[11px] font-semibold text-hazon-success">
-              {{ m.classe_abbr }}
-            </span>
-          {% elif m.classe_abbr == 'EN' %}
-            <span class="inline-flex items-center gap-1.5 rounded-full border border-red-400/25 bg-red-400/15 px-2.5 py-1 text-[11px] font-semibold text-red-400">
-              {{ m.classe_abbr }}
-            </span>
-          {% elif m.classe_abbr == 'CBCS' %}
-            <span class="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white">
-              {{ m.classe_abbr }}
-            </span>
-          {% else %}
-            <span class="inline-flex items-center gap-1.5 rounded-full border border-hazon-accent/25 bg-hazon-accent/10 px-2.5 py-1 text-[11px] font-semibold text-hazon-accent">
-              {{ m.classe_abbr|default:"—" }}
-            </span>
-          {% endif %}
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ m.celular|default:"—" }}</td>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ m.email|default:"—" }}</td>
+        <td class="px-5 py-3.5 text-[12.5px] leading-relaxed text-[#bcd3da]">
+          {% if m.cpf %}<div>CPF {{ m.cpf }}</div>{% endif %}
+          {% if m.nascimento %}<div>Nasc. {{ m.nascimento|date:"d/m/Y" }}</div>{% endif %}
+          {% if m.cidade %}<div>{{ m.cidade }}{% if m.uf %} / {{ m.uf }}{% endif %}</div>{% endif %}
+          {% if not m.cpf and not m.nascimento and not m.cidade %}—{% endif %}
         </td>
-        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ m.prefeitura|default:"—" }}</td>
-        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ m.loja|default:"—" }}</td>
         <td class="px-5 py-3.5">
-          {% if m.situacao == 'ATIVO' %}
-            <span class="inline-flex items-center gap-1.5 rounded-full border border-hazon-success/25 bg-hazon-success/10 px-2.5 py-1 text-[11px] font-semibold text-hazon-success" style="justify-content:center;">
-              <span class="h-1.5 w-1.5 rounded-full bg-hazon-success"></span>Ativo
-            </span>
+          {% if m.lojas %}
+          <button type="button" onclick="alternarLojas('{{ m.id|escapejs }}')" title="Ver lojas e potências"
+            class="flex h-8 min-w-[2.75rem] items-center justify-center rounded-lg border border-[#5b8def]/30 bg-[#5b8def]/10 px-2 font-display text-[13px] font-bold text-[#5b8def] transition hover:bg-[#5b8def]/25 hover:text-white">
+            +{{ m.lojas|length }}
+          </button>
           {% else %}
-            <span class="inline-flex items-center gap-1.5 rounded-full border border-hazon-danger/25 bg-hazon-danger/10 px-2.5 py-1 text-[11px] font-semibold text-hazon-danger" style="justify-content:center;">
-              <span class="h-1.5 w-1.5 rounded-full bg-hazon-danger"></span>Inativo
-            </span>
+          <span class="text-[13px] text-[#a6bfc7]">—</span>
           {% endif %}
         </td>
         <td class="px-5 py-3.5">
@@ -165,6 +143,29 @@
           </div>
         </td>
       </tr>
+      {% if m.lojas %}
+      <tr id="lojas-{{ m.id }}" class="hidden border-b border-white/5 bg-white/[0.03]">
+        <td colspan="7" class="px-5 py-4">
+          <div class="mb-2 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Lojas do membro e suas potências</div>
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 text-left text-[10.5px] uppercase tracking-[0.09em] text-[#a6bfc7]">
+                <th class="px-3 py-2">Loja</th>
+                <th class="px-3 py-2">Potência</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for l in m.lojas %}
+              <tr class="border-b border-white/5">
+                <td class="px-3 py-2 text-[13px] text-white">{{ l.loja }}</td>
+                <td class="px-3 py-2 text-[13px] text-[#bcd3da]">{{ l.potencia|default:"—" }}{% if l.sigla %} <span class="text-[#a6bfc7]">({{ l.sigla }})</span>{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+      {% endif %}
       {% empty %}
       <tr>
         <td colspan="7" class="px-5 py-12 text-center text-[14px] text-[#a6bfc7]">Nenhum membro encontrado.</td>
@@ -205,4 +206,11 @@
 </div>
 <p class="mt-2 text-center text-[12px] text-[#a6bfc7]">Pagina {{ page_obj.number }} de {{ paginator.num_pages }}</p>
 {% endif %}
+
+<script>
+  function alternarLojas(id) {
+    var linha = document.getElementById('lojas-' + id);
+    if (linha) linha.classList.toggle('hidden');
+  }
+</script>
 {% endblock %}

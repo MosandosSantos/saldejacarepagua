@@ -75,7 +75,10 @@ def _nova_conexao():
     password = None
     pw = os.environ.get('GPRB_DB_PASSWORD')
     if pw:
-        password = pw
+        # No host (testes, runserver fora do compose) o .env pode ser carregado
+        # literal: '$$' é escape do docker compose — volta a ser '$'. Dentro do
+        # container o compose já desescapou e '$$' nunca ocorre (no-op).
+        password = pw.replace('$$', '$')
     else:
         # Fallback: lê do .env do projeto (aceita GPRB_DB_PASSWORD ou PGPASSWORD)
         env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
@@ -85,7 +88,9 @@ def _nova_conexao():
                     line = line.strip()
                     for chave in ('GPRB_DB_PASSWORD=', 'PGPASSWORD='):
                         if line.startswith(chave):
-                            password = line.split('=', 1)[1]
+                            # '$$' no .env é escape do docker compose — volta a ser '$'
+                            # para leitura direta do arquivo (fora do compose).
+                            password = line.split('=', 1)[1].replace('$$', '$')
                             break
                     if password:
                         break
