@@ -110,8 +110,10 @@ def _formatar_membro_lista(row, ano_corrente, em_q1):
         'celular': row[3] or '', 'cpf': row[4] or '',
         'cidade': row[5] or '', 'uf': row[6] or '',
         'situacao': row[7] or '',
+        'ativo': (row[7] or '') == 'ATIVO',
         'lojas': row[14] or [],
-        'nascimento': row[15],
+        'presencas_ano': row[15] or 0,
+        'nascimento': row[16],
         'criado_em': row[12],
         'anuidade': label, 'anuidade_cor': cor,
     }

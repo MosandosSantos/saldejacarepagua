@@ -140,18 +140,35 @@
       <tr id="lojas-{{ m.id }}" class="hidden border-b border-white/5 bg-white/[0.03]">
         <td colspan="6" class="px-5 py-4">
           <div class="mb-2 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Lojas do membro e suas potências</div>
+          <div class="mb-3 flex flex-wrap items-center gap-2">
+            {% if m.ativo %}<span class="rounded-full border border-[#4ade80]/30 bg-[#4ade80]/10 px-3 py-1 text-[11px] font-bold text-[#4ade80]">Ativo</span>{% else %}<span class="rounded-full border border-[#6f8a93]/30 bg-[#6f8a93]/10 px-3 py-1 text-[11px] font-bold text-[#a6bfc7]">Inativo</span>{% endif %}
+            {% if m.anuidade_cor == 'green' %}<span class="rounded-full border border-[#4ade80]/30 bg-[#4ade80]/10 px-3 py-1 text-[11px] font-bold text-[#4ade80]">Anuidade {{ m.anuidade }} paga</span>{% elif m.anuidade_cor == 'orange' %}<span class="rounded-full border border-[#fb923c]/30 bg-[#fb923c]/10 px-3 py-1 text-[11px] font-bold text-[#fb923c]">Anuidade {{ m.anuidade }} paga · corrente pendente</span>{% else %}<span class="rounded-full border border-[#ef4444]/30 bg-[#ef4444]/10 px-3 py-1 text-[11px] font-bold text-[#ef4444]">Anuidade em aberto</span>{% endif %}
+            <span class="rounded-full border border-[#5b8def]/30 bg-[#5b8def]/10 px-3 py-1 text-[11px] font-bold text-[#5b8def]">Presenças no ano: {{ m.presencas_ano }}</span>
+          </div>
           <table class="w-full border-collapse">
             <thead>
               <tr class="border-b border-white/10 text-left text-[10.5px] uppercase tracking-[0.09em] text-[#a6bfc7]">
-                <th class="px-3 py-2">Loja</th>
-                <th class="px-3 py-2">Potência</th>
+                <th class="px-3 py-2">Loja e potência</th>
               </tr>
             </thead>
             <tbody>
               {% for l in m.lojas %}
               <tr class="border-b border-white/5">
-                <td class="px-3 py-2 text-[13px] text-white">{{ l.loja }}</td>
-                <td class="px-3 py-2 text-[13px] text-[#bcd3da]">{{ l.potencia|default:"—" }}{% if l.sigla %} <span class="text-[#a6bfc7]">({{ l.sigla }})</span>{% endif %}</td>
+                <td class="px-3 py-2">
+                  <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                      <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-[#fbbf24]/25 bg-[#fbbf24]/10 font-display text-[11px] font-bold text-[#fbbf24]">{{ l.sigla|default:"GP"|truncatechars:3|upper }}</span>
+                      <div>
+                        <div class="text-[13px] font-medium text-white">{{ l.loja }}</div>
+                        {% if l.potencia %}<div class="text-[10.5px] text-[#6f8a93]">{{ l.potencia }}</div>{% endif %}
+                      </div>
+                    </div>
+                    <button type="button" onclick="alternarLojas('{{ m.id|escapejs }}')" title="Fechar" aria-label="Fechar detalhes das lojas"
+                      class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#ef4444]/15 hover:text-[#ef4444]">
+                      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                  </div>
+                </td>
               </tr>
               {% endfor %}
             </tbody>

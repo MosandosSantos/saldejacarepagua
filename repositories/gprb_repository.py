@@ -5,6 +5,7 @@ Cada metodo encapsula uma operacao: abre conexao, executa, fecha.
 """
 import uuid
 from contextlib import contextmanager
+from datetime import date
 
 from core.gprb import coluna_existe, connect
 from core.gprb.connection import gprb_transaction
@@ -256,7 +257,7 @@ def listar_membros(filtros):
 
     `filtros` e um dict com chaves: termo, situacao, prefeitura_id, loja_id,
     uf, cidade, grau.
-    Retorna lista de tuples (row format) com 16 colunas.
+    Retorna lista de tuples (row format) com 17 colunas (15: presencas no ano).
     """
     where = 'WHERE t.code = %s'
     params = ['GPRB']
@@ -308,6 +309,10 @@ def listar_membros(filtros):
               JOIN loja l2 ON ml2."lojaId" = l2.id
               LEFT JOIN prefeitura p2 ON l2."prefeituraId" = p2.id
              WHERE ml2."memberId" = m.id) as lojas_drill,
+           (SELECT COUNT(*) FROM attendance a2
+              JOIN meeting mt2 ON a2."meetingId" = mt2.id
+             WHERE a2."memberId" = m.id AND a2.status = 'PRESENTE'
+               AND EXTRACT(YEAR FROM mt2."dataSessao") = {ano_presencas}) as presencas_ano,
            m."dataNascimento"
         FROM member m
         JOIN tenant t ON m."tenantId" = t.id
@@ -317,7 +322,8 @@ def listar_membros(filtros):
         ORDER BY m."createdAt" DESC
         '''
         # nosec abaixo: {where} e estrutura interna montada neste modulo; valores sempre em params
-        cur.execute(sql.replace('{where}', where), params)  # nosec B608
+        cur.execute(sql.replace('{where}', where).replace(
+            '{ano_presencas}', str(date.today().year)), params)  # nosec B608
         return cur.fetchall()
 
 
