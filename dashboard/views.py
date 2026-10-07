@@ -2,10 +2,10 @@
 
 import html
 import logging
-from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 
-from django.db.models import Count, Sum
+from django.db.models import Count, Q, Sum
+from django.db.models.functions import TruncDate
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -16,32 +16,17 @@ from acesso.decorators import filtro_tenant, nicho_da_sessao, web_login_required
 from acesso.models import MetaVendedor, Tenant, Usuario
 from contatos.models import Movimentacao, Negocio, Nota
 from core.dominio import ORIGENS, PESOS_ETAPA, SEGS
-from core.gprb import (
-    agendamento_lojas,
-    anualidade_resumo,
-    anuidade_ano_referencia,
-    membros_por_classe,
-    membros_por_idade_faixa,
-    membros_por_mes,
-    membros_por_potencia,
-    membros_por_rito,
-    membros_por_tempo_maconaria,
-    novos_membros_ano,
-    proximas_sessoes,
-    ranking_lojas,
-    ranking_lojas_mx,
-    total_lojas_ativas,
-    total_lojas_cadastradas,
-    total_membros,
-)
 from core.utils import brl as _brl
 from core.utils import brl_curto as _brl_curto
 from core.utils import iniciais as _iniciais
-
-# Gestao (GEOD-CEOD)
 from gestao.models import Inscricao, Pagamento
 from recepcao.models import etapa_map_do_tenant, etapas_do_tenant
 from tarefas.models import Tarefa
+
+from dashboard.repositories.gprb_repository import GprbRepository
+from dashboard.services.cache_service import DashboardCache, DjangoCacheBackend
+
+from core.gprb import anualidade_resumo, anuidade_ano_referencia
 
 # _brl, _brl_curto, _iniciais → importados de core.utils
 
@@ -71,12 +56,18 @@ def _esc_attr(v):
     return html.escape(str(v), quote=True)
 
 
-def _funnel_svg(funil):
-    """Gráfico de funil 3D em SVG — tons de verde para o funil de BAII."""
+def _funnel_svg(funil, *, color_map=None, id_prefix='f3g'):
+    """Gráfico de funil 3D em SVG — unificado para funil de vendas e BAII.
+
+    Args:
+        funil: lista de dicts com 'count' e 'color'.
+        color_map: dict {índice: cor_hex} que sobrepõe s['color'].
+                   Usado pelo BAII para aplicar o tema azul (GEOD-CEOD).
+        id_prefix: prefixo para IDs de gradientes SVG (evita colisão).
+    """
     steps = list(funil)
     if not steps:
         return ''
-    steps[0]['count'] or 1
     W, sliceH, gap, depthX, depthY, topY = 340, 62, 5, 22, 14, 16
     cx, n = W / 2, len(steps)
     shadowY = topY + n * (sliceH + gap) + depthY + 10
@@ -84,72 +75,12 @@ def _funnel_svg(funil):
 
     defs = '<defs>'
     for i, s in enumerate(steps):
-        dark = _shade(s['color'], -0.42)
-        defs += (f'<linearGradient id="f3g{i}" x1="0" y1="0" x2="0" y2="1">'
-                 f'<stop offset="0%" stop-color="{_esc_attr(s['color'])}" stop-opacity="0.98"/>'
-                 f'<stop offset="100%" stop-color="{_esc_attr(dark)}" stop-opacity="0.9"/></linearGradient>')
-        defs += (f'<linearGradient id="f3s{i}" x1="0" y1="0" x2="1" y2="0">'
-                 f'<stop offset="0%" stop-color="{_esc_attr(dark)}" stop-opacity="0.78"/>'
-                 f'<stop offset="100%" stop-color="{_esc_attr(dark)}" stop-opacity="0.32"/></linearGradient>')
-    defs += '</defs>'
-
-    c = defs
-    c += (f'<ellipse cx="{(cx + depthX * 0.4):.1f}" cy="{shadowY:.1f}" '
-          f'rx="{(cx * 0.5):.1f}" ry="{(depthY * 0.9):.1f}" fill="rgba(0,0,0,0.4)"/>')
-
-    for i, s in enumerate(steps):
-        frac_top = 1 - (i / n) * 0.82
-        frac_bot = 1 - ((i + 1) / n) * 0.82
-        w_top, w_bot = frac_top * max_half, frac_bot * max_half
-        y1 = topY + i * (sliceH + gap)
-        y2 = y1 + sliceH
-        fl, fr = cx - w_top, cx + w_top
-        nl, nr = cx - w_bot, cx + w_bot
-
-        c += (f'<polygon points="{fl:.1f},{y1:.1f} {fr:.1f},{y1:.1f} {nr:.1f},{y2:.1f} {nl:.1f},{y2:.1f}" '
-              f'fill="url(#f3g{i})"/>')
-        c += (f'<polygon points="{fr:.1f},{y1:.1f} {fr + depthX:.1f},{y1 - depthY:.1f} '
-              f'{nr + depthX:.1f},{y2 - depthY:.1f} {nl:.1f},{y2:.1f}" fill="url(#f3s{i})"/>')
-        c += (f'<line x1="{fl:.1f}" y1="{y1:.1f}" x2="{fr:.1f}" y2="{y1:.1f}" '
-              f'stroke="rgba(255,255,255,0.24)" stroke-width="1.2"/>')
-        c += (f'<text x="{cx:.1f}" y="{(y1 + sliceH / 2 + 4):.1f}" text-anchor="middle" font-size="14" '
-              f'font-weight="700" font-family="JetBrains Mono, monospace" fill="#fff" opacity="0.92">{s["count"]}</text>')
-        if i == 0:
-            ecx = (fl + fr + depthX) / 2
-            erx = (fr + depthX - fl) / 2
-            c += (f'<ellipse cx="{ecx:.1f}" cy="{y1:.1f}" rx="{erx:.1f}" ry="{depthY * 0.75:.1f}" '
-                  f'fill="{_esc_attr(s['color'])}" opacity="0.95"/>')
-            c += (f'<ellipse cx="{ecx:.1f}" cy="{y1:.1f}" rx="{erx:.1f}" ry="{depthY * 0.75:.1f}" '
-                  f'fill="none" stroke="#74b3c6" stroke-width="1.4" opacity="0.6"/>')
-
-    return f'<svg viewBox="0 0 {W} {shadowY + 8}" class="w-full">' + c + '</svg>'
-
-
-def _baii_svg(baii):
-    """Gráfico de funil 3D em tons de verde para o funil de BAII (Bem Amados Irmãos)."""
-    steps = list(baii)
-    if not steps:
-        return ''
-    steps[0]['count'] or 1
-    W, sliceH, gap, depthX, depthY, topY = 340, 62, 5, 22, 14, 16
-    cx, n = W / 2, len(steps)
-    shadowY = topY + n * (sliceH + gap) + depthY + 10
-    max_half = cx * 0.92
-
-    # Tons de azul: escuro (base) → médio → claro (topo) — tema GEOD-CEOD
-    azul_escuro = '#1a5fb4'    # MESA (base)
-    azul_medio = '#3b7ded'     # EN (meio)
-    azul_claro = '#93b8f7'     # CBCS (topo)
-    verdes = [azul_escuro, azul_medio, azul_claro]
-
-    defs = '<defs>'
-    for i, s in enumerate(steps):
-        cor = verdes[i] if i < len(verdes) else s.get('color', '#1a5fb4')
+        cor = (color_map.get(i, s['color']) if color_map else s['color'])
         dark = _shade(cor, -0.42)
-        defs += (f'<linearGradient id="baii{i}" x1="0" y1="0" x2="0" y2="1">'
+        defs += (f'<linearGradient id="{id_prefix}g{i}" x1="0" y1="0" x2="0" y2="1">'
                  f'<stop offset="0%" stop-color="{_esc_attr(cor)}" stop-opacity="0.98"/>'
                  f'<stop offset="100%" stop-color="{_esc_attr(dark)}" stop-opacity="0.9"/></linearGradient>')
-        defs += (f'<linearGradient id="baiis{i}" x1="0" y1="0" x2="1" y2="0">'
+        defs += (f'<linearGradient id="{id_prefix}s{i}" x1="0" y1="0" x2="1" y2="0">'
                  f'<stop offset="0%" stop-color="{_esc_attr(dark)}" stop-opacity="0.78"/>'
                  f'<stop offset="100%" stop-color="{_esc_attr(dark)}" stop-opacity="0.32"/></linearGradient>')
     defs += '</defs>'
@@ -159,7 +90,7 @@ def _baii_svg(baii):
           f'rx="{(cx * 0.5):.1f}" ry="{(depthY * 0.9):.1f}" fill="rgba(0,0,0,0.4)"/>')
 
     for i, s in enumerate(steps):
-        cor = verdes[i] if i < len(verdes) else s.get('color', '#1a5fb4')
+        cor = (color_map.get(i, s['color']) if color_map else s['color'])
         frac_top = 1 - (i / n) * 0.82
         frac_bot = 1 - ((i + 1) / n) * 0.82
         w_top, w_bot = frac_top * max_half, frac_bot * max_half
@@ -169,9 +100,9 @@ def _baii_svg(baii):
         nl, nr = cx - w_bot, cx + w_bot
 
         c += (f'<polygon points="{fl:.1f},{y1:.1f} {fr:.1f},{y1:.1f} {nr:.1f},{y2:.1f} {nl:.1f},{y2:.1f}" '
-              f'fill="url(#baii{i})"/>')
+              f'fill="url(#{id_prefix}g{i})"/>')
         c += (f'<polygon points="{fr:.1f},{y1:.1f} {fr + depthX:.1f},{y1 - depthY:.1f} '
-              f'{nr + depthX:.1f},{y2 - depthY:.1f} {nl:.1f},{y2:.1f}" fill="url(#baiis{i})"/>')
+              f'{nr + depthX:.1f},{y2 - depthY:.1f} {nl:.1f},{y2:.1f}" fill="url(#{id_prefix}s{i})"/>')
         c += (f'<line x1="{fl:.1f}" y1="{y1:.1f}" x2="{fr:.1f}" y2="{y1:.1f}" '
               f'stroke="rgba(255,255,255,0.24)" stroke-width="1.2"/>')
         c += (f'<text x="{cx:.1f}" y="{(y1 + sliceH / 2 + 4):.1f}" text-anchor="middle" font-size="14" '
@@ -183,6 +114,87 @@ def _baii_svg(baii):
                   f'fill="{_esc_attr(cor)}" opacity="0.95"/>')
             c += (f'<ellipse cx="{ecx:.1f}" cy="{y1:.1f}" rx="{erx:.1f}" ry="{depthY * 0.75:.1f}" '
                   f'fill="none" stroke="#74b3c6" stroke-width="1.4" opacity="0.6"/>')
+
+    return f'<svg viewBox="0 0 {W} {shadowY + 8}" class="w-full">' + c + '</svg>'
+
+
+_BAII_COLORS = ['#1a5fb4', '#3b7ded', '#93b8f7']  # base (mais membros) -> topo
+
+
+def _para_svg_pyramide(potencias):
+    """Itens da piramide de Potencias — `potencias` vem ordenado por total DESC."""
+    itens = [{'name': p['name'], 'count': p['total']} for p in potencias]
+    total = sum(i['count'] for i in itens) or 1
+    n = len(itens)
+    for k, i in enumerate(itens):
+        i['pct'] = round(i['count'] / total * 100)
+        # k=0 (mais membros, base) = azul profundo; topo = azul claro
+        cor_idx = round(k / max(n - 1, 1) * (len(_BAII_COLORS) - 1))
+        i['color'] = _BAII_COLORS[cor_idx]
+    return itens
+
+
+def _pyramide_svg(itens):
+    """Piramide 3D de Potencias — base larga com a de mais membros embaixo.
+
+    Inversao do grafico de funil: desenha de cima (menos vinculados, faixa
+    estreita) para baixo (mais vinculados, faixa larga na base). Potencias
+    sem membros vinculados ficam de fora. Sem dados, renderiza vazio.
+    """
+    if not itens:
+        return ''
+    steps = list(itens)[::-1]  # topo -> base: menos membros primeiro
+    n = len(steps)
+    W, sliceH, gap, depthX, depthY, topY = 340, 62, 5, 22, 14, 16
+    min_frac = 0.18
+    cx = W / 2
+    shadowY = topY + n * (sliceH + gap) + depthY + 10
+    max_half = cx * 0.92
+
+    def _meia_largura(pos):
+        # pos 0..n: 0 = topo estreito, n = base larga
+        return max_half * (min_frac + (1 - min_frac) * pos / n)
+
+    defs = '<defs>'
+    for i, s in enumerate(steps):
+        cor = s['color']
+        dark = _shade(cor, -0.42)
+        defs += (f'<linearGradient id="bairiG{i}" x1="0" y1="0" x2="0" y2="1">'
+                 f'<stop offset="0%" stop-color="{_esc_attr(cor)}" stop-opacity="0.98"/>'
+                 f'<stop offset="100%" stop-color="{_esc_attr(dark)}" stop-opacity="0.9"/></linearGradient>')
+        defs += (f'<linearGradient id="bairiS{i}" x1="0" y1="0" x2="1" y2="0">'
+                 f'<stop offset="0%" stop-color="{_esc_attr(dark)}" stop-opacity="0.78"/>'
+                 f'<stop offset="100%" stop-color="{_esc_attr(dark)}" stop-opacity="0.32"/></linearGradient>')
+    defs += '</defs>'
+
+    c = defs
+    c += (f'<ellipse cx="{(cx + depthX * 0.4):.1f}" cy="{shadowY:.1f}" '
+          f'rx="{(cx * 0.5):.1f}" ry="{(depthY * 0.9):.1f}" fill="rgba(0,0,0,0.4)"/>')
+
+    for i, s in enumerate(steps):
+        cor = s['color']
+        w_top = _meia_largura(i)
+        w_bot = _meia_largura(i + 1)
+        y1 = topY + i * (sliceH + gap)
+        y2 = y1 + sliceH
+        fl, fr = cx - w_top, cx + w_top
+        nl, nr = cx - w_bot, cx + w_bot
+
+        c += (f'<polygon points="{fl:.1f},{y1:.1f} {fr:.1f},{y1:.1f} {nr:.1f},{y2:.1f} {nl:.1f},{y2:.1f}" '
+              f'fill="url(#bairiG{i})"/>')
+        c += (f'<polygon points="{fr:.1f},{y1:.1f} {fr + depthX:.1f},{y1 - depthY:.1f} '
+              f'{nr + depthX:.1f},{y2 - depthY:.1f} {nl:.1f},{y2:.1f}" fill="url(#bairiS{i})"/>')
+        c += (f'<line x1="{fl:.1f}" y1="{y1:.1f}" x2="{fr:.1f}" y2="{y1:.1f}" '
+              f'stroke="rgba(255,255,255,0.24)" stroke-width="1.2"/>')
+        c += (f'<text x="{cx:.1f}" y="{(y1 + sliceH / 2 + 4):.1f}" text-anchor="middle" font-size="14" '
+              f'font-weight="700" font-family="JetBrains Mono, monospace" fill="#fff" opacity="0.92">{s["count"]}</text>')
+        if i == n - 1:
+            # "boca" 3D embaixo da base larga (invertendo a do funil)
+            ecx = (nl + nr + depthX) / 2
+            erx = (nr - nl + depthX) / 2
+            ecy = y2 + depthY * 0.45
+            c += (f'<ellipse cx="{ecx:.1f}" cy="{ecy:.1f}" rx="{erx:.1f}" ry="{depthY * 0.6:.1f}" '
+                  f'fill="{_esc_attr(cor)}" opacity="0.9"/>')
 
     return f'<svg viewBox="0 0 {W} {shadowY + 8}" class="w-full">' + c + '</svg>'
 
@@ -269,13 +281,15 @@ def _resumo(request, negocios=None):
     meta_pct = round(float(valor_fechados_mes) / meta_valor * 100) if meta_valor else None
     meta_bar_pct = min(100, meta_pct) if meta_pct is not None else None
 
-    # ---- KPIs do saldorer (banco GPRB) ----
+    # ---- KPIs do saldorer (banco GPRB, 1 query unica) ----
     ano_corrente = hoje.year
-    lojas_ativas = total_lojas_ativas()
-    lojas_total = total_lojas_cadastradas()
-    membros_ativos = total_membros(apenas_ativos=True)
-    membros_total = total_membros(apenas_ativos=False)
-    novos_membros = novos_membros_ano(ano=ano_corrente)
+    gprb_repo = GprbRepository()
+    gprb = gprb_repo.dashboard_kpis(ano=ano_corrente) or {}
+    lojas_ativas = gprb.get('lojas_ativas', 0)
+    lojas_total = gprb.get('lojas_total', 0)
+    membros_ativos = gprb.get('membros_ativos', 0)
+    membros_total = gprb.get('membros_total', 0)
+    novos_membros = gprb.get('novos_membros_ano', 0)
     sessoes_ano = Inscricao.objects.filter(
         criado_em__year=ano_corrente,
     ).count()
@@ -312,8 +326,16 @@ def _resumo(request, negocios=None):
 
 @web_login_required
 def dados(request):
-    """Auto-refresh leve: números do cabeçalho em JSON para o polling do dashboard."""
-    resumo = _resumo(request)
+    """Auto-refresh leve: numeros do cabecalho em JSON para o polling do dashboard."""
+    tid = request.session.get('usuario', {}).get('tenant_id')
+    nicho = nicho_da_sessao(request)
+    dashboard_cache = DashboardCache(DjangoCacheBackend())
+    cached = dashboard_cache.get_kpis(tid, nicho)
+    if cached is not None:
+        resumo = cached['resumo']
+    else:
+        negocios = filtro_tenant(request, Negocio.objects.select_related('contato'))
+        resumo = _resumo(request, negocios)
     resumo['atualizado_em'] = timezone.localtime().strftime('%H:%M:%S')
     return JsonResponse(resumo)
 
@@ -325,13 +347,18 @@ def dados(request):
 # ---------------------------------------------------------------------------
 
 def _calcular_timeline(negocios, hoje):
-    """Monta timeline dos ultimos 30 dias (novos negocios/dia)."""
-    por_dia = defaultdict(int)
-    for uc in negocios.values_list('created_at', flat=True):
-        if uc is not None:
-            por_dia[uc.date()] += 1
+    """Monta timeline dos ultimos 30 dias (query unica com annotate)."""
+    inicio = hoje - timedelta(days=29)
+    agg = (
+        negocios.filter(created_at__date__gte=inicio)
+        .annotate(dia=TruncDate('created_at'))
+        .values('dia')
+        .annotate(count=Count('id'))
+        .order_by('dia')
+    )
+    por_dia = {r['dia']: r['count'] for r in agg}
     timeline = []
-    d = hoje - timedelta(days=29)
+    d = inicio
     while d <= hoje:
         timeline.append({'data': f'{d.day:02d}/{d.month:02d}', 'valor': por_dia.get(d, 0)})
         d += timedelta(days=1)
@@ -394,10 +421,12 @@ def _buscar_atividade_recente(tid, negocios, stage_map):
 
 
 def _analise_funil_valor(stages, negocios):
-    """Valor total por etapa + ticket medio."""
+    """Valor total por etapa + ticket medio (query unica com annotate)."""
+    agg = negocios.values('stage').annotate(total=Sum('valor')).order_by('stage')
+    por_etapa_map = {r['stage']: float(r['total'] or 0) for r in agg}
     por_etapa = []
     for st in stages:
-        total = negocios.filter(stage=st['key']).aggregate(s=Sum('valor'))['s'] or 0
+        total = por_etapa_map.get(st['key'], 0)
         por_etapa.append({
             'key': st['key'], 'name': st['name'], 'color': st['color'],
             'total': total, 'total_label': _brl_curto(total), 'pct': 0,
@@ -405,10 +434,11 @@ def _analise_funil_valor(stages, negocios):
     max_etapa = max([p['total'] for p in por_etapa] + [1])
     for p in por_etapa:
         p['pct'] = round(p['total'] / max_etapa * 100) if max_etapa else 0
-    qtd_ativos = negocios.exclude(stage__in=['perdido', 'fechado']).count()
-    valor_funil_raw = sum(
-        float(n.valor) for n in negocios.exclude(stage__in=['perdido', 'fechado'])
+    stats = negocios.exclude(stage__in=['perdido', 'fechado']).aggregate(
+        qtd=Count('id'), valor_total=Sum('valor'),
     )
+    qtd_ativos = stats['qtd'] or 0
+    valor_funil_raw = float(stats['valor_total'] or 0)
     ticket_medio = _brl_curto(round(valor_funil_raw / qtd_ativos)) if qtd_ativos else 'R$ 0'
     return por_etapa, ticket_medio
 
@@ -472,39 +502,38 @@ def _buscar_tarefas_alerta(tid, hoje):
 
 
 def _agrupar_por_origem(negocios):
-    """Negocios agrupados por origem."""
+    """Negocios agrupados por origem (query unica com annotate)."""
     total = negocios.count()
+    agg = negocios.values('contato__origem').annotate(
+        count=Count('id'),
+        fechados=Count('id', filter=Q(stage='fechado')),
+    )
     por_origem = []
-    for origem in ORIGENS:
-        qs = negocios.filter(contato__origem=origem)
-        n = qs.count()
-        por_origem.append({
-            'nome': origem, 'count': n,
-            'pct': round(n / total * 100) if total else 0,
-            'fechados': qs.filter(stage='fechado').count(),
-        })
-    sem_origem = negocios.exclude(contato__origem__in=ORIGENS).count()
-    if sem_origem:
-        por_origem.append({
-            'nome': 'Sem origem', 'count': sem_origem,
-            'pct': round(sem_origem / total * 100) if total else 0,
-            'fechados': 0,
-        })
+    for r in agg:
+        origem = r['contato__origem'] or 'Sem origem'
+        if origem in ORIGENS or r['contato__origem'] is None:
+            por_origem.append({
+                'nome': origem, 'count': r['count'],
+                'pct': round(r['count'] / total * 100) if total else 0,
+                'fechados': r['fechados'],
+            })
     return por_origem
 
 
 def _agrupar_por_segmento(negocios):
-    """Negocios agrupados por segmento (valor total)."""
+    """Negocios agrupados por segmento (valor total, query unica com annotate)."""
+    agg = negocios.values('contato__seg').annotate(total=Sum('valor')).order_by('-total')
     por_segmento = []
-    for key, info in SEGS.items():
-        qs = negocios.filter(contato__seg=key)
-        total = qs.aggregate(s=Sum('valor'))['s'] or 0
-        if qs.count():
-            por_segmento.append({
-                'label': info['label'], 'color': info['color'],
-                'total': total, 'total_label': _brl_curto(total),
-            })
-    por_segmento.sort(key=lambda s: s['total'], reverse=True)
+    for r in agg:
+        key = r['contato__seg']
+        if key in SEGS:
+            info = SEGS[key]
+            total = float(r['total'] or 0)
+            if total > 0:
+                por_segmento.append({
+                    'label': info['label'], 'color': info['color'],
+                    'total': total, 'total_label': _brl_curto(total),
+                })
     return por_segmento
 
 
@@ -527,21 +556,23 @@ def _buscar_melhores_negocios(negocios, stage_map):
 
 
 def _buscar_atividade_time(tid, inicio30):
-    """Atividade do time: movimentacoes + notas por membro (ultimos 30 dias)."""
-    movs = Movimentacao.objects.filter(created_at__gte=inicio30).select_related('autor')
-    notas = Nota.objects.filter(created_at__gte=inicio30).select_related('autor')
+    """Atividade do time: movimentacoes + notas por membro (ultimos 30 dias, query unica)."""
+    movs_agg = Movimentacao.objects.filter(created_at__gte=inicio30)
+    notas_agg = Nota.objects.filter(created_at__gte=inicio30)
     if tid is not None:
-        movs = movs.filter(negocio__contato__tenant_id=tid)
-        notas = notas.filter(contato__tenant_id=tid)
+        movs_agg = movs_agg.filter(negocio__contato__tenant_id=tid)
+        notas_agg = notas_agg.filter(contato__tenant_id=tid)
+    movs_por = movs_agg.values('autor_id', 'autor__nome').annotate(cnt=Count('id'))
+    notas_por = notas_agg.values('autor_id', 'autor__nome').annotate(cnt=Count('id'))
     atv = {}
-    for m in movs:
-        chave = m.autor_id or 0
-        e = atv.setdefault(chave, {'nome': m.autor.nome if m.autor else 'Sem autor', 'movs': 0, 'notas': 0})
-        e['movs'] += 1
-    for n in notas:
-        chave = n.autor_id or 0
-        e = atv.setdefault(chave, {'nome': n.autor.nome if n.autor else 'Sem autor', 'movs': 0, 'notas': 0})
-        e['notas'] += 1
+    for r in movs_por:
+        chave = r['autor_id'] or 0
+        e = atv.setdefault(chave, {'nome': r['autor__nome'] or 'Sem autor', 'movs': 0, 'notas': 0})
+        e['movs'] = r['cnt']
+    for r in notas_por:
+        chave = r['autor_id'] or 0
+        e = atv.setdefault(chave, {'nome': r['autor__nome'] or 'Sem autor', 'movs': 0, 'notas': 0})
+        e['notas'] = r['cnt']
     atividade = sorted(atv.values(), key=lambda e: e['movs'] + e['notas'], reverse=True)[:6]
     for e in atividade:
         e['iniciais'] = _iniciais(e['nome'])
@@ -576,53 +607,31 @@ def _calcular_velocidade(negocios, stage_map):
     return velocidade
 
 
-def _buscar_dados_baii():
-    """Dados do funil BAII (ativos + cadastrados no ano)."""
-    azul_mesa = '#1a5fb4'
-    azul_en = '#3b7ded'
-    azul_cbcs = '#93b8f7'
-    cores = [azul_mesa, azul_en, azul_cbcs]
-    ordem = {'Mestre de Santo Andr': 0, 'Escudeiro': 1, 'Cavaleiro': 2}
+def _buscar_dados_baii(gprb_repo=None):
+    """Piramide de Potencias — membros ativos vinculados por Potencia.
 
-    def _ordenar(lista):
-        lista.sort(key=lambda x: next((v for k, v in ordem.items() if k in x['name']), 99))
-
-    def _para_svg(lista_raw, _cores):
-        _ordenar(lista_raw)
-        total = sum(m['total'] for m in lista_raw) or 1
-        itens = [
-            {'key': m['abbr'], 'name': m['abbr'], 'count': m['total'],
-             'color': _cores[i] if i < len(_cores) else '#166534',
-             'pct': round(m['total'] / total * 100)}
-            for i, m in enumerate(lista_raw)
-        ]
-        return itens, _baii_svg(itens), total
-
+    Substitui o antigo funil de situacao (BAII): cada faixa da piramide e a
+    Potencia (prefeitura) com membros ligados via loja; a base trara a com
+    mais membros e as sem vinculados ficam fora.
+    """
+    repo = gprb_repo or GprbRepository()
     try:
-        ativos_raw = membros_por_classe(apenas_ativos=True)
+        potencias = repo.membros_por_potencia_vinculo()
     except Exception as e:
-        logger.error('Erro ao buscar membros por classe (ativos): %s', e)
-        ativos_raw = []
-    ativos_itens, ativos_svg, ativos_total = _para_svg(ativos_raw, cores)
+        logger.error('Erro ao buscar membros por potencia (vinculo): %s', e)
+        potencias = []
 
-    ano = date.today().year
-    try:
-        ano_raw = membros_por_classe(apenas_ativos=False, ano=ano)
-    except Exception as e:
-        logger.error('Erro ao buscar membros por classe (ano): %s', e)
-        ano_raw = []
-    ano_itens, ano_svg, ano_total = _para_svg(ano_raw, cores)
-
+    itens = _para_svg_pyramide(potencias)
     return {
-        'baii_ativos': ativos_itens, 'baii_ativos_svg': ativos_svg,
-        'baii_ativos_total': ativos_total,
-        'baii_ano': ano_itens, 'baii_ano_svg': ano_svg,
-        'baii_ano_total': ano_total, 'baii_ano_ano': ano,
+        'baii_ativos': itens, 'baii_ativos_svg': _pyramide_svg(itens),
+        'baii_ativos_total': sum(i['count'] for i in itens),
     }
 
 
-def _buscar_dados_gprb(ano_corrente):
+def _buscar_dados_gprb(ano_corrente, gprb_repo=None):
     """Busca todos os dados GPRB do dashboard com tratamento de erro."""
+    repo = gprb_repo or GprbRepository()
+
     def _safe(fn, *a, **kw):
         try:
             return fn(*a, **kw)
@@ -631,16 +640,16 @@ def _buscar_dados_gprb(ano_corrente):
             return [] if fn not in (anualidade_resumo,) else {}
 
     return {
-        'chart_labels': membros_por_mes(meses=36),
-            'anuidade': _safe(anualidade_resumo, ano=anuidade_ano_referencia()),
-        'rito_dados': _safe(membros_por_rito),
-        'idade_dados': _safe(membros_por_idade_faixa),
-        'potencia_dados': _safe(membros_por_potencia),
-        'tempo_maconaria_dados': _safe(membros_por_tempo_maconaria),
-        'ranking_lojas_dados': _safe(ranking_lojas),
-        'ranking_mx_dados': _safe(ranking_lojas_mx, anos=3),
-        'proximas_sessoes_dados': _safe(proximas_sessoes),
-        'agendamento_dados': _safe(agendamento_lojas),
+        'chart_labels': _safe(repo.membros_por_mes, meses=36),
+        'anuidade': _safe(anualidade_resumo, ano=anuidade_ano_referencia()),
+        'rito_dados': _safe(repo.membros_por_rito),
+        'idade_dados': _safe(repo.membros_por_idade_faixa),
+        'potencia_dados': _safe(repo.membros_por_potencia),
+        'tempo_maconaria_dados': _safe(repo.membros_por_tempo_maconaria),
+        'ranking_lojas_dados': _safe(repo.ranking_lojas),
+        'ranking_mx_dados': _safe(repo.ranking_lojas_mx, anos=3),
+        'proximas_sessoes_dados': _safe(repo.proximas_sessoes),
+        'agendamento_dados': _safe(repo.agendamento_lojas),
     }
 
 
@@ -651,29 +660,62 @@ def index(request):
     stages = etapas_do_tenant(tid, nicho)
     stage_map = etapa_map_do_tenant(tid, nicho)
     negocios = filtro_tenant(request, Negocio.objects.select_related('contato'))
-    resumo = _resumo(request, negocios)
+
+    gprb_repo = GprbRepository()
+    dashboard_cache = DashboardCache(DjangoCacheBackend())
+
+    cached = dashboard_cache.get_kpis(tid, nicho)
 
     hoje = date.today()
     inicio30 = timezone.make_aware(datetime.combine(hoje - timedelta(days=30), time.min))
     ano_corrente = hoje.year
 
-    ocorrencias = {s['key']: negocios.filter(stage=s['key']).count() for s in stages}
+    if cached is None:
+        resumo = _resumo(request, negocios)
+        ocorrencias_agg = negocios.values('stage').annotate(cnt=Count('id'))
+        ocorrencias = {s['key']: 0 for s in stages}
+        for r in ocorrencias_agg:
+            ocorrencias[r['stage']] = r['cnt']
+        timeline, timeline_max = _calcular_timeline(negocios, hoje)
+        conversao = _calcular_conversao(stages, ocorrencias)
+        funil = _calcular_funil(stages, ocorrencias)
+        por_etapa, ticket_medio = _analise_funil_valor(stages, negocios)
+        por_origem = _agrupar_por_origem(negocios)
+        por_segmento = _agrupar_por_segmento(negocios)
+        melhores = _buscar_melhores_negocios(negocios, stage_map)
+        velocidade = _calcular_velocidade(negocios, stage_map)
+        cached = {
+            'resumo': resumo, 'timeline': timeline, 'timeline_max': timeline_max,
+            'conversao': conversao, 'funil': funil, 'por_etapa': por_etapa,
+            'ticket_medio': ticket_medio, 'por_origem': por_origem,
+            'por_segmento': por_segmento, 'melhores': melhores,
+            'velocidade': velocidade,
+        }
+        dashboard_cache.set_kpis(tid, nicho, cached)
+    else:
+        resumo = cached['resumo']
+        timeline = cached['timeline']
+        timeline_max = cached['timeline_max']
+        conversao = cached['conversao']
+        funil = cached['funil']
+        por_etapa = cached['por_etapa']
+        ticket_medio = cached['ticket_medio']
+        por_origem = cached['por_origem']
+        por_segmento = cached['por_segmento']
+        melhores = cached['melhores']
+        velocidade = cached['velocidade']
 
-    timeline, timeline_max = _calcular_timeline(negocios, hoje)
-    conversao = _calcular_conversao(stages, ocorrencias)
-    funil = _calcular_funil(stages, ocorrencias)
     recentes = _buscar_atividade_recente(tid, negocios, stage_map)
-    por_etapa, ticket_medio = _analise_funil_valor(stages, negocios)
     metas_dashboard = _buscar_metas_vendedor(tid, hoje)
     tarefas_alerta = _buscar_tarefas_alerta(tid, hoje)
-    por_origem = _agrupar_por_origem(negocios)
-    por_segmento = _agrupar_por_segmento(negocios)
-    melhores = _buscar_melhores_negocios(negocios, stage_map)
     atividade = _buscar_atividade_time(tid, inicio30)
-    velocidade = _calcular_velocidade(negocios, stage_map)
-    baii = _buscar_dados_baii()
-    dados_gprb = _buscar_dados_gprb(ano_corrente)
-    chart_labels, chart_valores = dados_gprb['chart_labels']
+    baii = _buscar_dados_baii(gprb_repo)
+    dados_gprb = _buscar_dados_gprb(ano_corrente, gprb_repo)
+    chart_data = dados_gprb.get('chart_labels', ([], []))
+    if isinstance(chart_data, tuple) and len(chart_data) == 2:
+        chart_labels, chart_valores = chart_data
+    else:
+        chart_labels, chart_valores = [], []
 
     return render(request, 'dashboard/index.html', {
         'kpis': resumo,
@@ -693,10 +735,6 @@ def index(request):
         'baii_ativos': baii['baii_ativos'],
         'baii_ativos_svg': baii['baii_ativos_svg'],
         'baii_ativos_total': baii['baii_ativos_total'],
-        'baii_ano': baii['baii_ano'],
-        'baii_ano_svg': baii['baii_ano_svg'],
-        'baii_ano_total': baii['baii_ano_total'],
-        'baii_ano_ano': baii['baii_ano_ano'],
         'ano_corrente': ano_corrente,
         'ano_anuidade': anuidade_ano_referencia(),
         'rito_dados': dados_gprb['rito_dados'],

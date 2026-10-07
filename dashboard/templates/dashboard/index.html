@@ -2,7 +2,7 @@
 {% load static %}
 {% load seguranca %}
 
-{% block titulo %}GPRBRCRM â VisÃ£o geral{% endblock %}
+{% block titulo %}SAL DA BRITÂNEA CRM â VisÃ£o geral{% endblock %}
 
 {% block extra_head %}
 <script src="{% static 'js/vendor/chart.umd.min.js' %}"></script>
@@ -31,9 +31,8 @@
 <div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
   <!-- BAII ATIVOS -->
   <div class="hazon-card-sm flex flex-col p-7 backdrop-blur-xl" style="min-height:300px;">
-    <div class="mb-6">
-      <h2 class="font-display text-lg font-semibold text-white">BAIIS Ativos</h2>
-      <span class="text-xs text-[#a6bfc7]">(BAIIS Cadastrados) total: {{ baii_ativos_total }}</span>
+    <div class="mb-6">      <h2 class="font-display text-lg font-semibold text-white">Potências</h2>
+      <span class="text-xs text-[#a6bfc7]">Membros ativos vinculados por Potência · total: {{ baii_ativos_total }}</span>
     </div>
     <div class="flex-1">
       {% include 'dashboard/partials/_baii.html' with baii=baii_ativos baii_svg=baii_ativos_svg baii_total=baii_ativos_total %}

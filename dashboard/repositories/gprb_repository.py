@@ -155,6 +155,27 @@ class GprbRepository:
             (tenant_code,),
         )
 
+    def membros_por_potencia_vinculo(self, tenant_code='GPRB'):
+        """Contagem de membros ativos por Potencia (prefeitura) via vinculacao.
+
+        Percorre member_loja -> loja -> prefeitura: N:N, um membro pode estar
+        ligado a mais de uma loja, logo conta-se o vinculo (um membro pode
+        aparecer em mais de uma Potencia e o total excede o de membros).
+        Potencias sem membros vinculados ficam fora do resultado.
+        """
+        return self._fetch_all(
+            "SELECT p.nome AS name, COUNT(DISTINCT ml.\"memberId\") AS total "
+            "FROM member_loja ml "
+            "JOIN loja l ON ml.\"lojaId\" = l.id "
+            "LEFT JOIN prefeitura p ON l.\"prefeituraId\" = p.id "
+            "JOIN member m ON ml.\"memberId\" = m.id "
+            "JOIN tenant t ON m.\"tenantId\" = t.id "
+            "WHERE t.code = %s AND m.situacao = 'ATIVO' "
+            "AND p.id IS NOT NULL "
+            "GROUP BY p.id, p.nome ORDER BY total DESC, p.nome",
+            (tenant_code,),
+        )
+
     def membros_por_tempo_maconaria(self, tenant_code='GPRB'):
         """Contagem de membros ativos por tempo de masonaria."""
         rows = self._fetch_all(
