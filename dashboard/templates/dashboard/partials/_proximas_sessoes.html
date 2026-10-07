@@ -13,7 +13,6 @@
             <th class="pb-2 pr-2 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Nome</th>
             <th class="pb-2 pr-2 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Loja pretendida</th>
             <th class="pb-2 pr-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Inclusão</th>
-            <th class="pb-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Loja simbólica</th>
           </tr>
         </thead>
         <tbody id="cand-table-body"></tbody>
@@ -62,9 +61,7 @@
       html += '<tr class="border-b border-white/5">';
       html += '<td class="py-2 pr-2"><span class="block max-w-[150px] truncate font-medium text-white" title="' + esc(c.nome) + '">' + esc(c.nome) + '</span></td>';
       html += '<td class="py-2 pr-2"><span class="block max-w-[130px] truncate text-[#a6bfc7]" title="' + esc(c.loja) + '">' + esc(c.loja || '—') + '</span></td>';
-      html += '<td class="py-2 pr-2 text-center font-mono text-[11px] text-[#a6bfc7]">' + esc(c.data) + '</td>';
-      html += '<td class="py-2 text-center"><span class="block max-w-[130px] truncate text-[#a6bfc7]" title="' + esc(c.loja_simbolo) + '">' + esc(c.loja_simbolo || '—') + '</span></td>';
-      html += '</tr>';
+      html += '<td class="py-2 pr-2 text-center font-mono text-[11px] text-[#a6bfc7]">' + esc(c.data) + '</td>';      html += '</tr>';
     });
     tbody.innerHTML = html;
 

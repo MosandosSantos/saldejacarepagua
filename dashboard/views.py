@@ -663,7 +663,6 @@ def _buscar_candidatos(tid):
         'loja': c.loja,
         'data': timezone.localtime(c.data_inscricao).strftime('%d/%m/%y')
                 if c.data_inscricao else '',
-        'loja_simbolo': c.loja_simbolo or '',
     } for c in qs]
     return {'itens': itens, 'total': len(itens)}
 
