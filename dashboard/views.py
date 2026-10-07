@@ -647,6 +647,27 @@ def _buscar_dados_baii(gprb_repo=None):
     }
 
 
+def _buscar_candidatos(tid):
+    """Candidatos mais recentes do tenant — quem quer ingressar (recepção).
+
+    Retorna todos para a paginação do card (5 por página no cliente):
+    nome, loja que pretende ingressar, data de inclusão e loja simbólica.
+    """
+    from candidatos.models import Candidato
+
+    if not tid:
+        return {'itens': [], 'total': 0}
+    qs = Candidato.objects.filter(tenant_id=tid).order_by('-data_inscricao')
+    itens = [{
+        'nome': c.nome_completo,
+        'loja': c.loja,
+        'data': timezone.localtime(c.data_inscricao).strftime('%d/%m/%y')
+                if c.data_inscricao else '',
+        'loja_simbolo': c.loja_simbolo or '',
+    } for c in qs]
+    return {'itens': itens, 'total': len(itens)}
+
+
 def _buscar_dados_gprb(ano_corrente, gprb_repo=None):
     """Busca todos os dados GPRB do dashboard com tratamento de erro."""
     repo = gprb_repo or GprbRepository()
@@ -666,7 +687,6 @@ def _buscar_dados_gprb(ano_corrente, gprb_repo=None):
         'potencia_dados': _safe(repo.membros_por_potencia),
         'tempo_maconaria_dados': _safe(repo.membros_por_tempo_maconaria),
         'ranking_lojas_dados': _safe(repo.ranking_lojas),
-        'proximas_sessoes_dados': _safe(repo.proximas_sessoes),
         'agendamento_dados': _safe(repo.agendamento_lojas),
     }
 
@@ -760,6 +780,6 @@ def index(request):
         'potencia_dados': dados_gprb['potencia_dados'],
         'tempo_maconaria_dados': dados_gprb['tempo_maconaria_dados'],
         'ranking_lojas_dados': dados_gprb['ranking_lojas_dados'],
-        'proximas_sessoes_dados': dados_gprb['proximas_sessoes_dados'],
+        'candidatos_card': _buscar_candidatos(tid),
         'agendamento_dados': dados_gprb['agendamento_dados'],
     })

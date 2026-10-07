@@ -1,5 +1,8 @@
 """Context processors da camada web: injetam a navegacao e o usuario da sessao em todos os templates."""
 
+import os
+
+from django.conf import settings
 from django.urls import reverse
 
 from acesso.models import (
@@ -47,13 +50,11 @@ _ICONE_CAMPANHA = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke=
 #   carteiras ficam com 'Carteiras' ativo, não 'Contatos')
 _ROTAS = [
     ('Dashboard', 'dashboard', 'dashboard:index', _ICONE_DASH, None, set()),
-    ('Recepção', 'recepcao', 'recepcao:kanban', _ICONE_FUNIL, None, set()),
+    ('Candidatos', 'recepcao', 'recepcao:kanban', _ICONE_FUNIL, None, set()),
     ('Membros', 'contatos', 'contatos:lista', _ICONE_CONTATOS, None, {'carteiras', 'carteira_detalhe'}),
     ('Potências', 'contatos', 'contatos:prefeituras', _ICONE_CARTEIRA, {'prefeituras'}, set()),
     ('Lojas', 'contatos', 'contatos:lojas', _ICONE_CARTEIRA, {'lojas', 'loja_detalhe'}, set()),
     ('Financeiro', 'contatos', 'contatos:financeiro', _ICONE_FINANCEIRO, {'financeiro'}, set()),
-    ('Emolumentos', 'contatos', 'contatos:emolumentos', _ICONE_FINANCEIRO,
-     {'emolumentos', 'emolumento_novo', 'emolumento_editar'}, set()),
     ('Agenda', 'tarefas', 'tarefas:ranking', _ICONE_TAREFAS, None, set()),
     ('Comunicações', 'gestao', 'comunicacoes', _ICONE_CAMPANHA, {'comunicacoes'}, set()),
     # Equipe/Usuários: gestão — oficialato (Grão Prior, Grande Chanceler, ...) + admin da empresa.
@@ -115,9 +116,6 @@ def _nav_itens(url_name='', app_atual='', tarefas_atrasadas=0, role=None):
 def _css_versao():
     """Versão do CSS compilado (mtime) — busta o cache do navegador quando o
     Tailwind regenera o arquivo durante o desenvolvimento."""
-    import os
-
-    from django.conf import settings
     caminho = os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'dist', 'styles.css')
     try:
         return str(int(os.path.getmtime(caminho)))
