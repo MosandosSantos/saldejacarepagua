@@ -71,6 +71,7 @@ services:
       - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-core.settings}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-change-this-in-production}
       - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
+      - DJANGO_PORT=8111
       
       # Database
       - DATABASE_URL=postgresql://${DB_USER:-gprbr}:${DB_PASSWORD:-securepassword123}@db:5432/${DB_NAME:-gprbr}
@@ -92,12 +93,20 @@ services:
       # Segurança
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-*}
+      # Banco GPRB externo (Postgres 17 do Windows host).
+      # Usa IP LAN, não host.docker.internal: a porta 5432 do host colide
+      # com o db do CRM (docker-proxy), que chega primeiro.
+      - GPRB_DB_HOST=${GPRB_DB_HOST:-192.168.1.217}
+      - GPRB_DB_PORT=${GPRB_DB_PORT:-5432}
+      - GPRB_DB_NAME=${GPRB_DB_NAME:-saldabritanea}
+      - GPRB_DB_USER=${GPRB_DB_USER:-postgres}
+      - GPRB_DB_PASSWORD=${GPRB_DB_PASSWORD:-}
     volumes:
       - ./media:/app/media
       - ./staticfiles:/app/staticfiles
       - ./logs:/app/logs
     ports:
-      - "${APP_PORT:-8000}:8000"
+      - "${APP_PORT:-8111}:8111"
     depends_on:
       db:
         condition: service_healthy
@@ -110,6 +119,34 @@ services:
       options:
         max-size: "20m"
         max-file: "5"
+
+  # ============================================
+  # Locust - Teste de carga (opcional)
+  # ============================================
+  locust:
+    image: locustio/locust:2.32.4
+    container_name: gprbr-locust
+    command:
+      - -f
+      - /mnt/locust/locustfile.py
+      - --host
+      - ${LOCUST_TARGET_URL:-http://app:8111}
+      - --web-host
+      - 0.0.0.0
+    environment:
+      LOCUST_USERNAME: ${LOCUST_USERNAME:-}
+      LOCUST_PASSWORD: ${LOCUST_PASSWORD:-}
+    volumes:
+      - ./locust:/mnt/locust:ro
+    ports:
+      - "127.0.0.1:${LOCUST_PORT:-8089}:8089"
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - gprbr-network
+    profiles:
+      - load-test
 
   # ============================================
   # Nginx - Reverse Proxy (Opcional)
