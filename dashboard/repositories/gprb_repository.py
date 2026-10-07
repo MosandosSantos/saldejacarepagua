@@ -155,26 +155,107 @@ class GprbRepository:
             (tenant_code,),
         )
 
-    def membros_por_potencia_vinculo(self, tenant_code='GPRB'):
+    def membros_por_potencia_vinculo(self, tenant_code='GPRB', prefeitura_id=None):
         """Contagem de membros ativos por Potencia (prefeitura) via vinculacao.
 
         Percorre member_loja -> loja -> prefeitura: N:N, um membro pode estar
         ligado a mais de uma loja, logo conta-se o vinculo (um membro pode
         aparecer em mais de uma Potencia e o total excede o de membros).
         Potencias sem membros vinculados ficam fora do resultado.
+        `prefeitura_id` restringe a uma Potencia (para o card Anuidade).
         """
+        where = "WHERE t.code = %s AND m.situacao = 'ATIVO' AND p.id IS NOT NULL"
+        params = [tenant_code]
+        if prefeitura_id:
+            where += ' AND p.id = %s'
+            params.append(prefeitura_id)
         return self._fetch_all(
-            "SELECT p.nome AS name, COUNT(DISTINCT ml.\"memberId\") AS total "
+            "SELECT p.id, p.nome AS name, COUNT(DISTINCT ml.\"memberId\") AS total "
             "FROM member_loja ml "
             "JOIN loja l ON ml.\"lojaId\" = l.id "
             "LEFT JOIN prefeitura p ON l.\"prefeituraId\" = p.id "
             "JOIN member m ON ml.\"memberId\" = m.id "
             "JOIN tenant t ON m.\"tenantId\" = t.id "
-            "WHERE t.code = %s AND m.situacao = 'ATIVO' "
-            "AND p.id IS NOT NULL "
-            "GROUP BY p.id, p.nome ORDER BY total DESC, p.nome",
-            (tenant_code,),
+            + where +
+            " GROUP BY p.id, p.nome ORDER BY total DESC, p.nome",
+            params,
         )
+
+    def membros_ativos_por_loja(self, tenant_code='GPRB', prefeitura_id=None):
+        """Contagem de vinculacoes ativas por loja (COUNT DISTINCT memberId).
+
+        Total simples por loja: membro ligado a N lojas soma 1 em cada —
+        o somatorio pode exceder o numero de membros. `prefeitura_id`
+        restringe as lojas de uma Potencia (card Anuidade).
+        """
+        where = "WHERE t.code = %s AND m.situacao = 'ATIVO'"
+        params = [tenant_code]
+        if prefeitura_id:
+            where += ' AND l.\"prefeituraId\" = %s'
+            params.append(prefeitura_id)
+        return self._fetch_all(
+            'SELECT l.id, '
+            "COALESCE(l.\"nomeFantasia\", l.\"lojaMX\", 'Loja ' || COALESCE(l.numero::text, '')) AS name, "
+            'l.\"prefeituraId\" AS prefeitura_id, '
+            'COUNT(DISTINCT ml.\"memberId\") AS total '
+            'FROM member_loja ml '
+            'JOIN loja l ON ml.\"lojaId\" = l.id '
+            'JOIN member m ON ml.\"memberId\" = m.id '
+            'JOIN tenant t ON m.\"tenantId\" = t.id '
+            + where +
+            ' GROUP BY l.id, l.\"nomeFantasia\", l.\"lojaMX\", l.numero, l.\"prefeituraId\" '
+            'ORDER BY total DESC, name',
+            params,
+        )
+
+    def anuidade_card(self, ano, tenant_code='GPRB', prefeitura_id=None, loja_id=None):
+        """Dados do card Anuidade — pagantes/pendentes + total simples por loja.
+
+        Pagamentos contam VINCULOS (membro em 2 lojas com anuidade paga soma
+        2): o percentual sai igual ao global (a cobranca e do membro), mas os
+        totais seguem a regra "soma simples das lojas". `total` sao membros
+        ativos vinculados (por loja) — inclusive os sem cobranca registrada.
+        `lojas` volta completo no escopo (para repopular o select de lojas).
+        """
+        where = "WHERE t.code = %s AND pp.type = 'ANNUAL' AND pp.year = %s "
+        where += "AND m.situacao = 'ATIVO'"
+        params = [tenant_code, ano]
+        if prefeitura_id:
+            where += ' AND l."prefeituraId" = %s'
+            params.append(prefeitura_id)
+        if loja_id:
+            where += ' AND l.id = %s'
+            params.append(loja_id)
+        rows = self._fetch_all(
+            'SELECT ps.status, COUNT(*) AS quantidade '
+            'FROM payment_status ps '
+            'JOIN payment_period pp ON ps.\"periodId\" = pp.id '
+            'JOIN tenant t ON pp.\"tenantId\" = t.id '
+            'JOIN member m ON m.id = ps.\"memberId\" '
+            'JOIN member_loja ml ON ml.\"memberId\" = m.id '
+            'JOIN loja l ON ml.\"lojaId\" = l.id '
+            + where +
+            ' GROUP BY ps.status',
+            params,
+        )
+        pagamentos = {r['status']: r['quantidade'] for r in rows}
+        pagantes = pagamentos.get('PAID', 0)
+        pendentes = pagamentos.get('PENDING', 0)
+        total_pagamentos = pagantes + pendentes
+        # Opções completas do select de Potências (independem do recorte de loja)
+        potencias = self.membros_por_potencia_vinculo(tenant_code)
+        lojas = self.membros_ativos_por_loja(tenant_code, prefeitura_id=prefeitura_id)
+        if loja_id:
+            lojas_do_filtro = [loja for loja in lojas if str(loja['id']) == str(loja_id)]
+        else:
+            lojas_do_filtro = lojas
+        return {
+            'pagantes': pagantes, 'pendentes': pendentes,
+            'percentual': round(pagantes / total_pagamentos * 100) if total_pagamentos else 0,
+            'total': sum(loja['total'] for loja in lojas_do_filtro),
+            'lojas': lojas,  # lista completa do escopo — repopula o select
+            'potencias': potencias,
+        }
 
     def membros_por_tempo_maconaria(self, tenant_code='GPRB'):
         """Contagem de membros ativos por tempo de masonaria."""

@@ -26,7 +26,7 @@ from tarefas.models import Tarefa
 from dashboard.repositories.gprb_repository import GprbRepository
 from dashboard.services.cache_service import DashboardCache, DjangoCacheBackend
 
-from core.gprb import anualidade_resumo, anuidade_ano_referencia
+from core.gprb import anuidade_ano_referencia
 
 # _brl, _brl_curto, _iniciais → importados de core.utils
 
@@ -340,6 +340,25 @@ def dados(request):
     return JsonResponse(resumo)
 
 
+@web_login_required
+def anuidade_dados(request):
+    """JSON do card Anuidade — recorte por Potencia (prefeitura) e/ou Loja.
+
+    O percentual segue pagantes/pendentes do recorte; `total` e a soma
+    simples das lojas do escopo (membro em 2 lojas soma 2).
+    """
+    prefeitura_id = request.GET.get('potencia') or None
+    loja_id = request.GET.get('loja') or None
+    try:
+        dados_card = GprbRepository().anuidade_card(
+            anuidade_ano_referencia(), prefeitura_id=prefeitura_id, loja_id=loja_id)
+    except Exception as e:
+        logger.error('Erro no endpoint anuidade_dados: %s', e)
+        dados_card = {'pagantes': 0, 'pendentes': 0, 'total': 0,
+                      'percentual': 0, 'lojas': []}
+    return JsonResponse(dados_card)
+
+
 
 
 # ---------------------------------------------------------------------------
@@ -637,11 +656,11 @@ def _buscar_dados_gprb(ano_corrente, gprb_repo=None):
             return fn(*a, **kw)
         except Exception as e:
             logger.error('Erro ao buscar %s: %s', fn.__name__, e)
-            return [] if fn not in (anualidade_resumo,) else {}
+            return [] if fn.__name__ != 'anuidade_card' else {}
 
     return {
         'chart_labels': _safe(repo.membros_por_mes, meses=36),
-        'anuidade': _safe(anualidade_resumo, ano=anuidade_ano_referencia()),
+        'anuidade': _safe(repo.anuidade_card, ano=anuidade_ano_referencia()),
         'rito_dados': _safe(repo.membros_por_rito),
         'idade_dados': _safe(repo.membros_por_idade_faixa),
         'potencia_dados': _safe(repo.membros_por_potencia),
