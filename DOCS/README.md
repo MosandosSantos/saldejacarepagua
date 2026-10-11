@@ -29,3 +29,9 @@ Veja o [README.md](../README.md) na raiz do repositório (setup, seed e servidor
 - **API**: `uvicorn api.main:app --port 8000` → `http://localhost:8000/docs` (Swagger)
 - **Testes**: `python -m pytest teste/` (463 testes, conforme Sprint 8)
 - **Tailwind**: `python manage.py tailwind start` (dev) / `python manage.py tailwind build` (build)
+
+## Migração do banco Docker
+
+O CRM usa o banco lógico `saldabritanea` no serviço PostgreSQL Compose `gprbr-db`, restaurado exclusivamente do banco Docker `gprbr`. A origem e seu volume permanecem preservados para rollback. A instância PostgreSQL externa de mesmo nome não é origem, destino nem é acessada pelo app. A conexão SQL direta GPRB fica desativada; recursos que dependem dessas tabelas foram adiados.
+
+Detalhes: [plano de migração](superpowers/plans/2026-10-11-saldabritanea-docker-migration.md) e [inventário do banco](../specs/legacy/database.md).

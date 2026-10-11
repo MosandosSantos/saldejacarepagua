@@ -1,6 +1,6 @@
 # Migração do CRM para o banco Docker `saldabritanea`
 
-**Status:** aguardando revisão do usuário  
+**Status:** aprovada e executada em 2026-10-11
 **Data:** 2026-10-11
 
 ## Objetivo

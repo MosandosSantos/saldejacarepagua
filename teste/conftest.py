@@ -115,3 +115,79 @@ def headers_admin_saas(client, admin_saas):
 @pytest.fixture
 def headers_admin_company(client, admin_company):
     return fazer_login(client, admin_company.email)
+
+# ---------------------------------------------------------------------------
+# Banco GPRB de teste (specs/002-problema-pagamento)
+# ---------------------------------------------------------------------------
+
+def _resetar_conexao_gprb():
+    """Fecha a conexão thread-local GPRB para reabrir com outro banco."""
+    from core.gprb import connection as gconn
+
+    antiga = getattr(gconn._tls, 'conn', None)
+    if antiga is not None:
+        try:
+            antiga.close()
+        except Exception:
+            pass
+    gconn._tls.conn = None
+
+
+@pytest.fixture
+def banco_gprb_teste(monkeypatch):
+    """Aponta a camada GPRB (SQL cru) para `saldabritanea_test` durante o teste."""
+
+    from core.gprb import connection as gconn
+    from django.test import override_settings
+
+    config_teste = _gprb_test_connection_settings()
+    if config_teste is None:
+        pytest.skip('GPRB integration tests require a local/Compose test PostgreSQL')
+
+    codigo_override = override_settings(
+        GPRB_TENANT_CODE='GPRB', GPRB_DB_ENABLED=True,
+    )
+    codigo_override.enable()
+    for chave, valor in config_teste.items():
+        monkeypatch.setenv(chave, valor)
+    _resetar_conexao_gprb()
+    try:
+        conn = gconn.connect()
+        if isinstance(conn, gconn._DummyConnection):
+            pytest.skip('Local GPRB test database is unavailable')
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT to_regclass('public.tenant'), to_regclass('public.member')"
+                )
+                tabelas = cur.fetchone()
+        except gconn.psycopg.Error:
+            pytest.skip('Local GPRB test database is unavailable')
+        finally:
+            conn.close()
+        if not tabelas or any(tabela is None for tabela in tabelas):
+            pytest.skip('Local GPRB test schema is unavailable')
+        yield
+    finally:
+        _resetar_conexao_gprb()
+        codigo_override.disable()
+
+
+def _gprb_test_connection_settings():
+    """Require explicit test-only GPRB settings for a local/Compose endpoint."""
+    host = (os.environ.get('GPRB_TEST_DB_HOST') or '').strip()
+    port = (os.environ.get('GPRB_TEST_DB_PORT') or '').strip()
+    user = (os.environ.get('GPRB_TEST_DB_USER') or '').strip()
+    if host not in {'localhost', '127.0.0.1', '::1', 'db'} or not port.isdigit() or not user:
+        return None
+    if 'GPRB_TEST_DB_PASSWORD' not in os.environ:
+        return None
+    return {
+        'GPRB_DB_HOST': host,
+        'GPRB_DB_PORT': port,
+        'GPRB_DB_NAME': 'saldabritanea_test',
+        'GPRB_DB_USER': user,
+        'GPRB_DB_PASSWORD': os.environ['GPRB_TEST_DB_PASSWORD'],
+        'GPRB_DB_SSLMODE': 'disable',
+        'GPRB_DB_TIMEOUT': '3',
+    }

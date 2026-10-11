@@ -10,6 +10,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
 
+# Desativa a conexao SQL direta ao banco GPRB externo durante o cutover.
+GPRB_DB_ENABLED = False
+
 def _env_bool(name: str, default: str = '0') -> bool:
     """Lê uma env var como booleana — aceita 1/true/yes/on (case-insensitive)."""
     return os.getenv(name, default).strip().lower() in ('1', 'true', 'yes', 'on', 't')
@@ -137,7 +140,7 @@ ASGI_APPLICATION = 'core.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('PGDATABASE', 'gprbr'),
+        'NAME': os.getenv('PGDATABASE', 'saldabritanea'),
         'USER': os.getenv('PGUSER', 'postgres'),
         'PASSWORD': os.getenv('PGPASSWORD', ''),
         'HOST': os.getenv('PGHOST', 'localhost'),

@@ -74,10 +74,11 @@ def _nova_conexao():
     """Abre uma conexão física com o banco saldabritanea."""
     password = None
     pw = os.environ.get('GPRB_DB_PASSWORD')
-    if pw:
+    if pw is not None:
         # No host (testes, runserver fora do compose) o .env pode ser carregado
         # literal: '$$' é escape do docker compose — volta a ser '$'. Dentro do
         # container o compose já desescapou e '$$' nunca ocorre (no-op).
+        # Senha explicitamente vazia também impede fallback ao .env.
         password = pw.replace('$$', '$')
     else:
         # Fallback: lê do .env do projeto (aceita GPRB_DB_PASSWORD ou PGPASSWORD)
@@ -117,6 +118,19 @@ def _nova_conexao():
 
 def connect():
     """Retorna a conexão da thread (reutilizada) — `close()` é no-op via proxy."""
+    from django.conf import settings
+
+    if not getattr(settings, 'GPRB_DB_ENABLED', False):
+        conn = getattr(_tls, 'conn', None)
+        if conn is not None:
+            try:
+                conn.close()
+            except (psycopg.Error, OSError, AttributeError) as e:
+                logger.debug('Falha ao fechar conexão GPRB desativada: %s', e)
+            finally:
+                _tls.conn = None
+        return _DummyConnection()
+
     conn = getattr(_tls, 'conn', None)
     if conn is not None:
         try:
