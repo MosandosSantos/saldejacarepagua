@@ -19,7 +19,7 @@ O banco Docker ativo e o banco Docker de origem `gprbr` não possuem a tabela `p
 - A tela usa o termo **Delegado** para o responsável do Vale.
 - A UI usa **Mensalidade**, mas o usuário autorizou somente a troca de texto: os campos e a semântica anual existentes (`valor_anuidade`, `vencimento_anuidade`) não mudam nesta etapa.
 - As telas não devem preencher ou criar registros com os exemplos de e-mail presentes nos placeholders.
-- Os e-mails existentes serão preservados como texto, sem acrescentar um validador mais restritivo; o exemplo fornecido (`farelli@gprbr`) precisa continuar aceito.
+- Os e-mails serão armazenados como texto, sem acrescentar um validador mais restritivo; o exemplo fornecido (`farelli@gprbr`) precisa continuar aceito.
 
 ## Abordagens consideradas
 
@@ -99,10 +99,11 @@ Testes não podem usar a base de produção, a base Docker de origem `gprbr` nem
 2. Criar, consultar, editar e excluir Vale funcionam no CRUD ORM e são escopados por tenant.
 3. `secretario_nome` e `tesoureiro_nome` persistem junto aos e-mails/telefones em criação e edição.
 4. A listagem e a confirmação de exclusão exibem nome, e-mail e telefone de Secretaria e Tesouraria.
-5. Os formulários podem deixar os contatos vazios e não preenchem valores de exemplo automaticamente.
-6. A tabela começa vazia; nenhum registro externo é copiado.
-7. Conector GPRB permanece desligado e não há alterações às bases ou volumes de origem.
-8. Testes focados, `manage.py check` e verificação de migrations passam.
+5. O endereço local-domain `farelli@gprbr` é aceito e preservado sem validação nova.
+6. Os formulários podem deixar os contatos vazios e não preenchem valores de exemplo automaticamente.
+7. A tabela começa vazia; nenhum registro externo é copiado.
+8. Conector GPRB permanece desligado e não há alterações às bases ou volumes de origem.
+9. Testes focados, `manage.py check` e verificação de migrations passam.
 
 ## Fora de escopo
 
