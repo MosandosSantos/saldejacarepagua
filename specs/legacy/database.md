@@ -42,6 +42,13 @@ Estas tabelas permanecem somente na instância externa antiga e **não** são co
 
 O restore copia o schema e os dados dessas tabelas de `gprbr`; as migrations Django rodam na inicialização da aplicação.
 
+### CRUD local de Vales
+
+- A migration Django `contatos.0015_vale` cria `public.vales` no banco Docker ativo `saldabritanea`; esta tabela pertence ao CRM e não é uma cópia da tabela GPRB `prefeitura`.
+- A tabela começa vazia. Nenhum Vale é importado da instância PostgreSQL externa. Os registros são cadastrados manualmente e vinculados a `acesso.Tenant`.
+- Secretaria e Tesouraria têm nome, e-mail e telefone locais. Os fluxos de consulta/exclusão não consultam vínculos GPRB com Loja/Membro; esses relacionamentos continuam fora do escopo.
+- A UI chama `prefeito` de **Delegado** e `valor_anuidade` de **Mensalidade**; os campos internos e o vencimento continuam anuais.
+
 ## 3. Conexões durante o cutover
 
 | Caminho | Configuração | Estado |

@@ -25,7 +25,7 @@ Browser ──► /api/v1 (JWT)  ──► FastAPI Routes ──► Services ─
 |-----|------------------|
 | `core` | settings, urls raiz, `dominio.py` (etapas/nichos/segmentos), `templatetags/seguranca`, pacote `core/gprb` (integração SQL direta desativada durante o cutover) |
 | `acesso` | login/logout por sessão, papéis, equipe, context processor (NAV) |
-| `contatos` | Membros, Potências, Lojas, Financeiro (placeholder) |
+| `contatos` | Vales (cadastro local via ORM), Membros, Lojas, Financeiro (placeholder) |
 | `dashboard` | KPIs, funil, rankings, partials GPRB |
 | `recepcao` | Fluxo de recepção |
 | `tarefas` | Follow-ups (agenda consolidada) |
@@ -37,8 +37,8 @@ Browser ──► /api/v1 (JWT)  ──► FastAPI Routes ──► Services ─
 
 ## Acesso a dados durante o cutover
 
-1. **ORM Django** (`DATABASE_URL`/`PG*`) — única conexão ativa do app; aponta ao serviço Docker `db`, banco `saldabritanea`.
-2. **SQL cru via psycopg 3** para GPRB — `GPRB_DB_ENABLED=False`; o app não recebe os `GPRB_DB_*` externos. As telas/fluxos que dependem de tabelas GPRB não copiadas podem ficar degradadas até a etapa funcional posterior.
+1. **ORM Django** (`DATABASE_URL`/`PG*`) — única conexão ativa do app; aponta ao serviço Docker `db`, banco `saldabritanea`. O CRUD de Vale usa o modelo local `contatos.Vale` (`public.vales`), escopado por tenant.
+2. **SQL cru via psycopg 3** para GPRB — `GPRB_DB_ENABLED=False`; o app não recebe os `GPRB_DB_*` externos. Fluxos de Loja/Membro que dependem de tabelas GPRB não copiadas podem ficar degradados; o CRUD local de Vale não os consulta.
 3. A instância PostgreSQL externa também chamada `saldabritanea` não é consultada nem alterada pelo processo da aplicação.
 
 ## Multi-tenant

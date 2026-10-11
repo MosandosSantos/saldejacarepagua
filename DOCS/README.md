@@ -34,4 +34,6 @@ Veja o [README.md](../README.md) na raiz do repositório (setup, seed e servidor
 
 O CRM usa o banco lógico `saldabritanea` no serviço PostgreSQL Compose `gprbr-db`, restaurado exclusivamente do banco Docker `gprbr`. A origem e seu volume permanecem preservados para rollback. A instância PostgreSQL externa de mesmo nome não é origem, destino nem é acessada pelo app. A conexão SQL direta GPRB fica desativada; recursos que dependem dessas tabelas foram adiados.
 
+Como exceção local, `contatos.0015_vale` cria `public.vales` vazio e tenant-scoped para o CRUD de Vales; não importa `prefeitura` nem dados do GPRB externo.
+
 Detalhes: [plano de migração](superpowers/plans/2026-10-11-saldabritanea-docker-migration.md) e [inventário do banco](../specs/legacy/database.md).
