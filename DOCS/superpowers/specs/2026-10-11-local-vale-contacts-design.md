@@ -19,6 +19,7 @@ O banco Docker ativo e o banco Docker de origem `gprbr` não possuem a tabela `p
 - A tela usa o termo **Delegado** para o responsável do Vale.
 - A UI usa **Mensalidade**, mas o usuário autorizou somente a troca de texto: os campos e a semântica anual existentes (`valor_anuidade`, `vencimento_anuidade`) não mudam nesta etapa.
 - As telas não devem preencher ou criar registros com os exemplos de e-mail presentes nos placeholders.
+- Os e-mails existentes serão preservados como texto, sem acrescentar um validador mais restritivo; o exemplo fornecido (`farelli@gprbr`) precisa continuar aceito.
 
 ## Abordagens consideradas
 
@@ -53,10 +54,10 @@ class Vale(models.Model):
     tenant = models.ForeignKey('acesso.Tenant', on_delete=models.CASCADE)
     nome = models.CharField(max_length=160)
     secretario_nome = models.CharField(max_length=160, blank=True, default='')
-    secretario_email = models.EmailField(blank=True, default='')
+    secretario_email = models.CharField(max_length=254, blank=True, default='')
     secretario_telefone = models.CharField(max_length=40, blank=True, default='')
     tesoureiro_nome = models.CharField(max_length=160, blank=True, default='')
-    tesoureiro_email = models.EmailField(blank=True, default='')
+    tesoureiro_email = models.CharField(max_length=254, blank=True, default='')
     tesoureiro_telefone = models.CharField(max_length=40, blank=True, default='')
 ```
 
