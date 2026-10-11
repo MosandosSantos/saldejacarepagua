@@ -18,10 +18,10 @@ from contatos.views.gprb_lojas import (
     lojas,
 )
 from contatos.views.gprb_membros import membro_detalhe, membro_editar, membro_excluir
-from contatos.views.gprb_prefeituras import (
+from contatos.views.gprb_prefeituras import prefeitura_lojas_json
+from contatos.views.vales import (
     prefeitura_editar,
     prefeitura_excluir,
-    prefeitura_lojas_json,
     prefeitura_nova,
     prefeituras,
 )

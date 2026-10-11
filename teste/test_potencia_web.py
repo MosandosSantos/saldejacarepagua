@@ -1,202 +1,182 @@
-"""Testes web do CRUD de Potências com os novos campos.
+"""Web CRUD tests for local Vales; the external GPRB connector is forbidden."""
 
-Cobre: inclusão/edição com contatos de cargo (secretário/tesoureiro), PIX,
-valor e vencimento da anuidade, e a listagem com sigla/anuidade/vencimento.
-Regressão: e-mail coletado no form agora é persistido (coluna nova).
-"""
 from datetime import date
 from decimal import Decimal
+from uuid import uuid4
 
 import pytest
+from django.contrib.auth.hashers import make_password
 from django.test import Client
 
-from core.gprb import connection as gconn
-from repositories import gprb_repository as repo
+from acesso.models import ROLE_ADMIN_SAAS, ROLE_GRANDE_PRIOR, ROLE_VIEWER, Tenant, Usuario
+from acesso.tenant_context import ADMIN_TENANT_SESSION_KEY
+from contatos.models import Vale
+from core.gprb import connection as gprb_connection
 
-SENHA = 'senha123'
 
 pytestmark = pytest.mark.django_db(transaction=True)
 
 
-def _login(email):
-    c = Client()
-    resp = c.post('/login/', {'email': email, 'senha': SENHA})
-    assert resp.status_code == 302, f'login falhou para {email}'
-    return c
+@pytest.fixture(autouse=True)
+def external_gprb_must_not_be_used(monkeypatch):
+    from repositories import gprb_repository
 
-
-@pytest.fixture
-def seed_potencia(banco_gprb_teste):
-    """Tenant GPRB (reusa o existente ou cria) no banco de teste."""
-    conn = gconn.connect()
-    cur = conn.cursor()
-    cur.execute('SELECT id FROM tenant WHERE code = %s ORDER BY "createdAt" LIMIT 1', ('GPRB',))
-    row = cur.fetchone()
-    criei_tenant = False
-    if row is None:
-        tid = 'test-tenant-potencia'
-        cur.execute(
-            'INSERT INTO tenant (id, code, name, "createdAt", "updatedAt") '
-            'VALUES (%s, %s, %s, NOW(), NOW())',
-            (tid, 'GPRB', 'Sal da Britânea (teste)'),
-        )
-        criei_tenant = True
-    else:
-        tid = row[0]
-    yield {'tenant': tid}
-    if criei_tenant:
-        cur.execute('DELETE FROM prefeitura WHERE "tenantId" = %s', (tid,))
-        cur.execute('DELETE FROM tenant WHERE id = %s', (tid,))
-
-
-def _criar_potencia(nome, sigla='', pix='', valor=None, vencimento=None):
-    """Insere prefeitura direto no banco e devolve o id gerado."""
-    tid = None
-    conn = gconn.connect()
-    cur = conn.cursor()
-    cur.execute('SELECT id FROM tenant WHERE code = %s ORDER BY "createdAt" LIMIT 1', ('GPRB',))
-    row = cur.fetchone()
-    assert row is not None, 'tenant GPRB precisa existir (use o fixture seed_potencia)'
-    tid = row[0]
-    cur.execute(
-        'INSERT INTO prefeitura (id, "tenantId", nome, sigla, prefeito, telefone, email, pix, '
-        '"valorAnuidade", "dataVencimentoAnuidade", status, "createdAt", "updatedAt") '
-        'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()) RETURNING id',
-        ('test-pf-' + nome[:8].lower(), tid, nome, sigla or None, 'GM ' + nome,
-         '(21) 90000-0000', 'gm@' + nome.split()[0].lower() + '.com', pix or None,
-         valor, vencimento, 'ATIVA'),
+    monkeypatch.setattr(
+        gprb_repository,
+        'connect',
+        lambda: pytest.fail('local Vale CRUD must not connect to GPRB'),
     )
-    return cur.fetchone()[0]
 
 
-def test_incluir_potencia_salva_todos_os_campos(seed_potencia, usuario_operacional):
-    c = _login('oper@aurora.com')
-    r = c.post('/contatos/prefeitura/nova/', {
-        'nome': 'Potência Inclusao Teste', 'sigla': 'PIT', 'prefeito': 'GM Teste',
-        'telefone': '(21) 99999-0001', 'email': 'gm@pit.com',
-        'secretario_email': 'sec@pit.com', 'secretario_telefone': '(21) 99999-0002',
-        'tesoureiro_email': 'tes@pit.com', 'tesoureiro_telefone': '(21) 99999-0003',
-        'valor_anuidade': '1.500,00', 'vencimento_anuidade': '2027-01-31',
-        'pix': '12345678900',
-    })
-    assert r.status_code == 302
-
-    conn = gconn.connect()
-    cur = conn.cursor()
-    cur.execute('SELECT id FROM prefeitura WHERE nome = %s', ('Potência Inclusao Teste',))
-    pid = cur.fetchone()[0]
-
-    pf = repo.buscar_prefeitura(pid)
-    assert pf['sigla'] == 'PIT'
-    assert pf['prefeito'] == 'GM Teste'
-    assert pf['email'] == 'gm@pit.com'  # regressão: antes o e-mail era descartado
-    assert pf['secretario_email'] == 'sec@pit.com'
-    assert pf['secretario_telefone'] == '(21) 99999-0002'
-    assert pf['tesoureiro_email'] == 'tes@pit.com'
-    assert pf['tesoureiro_telefone'] == '(21) 99999-0003'
-    assert pf['pix'] == '12345678900'
-    assert pf['valor_anuidade'] == Decimal('1500.00')
-    assert pf['vencimento_anuidade'] == date(2027, 1, 31)
-
-    # limpeza
-    cur.execute('DELETE FROM prefeitura WHERE id = %s', (pid,))
+def _tenant():
+    suffix = uuid4().hex
+    return Tenant.objects.create(nome=f'Vale tenant {suffix}', slug=f'vale-{suffix}')
 
 
-def test_editar_potencia_atualiza_campos(seed_potencia, usuario_operacional):
-    pid = _criar_potencia('Pot Edicao', sigla='PED', valor=Decimal('1000.00'))
-    c = _login('oper@aurora.com')
-
-    r = c.post(f'/contatos/prefeitura/{pid}/editar/', {
-        'nome': 'Pot Edicao', 'sigla': 'PED', 'prefeito': 'GM Editado',
-        'telefone': '(21) 98888-0000', 'email': 'gm@ped.com',
-        'secretario_email': 'sec@ped.com', 'secretario_telefone': '(21) 98888-0001',
-        'tesoureiro_email': 'tes@ped.com', 'tesoureiro_telefone': '(21) 98888-0002',
-        'valor_anuidade': '2.000,00', 'vencimento_anuidade': '2027-12-31',
-        'pix': 'chave@pix.com',
-    })
-    assert r.status_code == 302
-
-    pf = repo.buscar_prefeitura(pid)
-    assert pf['prefeito'] == 'GM Editado'
-    assert pf['pix'] == 'chave@pix.com'
-    assert pf['valor_anuidade'] == Decimal('2000.00')
-    assert pf['vencimento_iso'] == '2027-12-31'
-
-    # página de edição traz os valores salvos
-    html = c.get(f'/contatos/prefeitura/{pid}/editar/').content.decode()
-    assert 'chave@pix.com' in html
-    assert 'sec@ped.com' in html
-
-    gconn.connect().cursor().execute('DELETE FROM prefeitura WHERE id = %s', (pid,))
-
-
-def test_lista_mostra_sigla_anuidade_e_vencimento(seed_potencia, usuario_operacional):
-    pid = _criar_potencia(
-        'Pot Lista Teste', sigla='PLT',
-        valor=Decimal('1500.00'), vencimento=date(2027, 1, 31),
+def _usuario(tenant, role=ROLE_GRANDE_PRIOR):
+    suffix = uuid4().hex
+    return Usuario.objects.create(
+        nome='Usuário de teste',
+        email=f'vale-{suffix}@example.test',
+        senha=make_password('senha-de-teste'),
+        role=role,
+        tenant=tenant,
     )
-    c = _login('oper@aurora.com')
-    html = c.get('/contatos/prefeituras/').content.decode()
-    assert 'Pot Lista Teste' in html
-    assert 'PLT' in html
-    assert 'R$ 1.500,00' in html
-    assert '31/01/2027' in html
-
-    gconn.connect().cursor().execute('DELETE FROM prefeitura WHERE id = %s', (pid,))
 
 
-def test_campos_opcionais_ficam_vazios(seed_potencia, usuario_operacional):
-    c = _login('oper@aurora.com')
-    r = c.post('/contatos/prefeitura/nova/', {'nome': 'Pot Minima'})
-    assert r.status_code == 302
-
-    conn = gconn.connect()
-    cur = conn.cursor()
-    cur.execute('SELECT id FROM prefeitura WHERE nome = %s', ('Pot Minima',))
-    pid = cur.fetchone()[0]
-    pf = repo.buscar_prefeitura(pid)
-    assert pf['pix'] == ''
-    assert pf['valor_anuidade'] is None
-    assert pf['vencimento_iso'] == ''
-    cur.execute('DELETE FROM prefeitura WHERE id = %s', (pid,))
-
-
-def test_excluir_potencia_sem_lojas_remove_registro(seed_potencia, usuario_operacional):
-    pid = _criar_potencia('Pot Excluir Sem Lojas')
-    c = _login('oper@aurora.com')
-
-    html = c.get(f'/contatos/prefeitura/{pid}/excluir/')
-    assert html.status_code == 200
-    assert 'Pot Excluir Sem Lojas' in html.content.decode()
-
-    r = c.post(f'/contatos/prefeitura/{pid}/excluir/')
-    assert r.status_code == 302
-
-    conn = gconn.connect()
-    cur = conn.cursor()
-    cur.execute('SELECT COUNT(*) FROM prefeitura WHERE id = %s', (pid,))
-    assert cur.fetchone()[0] == 0
+def _cliente(usuario, tenant_context=None):
+    client = Client()
+    session = client.session
+    session['usuario_id'] = usuario.pk
+    session['usuario'] = {
+        'nome': usuario.nome,
+        'email': usuario.email,
+        'role': usuario.role,
+        'tenant_id': usuario.tenant_id,
+    }
+    if tenant_context is not None:
+        session[ADMIN_TENANT_SESSION_KEY] = tenant_context
+    session.save()
+    return client
 
 
-def test_excluir_potencia_com_lojas_e_bloqueada(seed_potencia, usuario_operacional):
-    pid = _criar_potencia('Pot Excluir Com Lojas')
-    try:
-        repo.criar_loja({
-            'nome': 'Loja da Pot Bloqueada', 'numero': '1',
-            'prefeitura_id': pid,
-        })
-        c = _login('oper@aurora.com')
+def _dados(nome='Vale teste'):
+    return {
+        'nome': nome,
+        'sigla': 'VT',
+        'prefeito': 'Delegado de teste',
+        'telefone': '(21) 90000-0000',
+        'email': 'delegado@gprbr',
+        'secretario_nome': 'Secretário de teste',
+        'secretario_email': 'farelli@gprbr',
+        'secretario_telefone': '(21) 99999-9999',
+        'tesoureiro_nome': 'Tesoureiro de teste',
+        'tesoureiro_email': 'tesouraria@potencia.com',
+        'tesoureiro_telefone': '(21) 98888-9999',
+        'valor_anuidade': '1.500,00',
+        'vencimento_anuidade': '2027-01-31',
+        'pix': 'pix-vale-teste',
+    }
 
-        r = c.post(f'/contatos/prefeitura/{pid}/excluir/')
-        assert r.status_code == 200
-        assert 'loja(s) vinculada(s)' in r.content.decode()
 
-        conn = gconn.connect()
-        cur = conn.cursor()
-        cur.execute('SELECT COUNT(*) FROM prefeitura WHERE id = %s', (pid,))
-        assert cur.fetchone()[0] == 1
-    finally:
-        conn = gconn.connect()
-        cur = conn.cursor()
-        cur.execute('DELETE FROM loja WHERE "prefeituraId" = %s', (pid,))
-        cur.execute('DELETE FROM prefeitura WHERE id = %s', (pid,))
+def test_create_vale_persists_all_contact_fields():
+    tenant = _tenant()
+    client = _cliente(_usuario(tenant))
+
+    response = client.post('/contatos/prefeitura/nova/', _dados())
+
+    assert response.status_code == 302
+    vale = Vale.objects.get(tenant=tenant, nome='Vale teste')
+    assert vale.secretario_nome == 'Secretário de teste'
+    assert vale.secretario_email == 'farelli@gprbr'
+    assert vale.secretario_telefone == '(21) 99999-9999'
+    assert vale.tesoureiro_nome == 'Tesoureiro de teste'
+    assert vale.tesoureiro_email == 'tesouraria@potencia.com'
+    assert vale.tesoureiro_telefone == '(21) 98888-9999'
+    assert vale.valor_anuidade == Decimal('1500.00')
+    assert vale.vencimento_anuidade == date(2027, 1, 31)
+
+
+def test_edit_vale_updates_contacts():
+    tenant = _tenant()
+    vale = Vale.objects.create(tenant=tenant, nome='Vale editado')
+    client = _cliente(_usuario(tenant))
+    dados = _dados('Vale editado')
+    dados['secretario_nome'] = 'Secretária alterada'
+    dados['tesoureiro_nome'] = 'Tesoureiro alterado'
+
+    response = client.post(f'/contatos/prefeitura/{vale.pk}/editar/', dados)
+
+    assert response.status_code == 302
+    vale.refresh_from_db()
+    assert vale.secretario_nome == 'Secretária alterada'
+    assert vale.tesoureiro_nome == 'Tesoureiro alterado'
+    assert vale.secretario_email == 'farelli@gprbr'
+
+
+def test_list_vales_is_tenant_scoped():
+    tenant = _tenant()
+    other_tenant = _tenant()
+    Vale.objects.create(tenant=tenant, nome='Vale visível')
+    Vale.objects.create(tenant=other_tenant, nome='Vale de outro tenant')
+    client = _cliente(_usuario(tenant))
+
+    response = client.get('/contatos/prefeituras/')
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert 'Vale visível' in html
+    assert 'Vale de outro tenant' not in html
+
+
+def test_admin_saas_without_tenant_can_list_all_vales():
+    first = _tenant()
+    second = _tenant()
+    Vale.objects.create(tenant=first, nome='Vale tenant um')
+    Vale.objects.create(tenant=second, nome='Vale tenant dois')
+    client = _cliente(_usuario(None, ROLE_ADMIN_SAAS))
+
+    response = client.get('/contatos/prefeituras/')
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert 'Vale tenant um' in html
+    assert 'Vale tenant dois' in html
+
+
+def test_unselected_admin_saas_cannot_create_vale():
+    client = _cliente(_usuario(None, ROLE_ADMIN_SAAS))
+    vales_before = Vale.objects.count()
+
+    response = client.post('/contatos/prefeitura/nova/', _dados('Sem tenant'))
+
+    assert response.status_code == 403
+    assert Vale.objects.count() == vales_before
+
+
+def test_tenantless_non_saas_cannot_list_vales():
+    client = _cliente(_usuario(None, ROLE_VIEWER))
+
+    response = client.get('/contatos/prefeituras/')
+
+    assert response.status_code == 403
+
+
+def test_delete_vale_deletes_only_local_record():
+    tenant = _tenant()
+    vale = Vale.objects.create(
+        tenant=tenant,
+        nome='Vale para excluir',
+        secretario_nome='Secretária',
+        secretario_email='farelli@gprbr',
+        tesoureiro_nome='Tesoureiro',
+    )
+    client = _cliente(_usuario(tenant))
+
+    confirmation = client.get(f'/contatos/prefeitura/{vale.pk}/excluir/')
+    assert confirmation.status_code == 200
+
+    response = client.post(f'/contatos/prefeitura/{vale.pk}/excluir/')
+
+    assert response.status_code == 302
+    assert not Vale.objects.filter(tenant=tenant, pk=vale.pk).exists()
