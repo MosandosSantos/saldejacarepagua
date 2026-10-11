@@ -153,3 +153,10 @@ def test_delete_confirmation_lists_complete_contact_details_without_external_gua
     assert 'possui lojas vinculadas' not in html
     assert 'nao pode ser excluido' not in html
     assert 'Confirmar Exclusao' in html
+    avatar = re.search(
+        r'<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full[^"]*">\s*(.*?)\s*</span>',
+        html,
+        re.DOTALL,
+    )
+    assert avatar is not None
+    assert avatar.group(1).strip() == 'V'

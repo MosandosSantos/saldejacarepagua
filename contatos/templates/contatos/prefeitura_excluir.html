@@ -47,7 +47,7 @@
     <div class="rounded-xl border border-white/10 bg-white/5 p-4">
       <div class="flex items-center gap-3">
         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#4ade80]/15 font-display text-sm font-bold text-[#4ade80]">
-          {{ prefeitura.nome|truncatechars:1 }}
+          {{ prefeitura.nome|first|upper }}
         </span>
         <div>
           <div class="flex items-center gap-2">
