@@ -38,7 +38,7 @@
             {% if p.sigla %}<span class="rounded-md bg-[#5b8def]/15 px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#5b8def]">{{ p.sigla }}</span>{% endif %}
           </div>
         </td>
-        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ p.prefeito }}</td>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ p.prefeito|default:"—" }}</td>
         <td class="px-5 py-3.5 text-[12.5px] text-[#bcd3da]">
           <div class="font-medium text-white">{{ p.secretario_nome|default:"—" }}</div>
           <div class="mt-1 break-all">{{ p.secretario_email|default:"—" }}</div>
@@ -49,7 +49,7 @@
           <div class="mt-1 break-all">{{ p.tesoureiro_email|default:"—" }}</div>
           <div class="mt-0.5">{{ p.tesoureiro_telefone|default:"—" }}</div>
         </td>
-        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ p.telefone }}</td>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ p.telefone|default:"—" }}</td>
         <td class="px-5 py-3.5 text-[13px] font-semibold text-[#4ade80]">{{ p.valor_anuidade_fmt|default:"—" }}</td>
         <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ p.vencimento_fmt|default:"—" }}</td>
         <td class="px-5 py-3.5">

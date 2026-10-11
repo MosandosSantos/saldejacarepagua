@@ -111,6 +111,24 @@ def test_edit_vale_updates_contacts():
     assert vale.secretario_email == 'farelli@gprbr'
 
 
+def test_edit_preserves_blank_delegate_fields_instead_of_saving_display_dash():
+    tenant = _tenant()
+    vale = Vale.objects.create(tenant=tenant, nome='Vale sem Delegado')
+    client = _cliente(_usuario(tenant))
+    edit_page = client.get(f'/contatos/prefeitura/{vale.pk}/editar/')
+    form_value = edit_page.context['prefeitura']
+    dados = _dados('Vale sem Delegado')
+    dados['prefeito'] = form_value['prefeito']
+    dados['telefone'] = form_value['telefone']
+
+    response = client.post(f'/contatos/prefeitura/{vale.pk}/editar/', dados)
+
+    assert response.status_code == 302
+    vale.refresh_from_db()
+    assert vale.prefeito == ''
+    assert vale.telefone == ''
+
+
 def test_list_vales_is_tenant_scoped():
     tenant = _tenant()
     other_tenant = _tenant()
