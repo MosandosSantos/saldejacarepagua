@@ -380,6 +380,43 @@ class LojaPdf(models.Model):
         return f'PDF de valores da loja {self.loja_id}'
 
 
+class Vale(models.Model):
+    """Tenant-scoped local Vale directory and its Secretaria/Tesouraria contacts."""
+
+    tenant = models.ForeignKey(
+        'acesso.Tenant',
+        on_delete=models.CASCADE,
+        db_column='tenant_id',
+        related_name='vales',
+    )
+    nome = models.CharField(max_length=160)
+    sigla = models.CharField(max_length=10, blank=True, default='')
+    prefeito = models.CharField(max_length=160, blank=True, default='')
+    telefone = models.CharField(max_length=40, blank=True, default='')
+    email = models.CharField(max_length=254, blank=True, default='')
+    secretario_nome = models.CharField(max_length=160, blank=True, default='')
+    secretario_email = models.CharField(max_length=254, blank=True, default='')
+    secretario_telefone = models.CharField(max_length=40, blank=True, default='')
+    tesoureiro_nome = models.CharField(max_length=160, blank=True, default='')
+    tesoureiro_email = models.CharField(max_length=254, blank=True, default='')
+    tesoureiro_telefone = models.CharField(max_length=40, blank=True, default='')
+    pix = models.CharField(max_length=255, blank=True, default='')
+    valor_anuidade = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+    )
+    vencimento_anuidade = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=10, default='ATIVA')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'vales'
+        ordering = ['nome']
+
+    def __str__(self):
+        return self.nome
+
+
 def negocio_principal(contato):
     """Negócio principal de um contato: o marcado como principal ou o mais antigo.
 
