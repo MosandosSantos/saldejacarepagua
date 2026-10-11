@@ -20,13 +20,14 @@ Manter o CRM em um único banco PostgreSQL, `saldoreaa`, hospedado no serviço P
 1. Criar `saldoreaa` como um banco lógico no PostgreSQL Docker existente, sem criar um segundo serviço/container PostgreSQL.
 2. Fazer backup em formato customizado de `gprbr` e restaurá-lo em `saldoreaa`.
 3. Configurar o Django para usar `saldoreaa` como único banco ativo.
-4. Remover do caminho de execução do aplicativo a conexão externa `GPRB_DB_*` e os fluxos que dependem das tabelas GPRB de `saldabritanea` (incluindo autenticação externa e telas/indicadores GPRB identificados no código).
+4. Remover do caminho de execução do aplicativo a conexão externa `GPRB_DB_*` e os fluxos que dependem das tabelas GPRB de `saldabritanea` (incluindo autenticação externa e telas/indicadores GPRB identificados no código). A rota `/contatos/` deve continuar ativa, mas listando registros do modelo Django `Contato` em `gprbr`/`saldoreaa`, não membros GPRB.
 5. Manter `gprbr` e `saldabritanea` sem alterações durante a migração. Não apagar bancos, volumes ou backups nesta entrega; `gprbr` permanece como origem/rollback até validação explícita.
 
 ## Escopo funcional
 
 - Continuam disponíveis as funcionalidades cujo armazenamento já está no banco Django `gprbr`.
-- Os recursos que exigem consultas GPRB externas devem ser desativados de forma explícita e segura; não devem permanecer acessíveis como se os dados estivessem disponíveis.
+- A listagem `/contatos/` passa a consultar `contatos.Contato` via ORM, com filtros/paginação compatíveis com os dados locais e isolamento por tenant.
+- Os recursos que exigem consultas GPRB externas devem ser desativados de forma explícita e segura; não devem permanecer acessíveis como se os dados estivessem disponíveis. A listagem local de contatos é preservada e não é uma tela de membros GPRB.
 - O login deixa de tentar autenticar no banco externo e usa somente as contas locais persistidas no Django.
 - Scripts operacionais não devem continuar apontando implicitamente para `saldabritanea`.
 
@@ -55,6 +56,7 @@ O parâmetro `POSTGRES_DB` é aplicado pelo container oficial somente na inicial
 - O processo da aplicação não estabelece conexão nem executa consultas em `saldabritanea`.
 - `gprbr` e seu volume permanecem intactos como origem/rollback.
 - As rotas e telas dependentes do banco GPRB estão claramente desativadas; as funcionalidades Django restantes seguem funcionando.
+- `/contatos/` lista contatos locais, aplica o escopo do tenant e não chama o repositório GPRB.
 - Testes focados e verificações Django passam; os testes não usam bases reais de origem.
 
 ## Fora de escopo
