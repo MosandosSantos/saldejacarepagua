@@ -188,6 +188,9 @@ class Negocio(models.Model):
         indexes = [
             models.Index(fields=['tenant_id', 'stage'], name='neg_tenant_stage_idx'),
             models.Index(fields=['tenant_id', 'updated_at'], name='neg_tenant_upd_idx'),
+            models.Index(fields=['tenant_id', 'responsavel_id'], name='neg_tenant_resp_idx'),
+            models.Index(fields=['tenant_id', 'created_at'], name='neg_tenant_created_idx'),
+            models.Index(fields=['responsavel_id', 'stage'], name='neg_resp_stage_idx'),
         ]
 
     def __str__(self):
@@ -355,6 +358,26 @@ def tornar_principal(negocio):
     if not negocio.principal:
         negocio.principal = True
         negocio.save(update_fields=['principal'])
+
+
+class LojaPdf(models.Model):
+    """PDF de valores (tabela de emolumentos) de uma loja — ex.: diploma, avental,
+    anuidade e iniciação.
+
+    Um único arquivo por loja (substituir apaga o anterior). `loja_id` referencia
+    a loja do banco GPRB — não é FK do Django porque essa entidade vive fora.
+    """
+
+    loja_id = models.CharField(max_length=64, unique=True, db_index=True)
+    arquivo = models.FileField(upload_to='lojas/valores/%Y/%m/')
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'loja_pdf'
+        ordering = ['loja_id']
+
+    def __str__(self):
+        return f'PDF de valores da loja {self.loja_id}'
 
 
 def negocio_principal(contato):

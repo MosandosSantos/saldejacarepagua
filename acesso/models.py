@@ -19,8 +19,6 @@ ROLE_DEPUTADO_MESTRE = 'deputado_mestre'
 
 ROLES = [
     (ROLE_ADMIN_SAAS, 'Admin SaaS'),
-    (ROLE_ADMIN_COMPANY, 'Admin da empresa'),
-    (ROLE_OPERACIONAL, 'Operacional'),
     (ROLE_VIEWER, 'Somente leitura'),
     (ROLE_GRANDE_PRIOR, 'Grande Prior'),
     (ROLE_GRANDE_CHANCELER, 'Grande Chanceler'),
@@ -30,10 +28,10 @@ ROLES = [
     (ROLE_DEPUTADO_MESTRE, 'Deputado Mestre'),
 ]
 
-ROLES_DE_TENANT = (ROLE_ADMIN_COMPANY, ROLE_OPERACIONAL, ROLE_VIEWER)
+ROLES_DE_TENANT = (ROLE_VIEWER,)
 # Base de edição (admin_saas inclui — o dono da plataforma). O oficialato entra
 # abaixo, junto com os demais conjuntos de perfil.
-_ROLES_EDITAM_BASE = (ROLE_ADMIN_SAAS, ROLE_ADMIN_COMPANY, ROLE_OPERACIONAL)
+_ROLES_EDITAM_BASE = (ROLE_ADMIN_SAAS,)
 
 # Perfis de oficialato que podem criar/reenviar usuários (PRD-USUARIOS-SEM-SENHA).
 ROLES_OFICIAIS = (
@@ -42,14 +40,14 @@ ROLES_OFICIAIS = (
 )
 # Tudo que não é viewer pode editar — inclusive o oficialato (coexistência).
 ROLES_QUE_EDITAM = _ROLES_EDITAM_BASE + ROLES_OFICIAIS
-# Quem gerencia usuários: oficialato + admin da empresa legado (coexistência).
-# admin_saas entra: no fluxo GPRB ele recebe tenant e administra o tenant GPRB
-# (sem tenant continua barrado pelo guard da view, que exige tenant na sessão).
-ROLES_GESTORES_USUARIOS = ROLES_OFICIAIS + (ROLE_ADMIN_COMPANY, ROLE_ADMIN_SAAS)
-# Perfis que podem ser atribuídos ao criar um usuário: oficialato + perfis legados.
+# Quem gerencia usuários: oficialato + admin_saas.
+# admin_saas permanece tenantless; o tenant administrado e selecionado no
+# contexto da requisicao, nao vinculado ao registro da identidade.
+ROLES_GESTORES_USUARIOS = ROLES_OFICIAIS + (ROLE_ADMIN_SAAS,)
+# Perfis que podem ser atribuídos ao criar um usuário: oficialato + viewer.
 ROLES_ATRIB_CRIACAO = ROLES_OFICIAIS + ROLES_DE_TENANT
-# Admins com acesso administrativo amplo (config/gestão) — oficialato incluso.
-ROLES_ADMINISTRATIVOS = ROLES_OFICIAIS + (ROLE_ADMIN_COMPANY, ROLE_ADMIN_SAAS)
+# Perfis com acesso administrativo amplo (config/gestão) — oficialato incluso.
+ROLES_ADMINISTRATIVOS = ROLES_OFICIAIS + (ROLE_ADMIN_SAAS,)
 
 # Estados de conta de usuário.
 USUARIO_ATIVO = 'ativo'
@@ -178,6 +176,10 @@ class Usuario(models.Model):
     prefeitura_id = models.CharField(
         max_length=36, blank=True, default='',
         help_text='UUID da prefeitura GPRB vinculada ao usuário (opcional)',
+    )
+    loja_id = models.CharField(
+        max_length=36, blank=True, default='',
+        help_text='UUID da loja GPRB vinculada ao usuário (opcional)',
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
