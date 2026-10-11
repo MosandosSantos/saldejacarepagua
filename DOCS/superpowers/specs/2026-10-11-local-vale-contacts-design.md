@@ -1,6 +1,6 @@
 # Spec: cadastro local de Vales e contatos
 
-**Status:** aguardando revisão escrita do usuário
+**Status:** aprovada em 2026-10-11; plano em revisão
 
 **Data:** 2026-10-11
 
