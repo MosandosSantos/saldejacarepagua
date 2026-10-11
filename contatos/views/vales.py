@@ -10,7 +10,6 @@ from acesso.decorators import (
     tenant_id_da_sessao,
     web_login_required,
     web_requer_edicao,
-    web_requer_tenant_context,
 )
 from acesso.models import ROLE_ADMIN_SAAS
 from contatos.importador import normalizar_valor
@@ -33,6 +32,14 @@ def _vales_do_request(request):
     if tenant_id is None:
         return Vale.objects.all() if _role(request) == ROLE_ADMIN_SAAS else None
     return filtro_tenant(request, Vale.objects.all())
+
+
+def _vales_do_tenant_para_edicao(request):
+    """Writes always target one explicit tenant, including for SaaS admins."""
+    tenant_id = tenant_id_da_sessao(request)
+    if tenant_id is None:
+        return None
+    return Vale.objects.filter(tenant_id=tenant_id)
 
 
 def _data_anuidade(raw):
@@ -116,7 +123,6 @@ def prefeituras(request):
 
 
 @web_login_required
-@web_requer_tenant_context
 @web_requer_edicao
 def prefeitura_nova(request):
     """Create a local Vale in the effective tenant."""
@@ -136,13 +142,12 @@ def prefeitura_nova(request):
 
 
 @web_login_required
-@web_requer_tenant_context
 @web_requer_edicao
 def prefeitura_editar(request, pk):
     """Edit a local Vale, never a record in the external GPRB database."""
-    vales = _vales_do_request(request)
+    vales = _vales_do_tenant_para_edicao(request)
     if vales is None:
-        return HttpResponseForbidden('Tenant obrigatório.')
+        return HttpResponseForbidden('Selecione um tenant para alterar o Vale.')
     vale = get_object_or_404(vales, pk=pk)
     erro = None
 
@@ -164,13 +169,12 @@ def prefeitura_editar(request, pk):
 
 
 @web_login_required
-@web_requer_tenant_context
 @web_requer_edicao
 def prefeitura_excluir(request, pk):
     """Delete a local Vale; no external Loja relationship is queried."""
-    vales = _vales_do_request(request)
+    vales = _vales_do_tenant_para_edicao(request)
     if vales is None:
-        return HttpResponseForbidden('Tenant obrigatório.')
+        return HttpResponseForbidden('Selecione um tenant para excluir o Vale.')
     vale = get_object_or_404(vales, pk=pk)
     if request.method == 'POST':
         vale.delete()

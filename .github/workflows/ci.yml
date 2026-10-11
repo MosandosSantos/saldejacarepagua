@@ -71,7 +71,8 @@ jobs:
       - name: Run tests
         run: python -m pytest teste/ -v --tb=short
         env:
-          DJANGO_SETTINGS_MODULE: core.settings
+          DJANGO_SETTINGS_MODULE: core.settings_vale_test
+          VALE_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gprbr_test
           DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
           PGDATABASE: gprbr_test
           PGUSER: postgres
@@ -83,7 +84,8 @@ jobs:
         run: |
           python -m pytest teste/ --cov=. --cov-report=xml --cov-report=term-missing
         env:
-          DJANGO_SETTINGS_MODULE: core.settings
+          DJANGO_SETTINGS_MODULE: core.settings_vale_test
+          VALE_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gprbr_test
           DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
           PGDATABASE: gprbr_test
           PGUSER: postgres

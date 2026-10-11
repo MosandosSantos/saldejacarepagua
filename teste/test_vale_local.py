@@ -3,9 +3,11 @@
 import os
 import subprocess
 import sys
+from configparser import ConfigParser
 from datetime import date
 from decimal import Decimal
 from uuid import uuid4
+from pathlib import Path
 
 import pytest
 
@@ -24,6 +26,98 @@ def test_vale_test_settings_require_explicit_database_url():
 
     assert result.returncode != 0
     assert 'VALE_TEST_DATABASE_URL' in result.stderr
+
+
+def test_vale_test_settings_reject_external_database_url():
+    env = os.environ.copy()
+    env.update({
+        'DJANGO_SETTINGS_MODULE': 'core.settings_vale_test',
+        'VALE_TEST_DATABASE_URL': 'postgresql://user:pass@external.example:5432/saldabritanea',
+    })
+
+    result = subprocess.run(
+        [sys.executable, '-c', 'import django; django.setup()'],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode != 0
+    assert 'must target Docker saldabritanea' in result.stderr
+
+
+def test_vale_test_settings_accept_isolated_ci_database_url():
+    env = os.environ.copy()
+    env.update({
+        'DJANGO_SETTINGS_MODULE': 'core.settings_vale_test',
+        'VALE_TEST_DATABASE_URL': 'postgresql://postgres:postgres@localhost:5432/gprbr_test',
+    })
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            '-c',
+            'import django; django.setup(); from django.conf import settings; '
+            'assert settings.DATABASES["default"]["TEST"]["NAME"] == '
+            '"test_saldabritanea_vales"',
+        ],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_pytest_defaults_to_fail_closed_database_settings():
+    config = ConfigParser()
+    config.read(Path(__file__).resolve().parents[1] / 'pytest.ini')
+
+    assert config['pytest']['DJANGO_SETTINGS_MODULE'] == 'core.settings_vale_test'
+
+
+def test_vale_views_import_without_uncommitted_tenant_decorator():
+    script = r'''
+import os
+import importlib.util
+import sys
+import types
+from pathlib import Path
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'core.settings'
+import django
+django.setup()
+
+decorators = types.ModuleType('acesso.decorators')
+def passthrough(view):
+    return view
+decorators.filtro_tenant = lambda request, queryset: queryset
+decorators.tenant_id_da_sessao = lambda request: None
+decorators.web_login_required = passthrough
+decorators.web_requer_edicao = passthrough
+sys.modules['acesso.decorators'] = decorators
+
+views_package = types.ModuleType('contatos.views')
+views_package.__path__ = []
+sys.modules['contatos.views'] = views_package
+spec = importlib.util.spec_from_file_location(
+    'contatos.views.vales', Path('contatos/views/vales.py'),
+)
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+'''
+    result = subprocess.run(
+        [sys.executable, '-c', script],
+        env=os.environ.copy(),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
 
 
 def test_vale_model_is_registered():

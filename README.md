@@ -142,12 +142,12 @@ curl http://localhost:8000/healthz/
 
 ## Testes
 
-```bash
-# Rodar todos os testes
-python -m pytest teste/ -v
+```powershell
+# Os testes Django usam o PostgreSQL Docker e o banco de teste isolado.
+docker compose run --rm --no-deps -v "$($PWD.Path):/app" --entrypoint sh app -c 'VALE_TEST_DATABASE_URL="$DATABASE_URL" python -m pytest --ds=core.settings_vale_test teste/ -v'
 
-# Rodar com coverage
-python -m pytest teste/ --cov=. --cov-report=term-missing
+# Rodar com coverage no mesmo ambiente isolado
+docker compose run --rm --no-deps -v "$($PWD.Path):/app" --entrypoint sh app -c 'VALE_TEST_DATABASE_URL="$DATABASE_URL" python -m pytest --ds=core.settings_vale_test teste/ --cov=. --cov-report=term-missing'
 
 # Verificar complexidade ciclomática
 python -m radon cc recepcao/ -s

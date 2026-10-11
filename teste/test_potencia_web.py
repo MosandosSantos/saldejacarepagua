@@ -9,7 +9,6 @@ from django.contrib.auth.hashers import make_password
 from django.test import Client
 
 from acesso.models import ROLE_ADMIN_SAAS, ROLE_GRANDE_PRIOR, ROLE_VIEWER, Tenant, Usuario
-from acesso.tenant_context import ADMIN_TENANT_SESSION_KEY
 from contatos.models import Vale
 from core.gprb import connection as gprb_connection
 
@@ -44,7 +43,7 @@ def _usuario(tenant, role=ROLE_GRANDE_PRIOR):
     )
 
 
-def _cliente(usuario, tenant_context=None):
+def _cliente(usuario):
     client = Client()
     session = client.session
     session['usuario_id'] = usuario.pk
@@ -54,8 +53,6 @@ def _cliente(usuario, tenant_context=None):
         'role': usuario.role,
         'tenant_id': usuario.tenant_id,
     }
-    if tenant_context is not None:
-        session[ADMIN_TENANT_SESSION_KEY] = tenant_context
     session.save()
     return client
 
@@ -152,6 +149,32 @@ def test_unselected_admin_saas_cannot_create_vale():
 
     assert response.status_code == 403
     assert Vale.objects.count() == vales_before
+
+
+def test_unselected_admin_saas_cannot_edit_vale():
+    tenant = _tenant()
+    vale = Vale.objects.create(tenant=tenant, nome='Vale protegido')
+    client = _cliente(_usuario(None, ROLE_ADMIN_SAAS))
+
+    response = client.post(
+        f'/contatos/prefeitura/{vale.pk}/editar/',
+        _dados('Nome indevido'),
+    )
+
+    vale.refresh_from_db()
+    assert response.status_code == 403
+    assert vale.nome == 'Vale protegido'
+
+
+def test_unselected_admin_saas_cannot_delete_vale():
+    tenant = _tenant()
+    vale = Vale.objects.create(tenant=tenant, nome='Vale protegido')
+    client = _cliente(_usuario(None, ROLE_ADMIN_SAAS))
+
+    response = client.post(f'/contatos/prefeitura/{vale.pk}/excluir/')
+
+    assert response.status_code == 403
+    assert Vale.objects.filter(pk=vale.pk, tenant=tenant).exists()
 
 
 def test_tenantless_non_saas_cannot_list_vales():

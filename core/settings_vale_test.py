@@ -22,15 +22,22 @@ if not _database_url:
     )
 
 _parsed_database_url = urlsplit(_database_url)
-if (
-    _parsed_database_url.scheme not in ('postgres', 'postgresql')
-    or _parsed_database_url.username != 'gprbr'
-    or _parsed_database_url.hostname not in ('localhost', '127.0.0.1', 'db')
-    or _parsed_database_url.path != '/saldabritanea'
+_docker_target = (
+    _parsed_database_url.username == 'gprbr'
+    and _parsed_database_url.hostname in ('localhost', '127.0.0.1', 'db')
+    and _parsed_database_url.path == '/saldabritanea'
+)
+_ci_target = (
+    _parsed_database_url.username == 'postgres'
+    and _parsed_database_url.hostname in ('localhost', '127.0.0.1')
+    and _parsed_database_url.path == '/gprbr_test'
+)
+if _parsed_database_url.scheme not in ('postgres', 'postgresql') or not (
+    _docker_target or _ci_target
 ):
     raise ImproperlyConfigured(
-        'VALE_TEST_DATABASE_URL must target the local Docker saldabritanea '
-        'database as role gprbr.'
+        'VALE_TEST_DATABASE_URL must target Docker saldabritanea as gprbr, '
+        'or the isolated CI database gprbr_test as postgres.'
     )
 
 DATABASES = deepcopy(base_settings.DATABASES)
