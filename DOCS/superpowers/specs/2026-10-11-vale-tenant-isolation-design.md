@@ -104,7 +104,7 @@ As contagens são uma fotografia da descoberta, não uma autorização para desc
 - Manter `GPRB_DB_ENABLED=False` e não adicionar credenciais/host GPRB ao app.
 - Antes de qualquer migration no banco ativo: confirmar `gprbr-app`/`gprbr-db` saudáveis, `current_database() = saldabritanea`, volume atual preservado e criar/validar backup custom-format fora do Git.
 - Revalidar contagens de Vales, candidatos e PDFs. Se os dados deixaram de estar vazios, parar a migration que removeria/reinterpretaria campos e atualizar o plano de dados antes de prosseguir.
-- Não executar `docker compose down -v`, não remover volumes e não resetar bancos de teste ou produção.
+- Não executar `docker compose down -v` nem remover volumes. Não resetar `test_saldabritanea` nem bases de produção; somente o banco isolado `test_saldabritanea_vales` pode ser criado/recriado pelo runner de testes explícito.
 
 ## Testes e critérios de sucesso
 
