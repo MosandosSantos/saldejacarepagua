@@ -1,86 +1,57 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Prefeituras{% endblock %}
+{% block titulo %}SAL DA BRITÂNEA CRM — Vales{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7 flex items-end justify-between">
   <div>
-    <h1 class="hazon-titulo">Prefeituras</h1>
-    <p class="hazon-sub mt-2">Lista de prefeituras cadastradas e lojas vinculadas.</p>
+    <h1 class="hazon-titulo">Vales</h1>
+    <p class="hazon-sub mt-2">Cadastro local dos Vales e dos contatos de Secretaria e Tesouraria.</p>
   </div>
   <a href="{% url 'contatos:prefeitura_nova' %}" class="flex items-center gap-2 rounded-xl border border-[#4ade80]/50 bg-[#4ade80]/15 px-5 py-2.5 text-[13px] font-semibold text-[#4ade80] transition hover:bg-[#4ade80]/25">
     <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    Incluir Prefeitura
+    Incluir Vale
   </a>
 </div>
 
-<div class="mb-6 flex gap-4">
-  <div class="hazon-card-sm min-w-0 flex-1 p-5 backdrop-blur-xl">
-    <div class="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">
-      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      Total de prefeituras
-    </div>
-    <div class="font-mono text-[30px] font-bold leading-none text-[#4ade80]">{{ total_pf }}</div>
-    <div class="mt-1 text-[12px] text-[#a6bfc7]">Cadastradas no escopo</div>
-  </div>
-  <div class="hazon-card-sm min-w-0 flex-1 p-5 backdrop-blur-xl">
-    <div class="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">
-      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#5b8def" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      Total de lojas
-    </div>
-    <div class="font-mono text-[30px] font-bold leading-none text-[#5b8def]">{{ total_lojas }}</div>
-    <div class="mt-1 text-[12px] text-[#a6bfc7]">Vinculadas as prefeituras</div>
-  </div>
-  <div class="hazon-card-sm min-w-0 flex-1 p-5 backdrop-blur-xl">
-    <div class="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">
-      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Total de membros
-    </div>
-    <div class="font-mono text-[30px] font-bold leading-none text-[#a78bfa]">{{ total_membros }}</div>
-    <div class="mt-1 text-[12px] text-[#a6bfc7]">Membros no recorte</div>
-  </div>
-</div>
-
 <div class="overflow-x-auto hazon-card">
-  <table class="w-full min-w-[900px] border-collapse">
+  <table class="w-full min-w-[1380px] border-collapse">
     <thead>
       <tr class="border-b border-white/10 text-left">
-        <th class="w-10 px-3 py-4"></th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Nome</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Regiao</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Prefeito</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Lojas</th>
-        <th class="px-5 py-4 text-center text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">MX</th>
-        <th class="px-5 py-4 text-center text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">EN</th>
-        <th class="px-5 py-4 text-center text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">CBCS</th>
-        <th class="px-5 py-4 text-center text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Membros</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Vale</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Delegado</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Secretaria</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Tesouraria</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Telefone</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Mensalidade</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Vencimento</th>
         <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Acoes</th>
       </tr>
     </thead>
     <tbody>
       {% for p in prefeituras %}
-      <!-- Prefeitura row -->
-      <tr class="border-b border-white/5 transition hover:bg-white/5 pf-row" data-pf-id="{{ p.id }}">
-        <td class="px-3 py-3.5 text-center">
-          <button type="button" class="btn-expand-pf inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def]"
-                  data-pf-id="{{ p.id }}" data-loaded="false" title="Expandir lojas">
-            <svg class="expand-icon h-3.5 w-3.5 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
-        </td>
+      <!-- Vale row -->
+      <tr class="border-b border-white/5 transition hover:bg-white/5" data-pf-id="{{ p.id }}">
         <td class="px-5 py-3.5">
-          <span class="text-[13.5px] font-medium text-white">{{ p.nome }}</span>
-        </td>
-        <td class="px-5 py-3.5">
-          <span class="inline-flex items-center gap-1.5 rounded-full border border-[#5b8def]/25 bg-[#5b8def]/10 px-2.5 py-1 text-[11px] font-semibold text-[#5b8def]">
-            {{ p.regiao }}
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="text-[13.5px] font-medium text-white">{{ p.nome }}</span>
+            {% if p.sigla %}<span class="rounded-md bg-[#5b8def]/15 px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#5b8def]">{{ p.sigla }}</span>{% endif %}
+          </div>
         </td>
         <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ p.prefeito }}</td>
-        <td class="px-5 py-3.5 font-mono text-[14px] font-bold text-white">{{ p.total_lojas }}</td>
-        <td class="px-5 py-3.5 text-center font-mono text-[13px] font-bold text-[#3b82f6]">{{ p.mx }}</td>
-        <td class="px-5 py-3.5 text-center font-mono text-[13px] font-bold text-[#5b8def]">{{ p.en }}</td>
-        <td class="px-5 py-3.5 text-center font-mono text-[13px] font-bold text-[#93b8f7]">{{ p.cbcs }}</td>
-        <td class="px-5 py-3.5 text-center font-mono text-[14px] font-bold text-[#a78bfa]">{{ p.total_membros }}</td>
+        <td class="px-5 py-3.5 text-[12.5px] text-[#bcd3da]">
+          <div class="font-medium text-white">{{ p.secretario_nome|default:"—" }}</div>
+          <div class="mt-1 break-all">{{ p.secretario_email|default:"—" }}</div>
+          <div class="mt-0.5">{{ p.secretario_telefone|default:"—" }}</div>
+        </td>
+        <td class="px-5 py-3.5 text-[12.5px] text-[#bcd3da]">
+          <div class="font-medium text-white">{{ p.tesoureiro_nome|default:"—" }}</div>
+          <div class="mt-1 break-all">{{ p.tesoureiro_email|default:"—" }}</div>
+          <div class="mt-0.5">{{ p.tesoureiro_telefone|default:"—" }}</div>
+        </td>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ p.telefone }}</td>
+        <td class="px-5 py-3.5 text-[13px] font-semibold text-[#4ade80]">{{ p.valor_anuidade_fmt|default:"—" }}</td>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ p.vencimento_fmt|default:"—" }}</td>
         <td class="px-5 py-3.5">
           <div class="flex items-center justify-end gap-2">
             <a href="{% url 'contatos:prefeitura_editar' p.id %}" title="Alterar" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#fbbf24]/15 hover:text-[#fbbf24]">
@@ -92,160 +63,13 @@
           </div>
         </td>
       </tr>
-      <!-- Drill-down container for lojas -->
-      <tr class="drill-lojas" data-pf-id="{{ p.id }}" style="display:none;">
-        <td colspan="10" class="px-0 py-0">
-          <div class="bg-white/[0.02] px-12 py-3">
-            <div class="lojas-container" data-pf-id="{{ p.id }}">
-              <p class="py-4 text-center text-[12px] text-[#6f8a93]">Carregando lojas...</p>
-            </div>
-          </div>
-        </td>
-      </tr>
       {% empty %}
       <tr>
-        <td colspan="10" class="px-5 py-12 text-center text-[14px] text-[#a6bfc7]">Nenhuma prefeitura encontrada.</td>
+        <td colspan="8" class="px-5 py-12 text-center text-[14px] text-[#a6bfc7]">Nenhum Vale cadastrado ainda. Inclua o primeiro Vale para começar.</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
 
-{% endblock %}
-
-{% block js %}
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-
-  // Toggle lojas drill-down
-  document.querySelectorAll('.btn-expand-pf').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var pfId = this.getAttribute('data-pf-id');
-      var drillRow = document.querySelector('.drill-lojas[data-pf-id="' + pfId + '"]');
-      var container = document.querySelector('.lojas-container[data-pf-id="' + pfId + '"]');
-      var icon = this.querySelector('.expand-icon');
-      var isOpen = drillRow.style.display !== 'none';
-
-      if (isOpen) {
-        drillRow.style.display = 'none';
-        icon.style.transform = 'rotate(0deg)';
-        return;
-      }
-
-      // Open
-      drillRow.style.display = '';
-      icon.style.transform = 'rotate(45deg)';
-
-      // Load lojas if not yet loaded
-      if (btn.getAttribute('data-loaded') === 'true') return;
-      btn.setAttribute('data-loaded', 'true');
-
-      fetch('/contatos/prefeitura/' + pfId + '/lojas-json/', {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          var lojas = data.lojas || [];
-          if (!lojas.length) {
-            container.innerHTML = '<p class="py-4 text-center text-[12px] text-[#6f8a93]">Nenhuma loja vinculada.</p>';
-            return;
-          }
-          var html = '<table class="w-full border-collapse">';
-          html += '<thead><tr class="border-b border-white/10 text-left">';
-          html += '<th class="w-10 px-3 py-2"></th>';
-          html += '<th class="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-[#a6bfc7]">Loja</th>';
-          html += '<th class="px-4 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#a6bfc7]">Situacao</th>';
-          html += '<th class="px-4 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#a6bfc7]">Membros</th>';
-          html += '<th class="px-4 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#3b82f6]">MX</th>';
-          html += '<th class="px-4 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#5b8def]">EN</th>';
-          html += '<th class="px-4 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#93b8f7]">CBCS</th>';
-          html += '</tr></thead><tbody>';
-
-          lojas.forEach(function (l) {
-            var corSituacao = l.situacao === 'ATIVA' ? '#4ade80' : '#ef4444';
-            html += '<tr class="border-b border-white/[0.03] hover:bg-white/[0.03]">';
-            html += '<td class="px-3 py-2.5 text-center">';
-            html += '<button type="button" class="btn-expand-loja inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#a78bfa]/15 hover:text-[#a78bfa]"';
-            html += ' data-loja-id="' + l.id + '" data-loaded="false" title="Expandir membros">';
-            html += '<svg class="expand-icon h-3 w-3 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
-            html += '</button></td>';
-            html += '<td class="px-4 py-2.5 text-[12.5px] font-medium text-[#bcd3da]">' + l.nome + '</td>';
-            html += '<td class="px-4 py-2.5 text-center"><span class="inline-block rounded-full px-2 py-0.5 text-[10px] font-bold" style="background:' + corSituacao + '20;color:' + corSituacao + '">' + l.situacao + '</span></td>';
-            html += '<td class="px-4 py-2.5 text-center font-mono text-[13px] font-bold text-[#a78bfa]">' + l.total_membros + '</td>';
-            html += '<td class="px-4 py-2.5 text-center font-mono text-[12px] font-bold text-[#3b82f6]">' + l.mx + '</td>';
-            html += '<td class="px-4 py-2.5 text-center font-mono text-[12px] font-bold text-[#5b8def]">' + l.en + '</td>';
-            html += '<td class="px-4 py-2.5 text-center font-mono text-[12px] font-bold text-[#93b8f7]">' + l.cbcs + '</td>';
-            html += '</tr>';
-            // Drill-down row for membros
-            html += '<tr class="drill-membros" data-loja-id="' + l.id + '" style="display:none;">';
-            html += '<td colspan="7" class="px-0 py-0"><div class="bg-white/[0.02] px-12 py-2"><div class="membros-container" data-loja-id="' + l.id + '">';
-            html += '<p class="py-3 text-center text-[11px] text-[#6f8a93]">Carregando membros...</p>';
-            html += '</div></div></td>';
-            html += '</tr>';
-          });
-
-          html += '</tbody></table>';
-          container.innerHTML = html;
-
-          // Bind loja expand buttons
-          container.querySelectorAll('.btn-expand-loja').forEach(function (lojaBtn) {
-            lojaBtn.addEventListener('click', function () {
-              var lojaId = this.getAttribute('data-loja-id');
-              var membrosDrill = container.querySelector('.drill-membros[data-loja-id="' + lojaId + '"]');
-              var membrosContainer = container.querySelector('.membros-container[data-loja-id="' + lojaId + '"]');
-              var lojaIcon = this.querySelector('.expand-icon');
-              var lojaOpen = membrosDrill.style.display !== 'none';
-
-              if (lojaOpen) {
-                membrosDrill.style.display = 'none';
-                lojaIcon.style.transform = 'rotate(0deg)';
-                return;
-              }
-
-              membrosDrill.style.display = '';
-              lojaIcon.style.transform = 'rotate(45deg)';
-
-              if (lojaBtn.getAttribute('data-loaded') === 'true') return;
-              lojaBtn.setAttribute('data-loaded', 'true');
-
-              fetch('/contatos/loja/' + lojaId + '/membros-json/', {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-              })
-                .then(function (r) { return r.json(); })
-                .then(function (md) {
-                  var membros = md.membros || [];
-                  if (!membros.length) {
-                    membrosContainer.innerHTML = '<p class="py-3 text-center text-[11px] text-[#6f8a93]">Nenhum membro ativo.</p>';
-                    return;
-                  }
-                  var classes = {};
-                  membros.forEach(function (m) {
-                    var cl = m.classe || '—';
-                    if (!classes[cl]) classes[cl] = [];
-                    classes[cl].push(m);
-                  });
-
-                  var mhtml = '<div class="flex flex-wrap gap-2 py-2">';
-                  var classColors = { 'MX': '#3b82f6', 'EN': '#5b8def', 'CBCS': '#93b8f7' };
-                  Object.keys(classes).sort().forEach(function (cl) {
-                    var cor = classColors[cl] || '#a6bfc7';
-                    classes[cl].forEach(function (m) {
-                      mhtml += '<span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition hover:bg-white/5" style="border-color:' + cor + '30;background:' + cor + '10;color:' + cor + '">';
-                      mhtml += '<span class="h-1.5 w-1.5 rounded-full" style="background:' + cor + '"></span>';
-                      mhtml += m.nome;
-                      mhtml += '<span class="ml-1 rounded px-1 py-0.5 text-[9px] font-bold" style="background:' + cor + '20">' + cl + '</span>';
-                      mhtml += '</span>';
-                    });
-                  });
-                  mhtml += '</div>';
-                  mhtml += '<div class="mt-1 text-[10px] text-[#6f8a93]">Total: ' + membros.length + ' membro' + (membros.length !== 1 ? 's' : '') + '</div>';
-                  membrosContainer.innerHTML = mhtml;
-                });
-            });
-          });
-        });
-    });
-  });
-});
-</script>
 {% endblock %}

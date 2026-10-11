@@ -50,9 +50,9 @@ _ICONE_CAMPANHA = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke=
 #   carteiras ficam com 'Carteiras' ativo, não 'Contatos')
 _ROTAS = [
     ('Dashboard', 'dashboard', 'dashboard:index', _ICONE_DASH, None, set()),
+    ('Vale', 'contatos', 'contatos:prefeituras', _ICONE_CARTEIRA, {'prefeituras'}, set()),
     ('Candidatos', 'recepcao', 'recepcao:kanban', _ICONE_FUNIL, None, set()),
     ('Membros', 'contatos', 'contatos:lista', _ICONE_CONTATOS, None, {'carteiras', 'carteira_detalhe'}),
-    ('Potências', 'contatos', 'contatos:prefeituras', _ICONE_CARTEIRA, {'prefeituras'}, set()),
     ('Lojas', 'contatos', 'contatos:lojas', _ICONE_CARTEIRA, {'lojas', 'loja_detalhe'}, set()),
     ('Financeiro', 'contatos', 'contatos:financeiro', _ICONE_FINANCEIRO, {'financeiro'}, set()),
     ('Agenda', 'tarefas', 'tarefas:ranking', _ICONE_TAREFAS, None, set()),

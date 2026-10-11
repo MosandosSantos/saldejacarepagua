@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Nova Prefeitura{% endblock %}
+{% block titulo %}SAL DA BRITÂNEA CRM — Novo Vale{% endblock %}
 
 {% block conteudo %}
 <div class="mb-6">
@@ -10,14 +10,14 @@
   </a>
 </div>
 
-<div class="mx-auto max-w-lg">
+<div class="mx-auto max-w-2xl">
   <div class="hazon-card-sm p-7 backdrop-blur-xl">
     <div class="mb-6 flex items-center gap-3">
       <span class="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#4ade80]/15">
         <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </span>
       <div>
-        <h1 class="font-display text-lg font-semibold text-white">Nova Prefeitura</h1>
+        <h1 class="font-display text-lg font-semibold text-white">Novo Vale</h1>
         <p class="text-[13px] text-[#a6bfc7]">Preencha os dados abaixo</p>
       </div>
     </div>
@@ -30,45 +30,99 @@
       {% csrf_token %}
       <div class="grid gap-5">
         <div>
-          <label for="nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome *</label>
-          <input type="text" id="nome" name="nome" required placeholder="Ex: Prefeitura Centro-Oeste"
+          <label for="nome" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome *</label>
+          <input type="text" id="nome" name="nome" required placeholder="Ex: Vale Centro-Oeste"
                  class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
         </div>
+
         <div class="grid gap-5 sm:grid-cols-2">
           <div>
-            <label for="sigla" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Sigla</label>
+            <label for="sigla" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Sigla</label>
             <input type="text" id="sigla" name="sigla" placeholder="Ex: PCO" maxlength="10"
                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           </div>
           <div>
-            <label for="regiao" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Regiao *</label>
-            <select id="regiao" name="regiao" required
-                    class="w-full rounded-xl border border-white/15 bg-[#0a1e3d] px-4 py-3 text-[14px] text-white outline-none transition focus:border-[#5b8def]/60 focus:ring-4 focus:ring-[#5b8def]/15">
-              <option value="">Selecione...</option>
-              <option value="Centro-Oeste">Centro-Oeste</option>
-              <option value="Nordeste">Nordeste</option>
-              <option value="Norte">Norte</option>
-              <option value="Sudeste">Sudeste</option>
-              <option value="Sul">Sul</option>
-            </select>
-          </div>
-        </div>
-        <div class="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label for="prefeito" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Prefeito</label>
-            <input type="text" id="prefeito" name="prefeito" placeholder="Nome do prefeito"
+            <label for="prefeito" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Delegado</label>
+            <input type="text" id="prefeito" name="prefeito" placeholder="Nome do delegado"
                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           </div>
+        </div>
+
+        <div class="grid gap-5 sm:grid-cols-2">
           <div>
-            <label for="telefone" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone</label>
+            <label for="telefone" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone</label>
             <input type="tel" id="telefone" name="telefone" placeholder="(21) 99999-9999"
                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           </div>
           <div>
-            <label for="email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Prefeito</label>
-            <input type="email" id="email" name="email" placeholder="prefeito@prefeitura.gov.br"
+            <label for="email" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Delegado</label>
+            <input type="email" id="email" name="email" placeholder="graomestre@potencia.com"
                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           </div>
+        </div>
+
+        <div class="col-span-full border-t border-white/10 pt-5">
+          <p class="mb-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[#5b8def]">Secretaria</p>
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label for="secretario_nome" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Secretário</label>
+              <input type="text" id="secretario_nome" name="secretario_nome" placeholder="Nome do secretário"
+                     class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+            </div>
+            <div>
+              <label for="secretario_email" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Secretário</label>
+              <input type="email" id="secretario_email" name="secretario_email" placeholder="secretaria@potencia.com"
+                     class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+            </div>
+            <div>
+              <label for="secretario_telefone" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone do Secretário</label>
+              <input type="tel" id="secretario_telefone" name="secretario_telefone" placeholder="(21) 99999-9999"
+                     class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+            </div>
+          </div>
+        </div>
+
+        <div class="col-span-full">
+          <p class="mb-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[#5b8def]">Tesouraria</p>
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label for="tesoureiro_nome" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Tesoureiro</label>
+              <input type="text" id="tesoureiro_nome" name="tesoureiro_nome" placeholder="Nome do tesoureiro"
+                     class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+            </div>
+            <div>
+              <label for="tesoureiro_email" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Tesoureiro</label>
+              <input type="email" id="tesoureiro_email" name="tesoureiro_email" placeholder="tesouraria@potencia.com"
+                     class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+            </div>
+            <div>
+              <label for="tesoureiro_telefone" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone do Tesoureiro</label>
+              <input type="tel" id="tesoureiro_telefone" name="tesoureiro_telefone" placeholder="(21) 99999-9999"
+                     class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+            </div>
+          </div>
+        </div>
+
+        <div class="col-span-full border-t border-white/10 pt-5">
+          <p class="mb-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[#4ade80]">Mensalidade</p>
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label for="valor_anuidade" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Valor da Mensalidade (R$)</label>
+              <input type="text" id="valor_anuidade" name="valor_anuidade" placeholder="Ex: 1.500,00" inputmode="decimal"
+                     class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#4ade80]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#4ade80]/15">
+            </div>
+            <div>
+              <label for="vencimento_anuidade" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Data de Vencimento</label>
+              <input type="date" id="vencimento_anuidade" name="vencimento_anuidade"
+                     class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition [color-scheme:dark] focus:border-[#4ade80]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#4ade80]/15">
+            </div>
+          </div>
+        </div>
+
+        <div class="col-span-full">
+          <label for="pix" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">PIX do Vale</label>
+          <input type="text" id="pix" name="pix" placeholder="Chave PIX para pagamento da mensalidade"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#4ade80]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#4ade80]/15">
         </div>
       </div>
 
