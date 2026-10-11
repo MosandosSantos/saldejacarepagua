@@ -1,10 +1,29 @@
 """Persistence tests for the local, tenant-scoped Vale registry."""
 
+import os
+import subprocess
+import sys
 from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
 import pytest
+
+
+def test_vale_test_settings_require_explicit_database_url():
+    env = os.environ.copy()
+    env.pop('VALE_TEST_DATABASE_URL', None)
+
+    result = subprocess.run(
+        [sys.executable, '-c', 'import django; django.setup()'],
+        env={**env, 'DJANGO_SETTINGS_MODULE': 'core.settings_vale_test'},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode != 0
+    assert 'VALE_TEST_DATABASE_URL' in result.stderr
 
 
 def test_vale_model_is_registered():
