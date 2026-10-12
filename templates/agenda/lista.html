@@ -1,0 +1,52 @@
+{% extends "base/basic.html" %}
+{% block titulo %}Agenda{% endblock %}
+
+{% block conteudo %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="text-xl font-bold text-white">Agenda</h1>
+  {% if pode_escrever %}
+  <a href="{% url 'agenda:novo' %}" class="rounded-lg bg-[#3b82f6] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#2563eb]">+ Novo evento</a>
+  {% endif %}
+</div>
+
+<form method="get" class="mb-4 flex flex-wrap gap-2">
+  <select name="loja" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white">
+    <option value="">Todas as lojas</option>
+    {% for l in lojas %}
+    <option value="{{ l.id }}" {% if filtro_loja == l.id|stringformat:"s" %}selected{% endif %}>{{ l.nome }}</option>
+    {% endfor %}
+  </select>
+  <select name="tipo" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white">
+    <option value="">Todos os tipos</option>
+    {% for t in tipos %}
+    <option value="{{ t.id }}" {% if filtro_tipo == t.id|stringformat:"s" %}selected{% endif %}>{{ t.nome }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white">Filtrar</button>
+</form>
+
+<div class="grid gap-3">
+  {% for e in itens %}
+  <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <span class="rounded-full px-2 py-0.5 text-xs font-semibold text-white" style="background-color: {{ e.tipo.cor }}">{{ e.tipo.nome }}</span>
+        <a href="/agenda/{{ e.id }}/editar/" class="ml-2 font-semibold text-white">{{ e.titulo }}</a>
+      </div>
+      <div class="text-sm text-[#a6bfc7]">{{ e.data_hora|date:"d/m/Y H:i" }}{% if e.local %} · {{ e.local }}{% endif %}</div>
+      {% if pode_escrever %}
+      <div class="flex gap-2">
+        <a href="/agenda/{{ e.id }}/presenca/" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white">Registrar presença</a>
+        <form method="post" action="{% url 'agenda:excluir' e.id %}" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="rounded-lg border border-[#ef4444]/30 px-3 py-1.5 text-xs text-[#ef4444]">Excluir</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% empty %}
+  <p class="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-sm text-[#a6bfc7]">Nenhum evento encontrado.</p>
+  {% endfor %}
+</div>
+{% endblock %}

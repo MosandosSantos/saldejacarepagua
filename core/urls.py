@@ -56,10 +56,10 @@ urlpatterns = [
     path('convidar/<str:token>/', acesso_views.convidar, name='convidar'),
     path('usuario/ativar/<str:token>/', acesso_views.ativar_conta, name='ativar_conta'),
     path('dashboard/', include('dashboard.urls')),
-    path('recepcao/', include('recepcao.urls')),
+    path('iniciacao/', include('recepcao.urls', namespace='recepcao')),
+    path('recepcao/', include('recepcao.urls', namespace='recepcao_legacy')),
     path('contatos/', include('contatos.urls')),
-    # Agenda foi consolidada em Tarefas — bookmarks antigos redirecionam
-    path('agenda/', RedirectView.as_view(pattern_name='tarefas:lista', permanent=False), name='agenda_redirect'),
+    path('agenda/', include('agenda.urls')),
     path('emails/', include('emails.urls')),
     path('tarefas/', include('tarefas.urls')),
     path('automacoes/', include('automacoes.urls')),
