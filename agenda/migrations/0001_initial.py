@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('acesso', '0021_alter_usuario_role'),
-        ('contatos', '0001_initial'),
+        ('contatos', '0017_loja_membro_locais'),
     ]
 
     operations = [
@@ -58,7 +58,7 @@ class Migration(migrations.Migration):
                 ('lembrete_48_enviado_em', models.DateTimeField(blank=True, null=True)),
                 ('lembrete_24_enviado_em', models.DateTimeField(blank=True, null=True)),
                 ('criado_por', models.ForeignKey(blank=True, db_column='criado_por_id', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='agenda_eventos_criados', to='acesso.usuario')),
-                ('loja', models.ForeignKey(db_column='loja_id', on_delete=django.db.models.deletion.PROTECT, related_name='eventos_agenda', to='contatos.loja')),
+                ('loja', models.ForeignKey(db_column='loja_id', on_delete=django.db.models.deletion.PROTECT, related_name='eventos_agenda', to='contatos.Loja')),
                 ('tipo', models.ForeignKey(db_column='tipo_id', on_delete=django.db.models.deletion.PROTECT, related_name='eventos', to='agenda.tipoevento')),
                 ('tenant', models.ForeignKey(db_column='tenant_id', on_delete=django.db.models.deletion.CASCADE, related_name='eventos_agenda', to='acesso.tenant')),
             ],
