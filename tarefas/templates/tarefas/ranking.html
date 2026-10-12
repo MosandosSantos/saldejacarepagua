@@ -74,29 +74,14 @@
 </div>
 
 <div id="visao-kanban" class="hidden">
-  <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-    <div class="hazon-card-sm p-4">
-      <h3 class="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#5b8def]">Sessão</h3>
-      <div class="coluna-kanban space-y-2" data-tipo="sessao"></div>
-    </div>
-    <div class="hazon-card-sm p-4">
-      <h3 class="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#a78bfa]">Reunião</h3>
-      <div class="coluna-kanban space-y-2" data-tipo="reuniao"></div>
-    </div>
-    <div class="hazon-card-sm p-4">
-      <h3 class="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#4ade80]">Trabalho</h3>
-      <div class="coluna-kanban space-y-2" data-tipo="trabalho"></div>
-    </div>
-    <div class="hazon-card-sm p-4">
-      <h3 class="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#fbbf24]">Ritual</h3>
-      <div class="coluna-kanban space-y-2" data-tipo="ritual"></div>
-    </div>
+  <div class="hazon-card-sm overflow-x-auto p-4">
+    <div id="kanban-board" class="flex min-w-max gap-4"></div>
   </div>
 </div>
 
 <!-- Modal Novo/Editar Evento — estilo dos forms de Vale/Loja -->
 <div id="modal-evento" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm">
-  <div class="hazon-card mx-4 my-8 w-full max-w-2xl p-7">
+  <div class="hazon-card-sm mx-4 my-8 w-full max-w-2xl p-7 backdrop-blur-xl">
     <div class="mb-6 flex items-center gap-3">
       <span class="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#4ade80]/15">
         <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -271,20 +256,49 @@
   }
 
   function renderKanban() {
-    document.querySelectorAll('.coluna-kanban').forEach(function(col) {
-      var tipo = col.getAttribute('data-tipo');
-      var doTipo = eventos.filter(function(e) { return e.tipo === tipo; });
-      var html = '';
-      doTipo.forEach(function(ev) {
+    // Estilo CRM: cada mês é uma coluna, com cards de eventos dentro.
+    var board = document.getElementById('kanban-board');
+    if (!board) return;
+    var porMes = {};
+    eventos.forEach(function(ev) {
+      var chave = ev.data_inicio.substring(0, 7); // YYYY-MM
+      (porMes[chave] = porMes[chave] || []).push(ev);
+    });
+    var MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    var chaves = Object.keys(porMes).sort();
+    // Garante o mês corrente exibido mesmo sem eventos
+    var mesAtual = ano + '-' + String(mes).padStart(2, '0');
+    if (chaves.indexOf(mesAtual) === -1) { chaves.unshift(mesAtual); }
+    chaves.sort();
+    var html = '';
+    chaves.forEach(function(chave) {
+      var partes = chave.split('-');
+      var anoCol = parseInt(partes[0], 10);
+      var mesCol = parseInt(partes[1], 10);
+      var doMes = (porMes[chave] || []).sort(function(a, b) { return a.data_inicio.localeCompare(b.data_inicio); });
+      var agora = new Date();
+      var isAtual = (anoCol === agora.getFullYear() && mesCol === agora.getMonth() + 1);
+      html += '<div class="flex w-64 flex-shrink-0 flex-col rounded-xl border border-white/10 bg-white/[0.02] p-3">';
+      html += '<div class="mb-3 flex items-center justify-between">';
+      html += '<h3 class="text-[11px] font-bold uppercase tracking-wider ' + (isAtual ? 'text-[#5b8def]' : 'text-[#a6bfc7]') + '">' + MESES[mesCol - 1] + '</h3>';
+      html += '<span class="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10px] font-bold text-[#a6bfc7]">' + doMes.length + '</span>';
+      html += '</div>';
+      doMes.forEach(function(ev) {
         var c = cores[ev.tipo] || cores.sessao;
-        html += '<div onclick="verDetalhes(' + ev.id + ')" class="cursor-pointer rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10">';
+        html += '<div onclick="verDetalhes(' + ev.id + ')" class="mx-1 py-2 mb-2 cursor-pointer rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10">';
         html += '<div class="text-[13px] font-semibold text-white">' + ev.titulo + '</div>';
-        html += '<div class="mt-1 text-[11px] text-[#a6bfc7]">' + formatDT(ev.data_inicio) + '</div>';
+        html += '<div class="mt-1 flex items-center gap-2 text-[11px] text-[#a6bfc7]">';
+        html += '<span class="inline-block h-2 w-2 rounded-full" style="background:' + c.label + '"></span>';
+        html += formatDT(ev.data_inicio);
+        html += '</div>';
         html += '</div>';
       });
-      if (!doTipo.length) html = '<div class="rounded-lg border border-dashed border-white/10 p-4 text-center text-[11px] text-[#6f8a93]">Vazio</div>';
-      col.innerHTML = html;
+      if (!doMes.length) {
+        html += '<div class="rounded-lg border border-dashed border-white/10 p-4 text-center text-[11px] text-[#6f8a93]">Sem eventos</div>';
+      }
+      html += '</div>';
     });
+    board.innerHTML = html;
   }
 
   // ── Modal (estilo dos forms de Vale/Loja) ──────────────────────
