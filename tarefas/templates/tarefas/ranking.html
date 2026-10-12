@@ -81,7 +81,8 @@
 
 <!-- Modal Novo/Editar Evento — estilo dos forms de Vale/Loja -->
 <div id="modal-evento" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm">
-  <div class="hazon-card-sm mx-4 my-8 w-full max-w-2xl p-7 backdrop-blur-xl">
+  <div class="mx-auto my-8 max-w-2xl">
+  <div class="hazon-card-sm p-7 backdrop-blur-xl" style="background: var(--hazon-surface)">
     <div class="mb-6 flex items-center gap-3">
       <span class="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#4ade80]/15">
         <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -145,10 +146,11 @@
       </div>
     </form>
   </div>
+  </div>
 </div>
 
 <div id="modal-detalhes" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm">
-  <div class="hazon-card mx-4 my-8 w-full max-w-md p-6">
+  <div class="hazon-card-sm mx-4 my-8 w-full max-w-md p-6" style="background: var(--hazon-surface)">
     <div class="mb-4 flex items-center justify-between">
       <h3 class="hazon-titulo text-[16px]">Detalhes</h3>
       <button onclick="fecharDetalhes()" aria-label="Fechar" class="text-[#6f8a93] transition hover:text-white">
