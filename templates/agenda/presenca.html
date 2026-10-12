@@ -1,0 +1,42 @@
+{% extends "base/basic.html" %}
+{% block titulo %}Presença — {{ evento.titulo }}{% endblock %}
+
+{% block conteudo %}
+<h1 class="mb-1 text-xl font-bold text-white">Registrar presença</h1>
+<p class="mb-4 text-sm text-[#a6bfc7]">{{ evento.titulo }} · {{ evento.data_hora|date:"d/m/Y H:i" }}</p>
+
+{% if erro %}
+<div class="mb-4 rounded-lg border border-[#f59e0b]/40 bg-[#f59e0b]/10 px-4 py-2 text-sm text-[#fbbf24]">{{ erro }}</div>
+{% endif %}
+
+<form method="post" action="./salvar/" class="max-w-2xl space-y-2">
+  {% csrf_token %}
+  {% for l in linhas %}
+  <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <span class="font-semibold text-white">{{ l.membro.nome }}</span>
+      <div class="flex gap-3 text-sm">
+        {% for estado, rotulo in estados_do_form %}
+        <label class="flex items-center gap-1 text-[#a6bfc7]">
+          <input type="radio" name="presenca_{{ l.membro.id }}" value="{{ estado }}"
+                 {% if l.presenca and l.presenca.estado == estado %}checked{% endif %} />
+          {{ rotulo }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <input name="justificativa_{{ l.membro.id }}" maxlength="255" placeholder="Justificativa (quando Justificado)"
+           value="{{ l.presenca.justificativa|default:'' }}"
+           class="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white" />
+  </div>
+  {% empty %}
+  <p class="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-sm text-[#a6bfc7]">
+    Nenhum membro ativo filiado à loja deste evento.
+  </p>
+  {% endfor %}
+  {% if linhas %}
+  <button type="submit" class="rounded-lg bg-[#3b82f6] px-4 py-2 text-sm font-semibold text-white hover:bg-[#2563eb]">Salvar presenças</button>
+  {% endif %}
+  <a href="{% url 'agenda:lista' %}" class="ml-2 text-sm text-[#a6bfc7]">Voltar</a>
+</form>
+{% endblock %}

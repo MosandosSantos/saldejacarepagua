@@ -1,7 +1,7 @@
-"""Views web da agenda (CRUD de eventos)."""
+"""Views web da agenda (CRUD de eventos + registro de presença)."""
 import datetime
 
-from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -12,9 +12,9 @@ from acesso.decorators import (
     web_requer_edicao,
     web_requer_tenant_context,
 )
-from contatos.models import Loja
+from contatos.models import Filiacao, Loja
 
-from .models import EventoAgenda, TipoEvento
+from .models import EventoAgenda, PresencaEvento, TipoEvento
 from .permissions import agenda_requer_escrita, pode_escrever_agenda
 
 
@@ -161,3 +161,71 @@ def excluir(request, id):
     evento = get_object_or_404(eventos, pk=id)
     evento.delete()
     return redirect('agenda:lista')
+
+
+ESTADOS_VALIDOS = {'PRESENTE', 'AUSENTE', 'JUSTIFICADO'}
+
+
+def _membros_do_evento(evento):
+    """Membros ATIVOS filiados à loja do evento (fonte: Filiacao)."""
+    from contatos.models import Membro
+
+    return Membro.objects.filter(
+        filiacoes__loja_id=evento.loja_id,
+        situacao='ATIVO',
+    ).order_by('nome', 'id')
+
+
+@web_login_required
+@agenda_requer_escrita
+def presenca(request, id):
+    """Form de presença: lista membros ativos da loja com rádio por estado."""
+    eventos = filtro_tenant(request, EventoAgenda.objects.select_related('loja'))
+    evento = get_object_or_404(eventos, pk=id)
+    membros = _membros_do_evento(evento)
+    estados = {
+        p.membro_id: p for p in PresencaEvento.objects.filter(evento=evento)
+    }
+    linhas = [
+        {'membro': m, 'presenca': estados.get(m.id)}
+        for m in membros
+    ]
+    return render(request, 'agenda/presenca.html', {
+        'evento': evento, 'linhas': linhas,
+        'estados_do_form': PresencaEvento.ESTADOS,
+        'erro': request.GET.get('erro', ''),
+    })
+
+
+@web_login_required
+@agenda_requer_escrita
+@transaction.atomic
+def presenca_salvar(request, id):
+    """Grava todos os rádios do POST em transação única (update_or_create)."""
+    eventos = filtro_tenant(request, EventoAgenda.objects.all())
+    evento = get_object_or_404(eventos, pk=id)
+    usuario = _usuario_da_sessao(request)
+    membros_validos = set(_membros_do_evento(evento).values_list('id', flat=True))
+
+    for chave, valor in request.POST.items():
+        if not chave.startswith('presenca_'):
+            continue
+        try:
+            membro_id = int(chave.rsplit('_', 1)[1])
+        except (ValueError, IndexError):
+            continue
+        if membro_id not in membros_validos or valor not in ESTADOS_VALIDOS:
+            continue
+        justificativa = (request.POST.get(f'justificativa_{membro_id}') or '').strip()
+        if valor == 'JUSTIFICADO' and not justificativa:
+            return redirect(
+                f'/agenda/{id}/presenca/?erro=Informe a justificativa')
+        PresencaEvento.objects.update_or_create(
+            evento=evento, membro_id=membro_id,
+            defaults={
+                'estado': valor,
+                'justificativa': justificativa if valor == 'JUSTIFICADO' else '',
+                'registrado_por': usuario,
+            },
+        )
+    return redirect('agenda:presenca', id)
