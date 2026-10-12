@@ -4,14 +4,18 @@ As tarefas são escopadas por tenant; o vencimento alimenta os lembretes
 (atrasadas, de hoje, próximas). Viewer só visualiza; admin exclui.
 """
 
-import locale
+import json
 import logging
 import re
-from datetime import date, time
+import smtplib
+from datetime import date, datetime, time, timedelta
 
-from django.http import HttpResponse
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_GET, require_POST
 
 from acesso.decorators import (
     e_admin_do_tenant,
@@ -19,17 +23,20 @@ from acesso.decorators import (
     pode_editar,
     web_login_required,
     web_requer_edicao,
+    web_requer_tenant_context,
 )
 from acesso.models import Usuario
 from contatos.models import Contato
 from core.utils import iniciais as _iniciais
 from core.utils import tenant_id as _tenant_id
-from tarefas.ical import gerar_ics, parse_ics
+from tarefas.ical import gerar_ics, gerar_ics_eventos, parse_ics
 from tarefas.models import (
     PRIORIDADE_CORES,
     PRIORIDADES,
+    Evento,
     Tarefa,
     concluir_tarefa,
+    reabrir_tarefa,
 )
 
 logger = logging.getLogger(__name__)
@@ -130,6 +137,7 @@ def _membro_do_tenant(tid, raw):
 
 
 @web_login_required
+@web_requer_tenant_context
 def lista(request):
     """Página de tarefas: criar rápido no topo + seções atrasadas/hoje/próximas/concluídas."""
     tid = _tenant_id(request)
@@ -186,6 +194,7 @@ def lista(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def editar(request, pk):
     tarefa = get_object_or_404(filtro_tenant(request, Tarefa.objects.all()), pk=pk)
@@ -216,6 +225,7 @@ def editar(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def concluir(request, pk):
     """Marca como concluída (POST) e volta para a origem (ficha ou lista)."""
@@ -226,6 +236,7 @@ def concluir(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def reabrir(request, pk):
     if request.method == 'POST':
@@ -235,6 +246,7 @@ def reabrir(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 def excluir(request, pk):
     """Excluir tarefa — apenas admin (operacional volta)."""
     if not e_admin_do_tenant(request):
@@ -246,6 +258,7 @@ def excluir(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def nova_para_contato(request, contato_id):
     """Criação rápida de follow-up direto da ficha do contato."""
@@ -267,6 +280,17 @@ def nova_para_contato(request, contato_id):
 
 
 @web_login_required
+@require_GET
+def exportar_calendario_ics(request):
+    """Exporta os eventos da agenda como arquivo .ics (Google Calendar)."""
+    qs = Evento.objects.all().order_by('data_inicio')
+    ics_bytes = gerar_ics_eventos(qs)
+    response = HttpResponse(ics_bytes, content_type='text/calendar; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="agenda-sessoes.ics"'
+    return response
+
+
+@web_login_required
 def exportar_ics(request):
     """Exporta todas as tarefas abertas do tenant como arquivo .ics (Google Calendar)."""
     tid = _tenant_id(request)
@@ -278,6 +302,7 @@ def exportar_ics(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def importar_ics(request):
     """Importa tarefas de um arquivo .ics (compatível com Google Calendar)."""
@@ -291,7 +316,8 @@ def importar_ics(request):
     try:
         conteudo = arquivo.read()
         eventos = parse_ics(conteudo)
-    except Exception:
+    except (OSError, ValueError, TypeError):
+        logger.warning('Falha ao ler arquivo .ics de %s', _usuario_id(request), exc_info=True)
         return redirect('tarefas:lista')
 
     tid = _tenant_id(request)
@@ -325,8 +351,6 @@ def _linhas_ranking(members, member_stats):
     Usado tanto na tabela (com os filtros aplicados) quanto nos KPIs
     estáticos (chamado com todos os membros, sem filtro de classe/loja).
     """
-    from datetime import date
-
     from core.gprb import _months_between, _years_between
 
     hoje = date.today()
@@ -375,117 +399,277 @@ def _linhas_ranking(members, member_stats):
 
 @web_login_required
 def ranking(request):
-    """Página de ranking de presença (baseada no PRD-RANKING)."""
-    from datetime import date
+    """Agenda de sessões da loja maçonica — calendário estilo Google Calendar."""
+    usuario = request.session.get('usuario', {})
+    loja_id_usuario = usuario.get('loja_id', '')
 
-    from core.gprb import ranking_dados
+    # Parâmetros de data (mês/ano atual ou via GET)
+    hoje = date.today()
+    ano = int(request.GET.get('ano', hoje.year))
+    mes = int(request.GET.get('mes', hoje.month))
+    if mes < 1: mes = 1
+    if mes > 12: mes = 12
 
-    classe = request.GET.get('classe', 'MX').upper().strip()
-    if classe not in ('MX', 'EN'):
-        classe = 'MX'
+    # Primeiro e último dia do mês
+    data_inicio_mes = date(ano, mes, 1)
+    if mes == 12:
+        data_fim_mes = date(ano + 1, 1, 1) - timedelta(days=1)
+    else:
+        data_fim_mes = date(ano, mes + 1, 1) - timedelta(days=1)
 
-    prefeitura_id = request.GET.get('prefeitura_id') or None
-    loja_id = request.GET.get('loja_id') or None
-
-    # Período fixo: últimos 24 meses
-    data_inicio = date(date.today().year - 2, 1, 1)
-    data_fim = date.today()
-
-    # Tabela: com os filtros de classe/prefeitura/loja aplicados
-    stats_por_membro = {}
-    ranking_rows = []
-    if True:
-        dados = ranking_dados(
-            classe=classe,
-            loja_id=loja_id,
-            prefeitura_id=prefeitura_id,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
-        )
-        stats_por_membro = {s['memberId']: s for s in dados['memberStats']}
-        ranking_rows = _linhas_ranking(dados['members'], stats_por_membro)
-
-    # KPIs: contagem de TODOS os elegíveis (MX e EN), SEM o filtro — estáticos
-    dados_kpi = ranking_dados(
-        classe=None,
-        data_inicio=data_inicio,
-        data_fim=data_fim,
+    # Buscar eventos do mês (todas as lojas visíveis)
+    eventos = Evento.objects.filter(
+        data_inicio__date__lte=data_fim_mes,
+        data_fim__date__gte=data_inicio_mes,
     )
-    stats_kpi = {s['memberId']: s for s in dados_kpi['memberStats']}
-    linhas_kpi = _linhas_ranking(dados_kpi['members'], stats_kpi)
-    total_ec = sum(1 for r in linhas_kpi if r['classe'] == 'EN')
-    total_mx = sum(1 for r in linhas_kpi if r['classe'] == 'MX')
-    total_ranking = len(linhas_kpi)
 
-    # Sort composto — todos já são elegíveis (tempo, presença, anuidade OK)
-    ranking_rows.sort(key=lambda x: (
-        -x['tempo_meses'],
-        -x['idade'],
-        x['original_index'],
-    ))
+    # Serializar eventos para JSON
+    eventos_json = []
+    for ev in eventos:
+        pode_editar = bool(loja_id_usuario and ev.loja_id == loja_id_usuario)
+        eventos_json.append({
+            'id': ev.id,
+            'titulo': ev.titulo,
+            'descricao': ev.descricao,
+            'tipo': ev.tipo,
+            'tipo_display': ev.get_tipo_display(),
+            'data_inicio': ev.data_inicio.strftime('%Y-%m-%dT%H:%M'),
+            'data_fim': ev.data_fim.strftime('%Y-%m-%dT%H:%M'),
+            'loja_id': ev.loja_id,
+            'pode_editar': pode_editar,
+        })
 
-    # Atribuir posição RK
-    for i, row in enumerate(ranking_rows, 1):
-        row['rk'] = i
+    # Navegação (mês anterior/próximo)
+    if mes == 1:
+        mes_anterior = 12
+        ano_anterior = ano - 1
+    else:
+        mes_anterior = mes - 1
+        ano_anterior = ano
 
-    # Prefeituras e lojas para filtro (degradação graciosa se o GPRB cair)
-    from core.gprb import connect
-    prefeituras = []
-    lojas_da_prefeitura = []
-    try:
-        conn = connect()
-        try:
-            cur = conn.cursor()
-            tid = request.session.get('usuario', {}).get('tenant_id')
-            if not tid:
-                # Sessão sem tenant (ex.: admin_saas): usa o tenant GPRB do ranking
-                cur.execute("SELECT id FROM tenant WHERE code = 'GPRB'")
-                _row = cur.fetchone()
-                tid = _row[0] if _row else None
-            if tid:
-                cur.execute(
-                    'SELECT id, nome FROM prefeitura WHERE "tenantId" = %s::text ORDER BY nome',
-                    (str(tid),),
-                )
-                prefeituras = [{'id': r[0], 'nome': r[1]} for r in cur.fetchall()]
-                if prefeitura_id:
-                    cur.execute(
-                        'SELECT id, COALESCE("nomeFantasia", "lojaMX", \'Loja \' || numero::text) '
-                        'FROM loja WHERE "tenantId" = %s::text AND "prefeituraId" = %s::text '
-                        'AND situacao = \'ATIVA\' ORDER BY 2',
-                        (str(tid), prefeitura_id),
-                    )
-                    lojas_da_prefeitura = [{'id': r[0], 'nome': r[1]} for r in cur.fetchall()]
-        finally:
-            conn.close()
-    except Exception as e:
-        logger.exception('GPRB indisponível ao listar prefeituras/lojas: %s', e)
-        prefeituras = []
-        lojas_da_prefeitura = []
+    if mes == 12:
+        proximo_mes = 1
+        proximo_ano = ano + 1
+    else:
+        proximo_mes = mes + 1
+        proximo_ano = ano
 
-    # Formatar datas de recepção
-    try:
-        locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
-    except Exception as e:
-        logger.debug('Locale pt_BR.UTF-8 não disponível: %s', e)
-    for row in ranking_rows:
-        try:
-            d = date.fromisoformat(row['recepcao']) if row['recepcao'] else None
-            row['recepcao_fmt'] = d.strftime('%d/%m/%Y') if d else '—'
-        except Exception:
-            row['recepcao_fmt'] = row['recepcao'] or '—'
+    # Nomes dos meses em português
+    MESES_PT = [
+        '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ]
 
     return render(request, 'tarefas/ranking.html', {
-        'ranking_rows': ranking_rows,
-        'classe_selecionada': classe,
-        'prefeituras': prefeituras,
-        'prefeitura_selecionada': prefeitura_id or '',
-        'lojas_da_prefeitura': lojas_da_prefeitura,
-        'loja_selecionada': loja_id or '',
-        'tem_filtros': bool(prefeitura_id or loja_id or classe != 'MX'),
-        'data_inicio': data_inicio,
-        'data_fim': data_fim,
-        'total_ranking': total_ranking,
-        'total_ec': total_ec,
-        'total_mx': total_mx,
+        'eventos_json': json.dumps(eventos_json),
+        'ano': ano,
+        'mes': mes,
+        'mes_nome': MESES_PT[mes],
+        'data_inicio_mes': data_inicio_mes,
+        'data_fim_mes': data_fim_mes,
+        'ano_anterior': ano_anterior,
+        'mes_anterior': mes_anterior,
+        'proximo_ano': proximo_ano,
+        'proximo_mes': proximo_mes,
+        'loja_id_usuario': loja_id_usuario,
+        'hoje': hoje,
     })
+
+
+# ---------------------------------------------------------------------------
+# API JSON para eventos (CRUD)
+# ---------------------------------------------------------------------------
+
+
+def _obter_loja_usuario(request):
+    """Retorna o loja_id do usuário logado (None se não tiver)."""
+    return request.session.get('usuario', {}).get('loja_id') or None
+
+
+@web_login_required
+@require_GET
+def eventos_json(request):
+    """Retorna eventos do mês como JSON para o calendário."""
+    hoje = date.today()
+    ano = int(request.GET.get('ano', hoje.year))
+    mes = int(request.GET.get('mes', hoje.month))
+
+    data_inicio_mes = date(ano, mes, 1)
+    if mes == 12:
+        data_fim_mes = date(ano + 1, 1, 1) - timedelta(days=1)
+    else:
+        data_fim_mes = date(ano, mes + 1, 1) - timedelta(days=1)
+
+    eventos = Evento.objects.filter(
+        data_inicio__date__lte=data_fim_mes,
+        data_fim__date__gte=data_inicio_mes,
+    )
+
+    loja_id_usuario = _obter_loja_usuario(request)
+
+    eventos_list = []
+    for ev in eventos:
+        pode_editar = bool(loja_id_usuario and ev.loja_id == loja_id_usuario)
+        eventos_list.append({
+            'id': ev.id,
+            'titulo': ev.titulo,
+            'descricao': ev.descricao,
+            'tipo': ev.tipo,
+            'tipo_display': ev.get_tipo_display(),
+            'data_inicio': ev.data_inicio.strftime('%Y-%m-%dT%H:%M'),
+            'data_fim': ev.data_fim.strftime('%Y-%m-%dT%H:%M'),
+            'loja_id': ev.loja_id,
+            'pode_editar': pode_editar,
+        })
+
+    return JsonResponse({'eventos': eventos_list})
+
+
+@web_login_required
+@require_POST
+def evento_criar(request):
+    """Cria um novo evento (só se o usuário tiver loja_id)."""
+    loja_id = _obter_loja_usuario(request)
+    if not loja_id:
+        return JsonResponse({'erro': 'Usuário não vinculado a uma loja'}, status=403)
+
+    try:
+        dados = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'JSON inválido'}, status=400)
+
+    titulo = dados.get('titulo', '').strip()
+    if not titulo:
+        return JsonResponse({'erro': 'Título é obrigatório'}, status=400)
+
+    try:
+        data_inicio = datetime.fromisoformat(dados['data_inicio'])
+        data_fim = datetime.fromisoformat(dados['data_fim'])
+    except (KeyError, ValueError):
+        return JsonResponse({'erro': 'Datas inválidas'}, status=400)
+
+    if data_fim <= data_inicio:
+        return JsonResponse({'erro': 'Data fim deve ser posterior à data início'}, status=400)
+
+    evento = Evento.objects.create(
+        titulo=titulo,
+        descricao=dados.get('descricao', ''),
+        tipo=dados.get('tipo', 'sessao'),
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+        loja_id=loja_id,
+        criado_por_id=_usuario_id(request),
+    )
+
+    # Enviar email para membros da loja
+    _enviar_email_novo_evento(evento)
+
+    return JsonResponse({
+        'ok': True,
+        'evento': {
+            'id': evento.id,
+            'titulo': evento.titulo,
+            'tipo': evento.tipo,
+            'tipo_display': evento.get_tipo_display(),
+            'data_inicio': evento.data_inicio.strftime('%Y-%m-%dT%H:%M'),
+            'data_fim': evento.data_fim.strftime('%Y-%m-%dT%H:%M'),
+        },
+    })
+
+
+@web_login_required
+@require_POST
+def evento_editar(request, evento_id):
+    """Edita um evento (só se for da loja do usuário)."""
+    loja_id = _obter_loja_usuario(request)
+    if not loja_id:
+        return JsonResponse({'erro': 'Usuário não vinculado a uma loja'}, status=403)
+
+    try:
+        evento = Evento.objects.get(pk=evento_id)
+    except Evento.DoesNotExist:
+        return JsonResponse({'erro': 'Evento não encontrado'}, status=404)
+
+    if evento.loja_id != loja_id:
+        return JsonResponse({'erro': 'Sem permissão para editar este evento'}, status=403)
+
+    try:
+        dados = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'erro': 'JSON inválido'}, status=400)
+
+    if 'titulo' in dados:
+        evento.titulo = dados['titulo']
+    if 'descricao' in dados:
+        evento.descricao = dados['descricao']
+    if 'tipo' in dados:
+        evento.tipo = dados['tipo']
+    if 'data_inicio' in dados:
+        evento.data_inicio = datetime.fromisoformat(dados['data_inicio'])
+    if 'data_fim' in dados:
+        evento.data_fim = datetime.fromisoformat(dados['data_fim'])
+
+    evento.save()
+
+    return JsonResponse({'ok': True})
+
+
+@web_login_required
+@require_POST
+def evento_excluir(request, evento_id):
+    """Exclui um evento (só se for da loja do usuário)."""
+    loja_id = _obter_loja_usuario(request)
+    if not loja_id:
+        return JsonResponse({'erro': 'Usuário não vinculado a uma loja'}, status=403)
+
+    try:
+        evento = Evento.objects.get(pk=evento_id)
+    except Evento.DoesNotExist:
+        return JsonResponse({'erro': 'Evento não encontrado'}, status=404)
+
+    if evento.loja_id != loja_id:
+        return JsonResponse({'erro': 'Sem permissão para excluir este evento'}, status=403)
+
+    evento.delete()
+    return JsonResponse({'ok': True})
+
+
+def _enviar_email_novo_evento(evento):
+    """Envia email para todos os membros da loja quando um evento é criado."""
+    if not getattr(settings, 'EMAIL_CONFIGURADO', False):
+        logger.info('Email não configurado — simulação de envio para evento %s', evento.id)
+        return
+
+    # Busca membros ativos da loja no tenant externo configurado.
+    from core.gprb.members import emails_membros_da_loja
+    try:
+        membros = emails_membros_da_loja(evento.loja_id)
+    except Exception:
+        logger.exception('Erro ao buscar membros para email (loja %s)', evento.loja_id)
+        return
+
+    if not membros:
+        return
+
+    assunto = f'Nova sessão agendada: {evento.titulo}'
+    corpo = (
+        f'Uma nova sessão foi agendada para sua loja:\n\n'
+        f'Tipo: {evento.get_tipo_display()}\n'
+        f'Título: {evento.titulo}\n'
+        f'Data: {evento.data_inicio:%d/%m/%Y às %H:%M}\n'
+        f'Até: {evento.data_fim:%d/%m/%Y às %H:%M}\n'
+    )
+    if evento.descricao:
+        corpo += f'\\nDescrição: {evento.descricao}\n'
+
+    for nome, email in membros:
+        try:
+            msg = EmailMultiAlternatives(
+                subject=assunto,
+                body=corpo,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[email],
+            )
+            msg.send(fail_silently=False)
+        except (OSError, smtplib.SMTPException):
+            logger.warning('Falha ao enviar email para %s', email, exc_info=True)

@@ -1,273 +1,389 @@
 {% extends 'base/basic.html' %}
 {% load seguranca %}
 
-{% block titulo %}Ranking de Presença{% endblock %}
+{% block titulo %}Agenda de Sessoes{% endblock %}
 
 {% block conteudo %}
-<!-- Header -->
-<div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+<div class="mb-7 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <div class="mb-2 text-[11px] text-[#6f8a93]">
-      <a href="{% url 'tarefas:lista' %}" class="text-[#5b8def] transition hover:underline">Tarefas</a>
-      <span class="mx-1.5">/</span>
-      <span class="text-[#a6bfc7]">Ranking</span>
-    </div>
-    <h1 class="hazon-titulo">Ranking de Presença</h1>
-    <p class="hazon-sub mt-2">
-      {% if classe_selecionada == 'MX' %}
-        Mestres de Santo André — ordenados por tempo de recepção e assiduidade.
-      {% else %}
-        Escudeiros Noviços — ordenados por tempo de recepção e assiduidade.
-      {% endif %}
-    </p>
+    <h1 class="hazon-titulo">Agenda de Sessões</h1>
+    <p class="hazon-sub mt-2">Calendário de sessões e reuniões da loja maçônica.</p>
   </div>
-</div>
-
-<!-- KPIs -->
-<div class="mb-5 grid gap-4 sm:grid-cols-3">
-  <div class="hazon-card-sm flex items-center gap-4 p-5 backdrop-blur-xl">
-    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#5b8def]/15">
-      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#5b8def" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    </div>
-    <div>
-      <div class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Total no ranking</div>
-      <div class="font-mono text-[24px] font-bold leading-none text-white">{{ total_ranking }}</div>
-    </div>
-  </div>
-  <div class="hazon-card-sm flex items-center gap-4 p-5 backdrop-blur-xl">
-    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#3b82f6]/15">
-      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#3b82f6" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-    </div>
-    <div>
-      <div class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Mestres de Santo André</div>
-      <div class="font-mono text-[24px] font-bold leading-none text-[#3b82f6]">{{ total_mx }}</div>
-    </div>
-  </div>
-  <div class="hazon-card-sm flex items-center gap-4 p-5 backdrop-blur-xl">
-    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#5b8def]/15">
-      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#5b8def" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    </div>
-    <div>
-      <div class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Escudeiros Noviços</div>
-      <div class="font-mono text-[24px] font-bold leading-none text-[#5b8def]">{{ total_ec }}</div>
-    </div>
-  </div>
-</div>
-
-<!-- Filtros -->
-<div class="mb-5 hazon-card-sm p-5 backdrop-blur-xl">
-  <div class="flex flex-wrap items-center gap-4">
-    <!-- Período -->
-    <div class="text-[12px] text-[#a6bfc7]">
-      Período: <span class="font-mono font-bold text-white">{{ data_inicio|date:"d/m/Y" }}</span> a <span class="font-mono font-bold text-white">{{ data_fim|date:"d/m/Y" }}</span>
-    </div>
-
-    <!-- Filtro Prefeitura -->
-    <div class="flex items-center gap-2">
-      <label class="text-[11px] font-semibold uppercase tracking-wider text-[#6f8a93]">Prefeitura:</label>
-      <select id="filter-prefeitura" class="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/50">
-        <option value="">Todas as prefeituras</option>
-        {% for p in prefeituras %}
-          <option value="{{ p.id }}" {% if p.id == prefeitura_selecionada %}selected{% endif %}>{{ p.nome }}</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <!-- Filtro Loja (depende da prefeitura escolhida) -->
-    <div id="filter-loja-grupo" class="flex items-center gap-2 {% if not prefeitura_selecionada %}hidden{% endif %}">
-      <label class="text-[11px] font-semibold uppercase tracking-wider text-[#6f8a93]">Loja:</label>
-      <select id="filter-loja" class="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/50">
-        <option value="">Todas as lojas</option>
-        {% for l in lojas_da_prefeitura %}
-          <option value="{{ l.id }}" {% if l.id == loja_selecionada %}selected{% endif %}>{{ l.nome }}</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <!-- Botão limpar filtros -->
-    {% if tem_filtros %}
-      <a href="{% url 'tarefas:ranking' %}"
-         class="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-1.5 text-[12px] font-semibold text-red-200 transition hover:bg-red-400/20">
-        Limpar filtros
-      </a>
+  <div class="flex items-center gap-3">
+    <a href="{% url 'tarefas:exportar_calendario_ics' %}" title="Exportar agenda como .ics" class="flex items-center gap-2 rounded-xl border border-[#5b8def]/50 bg-[#5b8def]/15 px-5 py-2.5 text-[13px] font-semibold text-[#7aa8f5] transition hover:bg-[#5b8def]/25">
+      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar Calendário
+    </a>
+    {% if loja_id_usuario %}
+    <button onclick="abrirModalCriar()" class="flex items-center gap-2 rounded-xl border border-[#4ade80]/50 bg-[#4ade80]/15 px-5 py-2.5 text-[13px] font-semibold text-[#4ade80] transition hover:bg-[#4ade80]/25">
+      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Novo Evento
+    </button>
     {% endif %}
+  </div>
+</div>
 
-    <!-- Rádio Classe -->
-    <div class="flex items-center gap-3">
-      <label class="text-[11px] font-semibold uppercase tracking-wider text-[#6f8a93]">Classe:</label>
-      <label class="flex items-center gap-1.5 cursor-pointer">
-        <input type="radio" name="classe" value="MX" {% if classe_selecionada == 'MX' %}checked{% endif %}
-               class="accent-[#3b82f6]" onchange="navigateClasse(this.value)">
-        <span class="text-[12px] {% if classe_selecionada == 'MX' %}font-bold text-[#3b82f6]{% else %}text-[#a6bfc7]{% endif %}">MX</span>
-      </label>
-      <label class="flex items-center gap-1.5 cursor-pointer">
-        <input type="radio" name="classe" value="EN" {% if classe_selecionada == 'EN' %}checked{% endif %}
-               class="accent-[#5b8def]" onchange="navigateClasse(this.value)">
-        <span class="text-[12px] {% if classe_selecionada == 'EN' %}font-bold text-[#5b8def]{% else %}text-[#a6bfc7]{% endif %}">EN</span>
-      </label>
+<div class="mb-5 hazon-card-sm p-4 backdrop-blur-xl">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1" role="tablist" aria-label="Modo de exibição">
+      <button id="modo-btn-kanban" onclick="definirModo('kanban')" class="rounded-lg px-4 py-1.5 text-[12.5px] font-semibold text-[#a6bfc7] transition" role="tab" aria-selected="false">Kanban</button>
+      <button id="modo-btn-calendario" onclick="definirModo('calendario')" class="rounded-lg px-4 py-1.5 text-[12.5px] font-semibold text-[#a6bfc7] transition" role="tab" aria-selected="false">Calendário</button>
+      <button id="modo-btn-lista" onclick="definirModo('lista')" class="rounded-lg px-4 py-1.5 text-[12.5px] font-semibold text-[#a6bfc7] transition" role="tab" aria-selected="false">Lista</button>
+    </div>
+    <div id="nav-mes" class="flex items-center gap-2">
+      <a href="?ano={{ ano_anterior }}&amp;mes={{ mes_anterior }}" class="hazon-btn-ghost">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <h2 class="font-mono text-[18px] font-bold text-white">{{ mes_nome }} {{ ano }}</h2>
+      <a href="?ano={{ proximo_ano }}&amp;mes={{ proximo_mes }}" class="hazon-btn-ghost">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
     </div>
   </div>
 </div>
 
-<!-- Tabela de Ranking -->
-<div class="overflow-x-auto hazon-card">
-  {% if ranking_rows %}
+<div id="visao-calendario" class="hidden">
+  <div class="hazon-card overflow-hidden">
+    <div class="grid grid-cols-7 border-b border-white/10">
+      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Dom</div>
+      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Seg</div>
+      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Ter</div>
+      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Qua</div>
+      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Qui</div>
+      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Sex</div>
+      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Sab</div>
+    </div>
+    <div id="calendario-grid" class="grid grid-cols-7"></div>
+  </div>
+</div>
+
+<div id="visao-lista" class="hidden">
+  <div class="hazon-card overflow-hidden">
     <table class="w-full border-collapse">
       <thead>
         <tr class="border-b border-white/10 text-left">
-          <th class="sticky left-0 z-10 w-12 bg-[#0b2029] px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">RK</th>
-          <th class="sticky left-12 z-10 w-[200px] bg-[#0b2029] px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Nome</th>
-          <th class="bg-[#0b2029] px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Pref.</th>
-          <th class="bg-[#0b2029] px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Loja</th>
-          <th class="bg-[#0b2029] px-3 py-3 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Recepção</th>
-          <th class="bg-[#0b2029] px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Tempo</th>
-          <th class="bg-[#0b2029] px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[#4ade80]">Presenças</th>
-          <th class="bg-[#0b2029] px-3 py-3 text-center text-[10px] font-bold uppercase tracking-wider text-[#ef4444]">Faltas</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Título</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Início</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Fim</th>
+          <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Ações</th>
         </tr>
       </thead>
-      <tbody id="ranking-body">
-      </tbody>
+      <tbody id="lista-corpo"></tbody>
     </table>
-
-    <!-- Paginação -->
-    <div id="ranking-pagination" class="flex items-center justify-between border-t border-white/10 px-5 py-3">
-      <span class="text-[11px] text-[#6f8a93]">
-        Mostrando <span id="showing-range"></span> de <span class="text-white">{{ ranking_rows|length }}</span> membros
-      </span>
-      <div id="pagination-btns" class="flex items-center gap-1.5"></div>
-    </div>
-  {% else %}
-    <div class="py-16 text-center">
-      <p class="text-[14px] text-[#a6bfc7]">Nenhum membro encontrado no período selecionado.</p>
-    </div>
-  {% endif %}
+  </div>
 </div>
 
+<div id="visao-kanban" class="hidden">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+    <div class="hazon-card-sm p-4">
+      <h3 class="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#5b8def]">Sessão</h3>
+      <div class="coluna-kanban space-y-2" data-tipo="sessao"></div>
+    </div>
+    <div class="hazon-card-sm p-4">
+      <h3 class="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#a78bfa]">Reunião</h3>
+      <div class="coluna-kanban space-y-2" data-tipo="reuniao"></div>
+    </div>
+    <div class="hazon-card-sm p-4">
+      <h3 class="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#4ade80]">Trabalho</h3>
+      <div class="coluna-kanban space-y-2" data-tipo="trabalho"></div>
+    </div>
+    <div class="hazon-card-sm p-4">
+      <h3 class="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#fbbf24]">Ritual</h3>
+      <div class="coluna-kanban space-y-2" data-tipo="ritual"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Novo/Editar Evento — estilo dos forms de Vale/Loja -->
+<div id="modal-evento" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm">
+  <div class="hazon-card mx-4 my-8 w-full max-w-2xl p-7">
+    <div class="mb-6 flex items-center gap-3">
+      <span class="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#4ade80]/15">
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </span>
+      <div>
+        <h3 id="modal-titulo" class="font-display text-lg font-semibold text-white">Novo Evento</h3>
+        <p class="text-[13px] text-[#a6bfc7]">Preencha os dados abaixo</p>
+      </div>
+      <button onclick="fecharModal()" aria-label="Fechar" class="ml-auto text-[#6f8a93] transition hover:text-white">
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="form-evento" onsubmit="salvarEvento(event)">
+      <input type="hidden" id="evento-id" value="">
+      <div class="grid gap-5">
+        <div>
+          <label for="evento-titulo" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Título *</label>
+          <input type="text" id="evento-titulo" required placeholder="Ex: Sessão de Trabalho"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+        </div>
+
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="evento-inicio" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Início *</label>
+            <input type="datetime-local" id="evento-inicio" required
+                   class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition [color-scheme:dark] focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          </div>
+          <div>
+            <label for="evento-fim" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Fim *</label>
+            <input type="datetime-local" id="evento-fim" required
+                   class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition [color-scheme:dark] focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          </div>
+        </div>
+
+        <div>
+          <label for="evento-tipo" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Tipo</label>
+          <select id="evento-tipo" class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+            <option value="sessao">Sessão</option>
+            <option value="reuniao">Reunião</option>
+            <option value="trabalho">Trabalho</option>
+            <option value="ritual">Ritual</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="evento-descricao" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Descrição</label>
+          <textarea id="evento-descricao" rows="3" placeholder="Observações..."
+                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15"></textarea>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center gap-3">
+        <button type="submit" class="flex items-center gap-2 rounded-xl border border-[#5b8def]/50 bg-gradient-to-br from-[#1a5fb4] to-[#1450a0] px-6 py-3 text-[14px] font-bold text-white shadow-lg shadow-[#1a5fb4]/30 transition hover:brightness-110">
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Salvar
+        </button>
+        <button type="button" onclick="fecharModal()" class="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-[14px] font-medium text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="modal-detalhes" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm">
+  <div class="hazon-card mx-4 my-8 w-full max-w-md p-6">
+    <div class="mb-4 flex items-center justify-between">
+      <h3 class="hazon-titulo text-[16px]">Detalhes</h3>
+      <button onclick="fecharDetalhes()" aria-label="Fechar" class="text-[#6f8a93] transition hover:text-white">
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="detalhes-conteudo" class="space-y-3"></div>
+    <div id="detalhes-acoes" class="mt-4 flex justify-end gap-3"></div>
+  </div>
+</div>
 {% endblock %}
 
 {% block js %}
 <script>
 (function () {
-  var rankingRows = {{ ranking_rows|js }};
-  var perPage = 20;
-  var page = 1;
-  var totalPages = Math.ceil(rankingRows.length / perPage);
+  var eventos = {{ eventos_json|safe }};
+  var ano = {{ ano }};
+  var mes = {{ mes }};
+  var hojeStr = '{{ hoje|date:"Y-m-d" }}';
+  var modoSalvo = null;
+  try { modoSalvo = localStorage.getItem('agenda-modo'); } catch (e) {}
+  var modoAtual = ['kanban', 'calendario', 'lista'].indexOf(modoSalvo) > -1 ? modoSalvo : 'calendario';
+  var cores = {
+    sessao:   { bg: '#5b8def20', border: '#5b8def40', label: '#5b8def' },
+    reuniao:  { bg: '#a78bfa20', border: '#a78bfa40', label: '#a78bfa' },
+    trabalho: { bg: '#4ade8020', border: '#4ade8040', label: '#4ade80' },
+    ritual:   { bg: '#fbbf2420', border: '#fbbf2440', label: '#fbbf24' }
+  };
+  var tipoLabels = { sessao: 'Sessão', reuniao: 'Reunião', trabalho: 'Trabalho', ritual: 'Ritual' };
 
-  function render() {
-    var tbody = document.getElementById('ranking-body');
-    var pagBtns = document.getElementById('pagination-btns');
-    var showingRange = document.getElementById('showing-range');
-    if (!tbody) return;
-
-    var start = (page - 1) * perPage;
-    var slice = rankingRows.slice(start, start + perPage);
-
-    function esc(s) {
-      return String(s).replace(/[&<>"']/g, function (c) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-      });
-    }
-    var html = '';
-    slice.forEach(function (r) {
-      html += '<tr class="border-b border-white/5 transition hover:bg-white/5">';
-      html += '<td class="sticky left-0 z-10 bg-[#0b2029] px-3 py-2.5 font-mono text-[12px] font-bold text-[#a6bfc7]">' + r.rk + '</td>';
-      html += '<td class="sticky left-12 z-10 bg-[#0b2029] px-3 py-2.5 text-[12px] font-medium text-[#bcd3da]">' + esc(r.nome) + '</td>';
-      html += '<td class="px-3 py-2.5 text-[11px] text-[#6f8a93]">' + esc(r.prefeitura_sigla || '—') + '</td>';
-      html += '<td class="px-3 py-2.5 text-[11px] text-[#a6bfc7]">' + esc(r.loja_nome || '—') + '</td>';
-      html += '<td class="px-3 py-2.5 text-[11px] text-[#6f8a93]">' + esc(r.recepcao_fmt || '—') + '</td>';
-      html += '<td class="px-3 py-2.5 text-center font-mono text-[12px] font-bold text-[#a6bfc7]">' + r.tempo_meses + 'm</td>';
-      html += '<td class="px-3 py-2.5 text-center font-mono text-[12px] font-bold text-[#4ade80]">' + r.total_present + '</td>';
-      html += '<td class="px-3 py-2.5 text-center font-mono text-[12px] font-bold text-[#ef4444]">' + r.total_absent + '</td>';
-      html += '</tr>';
-    });
-    tbody.innerHTML = html;
-
-    // Range
-    if (showingRange) {
-      showingRange.textContent = (start + 1) + '–' + Math.min(start + perPage, rankingRows.length);
-    }
-
-    // Pagination
-    if (!pagBtns || totalPages <= 1) { if (pagBtns) pagBtns.innerHTML = ''; return; }
-    var phtml = '';
-    // Prev
-    phtml += '<button data-p="' + (page - 1) + '" class="rank-page h-7 min-w-[28px] rounded-lg px-2 text-[11px] font-bold transition bg-white/5 text-[#6f8a93] border border-white/10' + (page === 1 ? ' opacity-30 pointer-events-none' : '') + '">&laquo;</button>';
-    for (var i = 1; i <= totalPages; i++) {
-      phtml += '<button data-p="' + i + '" class="rank-page h-7 min-w-[28px] rounded-lg px-2 text-[11px] font-bold transition ';
-      if (i === page) {
-        phtml += 'bg-[#5b8def]/20 text-[#5b8def] border border-[#5b8def]/30';
-      } else {
-        phtml += 'bg-white/5 text-[#6f8a93] border border-white/10 hover:bg-white/10 hover:text-white';
-      }
-      phtml += '">' + i + '</button> ';
-    }
-    // Next
-    phtml += '<button data-p="' + (page + 1) + '" class="rank-page h-7 min-w-[28px] rounded-lg px-2 text-[11px] font-bold transition bg-white/5 text-[#6f8a93] border border-white/10' + (page === totalPages ? ' opacity-30 pointer-events-none' : '') + '">&raquo;</button>';
-    pagBtns.innerHTML = phtml;
-
-    pagBtns.querySelectorAll('.rank-page').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var p = parseInt(this.getAttribute('data-p'));
-        if (p >= 1 && p <= totalPages) { page = p; render(); }
-      });
-    });
+  function formatDT(iso) {
+    var d = new Date(iso);
+    var dd = String(d.getDate()).padStart(2,'0');
+    var mm = String(d.getMonth()+1).padStart(2,'0');
+    var hh = String(d.getHours()).padStart(2,'0');
+    var mi = String(d.getMinutes()).padStart(2,'0');
+    return dd+'/'+mm+'/'+d.getFullYear()+' '+hh+':'+mi;
   }
 
-  // Filtro Prefeitura -> carrega as lojas da prefeitura escolhida e navega
-  var prefeituraSelect = document.getElementById('filter-prefeitura');
-  var lojaGrupo = document.getElementById('filter-loja-grupo');
-  var lojaSelect = document.getElementById('filter-loja');
-  if (prefeituraSelect) {
-    prefeituraSelect.addEventListener('change', function () {
-      var id = this.value;
-      var params = new URLSearchParams(window.location.search);
-      params.delete('loja_id');
-      if (!id) {
-        params.delete('prefeitura_id');
-        window.location.search = params.toString();
-        return;
-      }
-      params.set('prefeitura_id', id);
-      lojaSelect.innerHTML = '<option value="">Todas as lojas</option>';
-      lojaSelect.disabled = true;
-      lojaGrupo.classList.remove('hidden');
-      fetch('/contatos/prefeitura/' + encodeURIComponent(id) + '/lojas-json/')
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          (d.lojas || []).forEach(function (lj) {
-            var opt = document.createElement('option');
-            opt.value = lj.id;
-            opt.textContent = lj.nome;
-            lojaSelect.appendChild(opt);
-          });
-          lojaSelect.disabled = false;
-          window.location.search = params.toString();
-        })
-        .catch(function () {
-          lojaSelect.innerHTML = '<option value="">Todas as lojas</option>';
-          lojaSelect.disabled = false;
-          window.location.search = params.toString();
-        });
+  // ── Modos de exibição ──────────────────────────────────────────
+  window.definirModo = function(modo) {
+    modoAtual = modo;
+    try { localStorage.setItem('agenda-modo', modo); } catch (e) {}
+    ['kanban', 'calendario', 'lista'].forEach(function(m) {
+      document.getElementById('visao-' + m).classList.toggle('hidden', m !== modo);
+      var btn = document.getElementById('modo-btn-' + m);
+      btn.setAttribute('aria-selected', m === modo ? 'true' : 'false');
+      btn.classList.toggle('bg-[#5b8def]', m === modo);
+      btn.classList.toggle('text-white', m === modo);
+      btn.classList.toggle('text-[#a6bfc7]', m !== modo);
     });
-  }
-
-  // Filtro Loja (preserva a prefeitura escolhida)
-  if (lojaSelect) {
-    lojaSelect.addEventListener('change', function () {
-      var params = new URLSearchParams(window.location.search);
-      if (this.value) { params.set('loja_id', this.value); } else { params.delete('loja_id'); }
-      window.location.search = params.toString();
-    });
-  }
-
-  // Navigate classe
-  window.navigateClasse = function (c) {
-    var params = new URLSearchParams(window.location.search);
-    params.set('classe', c);
-    window.location.search = params.toString();
+    document.getElementById('nav-mes').style.display = (modo === 'kanban') ? 'none' : 'flex';
   };
 
-  render();
+  function renderCalendario() {
+    var grid = document.getElementById('calendario-grid');
+    var primeiroDia = new Date(ano, mes - 1, 1).getDay();
+    var diasNoMes = new Date(ano, mes, 0).getDate();
+    var html = '';
+    var dia = 1;
+    for (var linha = 0; linha < 6; linha++) {
+      for (var coluna = 0; coluna < 7; coluna++) {
+        var idx = linha * 7 + coluna;
+        if (idx < primeiroDia || dia > diasNoMes) {
+          html += '<div style="min-height:100px" class="border-b border-r border-white/5 bg-white/[0.02] opacity-30"></div>';
+        } else {
+          var dataStr = ano + '-' + String(mes).padStart(2,'0') + '-' + String(dia).padStart(2,'0');
+          var isHoje = (hojeStr === dataStr);
+          var eventosDoDia = eventos.filter(function(e) { return e.data_inicio.substring(0,10) === dataStr; });
+          html += '<div style="min-height:100px" class="border-b border-r border-white/5 bg-white/[0.02] p-1.5">';
+          html += '<span class="inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ' + (isHoje ? 'bg-[#5b8def] text-white' : 'text-[#a6bfc7]') + '">' + dia + '</span>';
+          eventosDoDia.forEach(function(ev) {
+            var c = cores[ev.tipo] || cores.sessao;
+            var hora = ev.data_inicio.substring(11,16);
+            html += '<div onclick="verDetalhes(' + ev.id + ')" class="mb-0.5 cursor-pointer truncate rounded px-1.5 py-0.5 text-[10px] font-medium transition hover:brightness-125" style="background:' + c.bg + ';border-left:2px solid ' + c.border + ';color:' + c.label + '">';
+            html += hora + ' ' + ev.titulo;
+            html += '</div>';
+          });
+          html += '</div>';
+          dia++;
+        }
+      }
+    }
+    grid.innerHTML = html;
+  }
+
+  function renderLista() {
+    var corpo = document.getElementById('lista-corpo');
+    var ordenados = eventos.slice().sort(function(a, b) { return a.data_inicio.localeCompare(b.data_inicio); });
+    var html = '';
+    ordenados.forEach(function(ev) {
+      var c = cores[ev.tipo] || cores.sessao;
+      html += '<tr class="border-b border-white/5 transition hover:bg-white/5">';
+      html += '<td class="px-5 py-3.5"><div class="flex items-center gap-2"><span class="text-[13.5px] font-medium text-white">' + ev.titulo + '</span>';
+      html += '<span class="rounded-md px-1.5 py-0.5 font-mono text-[10px] font-bold" style="background:' + c.bg + ';color:' + c.label + '">' + (tipoLabels[ev.tipo] || ev.tipo) + '</span></div></td>';
+      html += '<td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">' + formatDT(ev.data_inicio) + '</td>';
+      html += '<td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">' + formatDT(ev.data_fim) + '</td>';
+      html += '<td class="px-5 py-3.5 text-right"><button onclick="verDetalhes(' + ev.id + ')" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[12px] text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">Detalhes</button></td>';
+      html += '</tr>';
+    });
+    if (!ordenados.length) {
+      html = '<tr><td colspan="4" class="px-5 py-10 text-center text-[13px] text-[#6f8a93]">Nenhum evento neste mês.</td></tr>';
+    }
+    corpo.innerHTML = html;
+  }
+
+  function renderKanban() {
+    document.querySelectorAll('.coluna-kanban').forEach(function(col) {
+      var tipo = col.getAttribute('data-tipo');
+      var doTipo = eventos.filter(function(e) { return e.tipo === tipo; });
+      var html = '';
+      doTipo.forEach(function(ev) {
+        var c = cores[ev.tipo] || cores.sessao;
+        html += '<div onclick="verDetalhes(' + ev.id + ')" class="cursor-pointer rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10">';
+        html += '<div class="text-[13px] font-semibold text-white">' + ev.titulo + '</div>';
+        html += '<div class="mt-1 text-[11px] text-[#a6bfc7]">' + formatDT(ev.data_inicio) + '</div>';
+        html += '</div>';
+      });
+      if (!doTipo.length) html = '<div class="rounded-lg border border-dashed border-white/10 p-4 text-center text-[11px] text-[#6f8a93]">Vazio</div>';
+      col.innerHTML = html;
+    });
+  }
+
+  // ── Modal (estilo dos forms de Vale/Loja) ──────────────────────
+  window.abrirModalCriar = function(dataStr) {
+    document.getElementById('evento-id').value = '';
+    document.getElementById('evento-titulo').value = '';
+    document.getElementById('evento-inicio').value = dataStr ? dataStr + 'T19:00' : '';
+    document.getElementById('evento-fim').value = dataStr ? dataStr + 'T21:00' : '';
+    document.getElementById('evento-tipo').value = 'sessao';
+    document.getElementById('evento-descricao').value = '';
+    document.getElementById('modal-titulo').textContent = 'Novo Evento';
+    var m = document.getElementById('modal-evento');
+    m.classList.remove('hidden');
+    m.classList.add('flex');
+  };
+  window.fecharModal = function() {
+    var m = document.getElementById('modal-evento');
+    m.classList.add('hidden');
+    m.classList.remove('flex');
+  };
+  window.fecharDetalhes = function() {
+    var m = document.getElementById('modal-detalhes');
+    m.classList.add('hidden');
+    m.classList.remove('flex');
+  };
+  window.verDetalhes = function(id) {
+    var ev = eventos.find(function(e) { return e.id === id; });
+    if (!ev) return;
+    var c = cores[ev.tipo] || cores.sessao;
+    var html = '';
+    html += '<div class="rounded-lg px-3 py-2" style="background:' + c.bg + ';border-left:3px solid ' + c.border + '">';
+    html += '<div class="text-[11px] font-bold" style="color:' + c.label + '">' + (tipoLabels[ev.tipo] || ev.tipo) + '</div></div>';
+    html += '<div class="text-[16px] font-bold text-white">' + ev.titulo + '</div>';
+    html += '<div class="text-[12px] text-[#a6bfc7]">' + formatDT(ev.data_inicio) + ' - ' + formatDT(ev.data_fim) + '</div>';
+    if (ev.descricao) { html += '<div class="text-[12px] text-[#6f8a93]">' + ev.descricao + '</div>'; }
+    document.getElementById('detalhes-conteudo').innerHTML = html;
+    var acoes = '';
+    if (ev.pode_editar) {
+      acoes += '<button onclick="editarEvento(' + ev.id + ')" class="hazon-btn-primary text-[12px]">Editar</button>';
+      acoes += '<button onclick="excluirEvento(' + ev.id + ')" class="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-1.5 text-[12px] font-semibold text-red-200 transition hover:bg-red-400/20">Excluir</button>';
+    }
+    acoes += '<button onclick="fecharDetalhes()" class="hazon-btn-ghost text-[12px]">Fechar</button>';
+    document.getElementById('detalhes-acoes').innerHTML = acoes;
+    var m = document.getElementById('modal-detalhes');
+    m.classList.remove('hidden');
+    m.classList.add('flex');
+  };
+  window.editarEvento = function(id) {
+    var ev = eventos.find(function(e) { return e.id === id; });
+    if (!ev) return;
+    fecharDetalhes();
+    document.getElementById('evento-id').value = ev.id;
+    document.getElementById('evento-titulo').value = ev.titulo;
+    document.getElementById('evento-inicio').value = ev.data_inicio;
+    document.getElementById('evento-fim').value = ev.data_fim;
+    document.getElementById('evento-tipo').value = ev.tipo;
+    document.getElementById('evento-descricao').value = ev.descricao || '';
+    document.getElementById('modal-titulo').textContent = 'Editar Evento';
+    var m = document.getElementById('modal-evento');
+    m.classList.remove('hidden');
+    m.classList.add('flex');
+  };
+  window.excluirEvento = function(id) {
+    if (!confirm('Tem certeza que deseja excluir este evento?')) return;
+    fetch('/tarefas/eventos/' + id + '/excluir/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      if (d.ok) { location.reload(); } else { alert(d.erro || 'Erro ao excluir'); }
+    });
+  };
+  window.salvarEvento = function(e) {
+    e.preventDefault();
+    var id = document.getElementById('evento-id').value;
+    var dados = {
+      titulo: document.getElementById('evento-titulo').value,
+      data_inicio: document.getElementById('evento-inicio').value,
+      data_fim: document.getElementById('evento-fim').value,
+      tipo: document.getElementById('evento-tipo').value,
+      descricao: document.getElementById('evento-descricao').value
+    };
+    var url = id ? '/tarefas/eventos/' + id + '/editar/' : '/tarefas/eventos/criar/';
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify(dados)
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      if (d.ok) { location.reload(); } else { alert(d.erro || 'Erro ao salvar'); }
+    });
+  };
+  function getCookie(name) {
+    var v = document.cookie.match('(^|;)\s*' + name + '\s*=\s*([^;]+)');
+    return v ? v.pop() : '';
+  }
+
+  renderCalendario();
+  renderLista();
+  renderKanban();
+  definirModo(modoAtual);
 })();
 </script>
 {% endblock %}

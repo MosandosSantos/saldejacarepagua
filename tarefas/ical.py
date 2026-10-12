@@ -113,6 +113,48 @@ def tarefa_para_vevent(tarefa):
     return '\r\n'.join(lines)
 
 
+def evento_para_vevent(evento):
+    """Converte um Evento da agenda em VEVENT (string iCalendar)."""
+    now = timezone.now()
+    uid = f'evento-{evento.id}@gprbr.local'
+    dtstamp = formatdate(now.timestamp(), usegmt=True)
+    dtstart = timezone.localtime(evento.data_inicio)
+    dtend = timezone.localtime(evento.data_fim)
+
+    lines = [
+        'BEGIN:VEVENT',
+        f'UID:{uid}',
+        f'DTSTAMP:{dtstamp}',
+        f'DTSTART:{dtstart.strftime("%Y%m%dT%H%M%S")}',
+        f'DTEND:{dtend.strftime("%Y%m%dT%H%M%S")}',
+        _fold_line(f'SUMMARY:{_ical_escape(evento.titulo)}'),
+    ]
+    if evento.descricao:
+        lines.append(_fold_line(f'DESCRIPTION:{_ical_escape(evento.descricao)}'))
+    lines.append(f'CATEGORIES:{_ical_escape(evento.get_tipo_display())}')
+    if getattr(evento, 'loja', None) and evento.loja.nome:
+        lines.append(_fold_line(f'LOCATION:{_ical_escape(evento.loja.nome)}'))
+    lines.append('END:VEVENT')
+    return '\r\n'.join(lines)
+
+
+def gerar_ics_eventos(eventos, nome_calendar='GPRBRCRM - Agenda'):
+    """Gera arquivo .ics completo a partir de um queryset de Eventos."""
+    vevents = [evento_para_vevent(e) for e in eventos]
+    cal = '\r\n'.join([
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//GPRBRCRM//Agenda v1.0//PT',
+        f'X-WR-CALNAME:{nome_calendar}',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        '\r\n'.join(vevents),
+        'END:VCALENDAR',
+        '',
+    ])
+    return cal.encode('utf-8')
+
+
 def gerar_ics(tarefas, nome_calendar='GPRBRCRM - Tarefas'):
     """Gera arquivo .ics completo a partir de um queryset de Tarefas."""
     vevents = [tarefa_para_vevent(t) for t in tarefas]
