@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ============================================
   # PostgreSQL - Banco de Dados
@@ -85,10 +83,15 @@ services:
       - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
       - EMAIL_USE_TLS=${EMAIL_USE_TLS:-True}
+
+      # Cloudflare Turnstile (em DEBUG, usa as chaves oficiais de teste se vazias)
+      - CLOUDFLARE_TURNSTILE_SITE_KEY=${CLOUDFLARE_TURNSTILE_SITE_KEY:-}
+      - CLOUDFLARE_TURNSTILE_SECRET_KEY=${CLOUDFLARE_TURNSTILE_SECRET_KEY:-}
       
       # Tenant
       - GPRB_TENANT_ID=${GPRB_TENANT_ID:-}
       - GPRB_TENANT_NAME=${GPRB_TENANT_NAME:-}
+      - GPRB_TENANT_CODE=${GPRB_TENANT_CODE:-SCG33REAA}
       
       # Segurança
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
@@ -113,6 +116,43 @@ services:
         max-file: "5"
 
   # ============================================
+  # Agenda cron - lembretes 48h/24h (idempotente)
+  # ============================================
+  agenda-cron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.13}
+    container_name: gprbr-agenda-cron
+    restart: unless-stopped
+    command: >
+      sh -c "while true; do python manage.py agenda_lembretes; sleep 300; done"
+    environment:
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-core.settings}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-change-this-in-production}
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
+      - DATABASE_URL=postgresql://${DB_USER:-gprbr}:${DB_PASSWORD:-securepassword123}@db:5432/${DB_NAME:-saldabritanea}
+      - REDIS_URL=redis://redis:6379/0
+      - EMAIL_HOST=${EMAIL_HOST:-}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
+      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-True}
+      - GOOGLE_SERVICE_ACCOUNT_JSON=${GOOGLE_SERVICE_ACCOUNT_JSON:-}
+      - GOOGLE_WORKSPACE_ADMIN=${GOOGLE_WORKSPACE_ADMIN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - gprbr-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # ============================================
   # Locust - Teste de carga (opcional)
   # ============================================
   locust:
@@ -128,6 +168,7 @@ services:
     environment:
       LOCUST_USERNAME: ${LOCUST_USERNAME:-}
       LOCUST_PASSWORD: ${LOCUST_PASSWORD:-}
+      LOCUST_TURNSTILE_TOKEN: ${LOCUST_TURNSTILE_TOKEN:-}
     volumes:
       - ./locust:/mnt/locust:ro
     ports:
