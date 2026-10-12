@@ -1,4 +1,5 @@
 """Configuracao central do projeto Django (core)."""
+from email.utils import formataddr, parseaddr
 import os
 from pathlib import Path
 
@@ -10,7 +11,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
 
-# Desativa a conexao SQL direta ao banco GPRB externo durante o cutover.
+APP_BRAND_NAME = 'SAL DA AMORIO'
+
+
+def format_from_email(configured_from_email):
+    """Preserva o endereço de envio e aplica o nome oficial da marca."""
+    raw = (configured_from_email or '').strip()
+    _, address = parseaddr(raw)
+    return formataddr((APP_BRAND_NAME, address or raw))
+
+# Código do tenant padrão no banco externo GPRB.
+GPRB_TENANT_CODE = os.getenv('GPRB_TENANT_CODE', '').strip() or 'SCG33REAA'
+# A conexão SQL direta ao banco GPRB externo fica desativada no runtime do CRM.
 GPRB_DB_ENABLED = False
 
 def _env_bool(name: str, default: str = '0') -> bool:
@@ -22,6 +34,38 @@ def _env_bool(name: str, default: str = '0') -> bool:
 # S8/C1 — padrão seguro. Deploy que esquecer DJANGO_DEBUG=1 roda em modo
 # production, nunca o contrario. Aceita `DEBUG` como alias do .env legado.
 DEBUG = _env_bool('DJANGO_DEBUG') or _env_bool('DEBUG', '0')
+
+TURNSTILE_TEST_SITE_KEY = '1x00000000000000000000AA'
+TURNSTILE_TEST_SECRET_KEY = '1x0000000000000000000000000000000AA'
+
+
+def resolve_turnstile_keys(debug, site_key, secret_key):
+    """Use Cloudflare's always-pass keys only for an unconfigured debug app."""
+    site_key = (site_key or '').strip()
+    secret_key = (secret_key or '').strip()
+
+    if debug and not site_key and not secret_key:
+        return TURNSTILE_TEST_SITE_KEY, TURNSTILE_TEST_SECRET_KEY
+
+    # Do not let accidentally copied Cloudflare test credentials enable a
+    # production login form without a real human-verification challenge.
+    if not debug and (
+        site_key == TURNSTILE_TEST_SITE_KEY
+        or secret_key == TURNSTILE_TEST_SECRET_KEY
+    ):
+        return '', ''
+
+    return site_key, secret_key
+
+
+CLOUDFLARE_TURNSTILE_SITE_KEY, CLOUDFLARE_TURNSTILE_SECRET_KEY = resolve_turnstile_keys(
+    DEBUG,
+    os.getenv('CLOUDFLARE_TURNSTILE_SITE_KEY', ''),
+    os.getenv('CLOUDFLARE_TURNSTILE_SECRET_KEY', ''),
+)
+CLOUDFLARE_TURNSTILE_CONFIGURED = bool(
+    CLOUDFLARE_TURNSTILE_SITE_KEY and CLOUDFLARE_TURNSTILE_SECRET_KEY
+)
 
 # --- Secrets fail-fast em producao ---------------------------------------
 # S8/C2 — fallback so em DEBUG=1; em producao a ausencia das env vars aborta
@@ -88,6 +132,7 @@ INSTALLED_APPS = [
     'contatos',
     'dashboard',
     'recepcao',
+    'agenda',
     'emails',
     'tarefas',
     'automacoes',
@@ -278,11 +323,12 @@ if not DEBUG:
 # com bundle (sem inline), trocamos por nonces/`'self'` estrito.
 CSP_DIRETIVAS = {
     'default-src': "'self'",
-    'script-src': "'self' 'unsafe-inline'",
+    'script-src': "'self' 'unsafe-inline' https://challenges.cloudflare.com",
     'style-src': "'self' 'unsafe-inline' https://fonts.googleapis.com",
     'font-src': "'self' https://fonts.gstatic.com",
     'img-src': "'self' data:",
-    'connect-src': "'self' https://brasilapi.com.br https://fonts.googleapis.com https://fonts.gstatic.com",
+    'connect-src': "'self' https://brasilapi.com.br https://fonts.googleapis.com https://fonts.gstatic.com https://challenges.cloudflare.com",
+    'frame-src': 'https://challenges.cloudflare.com',
     'object-src': "'none'",
     'base-uri': "'self'",
     'frame-ancestors': "'none'",
@@ -301,7 +347,9 @@ EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', '1') == '1'
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'GPRBRCRM <nao-responder@esferadatasci.com.br>')
+DEFAULT_FROM_EMAIL = format_from_email(
+    os.getenv('DEFAULT_FROM_EMAIL') or 'nao-responder@esferadatasci.com.br'
+)
 EMAIL_CONFIGURADO = bool(EMAIL_HOST and EMAIL_HOST_PASSWORD)
 
 # ---------------------------------------------------------------------------
