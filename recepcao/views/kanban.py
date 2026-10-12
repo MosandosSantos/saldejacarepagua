@@ -6,6 +6,9 @@ Otimizado para performance:
   - Passa qtd_cand para evitar query duplicada
 """
 
+import logging
+
+from django.core.cache import cache
 from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -16,7 +19,7 @@ from acesso.decorators import (
     pode_editar,
     tenant_id_da_sessao,
     web_login_required,
-    web_requer_edicao,
+    web_requer_tenant_context,
 )
 from contatos.models import Negocio, registrar_movimentacao
 from contatos.scoring import atualizar_score
@@ -29,6 +32,8 @@ from recepcao.views.helpers import (
     estagnados_da_lista,
     tenant_id_da_sessao_ou_padrao,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @web_login_required
@@ -91,21 +96,23 @@ def _buscar_negocios(request):
 
 
 def _buscar_prefeituras():
-    """Busca prefeituras GPRB para o filtro (com cache)."""
-    from django.core.cache import cache
+    """Busca prefeituras GPRB para o filtro (cache por tenant)."""
+    from core.gprb import opcoes_prefeituras_usuario
+    from core.gprb.connection import resolve_tenant_code
 
-    cache_key = 'recepcao_prefeituras_filtro'
+    tenant_code = resolve_tenant_code()
+    cache_key = f'recepcao_prefeituras_filtro:{tenant_code}'
     cached = cache.get(cache_key)
     if cached is not None:
         return cached
 
     try:
-        from core.gprb import opcoes_prefeituras_usuario
-        prefeituras = opcoes_prefeituras_usuario()
+        prefeituras = opcoes_prefeituras_usuario(tenant_code)
     except Exception:
-        prefeituras = []
+        logger.exception('Falha ao buscar prefeituras GPRB; filtro ficara vazio')
+        return []
 
-    cache.set(cache_key, prefeituras, timeout=300)  # 5 minutos
+    cache.set(cache_key, prefeituras, timeout=300)
     return prefeituras
 
 
@@ -158,6 +165,7 @@ def _dias_do_request(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 def mover(request, pk):
     """Move um NEGOCIO (deal) de etapa — pk e o id do negocio."""
     if request.method != 'POST':
@@ -205,6 +213,7 @@ def _mover_negocio(negocio, stage, request):
 
 
 @web_login_required
+@web_requer_tenant_context
 def excluir_negocio(request, pk):
     """Exclui um NEGOCIO (deal) do funil — pk e o id do negocio (AJAX POST)."""
     if request.method != 'POST':

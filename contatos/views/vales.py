@@ -2,8 +2,11 @@
 
 from datetime import date
 
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from acesso.decorators import (
     filtro_tenant,
@@ -11,9 +14,10 @@ from acesso.decorators import (
     web_login_required,
     web_requer_edicao,
 )
-from acesso.models import ROLE_ADMIN_SAAS
+from acesso.models import ROLE_ADMIN_SAAS, ROLE_ADM, ROLE_DELEGADO
 from contatos.importador import normalizar_valor
 from contatos.models import Vale
+from contatos.vale_services import provisionar_vale
 from core.utils import brl
 
 
@@ -26,20 +30,48 @@ def _role(request):
     return snapshot.get('role') if isinstance(snapshot, dict) else None
 
 
+def _pode_gerir_vale(request):
+    """Apenas admin_saas e ADM podem criar/excluir/reativar Vales."""
+    return _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM)
+
+
+def _pode_alterar_vale(request):
+    """admin_saas, ADM e Delegado podem alterar Vales."""
+    return _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM, ROLE_DELEGADO)
+
+
 def _vales_do_request(request):
     """Return the authorized Vale queryset, or None for a tenantless non-SaaS user."""
-    tenant_id = tenant_id_da_sessao(request)
-    if tenant_id is None:
-        return Vale.objects.all() if _role(request) == ROLE_ADMIN_SAAS else None
-    return filtro_tenant(request, Vale.objects.all())
-
-
-def _vales_do_tenant_para_edicao(request):
-    """Writes always target one explicit tenant, including for SaaS admins."""
+    if _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM):
+        return Vale.objects.filter(status='ATIVA')
     tenant_id = tenant_id_da_sessao(request)
     if tenant_id is None:
         return None
-    return Vale.objects.filter(tenant_id=tenant_id)
+    if not Vale.objects.filter(tenant_id=tenant_id, status='ATIVA').exists():
+        return None
+    return filtro_tenant(request, Vale.objects.filter(status='ATIVA'))
+
+
+def _vales_do_tenant_para_edicao(request):
+    """Writes target one explicit tenant, except global admins (all Vales)."""
+    if _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM):
+        return Vale.objects.filter(status='ATIVA')
+    tenant_id = tenant_id_da_sessao(request)
+    if tenant_id is None:
+        return None
+    return Vale.objects.filter(tenant_id=tenant_id, status='ATIVA')
+
+
+def _vale_visivel(request, pk):
+    """Vale que o usuário pode consultar (mesma política da listagem) ou None.
+
+    Usuário sem tenant com Vale ativo recebe None (a view responde 403);
+    vale inexistente, inativo ou de outro tenant gera 404 — sem vazar existência.
+    """
+    vales = _vales_do_request(request)
+    if vales is None:
+        return None
+    return get_object_or_404(vales, pk=pk)
 
 
 def _data_anuidade(raw):
@@ -88,6 +120,7 @@ def _para_contexto_vale(vale):
         'id': vale.pk,
         'nome': vale.nome,
         'sigla': vale.sigla,
+        'status': vale.status,
         'prefeito': vale.prefeito,
         'telefone': vale.telefone,
         'email': vale.email,
@@ -112,12 +145,33 @@ def _para_contexto_vale(vale):
 @web_login_required
 def prefeituras(request):
     """List local Vales visible to the current tenant."""
+    from django.db.models import Count
+
+    from contatos.models import Loja, Membro
+
     vales = _vales_do_request(request)
     if vales is None:
         return HttpResponseForbidden('Tenant obrigatório.')
     vales = vales.order_by('nome', 'id')
+    lojas_por_vale = {}
+    for loja in Loja.objects.filter(tenant_id__in=[v.tenant_id for v in vales]).order_by('nome'):
+        lojas_por_vale.setdefault(loja.tenant_id, []).append(loja.nome)
+    membros_por_tenant = dict(
+        Membro.objects
+        .filter(tenant_id__in=[v.tenant_id for v in vales], situacao='ATIVO')
+        .values_list('tenant_id')
+        .annotate(total=Count('id'))
+        .values_list('tenant_id', 'total')
+    )
+    vales_ctx = []
+    for vale in vales:
+        ctx = _para_contexto_vale(vale)
+        ctx['lojas_count'] = len(lojas_por_vale.get(vale.tenant_id, []))
+        ctx['lojas_nomes'] = lojas_por_vale.get(vale.tenant_id, [])
+        ctx['membros_total'] = membros_por_tenant.get(vale.tenant_id, 0)
+        vales_ctx.append(ctx)
     return render(request, 'contatos/prefeituras.html', {
-        'prefeituras': [_para_contexto_vale(vale) for vale in vales],
+        'prefeituras': vales_ctx,
         'total_pf': vales.count(),
     })
 
@@ -125,26 +179,42 @@ def prefeituras(request):
 @web_login_required
 @web_requer_edicao
 def prefeitura_nova(request):
-    """Create a local Vale in the effective tenant."""
+    """Provision a new tenant and its Vale for admin_saas or ADM."""
+    if not _pode_gerir_vale(request):
+        return HttpResponseForbidden('Sem permissão para cadastrar um Vale.')
+
     erro = None
     if request.method == 'POST':
-        tenant_id = tenant_id_da_sessao(request)
-        if tenant_id is None:
-            return HttpResponseForbidden('Selecione um tenant para criar o Vale.')
         dados = _dados_do_post(request)
-        if not dados['nome']:
-            erro = 'Informe o nome do Vale.'
+        try:
+            vale = provisionar_vale(dados)
+        except ValidationError as exc:
+            erro = '; '.join(exc.messages)
         else:
-            Vale.objects.create(tenant_id=tenant_id, **dados)
+            request.session['admin_tenant_id'] = vale.tenant_id
+            request.session.modified = True
             return redirect('contatos:prefeituras')
 
     return render(request, 'contatos/prefeitura_nova.html', {'erro': erro})
 
 
 @web_login_required
+def prefeitura_detalhe(request, pk):
+    """Mostra os detalhes de um Vale sem permitir edição."""
+    vale = _vale_visivel(request, pk)
+    if vale is None:
+        return HttpResponseForbidden('Selecione um tenant para consultar o Vale.')
+    return render(request, 'contatos/prefeitura_detalhe.html', {
+        'prefeitura': _para_contexto_vale(vale),
+    })
+
+
+@web_login_required
 @web_requer_edicao
 def prefeitura_editar(request, pk):
     """Edit a local Vale, never a record in the external GPRB database."""
+    if not _pode_alterar_vale(request):
+        return HttpResponseForbidden('Sem permissão para alterar um Vale.')
     vales = _vales_do_tenant_para_edicao(request)
     if vales is None:
         return HttpResponseForbidden('Selecione um tenant para alterar o Vale.')
@@ -155,10 +225,19 @@ def prefeitura_editar(request, pk):
         dados = _dados_do_post(request)
         if not dados['nome']:
             erro = 'Informe o nome do Vale.'
+        elif not dados['sigla']:
+            erro = 'Informe a sigla do Vale.'
+        elif Vale.objects.filter(sigla__iexact=dados['sigla']).exclude(pk=vale.pk).exists():
+            erro = 'Essa sigla já está em uso.'
         else:
-            for campo, valor in dados.items():
-                setattr(vale, campo, valor)
-            vale.save()
+            with transaction.atomic():
+                for campo, valor in dados.items():
+                    setattr(vale, campo, valor)
+                vale.save()
+                tenant = vale.tenant
+                if tenant.nome != vale.sigla:
+                    tenant.nome = vale.sigla
+                    tenant.save(update_fields=['nome', 'updated_at'])
             return redirect('contatos:prefeituras')
 
     return render(request, 'contatos/prefeitura_editar.html', {
@@ -171,17 +250,39 @@ def prefeitura_editar(request, pk):
 @web_login_required
 @web_requer_edicao
 def prefeitura_excluir(request, pk):
-    """Delete a local Vale; no external Loja relationship is queried."""
+    """Archive a local Vale without deleting its tenant or related data."""
+    if not _pode_gerir_vale(request):
+        return HttpResponseForbidden('Sem permissão para arquivar um Vale.')
     vales = _vales_do_tenant_para_edicao(request)
     if vales is None:
         return HttpResponseForbidden('Selecione um tenant para excluir o Vale.')
     vale = get_object_or_404(vales, pk=pk)
     if request.method == 'POST':
-        vale.delete()
-        return redirect('contatos:prefeituras')
+        vale.status = 'INATIVA'
+        vale.save(update_fields=['status', 'updated_at'])
+        if _role(request) == ROLE_ADMIN_SAAS:
+            request.session.pop('admin_tenant_id', None)
+            request.session.modified = True
+            return redirect('contatos:prefeituras')
+        return redirect('dashboard:index')
 
     return render(request, 'contatos/prefeitura_excluir.html', {
         'prefeitura': _para_contexto_vale(vale),
         'lojas': 0,
         'erro': None,
     })
+
+
+@web_login_required
+@require_POST
+def prefeitura_reativar(request, pk):
+    """Reativa um Vale arquivado sem alterar seus dados relacionados."""
+    if not _pode_gerir_vale(request):
+        return HttpResponseForbidden('Sem permissão para reativar um Vale.')
+
+    vale = get_object_or_404(Vale, pk=pk, status='INATIVA')
+    vale.status = 'ATIVA'
+    vale.save(update_fields=['status', 'updated_at'])
+    request.session['admin_tenant_id'] = vale.tenant_id
+    request.session.modified = True
+    return redirect('contatos:prefeituras')
