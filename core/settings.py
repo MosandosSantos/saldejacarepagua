@@ -18,7 +18,9 @@ def format_from_email(configured_from_email):
     """Preserva o endereço de envio e aplica o nome oficial da marca."""
     raw = (configured_from_email or '').strip()
     _, address = parseaddr(raw)
-    return formataddr((APP_BRAND_NAME, address or raw))
+    nome_display, _ = parseaddr(raw)
+    nome = nome_display.strip() or APP_BRAND_NAME
+    return formataddr((nome, address or raw))
 
 # Código do tenant padrão no banco externo GPRB.
 GPRB_TENANT_CODE = os.getenv('GPRB_TENANT_CODE', '').strip() or 'SCG33REAA'

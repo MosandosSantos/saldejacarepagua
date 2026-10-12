@@ -85,6 +85,32 @@ def _corpo(evento):
     )
 
 
+ASSUNTOS_AVISO = {
+    'INCLUSAO': 'agendado',
+}
+
+
+def enviar_aviso_inclusao(evento, destinatarios=None, tipo='INCLUSAO'):
+    """Aviso imediato ao incluir um evento: a loja inteira recebe agora.
+
+    Retorna a quantidade de envios (0 se nada configurado/nenhum destino).
+    """
+    if not getattr(settings, 'EMAIL_CONFIGURADO', False):
+        return 0
+    if destinatarios is None:
+        destinatarios = destinatarios_do_evento(evento)
+    if not destinatarios:
+        return 0
+    rotulo = ASSUNTOS_AVISO.get(tipo, tipo.lower())
+    quando = timezone.localtime(evento.data_hora).strftime('%d/%m/%Y %H:%M')
+    assunto = (
+        f'[{evento.loja.nome}] {evento.titulo} — {rotulo} para {quando}'
+    )
+    _enviar_email(assunto, _corpo(evento), destinatarios)
+    logger.info('Aviso imediato do evento %s enviado a %d membros', evento.id, len(destinatarios))
+    return len(destinatarios)
+
+
 def enviar_lembretes(evento, estado, agora=None):
     """Envia um lembrete ('48' ou '24') se estiver na janela e ainda não enviado.
 

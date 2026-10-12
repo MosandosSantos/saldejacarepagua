@@ -1,5 +1,6 @@
 """Views web da agenda (CRUD de eventos + registro de presença)."""
 import datetime
+import logging
 
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
@@ -16,6 +17,8 @@ from contatos.models import Filiacao, Loja
 
 from .models import EventoAgenda, PresencaEvento, TipoEvento
 from .permissions import agenda_requer_escrita, pode_escrever_agenda
+
+logger = logging.getLogger(__name__)
 
 
 def _lojas_do_tenant(request):
@@ -107,6 +110,16 @@ def novo(request):
         evento.tenant_id = tenant_id
         evento.criado_por = _usuario_da_sessao(request)
         evento.save()
+        # Aviso imediato: toda a loja recebe na inclusão (falha de SMTP não
+        # bloqueia o cadastro; os lembretes 48h/24h seguem independentes).
+        try:
+            from agenda.emails import enviar_aviso_inclusao
+
+            enviar_aviso_inclusao(evento)
+        except Exception:
+            logger.warning(
+                'Falha no aviso imediato do evento %s', evento.id, exc_info=True,
+            )
         return redirect('agenda:lista')
     return render(request, 'agenda/form.html', {
         'evento': None, 'tipos': TipoEvento.objects.order_by('nome'),
