@@ -37,6 +37,16 @@
       {% if pode_escrever %}
       <div class="flex gap-2">
         <a href="/agenda/{{ e.id }}/presenca/" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white">Registrar presença</a>
+        {% if e.tenant.google_calendar_id %}
+        {% if e.google_event_id %}
+        <span class="rounded-lg border border-[#22c55e]/40 bg-[#22c55e]/10 px-3 py-1.5 text-xs text-[#22c55e]" title="{{ e.google_event_id }}">Sincronizado ✓</span>
+        {% else %}
+        <form method="post" action="{% url 'agenda:google_sync' e.id %}" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-[#93c5fd]">Enviar ao Google</button>
+        </form>
+        {% endif %}
+        {% endif %}
         <form method="post" action="{% url 'agenda:excluir' e.id %}" class="inline">
           {% csrf_token %}
           <button type="submit" class="rounded-lg border border-[#ef4444]/30 px-3 py-1.5 text-xs text-[#ef4444]">Excluir</button>

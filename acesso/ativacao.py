@@ -14,6 +14,7 @@ import logging
 import secrets
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.urls import reverse
 from django.utils import timezone
@@ -34,7 +35,7 @@ PRAZO_ATIVACAO = timedelta(hours=72)
 # Limite de reenvios do link por usuario pendente (PRD §5).
 LIMITE_REENVIOS = 3
 
-ASSUNTO_ATIVACAO = 'Ative seu acesso ao GPRBRCRM'
+ASSUNTO_ATIVACAO = f'Ative seu acesso ao {settings.APP_BRAND_NAME}'
 
 
 def criar_usuario_pendente(*, nome, email, celular='', papel, criado_por, tenant_id=None,
@@ -84,8 +85,6 @@ def reenviar_ativacao(usuario):
 
 def montar_link_ativacao(request, usuario):
     """Link absoluto de ativacao do usuario (para o corpo do e-mail)."""
-    from django.urls import reverse
-
     return request.build_absolute_uri(reverse('ativar_conta', args=[usuario.token_ativacao]))
 
 
@@ -99,11 +98,11 @@ def enviar_email_ativacao(request, usuario, token=None):
     link = request.build_absolute_uri(reverse('ativar_conta', args=[token]))
     corpo = (
         f'Olá, {usuario.nome or usuario.email}!\n\n'
-        'Sua conta de acesso ao GPRBRCRM foi criada. Para definir sua senha e '
+        f'Sua conta de acesso ao {settings.APP_BRAND_NAME} foi criada. Para definir sua senha e '
         'começar a usar o sistema, abra o link abaixo (válido por 72 horas):\n\n'
         f'{link}\n\n'
         'Se você não pediu este acesso, ignore este e-mail.\n\n'
-        'Atenciosamente,\nEquipe GPRBRCRM'
+        f'Atenciosamente,\nEquipe {settings.APP_BRAND_NAME}'
     )
     status = enviar_mensagem(ASSUNTO_ATIVACAO, corpo, usuario.email)
     if status == 'simulado':

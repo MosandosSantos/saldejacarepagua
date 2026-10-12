@@ -23,6 +23,7 @@ def iniciar_sessao(request, usuario, nicho='saude', dispositivo=None):
             'email': usuario.email,
             'role': usuario.role,
             'tenant_id': usuario.tenant_id,
+            'loja_id': getattr(usuario, 'loja_id', '') or '',
         }
 
     request.session['usuario_id'] = dados_usuario.get('id')
@@ -44,6 +45,7 @@ def obter_usuario_sessao(request):
 
 
 def obter_tenant_id(request):
-    """Retorna o tenant_id da sessão (ou None)."""
-    usuario = request.session.get('usuario', {})
-    return usuario.get('tenant_id') if isinstance(usuario, dict) else None
+    """Retorna o tenant efetivo do request (ou None)."""
+    from acesso.tenant_context import resolve_tenant_id
+
+    return resolve_tenant_id(request)

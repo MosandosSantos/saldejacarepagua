@@ -9,23 +9,20 @@ ROLE_ADMIN_COMPANY = 'admin_company'
 ROLE_OPERACIONAL = 'operacional'
 ROLE_VIEWER = 'viewer'
 
-# Oficialato (perfis RER — usuários do sistema, PRD-USUARIOS-SEM-SENHA)
-ROLE_GRANDE_PRIOR = 'grande_prior'
-ROLE_GRANDE_CHANCELER = 'grande_chanceler'
-ROLE_GRANDE_TESOUREIRO = 'grande_tesoureiro'
-ROLE_GRANDE_SECRETARIO = 'grande_secretario'
-ROLE_PREFEITO = 'prefeito'
-ROLE_DEPUTADO_MESTRE = 'deputado_mestre'
+ROLE_ADM = 'ADM'
+ROLE_TESOUREIRO = 'tesoureiro'
+ROLE_SECRETARIO = 'secretario'
+ROLE_DELEGADO = 'delegado'
+ROLE_PRESIDENTE_CORPO = 'presidente_corpo'
 
 ROLES = [
     (ROLE_ADMIN_SAAS, 'Admin SaaS'),
     (ROLE_VIEWER, 'Somente leitura'),
-    (ROLE_GRANDE_PRIOR, 'Grande Prior'),
-    (ROLE_GRANDE_CHANCELER, 'Grande Chanceler'),
-    (ROLE_GRANDE_TESOUREIRO, 'Grande Tesoureiro'),
-    (ROLE_GRANDE_SECRETARIO, 'Grande Secretário'),
-    (ROLE_PREFEITO, 'Prefeito'),
-    (ROLE_DEPUTADO_MESTRE, 'Deputado Mestre'),
+    (ROLE_ADM, 'Administrador'),
+    (ROLE_TESOUREIRO, 'Tesoureiro'),
+    (ROLE_SECRETARIO, 'Secretário'),
+    (ROLE_DELEGADO, 'Delegado'),
+    (ROLE_PRESIDENTE_CORPO, 'Presidente de Corpo'),
 ]
 
 ROLES_DE_TENANT = (ROLE_VIEWER,)
@@ -35,8 +32,8 @@ _ROLES_EDITAM_BASE = (ROLE_ADMIN_SAAS,)
 
 # Perfis de oficialato que podem criar/reenviar usuários (PRD-USUARIOS-SEM-SENHA).
 ROLES_OFICIAIS = (
-    ROLE_GRANDE_PRIOR, ROLE_GRANDE_CHANCELER, ROLE_GRANDE_TESOUREIRO,
-    ROLE_GRANDE_SECRETARIO, ROLE_PREFEITO, ROLE_DEPUTADO_MESTRE,
+    ROLE_ADM, ROLE_TESOUREIRO,
+    ROLE_SECRETARIO, ROLE_DELEGADO, ROLE_PRESIDENTE_CORPO,
 )
 # Tudo que não é viewer pode editar — inclusive o oficialato (coexistência).
 ROLES_QUE_EDITAM = _ROLES_EDITAM_BASE + ROLES_OFICIAIS
@@ -97,6 +94,10 @@ class Tenant(models.Model):
     softphone_dominio = models.CharField(
         max_length=160, blank=True, default='',
         help_text='Domínio SIP (ex.: sip.empresa.com.br) usado quando o esquema é SIP',
+    )
+    google_calendar_id = models.CharField(
+        max_length=120, blank=True, default='',
+        help_text='ID do calendário Google do tenant (exportação da agenda)',
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

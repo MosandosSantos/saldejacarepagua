@@ -2,13 +2,16 @@
 
 from functools import wraps
 
+from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 
 from acesso.models import (
+    ROLE_ADMIN_SAAS,
     ROLES_ADMINISTRATIVOS,
     ROLES_GESTORES_USUARIOS,
     ROLES_QUE_EDITAM,
 )
+from acesso.tenant_context import resolve_tenant_id
 from core.dominio import NICHO_PADRAO
 
 # Admins com acesso administrativo amplo: empresa + plataforma + oficialato.
@@ -69,9 +72,25 @@ def web_login_required(view_func):
     return _wrapped
 
 
+def web_requer_tenant_context(view_func):
+    """Block unsafe SaaS writes unless a valid tenant context is selected."""
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        if request.method not in ('GET', 'HEAD', 'OPTIONS', 'TRACE'):
+            usuario = getattr(request, 'usuario_logado', None)
+            snapshot = request.session.get('usuario', {})
+            role = getattr(usuario, 'role', None) or (
+                snapshot.get('role') if isinstance(snapshot, dict) else None
+            )
+            if role == ROLE_ADMIN_SAAS and resolve_tenant_id(request) is None:
+                return HttpResponseForbidden('Selecione um tenant para alterar dados.')
+        return view_func(request, *args, **kwargs)
+    return _wrapped
+
+
 def tenant_id_da_sessao(request):
-    """Tenant da sessao; admin_saas (sem tenant) devolve None."""
-    return request.session.get('usuario', {}).get('tenant_id')
+    """Tenant efetivo do request; a seleção SaaS fica em chave própria."""
+    return resolve_tenant_id(request)
 
 
 def filtro_tenant(request, qs):
@@ -94,6 +113,9 @@ def tenant_scope(view_func):
     @wraps(view_func)
     def _wrapped(request, *args, **kwargs):
         usuario = request.session.get('usuario', {})
-        request.scope = {'tenant_id': usuario.get('tenant_id'), 'role': usuario.get('role')}
+        request.scope = {
+            'tenant_id': resolve_tenant_id(request),
+            'role': usuario.get('role') if isinstance(usuario, dict) else None,
+        }
         return view_func(request, *args, **kwargs)
     return _wrapped

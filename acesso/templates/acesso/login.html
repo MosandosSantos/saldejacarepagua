@@ -1,14 +1,14 @@
 {% extends 'base/basic.html' %}
 {% load static %}
 
-{% block titulo %}GPRBRCRM — Entrar{% endblock %}
+{% block titulo %}{{ APP_BRAND_NAME }} CRM — Entrar{% endblock %}
 
 {% block cabecalho %}{% endblock %}
 
 {% block extra_head %}
 <style>
   html, body { height: 100%; }
-  body { overflow: hidden; }
+  body { overflow-x: hidden; overflow-y: auto; }
 
   .login-bg { position: fixed; inset: 0; z-index: 0; }
   .login-bg-gradient {
@@ -49,6 +49,9 @@
   .login-card.dragging { cursor: grabbing; user-select: none; }
   .login-card input, .login-card button, .login-card label, .login-card a, .login-card .footer { cursor: auto; }
 </style>
+{% if turnstile_configured %}
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% endif %}
 {% endblock %}
 
 {% block conteudo %}
@@ -62,8 +65,8 @@
   <div class="login-wrap">
     <section class="login-card" id="loginCard" title="Arraste para posicionar · duplo-clique para centralizar">
       <div class="mb-7 flex items-center gap-3">
-        <img src="{% static 'img/gprbr.png' %}" alt="GPRBR" class="h-11 w-11 rounded-[13px] object-cover shadow-lg shadow-[#1a5fb4]/70">
-        <span class="font-display text-[1.35rem] font-semibold tracking-tight"><span class="text-[#ef4444]">GPRBR</span><span class="text-[#5b8def]">CRM</span></span>
+        <img src="{% static 'img/logow.webp' %}" alt="{{ APP_BRAND_NAME }}" class="h-11 w-11 rounded-[13px] object-cover shadow-lg shadow-[#1a5fb4]/70">
+        <span class="font-display text-[1.35rem] font-semibold tracking-tight"><span class="text-[#ef4444]">{{ APP_BRAND_NAME }}</span></span>
       </div>
 
       <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.3em] text-white/90">
@@ -78,6 +81,9 @@
         <p class="mb-7 text-[15px] leading-relaxed text-white/70">Digite o seu celular e senha para acessar.</p>
       {% endif %}
 
+      {% for message in messages %}
+        <div role="status" aria-live="polite" class="mb-4 rounded-xl border border-[#4ade80]/30 bg-[#4ade80]/10 px-4 py-3 text-[13.5px] font-semibold text-[#b9f6ce]">{{ message }}</div>
+      {% endfor %}
       {% if erro %}
         <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ erro }}</div>
       {% endif %}
@@ -121,15 +127,31 @@
           </div>
         </div>
 
-        <button type="submit"
-                class="mt-1.5 flex w-full items-center justify-center gap-2.5 rounded-2xl border border-[#5b8def]/50 bg-gradient-to-br from-[#1a5fb4] to-[#1450a0] py-4 text-[15px] font-bold text-white shadow-[0_14px_28px_-10px_rgba(5,40,46,0.65)] transition hover:brightness-110">
-          Entrar no painel
+        {% if turnstile_configured %}
+          <div class="my-5 flex justify-center" aria-label="Verificação de segurança">
+            <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark" data-action="login"></div>
+          </div>
+        {% else %}
+          <p class="my-4 rounded-xl border border-amber-200/30 bg-amber-100/10 px-4 py-3 text-center text-[13px] leading-relaxed text-amber-100" role="status">
+            Verificação humana indisponível. Tente novamente mais tarde.
+          </p>
+        {% endif %}
+
+        <button type="submit" {% if not turnstile_configured %}disabled aria-disabled="true"{% endif %}
+                class="mt-1.5 flex w-full items-center justify-center gap-2.5 rounded-2xl border border-red-200/25 bg-[#991b1b] py-4 text-[15px] font-bold tracking-wide text-white shadow-[0_10px_24px_-9px_rgba(40,0,0,0.65)] transition hover:bg-[#7f1d1d] focus:outline-none focus:ring-4 focus:ring-red-200/30 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/15 disabled:text-white/50 disabled:shadow-none">
+          LOGIN
         </button>
+        <div class="mt-4 text-center">
+          <button type="button" id="forgotPassword" aria-controls="forgotPasswordNotice" aria-expanded="false" class="rounded px-2 py-1 text-[13px] font-medium text-red-100 underline decoration-red-200/50 underline-offset-4 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-red-200/50">
+            Esqueci a senha
+          </button>
+          <p id="forgotPasswordNotice" class="mt-2 rounded-xl bg-white/10 px-3 py-2 text-[12.5px] leading-relaxed text-white/85" role="status" tabindex="-1" hidden>
+            A recuperação de senha ainda não está disponível. Entre em contato com o administrador da sua unidade.
+          </p>
+        </div>
       </form>
 
       <p class="footer mt-6 text-center text-[12.5px] leading-relaxed text-white/50">
-        Usuários de exemplo: admin@gprbr.com · carlos@lojavirtual.com<br>
-        Senhas geradas aleatoriamente — veja <code class="rounded-md bg-white/10 px-1.5 py-0.5 text-white/75">.env-seed</code>
       </p>
     </section>
   </div>
@@ -189,6 +211,18 @@
 
   function apply(x, y) { tx = x; ty = y; card.style.transform = 'translate(' + x + 'px,' + y + 'px)'; }
   function clamp(v, min, max) { return v < min ? min : (v > max ? max : v); }
+})();
+
+// Explica o estado do recurso de recuperação ainda não disponível.
+(function () {
+  var button = document.getElementById('forgotPassword');
+  var notice = document.getElementById('forgotPasswordNotice');
+  if (!button || !notice) return;
+  button.addEventListener('click', function () {
+    notice.hidden = false;
+    button.setAttribute('aria-expanded', 'true');
+    notice.focus();
+  });
 })();
 
 // Toggle mostrar/ocultar senha

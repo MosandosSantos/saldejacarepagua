@@ -6,16 +6,18 @@ from django.conf import settings
 from django.urls import reverse
 
 from acesso.models import (
-    ROLE_DEPUTADO_MESTRE,
-    ROLE_GRANDE_CHANCELER,
-    ROLE_GRANDE_PRIOR,
-    ROLE_GRANDE_SECRETARIO,
-    ROLE_GRANDE_TESOUREIRO,
-    ROLE_PREFEITO,
+    ROLE_ADMIN_SAAS,
+    ROLE_ADM,
+    ROLE_DELEGADO,
+    ROLE_PRESIDENTE_CORPO,
+    ROLE_SECRETARIO,
+    ROLE_TESOUREIRO,
     ROLES_ADMINISTRATIVOS,
     ROLES_GESTORES_USUARIOS,
     ROLES_QUE_EDITAM,
+    Tenant,
 )
+from acesso.tenant_context import resolve_tenant_id
 from tarefas.models import resumo_tarefas
 
 _ICONE_DASH = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
@@ -51,27 +53,24 @@ _ICONE_CAMPANHA = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke=
 _ROTAS = [
     ('Dashboard', 'dashboard', 'dashboard:index', _ICONE_DASH, None, set()),
     ('Vale', 'contatos', 'contatos:prefeituras', _ICONE_CARTEIRA, {'prefeituras'}, set()),
-    ('Candidatos', 'recepcao', 'recepcao:kanban', _ICONE_FUNIL, None, set()),
-    ('Membros', 'contatos', 'contatos:lista', _ICONE_CONTATOS, None, {'carteiras', 'carteira_detalhe'}),
     ('Lojas', 'contatos', 'contatos:lojas', _ICONE_CARTEIRA, {'lojas', 'loja_detalhe'}, set()),
+    ('Membros', 'contatos', 'contatos:lista', _ICONE_CONTATOS, None, {'carteiras', 'carteira_detalhe'}),
     ('Financeiro', 'contatos', 'contatos:financeiro', _ICONE_FINANCEIRO, {'financeiro'}, set()),
     ('Agenda', 'tarefas', 'tarefas:ranking', _ICONE_TAREFAS, None, set()),
     ('Comunicações', 'gestao', 'comunicacoes', _ICONE_CAMPANHA, {'comunicacoes'}, set()),
-    # Equipe/Usuários: gestão — oficialato (Grão Prior, Grande Chanceler, ...) + admin da empresa.
+    ('Iniciação', 'recepcao', 'recepcao:kanban', _ICONE_FUNIL, None, set()),
+    # Equipe/Usuários: gestão — oficialato (ADM, Delegado, ...) + admin da plataforma.
     ('Usuários', 'acesso', 'equipe', _ICONE_EQUIPE, {'equipe', 'equipe_novo'}, set(), None, ROLES_GESTORES_USUARIOS),
 ]
 
 ROLE_LABELS = {
     'admin_saas': 'Admin SaaS',
-    'admin_company': 'Admin da empresa',
-    'operacional': 'Operacional',
     'viewer': 'Somente leitura',
-    ROLE_GRANDE_PRIOR: 'Grande Prior',
-    ROLE_GRANDE_CHANCELER: 'Grande Chanceler',
-    ROLE_GRANDE_TESOUREIRO: 'Grande Tesoureiro',
-    ROLE_GRANDE_SECRETARIO: 'Grande Secretário',
-    ROLE_PREFEITO: 'Prefeito',
-    ROLE_DEPUTADO_MESTRE: 'Deputado Mestre',
+    ROLE_ADM: 'Administrador',
+    ROLE_TESOUREIRO: 'Tesoureiro',
+    ROLE_SECRETARIO: 'Secretário',
+    ROLE_DELEGADO: 'Delegado',
+    ROLE_PRESIDENTE_CORPO: 'Presidente de Corpo',
     None: '',
 }
 
@@ -132,13 +131,15 @@ def web_sessao(request):
     iniciais = (partes[0][0] + (partes[-1][0] if len(partes) > 1 else '')) if partes else 'A'
 
     # Tarefas pendentes (badge no header) — sem query para páginas públicas/API
-    resumo = resumo_tarefas(usuario.get('tenant_id')) if request.session.get('usuario_id') else {
+    tenant_id = resolve_tenant_id(request) if request.session.get('usuario_id') else None
+    resumo = resumo_tarefas(tenant_id) if request.session.get('usuario_id') else {
         'atrasadas': 0, 'hoje': 0, 'abertas': 0,
     }
     resolver = getattr(request, 'resolver_match', None)
     url_name = resolver.url_name if resolver else ''
     app_atual = resolver.app_name if resolver else ''
-    return {
+    contexto = {
+        'APP_BRAND_NAME': settings.APP_BRAND_NAME,
         'css_versao': _css_versao(),
         'NAV_ITENS': _nav_itens(
             url_name, app_atual, tarefas_atrasadas=resumo['atrasadas'], role=role
@@ -156,3 +157,19 @@ def web_sessao(request):
             'tenant_id': usuario.get('tenant_id'),
         },
     }
+    if role == ROLE_ADMIN_SAAS:
+        tenants = list(
+            Tenant.objects.exclude(vales__status='INATIVA')
+            .only('id', 'nome')
+            .order_by('nome', 'id')
+        )
+        selecionado = next(
+            (tenant for tenant in tenants if tenant.pk == tenant_id),
+            None,
+        )
+        contexto.update({
+            'web_tenant_options': tenants,
+            'web_tenant_selected_id': tenant_id,
+            'web_tenant_selected_name': selecionado.nome if selecionado else '',
+        })
+    return contexto

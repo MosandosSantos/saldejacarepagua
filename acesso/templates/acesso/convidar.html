@@ -1,7 +1,7 @@
 {% extends 'base/basic.html' %}
 {% load static %}
 
-{% block titulo %}GPRBRCRM — Aceitar convite{% endblock %}
+{% block titulo %}SAL DA BRITÂNEA CRM — Aceitar convite{% endblock %}
 
 {% block cabecalho %}{% endblock %}
 
@@ -87,7 +87,7 @@
         <h1 class="font-display mb-2.5 text-[1.9rem] font-medium leading-[1.12] tracking-tight text-white">Você foi convidado(a) 🎉</h1>
         <p class="mb-7 text-[15px] leading-relaxed text-white/70">
           Entre como <b class="text-white">{{ convite.email }}</b> com o papel
-          <b class="text-[#5b8def]">{% if convite.papel == 'admin_company' %}Admin da empresa{% elif convite.papel == 'viewer' %}Somente leitura{% else %}Operacional{% endif %}</b>.
+          <b class="text-[#5b8def]">{{ convite.papel }}</b>.
           Escolha seu nome e crie uma senha para começar.
         </p>
 

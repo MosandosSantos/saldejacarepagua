@@ -156,10 +156,29 @@ def editar(request, id):
 @web_requer_tenant_context
 @agenda_requer_escrita
 def excluir(request, id):
-    """Excluir o evento do tenant."""
+    """Excluir o evento do tenant (e best-effort no Google)."""
     eventos = filtro_tenant(request, EventoAgenda.objects.all())
     evento = get_object_or_404(eventos, pk=id)
+    from .google_sync import remover_google
+
+    remover_google(evento)
     evento.delete()
+    return redirect('agenda:lista')
+
+
+@web_login_required
+@agenda_requer_escrita
+def google_sync_view(request, id):
+    """Envia o evento ao Google Calendar do tenant (POST)."""
+    if request.method != 'POST':
+        return redirect('agenda:lista')
+    eventos = filtro_tenant(
+        request, EventoAgenda.objects.select_related('loja', 'tipo', 'tenant'),
+    )
+    evento = get_object_or_404(eventos, pk=id)
+    from .google_sync import sincronizar_google
+
+    sincronizar_google(evento)
     return redirect('agenda:lista')
 
 

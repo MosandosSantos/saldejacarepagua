@@ -6,6 +6,6 @@ app_name = 'acesso'
 
 urlpatterns = [
     path('', views.login_web, name='login'),
-    path('onboarding/', views.onboarding, name='onboarding'),
     path('logout/', views.logout_web, name='logout'),
+    path('tenant-contexto/', views.selecionar_tenant_contexto, name='selecionar_tenant_contexto'),
 ]

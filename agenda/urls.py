@@ -12,4 +12,5 @@ urlpatterns = [
     path('<int:id>/excluir/', views.excluir, name='excluir'),
     path('<int:id>/presenca/', views.presenca, name='presenca'),
     path('<int:id>/presenca/salvar/', views.presenca_salvar, name='presenca_salvar'),
+    path('<int:id>/google/', views.google_sync_view, name='google_sync'),
 ]

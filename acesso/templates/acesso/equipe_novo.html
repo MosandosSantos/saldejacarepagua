@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Novo usuário{% endblock %}
+{% block titulo %}SAL DA BRITÂNEA CRM — Novo usuário{% endblock %}
 
 {% block conteudo %}
 <div class="mb-6">
@@ -70,10 +70,10 @@
       </div>
 
       <div>
-        <label for="prefeitura" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Prefeitura</label>
+        <label for="prefeitura" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Vale</label>
         <select id="prefeitura" name="prefeitura"
                 class="w-full rounded-xl border border-white/15 bg-[#0a1e3d] px-4 py-3 text-[14px] text-white outline-none transition focus:border-[#5b8def]/60 focus:ring-4 focus:ring-[#5b8def]/15">
-          <option value="">Selecione a prefeitura</option>
+          <option value="">Selecione o vale</option>
           {% for pf in prefeituras %}
             <option value="{{ pf.id }}" {% if request.POST.prefeitura == pf.id %}selected{% endif %}>{{ pf.nome }}</option>
           {% endfor %}
