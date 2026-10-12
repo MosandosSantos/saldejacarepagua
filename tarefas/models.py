@@ -107,3 +107,58 @@ def reabrir_tarefa(tarefa):
         tarefa.concluida = False
         tarefa.concluida_em = None
         tarefa.save(update_fields=['concluida', 'concluida_em'])
+
+
+# ---------------------------------------------------------------------------
+# Evento (sessão/reunião da loja maçonica)
+# ---------------------------------------------------------------------------
+
+TIPOS_EVENTO = [
+    ('sessao', 'Sessão'),
+    ('reuniao', 'Reunião'),
+    ('trabalho', 'Trabalho'),
+    ('ritual', 'Ritual'),
+]
+
+
+class Evento(models.Model):
+    """Sessão ou reunião da loja maçonica — escopado por loja_id (UUID GPRB)."""
+
+    titulo = models.CharField(max_length=200)
+    descricao = models.TextField(blank=True, default='')
+    tipo = models.CharField(max_length=20, choices=TIPOS_EVENTO, default='sessao')
+    data_inicio = models.DateTimeField()
+    data_fim = models.DateTimeField()
+    loja_id = models.CharField(
+        max_length=36,
+        help_text='UUID da loja GPRB vinculada ao evento',
+    )
+    criado_por = models.ForeignKey(
+        'acesso.Usuario',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='eventos_criados',
+    )
+    lembrete_enviado = models.BooleanField(
+        default=False,
+        help_text='True quando o lembrete de 72h já foi enviado',
+    )
+    google_event_id = models.CharField(
+        max_length=120,
+        blank=True,
+        default='',
+        help_text='ID do evento no Google Calendar (auto-sync)',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'eventos'
+        ordering = ['data_inicio']
+        indexes = [
+            models.Index(fields=['loja_id', 'data_inicio'], name='evento_loja_data_idx'),
+        ]
+
+    def __str__(self):
+        return f'{self.get_tipo_display()}: {self.titulo} ({self.data_inicio:%d/%m/%Y})'

@@ -30,6 +30,7 @@ from contatos.models import Contato
 from core.utils import iniciais as _iniciais
 from core.utils import tenant_id as _tenant_id
 from tarefas.ical import gerar_ics, gerar_ics_eventos, parse_ics
+from tarefas.google_sync import remover_google, tentar_sincronizar
 from tarefas.models import (
     PRIORIDADE_CORES,
     PRIORIDADES,
@@ -564,6 +565,9 @@ def evento_criar(request):
     # Enviar email para membros da loja
     _enviar_email_novo_evento(evento)
 
+    # Auto-sync Google Calendar (best-effort; falha não impede a gravação)
+    tentar_sincronizar(evento)
+
     return JsonResponse({
         'ok': True,
         'evento': {
@@ -611,6 +615,9 @@ def evento_editar(request, evento_id):
 
     evento.save()
 
+    # Auto-sync Google Calendar (best-effort)
+    tentar_sincronizar(evento)
+
     return JsonResponse({'ok': True})
 
 
@@ -630,6 +637,7 @@ def evento_excluir(request, evento_id):
     if evento.loja_id != loja_id:
         return JsonResponse({'erro': 'Sem permissão para excluir este evento'}, status=403)
 
+    remover_google(evento)  # best-effort: apaga no Google antes do local
     evento.delete()
     return JsonResponse({'ok': True})
 
