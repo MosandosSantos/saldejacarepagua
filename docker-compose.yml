@@ -127,6 +127,8 @@ services:
         PYTHON_VERSION: ${PYTHON_VERSION:-3.13}
     container_name: gprbr-agenda-cron
     restart: unless-stopped
+    healthcheck:
+      disable: true
     command: >
       sh -c "while true; do python manage.py agenda_lembretes; sleep 300; done"
     environment:
