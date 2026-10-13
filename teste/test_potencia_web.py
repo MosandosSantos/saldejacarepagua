@@ -8,7 +8,7 @@ import pytest
 from django.contrib.auth.hashers import make_password
 from django.test import Client
 
-from acesso.models import ROLE_ADMIN_SAAS, ROLE_GRANDE_PRIOR, ROLE_VIEWER, Tenant, Usuario
+from acesso.models import ROLE_ADMIN_SAAS, ROLE_ADM, ROLE_DELEGADO, ROLE_VIEWER, Tenant, Usuario
 from contatos.models import Vale
 from core.gprb import connection as gprb_connection
 
@@ -32,7 +32,7 @@ def _tenant():
     return Tenant.objects.create(nome=f'Vale tenant {suffix}', slug=f'vale-{suffix}')
 
 
-def _usuario(tenant, role=ROLE_GRANDE_PRIOR):
+def _usuario(tenant, role=ROLE_DELEGADO):
     suffix = uuid4().hex
     return Usuario.objects.create(
         nome='Usuário de teste',
@@ -77,13 +77,14 @@ def _dados(nome='Vale teste'):
 
 
 def test_create_vale_persists_all_contact_fields():
-    tenant = _tenant()
-    client = _cliente(_usuario(tenant))
+    client = _cliente(_usuario(None, ROLE_ADMIN_SAAS))
 
     response = client.post('/contatos/prefeitura/nova/', _dados())
 
     assert response.status_code == 302
-    vale = Vale.objects.get(tenant=tenant, nome='Vale teste')
+    vale = Vale.objects.get(nome='Vale teste')
+    assert vale.tenant.nome == 'VT'
+    assert vale.tenant.slug == 'vt'
     assert vale.secretario_nome == 'Secretário de teste'
     assert vale.secretario_email == 'farelli@gprbr'
     assert vale.secretario_telefone == '(21) 99999-9999'
@@ -96,7 +97,7 @@ def test_create_vale_persists_all_contact_fields():
 
 def test_edit_vale_updates_contacts():
     tenant = _tenant()
-    vale = Vale.objects.create(tenant=tenant, nome='Vale editado')
+    vale = Vale.objects.create(tenant=tenant, nome='Vale editado', sigla='VED')
     client = _cliente(_usuario(tenant))
     dados = _dados('Vale editado')
     dados['secretario_nome'] = 'Secretária alterada'
@@ -113,7 +114,7 @@ def test_edit_vale_updates_contacts():
 
 def test_edit_preserves_blank_delegate_fields_instead_of_saving_display_dash():
     tenant = _tenant()
-    vale = Vale.objects.create(tenant=tenant, nome='Vale sem Delegado')
+    vale = Vale.objects.create(tenant=tenant, nome='Vale sem Delegado', sigla='VSD')
     client = _cliente(_usuario(tenant))
     edit_page = client.get(f'/contatos/prefeitura/{vale.pk}/editar/')
     form_value = edit_page.context['prefeitura']
@@ -132,8 +133,8 @@ def test_edit_preserves_blank_delegate_fields_instead_of_saving_display_dash():
 def test_list_vales_is_tenant_scoped():
     tenant = _tenant()
     other_tenant = _tenant()
-    Vale.objects.create(tenant=tenant, nome='Vale visível')
-    Vale.objects.create(tenant=other_tenant, nome='Vale de outro tenant')
+    Vale.objects.create(tenant=tenant, nome='Vale visível', sigla='VVI')
+    Vale.objects.create(tenant=other_tenant, nome='Vale de outro tenant', sigla='VOT')
     client = _cliente(_usuario(tenant))
 
     response = client.get('/contatos/prefeituras/')
@@ -147,8 +148,8 @@ def test_list_vales_is_tenant_scoped():
 def test_admin_saas_without_tenant_can_list_all_vales():
     first = _tenant()
     second = _tenant()
-    Vale.objects.create(tenant=first, nome='Vale tenant um')
-    Vale.objects.create(tenant=second, nome='Vale tenant dois')
+    Vale.objects.create(tenant=first, nome='Vale tenant um', sigla='VT1')
+    Vale.objects.create(tenant=second, nome='Vale tenant dois', sigla='VT2')
     client = _cliente(_usuario(None, ROLE_ADMIN_SAAS))
 
     response = client.get('/contatos/prefeituras/')
@@ -159,19 +160,23 @@ def test_admin_saas_without_tenant_can_list_all_vales():
     assert 'Vale tenant dois' in html
 
 
-def test_unselected_admin_saas_cannot_create_vale():
+def test_unselected_admin_saas_can_create_vale_and_selects_tenant():
     client = _cliente(_usuario(None, ROLE_ADMIN_SAAS))
     vales_before = Vale.objects.count()
 
-    response = client.post('/contatos/prefeitura/nova/', _dados('Sem tenant'))
+    response = client.post('/contatos/prefeitura/nova/', _dados('Vale novo SaaS'))
 
-    assert response.status_code == 403
-    assert Vale.objects.count() == vales_before
+    assert response.status_code == 302
+    vale = Vale.objects.get(nome='Vale novo SaaS')
+    assert vale.tenant.nome == 'VT'
+    assert vale.tenant.slug == 'vt'
+    assert client.session['admin_tenant_id'] == vale.tenant_id
+    assert Vale.objects.count() == vales_before + 1
 
 
 def test_unselected_admin_saas_cannot_edit_vale():
     tenant = _tenant()
-    vale = Vale.objects.create(tenant=tenant, nome='Vale protegido')
+    vale = Vale.objects.create(tenant=tenant, nome='Vale protegido', sigla='VP1')
     client = _cliente(_usuario(None, ROLE_ADMIN_SAAS))
 
     response = client.post(
@@ -186,7 +191,7 @@ def test_unselected_admin_saas_cannot_edit_vale():
 
 def test_unselected_admin_saas_cannot_delete_vale():
     tenant = _tenant()
-    vale = Vale.objects.create(tenant=tenant, nome='Vale protegido')
+    vale = Vale.objects.create(tenant=tenant, nome='Vale protegido', sigla='VP2')
     client = _cliente(_usuario(None, ROLE_ADMIN_SAAS))
 
     response = client.post(f'/contatos/prefeitura/{vale.pk}/excluir/')
@@ -203,16 +208,17 @@ def test_tenantless_non_saas_cannot_list_vales():
     assert response.status_code == 403
 
 
-def test_delete_vale_deletes_only_local_record():
+def test_archive_vale_preserves_local_record_and_tenant():
     tenant = _tenant()
     vale = Vale.objects.create(
         tenant=tenant,
         nome='Vale para excluir',
+        sigla='VEX',
         secretario_nome='Secretária',
         secretario_email='farelli@gprbr',
         tesoureiro_nome='Tesoureiro',
     )
-    client = _cliente(_usuario(tenant))
+    client = _cliente(_usuario(tenant, ROLE_ADM))
 
     confirmation = client.get(f'/contatos/prefeitura/{vale.pk}/excluir/')
     assert confirmation.status_code == 200
@@ -220,4 +226,6 @@ def test_delete_vale_deletes_only_local_record():
     response = client.post(f'/contatos/prefeitura/{vale.pk}/excluir/')
 
     assert response.status_code == 302
-    assert not Vale.objects.filter(tenant=tenant, pk=vale.pk).exists()
+    vale.refresh_from_db()
+    assert vale.status == 'INATIVA'
+    assert Tenant.objects.filter(pk=tenant.pk).exists()

@@ -6,17 +6,17 @@ from uuid import uuid4
 import pytest
 from django.test import Client
 
-from acesso.models import ROLE_GRANDE_PRIOR, Tenant, Usuario
+from acesso.models import ROLE_ADM, ROLE_DELEGADO, Tenant, Usuario
 from contatos.models import Vale
 
 
-def _client_for_tenant(tenant):
+def _client_for_tenant(tenant, role=ROLE_DELEGADO):
     suffix = uuid4().hex
     user = Usuario.objects.create(
         nome='Editor de Vale',
         email=f'editor-{suffix}@example.test',
         senha='!',
-        role=ROLE_GRANDE_PRIOR,
+        role=role,
         tenant=tenant,
     )
     client = Client()
@@ -32,13 +32,36 @@ def _client_for_tenant(tenant):
     return client
 
 
+def _client_admin_saas():
+    suffix = uuid4().hex
+    user = Usuario.objects.create(
+        nome='Admin SaaS',
+        email=f'admin-saas-{suffix}@example.test',
+        senha='!',
+        role='admin_saas',
+        tenant=None,
+    )
+    client = Client()
+    session = client.session
+    session['usuario_id'] = user.pk
+    session['usuario'] = {
+        'nome': user.nome,
+        'email': user.email,
+        'role': user.role,
+        'tenant_id': None,
+    }
+    session.save()
+    return client
+
+
 @pytest.mark.django_db(transaction=True)
 def test_create_and_edit_show_both_contact_groups():
-    tenant = Tenant.objects.create(
-        nome='Tenant dos contatos', slug=f'vale-templates-{uuid4().hex}',
-    )
-    client = _client_for_tenant(tenant)
+    client = _client_admin_saas()
     create_html = client.get('/contatos/prefeitura/nova/').content.decode()
+    assert 'name="sigla"' in create_html
+    sigla_input = re.search(r'<input\b[^>]*name="sigla"[^>]*>', create_html)
+    assert sigla_input is not None
+    assert ' required' in sigla_input.group(0)
 
     contact_fields = {
         'secretario_nome': 'Nome do Secretário',
@@ -59,9 +82,13 @@ def test_create_and_edit_show_both_contact_groups():
         input_tag = re.search(rf'<input\b[^>]*name="{field}"[^>]*>', create_html)
         assert 'value=' not in input_tag.group(0)
 
+    tenant = Tenant.objects.create(
+        nome='VCT', slug=f'vale-templates-{uuid4().hex}',
+    )
     vale = Vale.objects.create(
         tenant=tenant,
         nome='Vale com contatos',
+        sigla='VCT',
         secretario_nome='Secretário salvo',
         secretario_email='farelli@gprbr',
         secretario_telefone='(21) 99999-9999',
@@ -69,6 +96,9 @@ def test_create_and_edit_show_both_contact_groups():
         tesoureiro_email='tesouraria@potencia.com',
         tesoureiro_telefone='(21) 98888-9999',
     )
+    session = client.session
+    session['admin_tenant_id'] = tenant.pk
+    session.save()
     edit_html = client.get(f'/contatos/prefeitura/{vale.pk}/editar/').content.decode()
 
     for value in (
@@ -90,6 +120,7 @@ def test_consult_lists_complete_contact_details_without_gprb_counts():
     vale = Vale.objects.create(
         tenant=tenant,
         nome='Vale da consulta',
+        sigla='VCL',
         secretario_nome='Secretário da consulta',
         secretario_email='secretario@gprbr',
         secretario_telefone='(21) 90000-0001',
@@ -127,6 +158,7 @@ def test_delete_confirmation_lists_complete_contact_details_without_external_gua
     vale = Vale.objects.create(
         tenant=tenant,
         nome='Vale para excluir',
+        sigla='VEX',
         secretario_nome='Secretária da exclusão',
         secretario_email='secretaria@gprbr',
         secretario_telefone='(21) 91111-0001',
@@ -134,7 +166,7 @@ def test_delete_confirmation_lists_complete_contact_details_without_external_gua
         tesoureiro_email='tesouraria@gprbr',
         tesoureiro_telefone='(21) 91111-0002',
     )
-    client = _client_for_tenant(tenant)
+    client = _client_for_tenant(tenant, ROLE_ADM)
 
     response = client.get(f'/contatos/prefeitura/{vale.pk}/excluir/')
     html = response.content.decode()
@@ -152,7 +184,7 @@ def test_delete_confirmation_lists_complete_contact_details_without_external_gua
         assert value in html
     assert 'possui lojas vinculadas' not in html
     assert 'nao pode ser excluido' not in html
-    assert 'Confirmar Exclusao' in html
+    assert 'Arquivar Vale' in html
     avatar = re.search(
         r'<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full[^"]*">\s*(.*?)\s*</span>',
         html,
