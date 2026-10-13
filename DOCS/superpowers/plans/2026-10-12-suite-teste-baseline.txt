@@ -1,0 +1,184 @@
+
+=================================== ERRORS ====================================
+__________________ ERROR collecting teste/test_loja_local.py __________________
+ImportError while importing test module 'C:\Users\mosan\Documents\Sistemas\crm\saldabriania\teste\test_loja_local.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+teste\test_loja_local.py:9: in <module>
+    from acesso.models import ROLE_ADMIN_SAAS, ROLE_GRANDE_PRIOR, Tenant, Usuario
+E   ImportError: cannot import name 'ROLE_GRANDE_PRIOR' from 'acesso.models' (C:\Users\mosan\Documents\Sistemas\crm\saldabriania\acesso\models.py)
+________________ ERROR collecting teste/test_loja_pdf_local.py ________________
+ImportError while importing test module 'C:\Users\mosan\Documents\Sistemas\crm\saldabriania\teste\test_loja_pdf_local.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+teste\test_loja_pdf_local.py:10: in <module>
+    from acesso.models import ROLE_GRANDE_PRIOR, Tenant, Usuario
+E   ImportError: cannot import name 'ROLE_GRANDE_PRIOR' from 'acesso.models' (C:\Users\mosan\Documents\Sistemas\crm\saldabriania\acesso\models.py)
+_________________ ERROR collecting teste/test_membro_local.py _________________
+ImportError while importing test module 'C:\Users\mosan\Documents\Sistemas\crm\saldabriania\teste\test_membro_local.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+teste\test_membro_local.py:10: in <module>
+    from acesso.models import ROLE_ADMIN_SAAS, ROLE_GRANDE_PRIOR, Tenant, Usuario
+E   ImportError: cannot import name 'ROLE_GRANDE_PRIOR' from 'acesso.models' (C:\Users\mosan\Documents\Sistemas\crm\saldabriania\acesso\models.py)
+_________________ ERROR collecting teste/test_potencia_web.py _________________
+ImportError while importing test module 'C:\Users\mosan\Documents\Sistemas\crm\saldabriania\teste\test_potencia_web.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+teste\test_potencia_web.py:11: in <module>
+    from acesso.models import ROLE_ADMIN_SAAS, ROLE_GRANDE_PRIOR, ROLE_VIEWER, Tenant, Usuario
+E   ImportError: cannot import name 'ROLE_GRANDE_PRIOR' from 'acesso.models' (C:\Users\mosan\Documents\Sistemas\crm\saldabriania\acesso\models.py)
+_________________ ERROR collecting teste/test_vale_archive.py _________________
+ImportError while importing test module 'C:\Users\mosan\Documents\Sistemas\crm\saldabriania\teste\test_vale_archive.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+teste\test_vale_archive.py:9: in <module>
+    from acesso.models import ROLE_ADMIN_SAAS, ROLE_GRANDE_PRIOR, Tenant, Usuario
+E   ImportError: cannot import name 'ROLE_GRANDE_PRIOR' from 'acesso.models' (C:\Users\mosan\Documents\Sistemas\crm\saldabriania\acesso\models.py)
+________________ ERROR collecting teste/test_vale_templates.py ________________
+ImportError while importing test module 'C:\Users\mosan\Documents\Sistemas\crm\saldabriania\teste\test_vale_templates.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+teste\test_vale_templates.py:9: in <module>
+    from acesso.models import ROLE_GRANDE_PRIOR, Tenant, Usuario
+E   ImportError: cannot import name 'ROLE_GRANDE_PRIOR' from 'acesso.models' (C:\Users\mosan\Documents\Sistemas\crm\saldabriania\acesso\models.py)
+=========================== short test summary info ===========================
+ERROR teste/test_loja_local.py
+ERROR teste/test_loja_pdf_local.py
+ERROR teste/test_membro_local.py
+ERROR teste/test_potencia_web.py
+ERROR teste/test_vale_archive.py
+ERROR teste/test_vale_templates.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 6 errors during collection !!!!!!!!!!!!!!!!!!!
+6 errors in 1.35s
+
+
+## Resumo
+
+Capturado com a árvore de trabalho no estado **pré-Tasks 3–5** (coleta às
+20:10). As edições das Tasks 3 e 4 foram aplicadas por agentes paralelos às
+20:40–20:41, *durante* a execução de diagnóstico — reexecutar hoje dá números
+menores, pois esses bloqueios já estão corrigidos na árvore de trabalho.
+
+### Execução 1 — comando exato do Step 1 (`-o addopts='' --create-db`)
+
+- `Interrupted: 6 errors during collection` em 1.35s: a suíte **aborta na
+  coleta**; nenhum teste executa (o `--create-db` nunca chega ao setup do
+  banco, porque a coleta falha antes).
+- passed: 0 / failed: 0 / errors: 6 (todos de coleta) / coletados: 724
+
+### Execução 2 — mesma coleta com `--continue-on-collection-errors`
+(diagnóstico complementar, necessário porque o comando padrão aborta na coleta)
+
+- **209 failed, 454 passed, 48 skipped, 19 errors em 2218.15s (0:36:58)**
+- 724 testes coletados. Dos 19 errors: 6 são os erros de coleta acima e
+  13 são erros de execução:
+  - `teste/test_ranking_presenca.py` — 11 errors
+  - `teste/test_viewer.py::test_api_viewer_le_mas_nao_escreve` — 1 error
+  - `teste/test_role_retirement_migration.py::test_migration_converts_retired_users_and_pending_invites_to_viewer` — 1 error
+
+### Módulos com `ERROR collecting` (6) — `ImportError: cannot import name
+'ROLE_GRANDE_PRIOR' from 'acesso.models'` (alimentam a Task 4)
+
+1. `teste/test_loja_local.py`
+2. `teste/test_loja_pdf_local.py`
+3. `teste/test_membro_local.py`
+4. `teste/test_potencia_web.py`
+5. `teste/test_vale_archive.py`
+6. `teste/test_vale_templates.py`
+
+### Falhas por módulo (209, em 39 módulos) — alimentam Tasks 3–5
+
+- 18 `teste/test_fase_i_automacoes.py`; 16 `teste/test_fase_n_carteiras.py`;
+  13 `teste/test_contatos_api.py`; 13 `teste/test_fase_r_lead_rapido.py`;
+  11 `teste/test_atividades_view.py`; 10 `teste/test_fase_f_pipeline.py`;
+  10 `teste/test_fase_j_lead_orcamento_metas.py`; 9 `teste/test_fase_a_funil.py`;
+  8 `teste/test_equipe.py`; 8 `teste/test_import_view.py`;
+  7 `teste/test_campos_personalizados.py`; 7 `teste/test_dashboard_avancado.py`;
+  7 `teste/test_leads_view.py`; 7 `teste/test_fase_g_tarefas.py`;
+  6 `teste/test_fase_o_email_avancado.py`; 6 `teste/test_fase_e_export_email.py`;
+  6 `teste/test_rbac_api.py`; 5 `teste/test_fase_s8_interface_seguranca.py`;
+  4 `teste/test_vale_detalhe_isolation.py`; 4 `teste/test_branding_emails.py`;
+  4 `teste/test_fase_t_oficialato.py`; 4 `teste/test_comunicacao.py`;
+  3 `teste/test_saas_tenant_write_scope.py`; 3 `teste/test_viewer.py`;
+  3 `teste/test_vale_provisioning.py`; 2 `teste/test_fase_k_timestamps.py`;
+  2 `teste/test_kanban_views.py`; 2 `teste/test_role_retirement_migration.py`;
+  1 `teste/test_vale_labels.py`; 1 `teste/test_mensalidade_labels.py`;
+  1 `teste/test_importador.py`; 1 `teste/test_cache_invalidation.py`;
+  1 `teste/test_lead_service.py`; 1 `teste/test_kanban_prefeitura.py`;
+  1 `teste/test_header_branding.py`; 1 `teste/test_fase_s_candidatos.py`;
+  1 `teste/test_role_retirement.py`; 1 `teste/test_rbac_web.py`;
+  1 `teste/test_fase_b_config.py`
+
+### Padrões observados (pré-existentes)
+
+- 4 falhas confirmadas pela spec (Task 3): `test_kanban_views::test_mover_negocio_atualiza_stage`,
+  `test_kanban_views::test_excluir_negocio`,
+  `test_kanban_prefeitura::test_kanban_view_select_prefeitura_inclui_opcoes`,
+  `test_vale_labels::test_prefeitura_entity_no_longer_uses_potencia_in_templates`.
+- Papéis aposentados: imports de `ROLE_GRANDE_PRIOR` nos 6 módulos acima
+  (Task 4) e role `operacional` em `teste/conftest.py` (aposentado por
+  `acesso.0019_retire_admin_company_operacional`).
+- `test_vale_detalhe_isolation`: `IntegrityError` de FK — `usuarios_tenant_id`
+  aponta para tenant inexistente (`Key (tenant_id)=(144) is not present in
+  table "tenants"`).
+- `test_branding_emails`: `'SALDA AMORIO'` vs `'SAL DA AMORIO'` (nome da marca).
+- `test_fase_s8_interface_seguranca::test_allowed_hosts_falha_fechado_fora_do_debug`:
+  `ImproperlyConfigured: DJANGO_SECRET_KEY ausente ou placeholder em producao (DEBUG=0)`.
+- Massa de 302/403/404/422 nos testes web/API (`test_fase_*`, `test_leads_view`,
+  `test_import_view`, `test_atividades_view` etc.) — comportamento de permissão/
+  fluxo divergente das expectativas dos testes.
+- Saída completa da Execução 2 (7022 linhas) preservada em
+  `%TEMP%\opencode\t2_full_run.txt`.
+
+
+## Infra
+
+- **Alvo do banco de teste (CI):**
+  `$env:VALE_TEST_DATABASE_URL='postgresql://postgres:KXIr%25TG!AU*7(7UK%3C(%25Nhzr0KT%24osb@127.0.0.1:5432/gprbr_test'`
+  — Postgres **nativo** escutando em `127.0.0.1:5432` (usuário `postgres`,
+  banco `gprbr_test`). `core/settings_vale_test.py` aceita esse alvo
+  (`_ci_target`: usuário `postgres` + host `localhost`/`127.0.0.1` + path
+  `/gprbr_test`) e aponta o banco de teste para `test_saldabritanea_vales`
+  (`DATABASES['default']['TEST']['NAME']`, linha 45).
+- **Recriação do banco:** `--create-db` (drop + recreate + `migrate` do zero).
+  Exige que **nenhuma outra sessão** esteja conectada a
+  `test_saldabritanea_vales` — um `--create-db` concorrente com uma execução
+  `--reuse-db` ativa bloqueia no `DROP DATABASE` (observado: reexecução do
+  comando do Step 1 após as correções das Tasks 3/4 travou até o timeout do
+  shell).
+- **`--reuse-db` (addopts do `pytest.ini`):** reutiliza o banco de teste
+  existente; **só funciona após o banco estar atualizado** — ou seja, depois
+  que a Task 1 corrigiu as referências de modelo nas migrations
+  (`contatos.loja`/`contatos.lojacargo` → `contatos.Loja`/`contatos.LojaCargo`
+  + dependência de `agenda.0001_initial` em `contatos.0017`). Com o banco
+  desatualizado, o `--reuse-db` reaproveita um schema velho e a suíte falha
+  em massa; com `--create-db` o schema é reconstruído do zero.
+- **Ambiente:** há dois PostgreSQL na porta 5432 da máquina — o nativo do
+  Windows (17, em `127.0.0.1`) e o `gprbr-db` do Docker (em `::1`). O
+  `settings_vale_test` também aceita o alvo Docker (`gprbr`@`/saldabritanea`
+  ou `/saldoreaa`), mas as credenciais `gprbr/securepassword123` do `.env`
+  não autenticam por host no container; o caminho suportado no host é o alvo
+  CI acima.
+- **Configuração padrão confirmada (Step 3):** `python -m pytest teste/ -q
+  --no-header` (com `--reuse-db` do `pytest.ini`) **executa a suíte** sob o
+  `core.settings_vale_test` sem erro de banco/migration — ver relatório da
+  task (`task-2-report.md`) para a saída e totais dessa execução.
