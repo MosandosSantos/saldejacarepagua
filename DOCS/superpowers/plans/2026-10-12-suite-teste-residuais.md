@@ -74,7 +74,7 @@ Consequência: trocar a fixture `admin_company` por `admin_saas` + `admin_tenant
 
 **Interfaces:**
 - Produz fixtures com nomes atuais: `usuario_viewer`/`usuario_viewer_beta` (role `viewer`), `usuario_editor`/`usuario_editor_beta` (role `delegado`), `admin_saas_tenant`/`headers_admin_saas_tenant` (`admin_saas` sem tenant, sessão com `admin_tenant_id` do tenant pedido).
-- Mantém `usuario_operacional*`, `admin_company`, `headers_*` legados como **aliases depreciados** durante a migração, para permitir commits incrementais; remoção só na Task A5.
+- Mantém `usuario_operacional*`, `admin_company`, `headers_*` legados como **aliases depreciados** durante a migração, para permitir commits incrementais; a remoção fica na Task A5 (encerramento da Fase A, após A2/A3/A4).
 
 - [ ] **Step 1: Escrever o mapa de substituição**
 
@@ -177,6 +177,22 @@ git commit -m "test: mapear papeis atuais em auth/rbac/viewer"
 - [ ] **Step 3: GREEN por gate** — rodar o gate correspondente da Fase D e confirmar a queda de falhas atribuídas a papel.
 - [ ] **Step 4: Commit** — `git commit -m "test: migrar fixtures de papel para viewer/editor/admin_saas"`.
 
+### Task A5: Remover os aliases depreciados (encerramento da Fase A)
+
+**Files:**
+- Modify: `teste/conftest.py` (remover `usuario_operacional*`, `admin_company`, `headers_operacional`, `headers_admin_company` legados)
+- Grep de controle: todo `teste/` por `usuario_operacional|admin_company|headers_operacional|headers_admin_company`
+
+**Interfaces:**
+- Consumes: aliases criados em A1, já sem consumidores após A2/A3/A4.
+- Produces: `conftest.py` apenas com fixtures atuais (`usuario_viewer*`/`usuario_editor*`/`admin_saas_tenant`/`headers_*` atuais), sem alias depreciado.
+- Dependência: A5 só fecha depois de A2/A3/A4. Se A-DP1 = opção (ii) mantiver `admin_company` nos testes de administração de tenant, A5 fica **parcial** (remover só o que já migrou) ou bloqueada — registrar o saldo em vez de forçar a remoção.
+
+- [ ] **Step 1: Confirmar ausência de consumidores** — `rg -n "usuario_operacional|admin_company|headers_operacional|headers_admin_company" teste/ --glob "!test_role_retirement*.py"`; Expected: 0 ocorrências. Se houver, voltar à task de migração correspondente (A2/A3/A4) antes de remover.
+- [ ] **Step 2: Remover os aliases** — apagar as definições de alias em `teste/conftest.py`, preservando as fixtures atuais. **Não** tocar em `teste/test_role_retirement*.py`, que usam as strings legadas de propósito.
+- [ ] **Step 3: GREEN** — `python -m pytest teste/test_auth_api.py teste/test_rbac_api.py teste/test_rbac_web.py teste/test_viewer.py -q --no-header -o addopts='' --reuse-db`; Expected: PASS (nenhuma fixture ausente).
+- [ ] **Step 4: Commit** — `git add teste/conftest.py`; `git commit -m "test: remover aliases depreciados de papel aposentado"`.
+
 ---
 
 ## Fase B — Contratos WIP: Loja, Vale, admin-SaaS e templates
@@ -209,7 +225,7 @@ Falhas residuais do Task 4 (6 failed + 2 errors) e checagem contra spec. Cada ta
 - Produces: `/contatos/` local sem `Anuidade:` e sem `Presenças`.
 
 - [ ] **Step 1: RED** — `python -m pytest "teste/test_membro_local.py::test_member_list_search_and_filters_are_scoped_to_tenant" -q --no-header -o addopts='' --reuse-db`; Expected: FAIL em `assert 'Anuidade:' not in html`.
-- [ ] **Step 2: Remover ou marcar indisponível** — remover o filtro "Anuidade: todas" e as colunas/filtros dependentes de GPRB da lista local de Membros (o assert de `Presenças` já passa; confirmar que não regride). **Não** enfraquecer o assert nem o escopo por tenant (`q`, `loja`, `uf` continuam filtrando).
+- [ ] **Step 2: Remover ou marcar indisponível** — remover da lista local de Membros **tanto** o filtro "Anuidade: todas" **quanto** o indicador `Presenças`, além das demais colunas/filtros dependentes de GPRB (ambos vivem no bloco `{% if m.lojas %}` de `lista.html`: cabeçalhos `:137-138` e valores `:163,165`). O RED parou na asserção anterior de `Anuidade:`; a asserção de `Presenças` **não foi avaliada** (não afirmar que passa) e continuará sendo emitida enquanto o bloco `{% if m.lojas %}` existir. **Não** enfraquecer o assert nem o escopo por tenant (`q`, `loja`, `uf` continuam filtrando).
 - [ ] **Step 3: GREEN** — mesmo comando; Expected: PASS. Rodar também `teste/test_membro_local.py` inteiro.
 - [ ] **Step 4: Commit** — `git commit -m "fix(membro): ocultar indicadores GPRB na lista local"`.
 
@@ -304,7 +320,7 @@ def test_upload_rejects_invalid_or_oversized_pdf(media_root, factory, name, expe
 
 ### Task D0: Baseline controlada e atribuição
 
-- [ ] **Step 1: Coleta limpa** — `python -m pytest teste/ --collect-only -q -o addopts=''`; Expected: 0 erros de coleta, ~724 itens (os 6 módulos desbloqueados pelo Task 4 agora coletam).
+- [ ] **Step 1: Coleta limpa** — `python -m pytest teste/ --collect-only -q -o addopts=''`; Expected: 0 erros de coleta, **~768 itens** = ~724 (coleta que ainda tinha os 6 módulos com erro) + 44 (itens reabilitados pela Task 4). Aritmética: os 6 módulos desbloqueados somam 44 itens (relatório da Task 4: 36 passed / 6 failed / 2 errors = 44 coletados); logo ~724 + 44 = ~768.
 - [ ] **Step 2: Gate total controlado (uma única execução, banco exclusivo)** — `python -m pytest teste/ -q --no-header -o addopts='' --create-db --continue-on-collection-errors`; comparar com 209/19 e marcar quais falhas eram contaminação.
 - [ ] **Step 3: Exportar a lista de IDs** — salvar em `%TEMP%\opencode\` (fora do repo) e atribuir cada teste a um dos gates abaixo num arquivo de trabalho `DOCS/superpowers/plans/2026-10-12-residuais-triage.md` (versionar).
 
