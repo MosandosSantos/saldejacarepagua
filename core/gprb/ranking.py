@@ -3,7 +3,7 @@
 import logging
 from datetime import date, timedelta
 
-from core.gprb.connection import connect
+from core.gprb.connection import connect, resolve_tenant_code
 
 logger = logging.getLogger(__name__)
 
@@ -44,12 +44,13 @@ def _years_between(start, end=None):
     return max(years, 0)
 
 
-def ranking_lojas(tenant_code='GPRB', limite=10):
+def ranking_lojas(tenant_code=None, limite=10):
     """Retorna ranking das lojas com mais membros ativos.
 
     Retorna lista de dicts ordenada por total de membros (descendente):
         [{'nome': 'Loja X', 'total': 85, 'rank': 1}, ...]
     """
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -77,13 +78,14 @@ def ranking_lojas(tenant_code='GPRB', limite=10):
         conn.close()
 
 
-def ranking_lojas_mx(tenant_code='GPRB', limite=10, anos=None):
+def ranking_lojas_mx(tenant_code=None, limite=10, anos=None):
     """Retorna ranking das lojas com mais membros MX.
 
     Se anos for informado, filtra por apresentacao_mx nos últimos N anos.
     Retorna lista de dicts:
         [{'nome': 'Loja X', 'total_mx': 32, 'primeira_mx': '10/01/2024', 'ultima_mx': '15/06/2026', 'rank': 1}, ...]
     """
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -237,7 +239,7 @@ def _calcular_stats(members, meeting_ids, attendances, total_meetings):
     return stats
 
 
-def ranking_dados(tenant_code='GPRB', classe='MX', loja_id=None, prefeitura_id=None,
+def ranking_dados(tenant_code=None, classe='MX', loja_id=None, prefeitura_id=None,
                   data_inicio=None, data_fim=None):
     """Retorna dados para o ranking de presença (orquestra as 4 etapas).
 
@@ -247,6 +249,7 @@ def ranking_dados(tenant_code='GPRB', classe='MX', loja_id=None, prefeitura_id=N
             attendances: {memberId_meetingId: status}
             memberStats: [{memberId, totalPresent, totalRecorded, totalAbsent, percentage}]
         """
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     if conn is None:
         return {'meetings': [], 'members': [], 'attendances': {}, 'memberStats': []}

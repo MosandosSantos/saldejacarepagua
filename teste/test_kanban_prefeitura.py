@@ -7,11 +7,9 @@ Ciclo TDD:
   4. Refatorar
 """
 
-import pytest
-from decimal import Decimal
-from django.test import Client
 
-from contatos.models import Contato, Negocio, criar_negocio
+import pytest
+from django.test import Client
 
 
 def _cliente_web(usuario):
@@ -52,8 +50,9 @@ def test_kanban_view_renderiza_com_filtro_prefeitura(usuario_operacional, tenant
 @pytest.mark.django_db
 def test_kanban_view_filtra_candidatos_por_prefeitura(usuario_operacional, tenant_aurora):
     """RED: kanban view deve filtrar candidatos por prefeitura."""
-    from candidatos.models import Candidato
     from django.core.cache import cache
+
+    from candidatos.models import Candidato
 
     # Limpa cache antes do teste
     cache.clear()
@@ -91,8 +90,9 @@ def test_kanban_view_filtra_candidatos_por_prefeitura(usuario_operacional, tenan
 @pytest.mark.django_db
 def test_kanban_view_sem_filtro_mostra_todos(usuario_operacional, tenant_aurora):
     """RED: kanban view sem filtro deve mostrar todos os candidatos."""
-    from candidatos.models import Candidato
     from django.core.cache import cache
+
+    from candidatos.models import Candidato
 
     # Limpa cache antes do teste
     cache.clear()
@@ -149,4 +149,5 @@ def test_kanban_view_select_prefeitura_inclui_opcoes(usuario_operacional, tenant
     assert response.status_code == 200
     # Verifica que o select de prefeituras está presente
     assert b'filtro-prefeitura' in response.content
-    assert b'Todos os vales' in response.content
+    # Placeholder do filtro de Vale (kanban.html) — caixa atual do produto
+    assert b'Todos os Vales' in response.content

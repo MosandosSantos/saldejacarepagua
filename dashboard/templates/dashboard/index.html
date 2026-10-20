@@ -2,7 +2,7 @@
 {% load static %}
 {% load seguranca %}
 
-{% block titulo %}SAL DA BRITÂNEA CRM — Visão geral{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Visão geral{% endblock %}
 
 {% block extra_head %}
 <script src="{% static 'js/vendor/chart.umd.min.js' %}"></script>
@@ -15,10 +15,10 @@
     <p class="hazon-sub mt-2">Resumo dos seus clientes, negócios e do desempenho do time.</p>
   </div>
   <div class="flex items-center gap-3">
-    <span class="text-[11.5px] text-[#a6bfc7]">atualizado às <b id="atualizado-em" class="font-mono text-[#bcd3da]">{{ atualizado_em }}</b></span>
+    <span class="text-[11.5px] text-[#a6bfc7]">atualizado às <b id="atualizado-em" class="font-mono text-[#bcd3da]" aria-live="polite">{{ atualizado_em }}</b></span>
     <button type="button" id="btn-refresh"
             class="flex h-8 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 text-[11.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">
-      <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+      <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
       Atualizar
     </button>
   </div>
@@ -29,10 +29,10 @@
 {% include 'dashboard/partials/_tarefas.html' %}
 
 <div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
-  <!-- BAII ATIVOS -->
+  <!-- PIRÂMIDE DE GRAUS -->
   <div class="hazon-card-sm flex flex-col p-7 backdrop-blur-xl" style="min-height:300px;">
-    <div class="mb-6">      <h2 class="font-display text-lg font-semibold text-white">Potências</h2>
-      <span class="text-xs text-[#a6bfc7]">Membros ativos vinculados por Potência · total: {{ baii_ativos_total }}</span>
+    <div class="mb-6">      <h2 class="font-display text-lg font-semibold text-white">Pirâmide de Graus</h2>
+      <span class="text-xs text-[#a6bfc7]">Membros ativos por maior grau registrado · total: {{ baii_ativos_total }}</span>
     </div>
     <div class="flex-1">
       {% include 'dashboard/partials/_baii.html' with baii=baii_ativos baii_svg=baii_ativos_svg baii_total=baii_ativos_total %}
@@ -46,7 +46,7 @@
       <span class="text-xs text-[#a6bfc7]">Pagantes vs. Inadimplentes</span>
     </div>
     <div class="flex justify-center">
-      <svg viewBox="0 0 320 185" style="width:100%;max-width:340px;" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 320 185" style="width:100%;max-width:340px;" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
           <!-- Gradiente do arco principal (azul 3D) -->
           <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -111,13 +111,15 @@
       <span class="flex items-center gap-1.5"><span class="inline-block h-3 w-3 rounded-full" style="background:#93b8f7;box-shadow:0 0 8px #93b8f770"></span> Total: <b class="text-white anuidade-total-js">{{ anualidade.total }}</b></span>
     </div>
     <div class="mt-3 grid grid-cols-2 gap-3">
-      <select id="sel-anuidade-potencia" class="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-[11.5px] font-semibold text-[#bcd3da] outline-none focus:border-[#3b7ded]/60">
-        <option value="">Todas as Potências</option>
+      <select id="sel-anuidade-potencia" aria-label="Filtrar anuidade por vale"
+              class="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-[11.5px] font-semibold text-[#bcd3da] outline-none focus:border-[#3b7ded]/60 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
+        <option value="">Todos os vales</option>
         {% for p in anualidade.potencias %}
           <option value="{{ p.id }}">{{ p.name }} ({{ p.total }})</option>
         {% endfor %}
       </select>
-      <select id="sel-anuidade-loja" class="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-[11.5px] font-semibold text-[#bcd3da] outline-none focus:border-[#3b7ded]/60">
+      <select id="sel-anuidade-loja" aria-label="Filtrar anuidade por loja"
+              class="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-[11.5px] font-semibold text-[#bcd3da] outline-none focus:border-[#3b7ded]/60 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
         <option value="">Todas as lojas</option>
         {% for l in anualidade.lojas %}
           <option value="{{ l.id }}">{{ l.name }} ({{ l.total }})</option>
@@ -153,7 +155,7 @@
       <span class="text-xs text-[#a6bfc7]">membros ativos por rito</span>
     </div>
     <div class="flex-1" style="position:relative;min-height:200px;">
-      <canvas id="chart-rito"></canvas>
+      <canvas id="chart-rito" role="img" aria-label="Gráfico de membros por rito no simbolismo">Gráfico de membros por rito no simbolismo. Os dados estão disponíveis na tabela de ritos logo abaixo.</canvas>
     </div>
   </div>
 
@@ -164,7 +166,7 @@
       <span class="text-xs text-[#a6bfc7]">membros com idade declarada (10 em 10 anos)</span>
     </div>
     <div class="flex-1" style="position:relative;min-height:200px;">
-      <canvas id="chart-idade"></canvas>
+      <canvas id="chart-idade" role="img" aria-label="Gráfico de membros por faixa etária">Gráfico de membros por faixa etária.</canvas>
     </div>
   </div>
 </div>
@@ -175,7 +177,7 @@
     <span class="text-xs text-[#a6bfc7]">&#250;ltimos 36 meses</span>
   </div>
   <div style="position:relative;height:280px;">
-    <canvas id="chart-entradas"></canvas>
+    <canvas id="chart-entradas" role="img" aria-label="Gráfico de admissões de membros nos últimos 36 meses">Gráfico de admissões de membros nos últimos 36 meses.</canvas>
   </div>
 </div>
 
@@ -191,12 +193,12 @@
   <div class="hazon-card-sm p-4 backdrop-blur-xl">
     <div class="mb-3 flex items-center gap-3">
       <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#ef4444] to-[#b91c1c] shadow-md shadow-[#ef4444]/30">
-        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
       </span>
       <span class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Direitos Reservados</span>
     </div>
     <p class="text-[12px] leading-relaxed text-[#a6bfc7]">
-      Todos os direitos do aplicativo pertencem ao Grande Priorado Retificado do Brasil.
+      Todos os direitos do aplicativo pertencem ao AMORIO.
     </p>
   </div>
 
@@ -204,12 +206,12 @@
   <div class="hazon-card-sm p-4 backdrop-blur-xl">
     <div class="mb-3 flex items-center gap-3">
       <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#5b8def] to-[#1a5fb4] shadow-md shadow-[#5b8def]/30">
-        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       </span>
       <span class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">LGPD</span>
     </div>
     <p class="text-[12px] leading-relaxed text-[#a6bfc7]">
-      Este aplicativo está em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018).
+      Este aplicativo está em conformidade com a Lei Geral de Proteção de Dados (Lei nº&nbsp;13.709/2018).
     </p>
   </div>
 
@@ -217,7 +219,7 @@
   <div class="hazon-card-sm p-4 backdrop-blur-xl">
     <div class="mb-3 flex items-center gap-3">
       <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#4ade80] to-[#16a34a] shadow-md shadow-[#4ade80]/30">
-        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </span>
       <span class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Desenvolvido por</span>
     </div>
@@ -278,11 +280,25 @@ document.addEventListener('DOMContentLoaded', function () {
   var labels = {{ chart_membros_labels|js }};
   var valores = {{ chart_membros_valores|js }};
 
-  // Formata labels para 'Jul/26'
+  // Rotulos de mes ('jul/26') no mesmo formato do filtro |mesanome do Django,
+  // mas derivados da locale ativa da pagina (Intl) — nada de meses escritos a mao.
+  var localePagina = (document.documentElement && document.documentElement.lang) || 'pt-BR';
+  var fmtMes = new Intl.DateTimeFormat(localePagina, { month: 'short', year: '2-digit' });
+  function rotuloMes(d) {
+    var mes = '', ano = '';
+    fmtMes.formatToParts(d).forEach(function (p) {
+      if (p.type === 'month') mes = p.value.replace(/\.$/, '');
+      if (p.type === 'year') ano = p.value;
+    });
+    if (!mes || !ano) return '';
+    return mes.charAt(0).toUpperCase() + mes.slice(1) + '/' + ano;
+  }
   var labelsBR = labels.map(function (l) {
-    var parts = l.split('-');
-    var meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-    return meses[parseInt(parts[1], 10) - 1] + '/' + parts[0].slice(2);
+    var parts = String(l).split('-');
+    if (parts.length < 2) return l;
+    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+    if (isNaN(d.getTime())) return l;
+    return rotuloMes(d) || l;
   });
 
   var gradiente = ctx.getContext('2d').createLinearGradient(0, 0, 0, 280);
@@ -653,9 +669,23 @@ document.addEventListener('DOMContentLoaded', function () {
   var estado = { dash: 0, ang: -90 };
 
   // Animação suave — reusável para os filtros do card
+  function motionReduzido() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+  function aplicarEstado(dash, ang) {
+    estado.dash = dash;
+    estado.ang = ang;
+    arc.setAttribute('stroke-dasharray', dash.toFixed(1) + ' ' + totalLen);
+    needle.setAttribute('transform', 'rotate(' + ang.toFixed(1) + ' 160 160)');
+  }
   function animarPara(percentual) {
     var targetDash = totalLen * (percentual / 100);
     var targetAngle = -90 + 180 * (percentual / 100);
+    // Sem animacao quando o usuario pediu movimento reduzido
+    if (motionReduzido()) {
+      aplicarEstado(targetDash, targetAngle);
+      return;
+    }
     var dash0 = estado.dash, ang0 = estado.ang;
     var start = null;
     var duration = 1200;
@@ -664,10 +694,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var p = Math.min((ts - start) / duration, 1);
       // ease-out-cubic
       var t = 1 - Math.pow(1 - p, 3);
-      estado.dash = dash0 + (targetDash - dash0) * t;
-      estado.ang = ang0 + (targetAngle - ang0) * t;
-      arc.setAttribute('stroke-dasharray', estado.dash.toFixed(1) + ' ' + totalLen);
-      needle.setAttribute('transform', 'rotate(' + estado.ang.toFixed(1) + ' 160 160)');
+      aplicarEstado(dash0 + (targetDash - dash0) * t, ang0 + (targetAngle - ang0) * t);
       if (p < 1) requestAnimationFrame(anim);
     }
     requestAnimationFrame(anim);

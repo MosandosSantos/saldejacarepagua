@@ -13,10 +13,11 @@ from acesso.decorators import (
     web_requer_edicao,
     web_requer_tenant_context,
 )
-from contatos.models import Filiacao, Loja
+from contatos.models import Filiacao, Loja, Membro
 
 from .models import EventoAgenda, PresencaEvento, TipoEvento
 from .permissions import agenda_requer_escrita, pode_escrever_agenda
+import smtplib
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +117,7 @@ def novo(request):
             from agenda.emails import enviar_aviso_inclusao
 
             enviar_aviso_inclusao(evento)
-        except Exception:
+        except (smtplib.SMTPException, OSError):
             logger.warning(
                 'Falha no aviso imediato do evento %s', evento.id, exc_info=True,
             )
@@ -200,7 +201,6 @@ ESTADOS_VALIDOS = {'PRESENTE', 'AUSENTE', 'JUSTIFICADO'}
 
 def _membros_do_evento(evento):
     """Membros ATIVOS filiados à loja do evento (fonte: Filiacao)."""
-    from contatos.models import Membro
 
     return Membro.objects.filter(
         filiacoes__loja_id=evento.loja_id,

@@ -10,6 +10,8 @@ Sync é best-effort: falha no Google nunca impede a gravação no CRM.
 import json
 import logging
 import os
+from google.auth.exceptions import RefreshError
+from googleapiclient.errors import HttpError
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +109,7 @@ def remover_google(evento):
             eventId=evento.google_event_id, calendarId=calendar_id,
         ).execute()
         return True
-    except Exception:
+    except Exception:  # noqa: py-rules — contrato 'best-effort': nunca levanta; a falha vai para o log com exc_info
         logger.warning('Falha ao remover evento %s no Google Calendar', evento.id, exc_info=True)
         return False
 
@@ -116,6 +118,6 @@ def tentar_sincronizar(evento):
     """sync com exceções engolidas — para chamar das views (best-effort)."""
     try:
         return sincronizar_google(evento)
-    except Exception:
+    except Exception:  # noqa: py-rules — contrato 'best-effort': nunca levanta; a falha vai para o log com exc_info
         logger.warning('Falha ao sincronizar evento %s no Google Calendar', evento.id, exc_info=True)
         return None

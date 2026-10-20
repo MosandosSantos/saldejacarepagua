@@ -55,10 +55,23 @@ def dashboard(request):
         inscricao__status__in=Inscricao.STATUS_ATIVOS
     ).count()
 
-    # Sessoes no ano (inscricoes criadas no ano corrente)
-    sessoes_ano = Inscricao.objects.filter(
-        criado_em__year=ano_corrente
-    ).count()
+    # Sessoes no ano (sessoes da Agenda já ocorridas no ano corrente)
+    # + média de presença dessas sessões (presentes/registros × 100).
+    from tarefas.models import Evento, PresencaEvento
+
+    agora = timezone.now()
+    sessoes_ocorridas = Evento.objects.filter(
+        data_fim__lt=agora, data_fim__year=ano_corrente,
+    )
+    sessoes_ano = sessoes_ocorridas.count()
+    chamada = PresencaEvento.objects.filter(evento__in=sessoes_ocorridas).aggregate(
+        total=Count('id'),
+        presentes=Count('id', filter=Q(presente=True)),
+    )
+    presenca_media = (
+        round(chamada['presentes'] * 100 / chamada['total'])
+        if chamada['total'] else None
+    )
 
     # Caixa (total arrecadado — pagamentos confirmados/sistema)
     caixa = Pagamento.objects.filter(
@@ -218,6 +231,7 @@ def dashboard(request):
         'ias_ativas': ias_ativas,
         'membros_ativos': membros_ativos,
         'sessoes_ano': sessoes_ano,
+        'presenca_media': presenca_media,
         'caixa': _brl(caixa),
         'caixa_valor': float(caixa),
         'novos_ano': novos_ano,
@@ -243,6 +257,17 @@ def dashboard(request):
         # Cores
         'cores': cores,
     })
+
+
+def _historico_recentes():
+    """Mantém apenas as 15 campanhas mais recentes e devolve-as para exibição."""
+    ids = list(
+        Campanha.objects.order_by('-criado_em').values_list('id', flat=True)[:15]
+    )
+    antigos = Campanha.objects.exclude(pk__in=ids)
+    if antigos.exists():
+        antigos.delete()
+    return Campanha.objects.order_by('-criado_em')[:15]
 
 
 @web_login_required
@@ -316,7 +341,7 @@ def comunicacoes(request):
         'prefeitura_selecionada': prefeitura_selecionada,
         'lojas_da_prefeitura': listar_lojas(prefeitura_selecionada) if prefeitura_selecionada else [],
         'loja_selecionada': loja_selecionada,
-        'historico': Campanha.objects.all()[:30],
+        'historico': _historico_recentes(),
         'email_configurado': settings.EMAIL_CONFIGURADO,
     })
 

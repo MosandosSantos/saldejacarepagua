@@ -26,9 +26,9 @@ def _cliente_web(usuario):
 
 @pytest.mark.django_db
 def test_exportar_contatos_csv(tenant_aurora, admin_company):
-    co = Contato.objects.create(nome='Ana Teste', seg='estetica', tenant=tenant_aurora,
+    co = Contato.objects.create(nome='Ana Teste', seg='beleza', tenant=tenant_aurora,
                                 email='ana@teste.com', empresa='Aurora')
-    criar_negocio(co, stage='orcamento', valor=1500.50, tenant_id=tenant_aurora.id)
+    criar_negocio(co, stage='comunicacao', valor=1500.50, tenant_id=tenant_aurora.id)
     r = _cliente_web(admin_company).get('/contatos/exportar/')
     assert r.status_code == 200
     assert r['Content-Type'].startswith('text/csv')
@@ -36,7 +36,7 @@ def test_exportar_contatos_csv(tenant_aurora, admin_company):
     assert 'Ana Teste' in conteudo
     assert 'ana@teste.com' in conteudo
     assert '1500,50' in conteudo
-    assert 'orcamento' in conteudo
+    assert 'comunicacao' in conteudo
 
 
 @pytest.mark.django_db
@@ -49,7 +49,7 @@ def test_exportar_contatos_isolado_por_tenant(tenant_aurora, tenant_beta, admin_
 @pytest.mark.django_db
 def test_exportar_negocios_csv(tenant_aurora, admin_company):
     co = Contato.objects.create(nome='Ana Teste', seg='', tenant=tenant_aurora)
-    criar_negocio(co, titulo='Laser CO2', stage='fechado', valor=3000, tenant_id=tenant_aurora.id)
+    criar_negocio(co, titulo='Laser CO2', stage='diploma', valor=3000, tenant_id=tenant_aurora.id)
     r = _cliente_web(admin_company).get('/contatos/exportar/negocios/')
     assert r.status_code == 200
     conteudo = r.content.decode('utf-8-sig')
@@ -72,7 +72,7 @@ def test_csv_bloqueia_injecao_de_formula(tenant_aurora, admin_company):
 # Negócios estagnados
 # ---------------------------------------------------------------------------
 
-def _negocio_antigo(tenant, stage='orcamento', dias=10, nome='Ana'):
+def _negocio_antigo(tenant, stage='comunicacao', dias=10, nome='Ana'):
     co = Contato.objects.create(nome=nome, seg='', tenant=tenant)
     n = criar_negocio(co, stage=stage, valor=1000, tenant_id=tenant.id)
     Negocio.objects.filter(pk=n.id).update(updated_at=timezone.now() - timedelta(days=dias))
@@ -91,14 +91,14 @@ def test_estagnados_aparecem_no_funil(tenant_aurora, admin_company):
 @pytest.mark.django_db
 def test_estagnados_nao_mostra_recente(tenant_aurora, admin_company):
     co = Contato.objects.create(nome='Recente', seg='', tenant=tenant_aurora)
-    criar_negocio(co, stage='orcamento', valor=1000, tenant_id=tenant_aurora.id)  # updated_at = agora
+    criar_negocio(co, stage='comunicacao', valor=1000, tenant_id=tenant_aurora.id)  # updated_at = agora
     html = _cliente_web(admin_company).get('/recepcao/').content.decode()
     assert 'Negócios parados' not in html
 
 
 @pytest.mark.django_db
 def test_estagnados_ignoram_fechados(tenant_aurora, admin_company):
-    _negocio_antigo(tenant_aurora, stage='fechado', dias=30)
+    _negocio_antigo(tenant_aurora, stage='diploma', dias=30)
     html = _cliente_web(admin_company).get('/recepcao/').content.decode()
     assert 'Negócios parados' not in html
 
@@ -189,12 +189,12 @@ def test_envio_individual_requer_edicao(tenant_aurora, usuario_viewer):
 
 @pytest.mark.django_db
 def test_campanha_filtra_publico(tenant_aurora, admin_company):
-    with_email = Contato.objects.create(nome='Com Email', seg='estetica', tenant=tenant_aurora, email='a@x.com')
-    sem_email = Contato.objects.create(nome='Sem Email', seg='estetica', tenant=tenant_aurora)
+    with_email = Contato.objects.create(nome='Com Email', seg='beleza', tenant=tenant_aurora, email='a@x.com')
+    sem_email = Contato.objects.create(nome='Sem Email', seg='beleza', tenant=tenant_aurora)
     outro_seg = Contato.objects.create(nome='Outro Seg', seg='odonto', tenant=tenant_aurora, email='b@x.com')
     modelo = ModeloEmail.objects.create(tenant=tenant_aurora, nome='Camp', assunto='{{nome}}', corpo='Corpo')
     c = _cliente_web(admin_company)
-    r = c.post('/emails/campanha/', {'modelo_id': modelo.id, 'seg': 'estetica'})
+    r = c.post('/emails/campanha/', {'modelo_id': modelo.id, 'seg': 'beleza'})
     assert r.status_code == 302
     envios = EmailEnviado.objects.all()
     assert envios.count() == 1  # só o com e-mail no segmento
@@ -202,7 +202,7 @@ def test_campanha_filtra_publico(tenant_aurora, admin_company):
     assert EmailEnviado.objects.filter(contato=sem_email).count() == 0
     assert EmailEnviado.objects.filter(contato=outro_seg).count() == 0
     # pré-visualização de público
-    html = c.get(f'/emails/campanha/?modelo_id={modelo.id}&seg=estetica').content.decode()
+    html = c.get(f'/emails/campanha/?modelo_id={modelo.id}&seg=beleza').content.decode()
     assert 'público estimado' in html.lower() or 'Público estimado' in html
 
 

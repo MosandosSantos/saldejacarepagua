@@ -1,9 +1,19 @@
 """Tenant-scoped local CRUD for Lojas and their values PDFs."""
 
-from django.db.models import Count, Q
-from django.http import Http404, HttpResponseForbidden, JsonResponse
+from dataclasses import dataclass
+
+from django.core.paginator import Paginator
+from django.db.models import Count, Q, QuerySet
+from django.http import (
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    JsonResponse,
+)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.http import require_GET
 
 from acesso.decorators import (
     tenant_id_da_sessao,
@@ -11,9 +21,12 @@ from acesso.decorators import (
     web_requer_edicao,
     web_requer_tenant_context,
 )
-from acesso.models import ROLE_ADMIN_SAAS, ROLE_ADM, ROLE_DELEGADO, ROLE_PRESIDENTE_CORPO
+from acesso.models import ROLE_ADM, ROLE_ADMIN_SAAS, ROLE_DELEGADO, ROLE_PRESIDENTE_CORPO
 from contatos.importador import normalizar_valor
 from contatos.models import Loja, LojaPdf, Membro, Vale
+from contatos.paginacao import urls_paginacao
+from contatos.relatorio_lojas import gerar_pdf_lojas, gerar_xlsx_lojas
+from tarefas.presencas import PresencaServico
 
 TAMANHO_MAX_PDF = 10 * 1024 * 1024  # 10 MB
 
@@ -58,9 +71,32 @@ def _role(request):
     return snapshot.get('role') if isinstance(snapshot, dict) else None
 
 
+def _vale_do_delegado(request):
+    """Vale do cargo delegado — vem do `prefeitura_id` do usuário.
+
+    O delegado só atua dentro do Vale dele; sem vínculo ativo, devolve None
+    (e, com isso, ele perde também o direito de criar Loja).
+    """
+    if _role(request) != ROLE_DELEGADO:
+        return None
+    usuario = getattr(request, 'usuario_logado', None)
+    snapshot = request.session.get('usuario', {})
+    pid = getattr(usuario, 'prefeitura_id', None) or (
+        snapshot.get('prefeitura_id') if isinstance(snapshot, dict) else None
+    )
+    pid = str(pid or '').strip()
+    if not pid.isdigit():
+        return None
+    return Vale.objects.filter(pk=int(pid), status='ATIVA').first()
+
+
 def _pode_criar_loja(request):
-    """Apenas admin_saas e ADM podem criar Lojas (mesma regra do Vale)."""
-    return _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM)
+    """Quem cadastra Loja: admin_saas/ADM (qualquer Vale) e o delegado
+    vinculado ao Vale dele (prefeitura_id). Presidente de loja, secretário
+    e demais cargos não criam (mesma regra do Vale)."""
+    if _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM):
+        return True
+    return _vale_do_delegado(request) is not None
 
 
 def _pode_alterar_loja(request):
@@ -83,6 +119,27 @@ _MENSAGENS_OK = {
     'atualizado': 'PDF de valores atualizado.',
     'removido': 'PDF de valores removido.',
 }
+_MIMES_RELATORIO_LOJAS = {
+    'pdf': 'application/pdf',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+}
+
+
+@dataclass(frozen=True)
+class ConsultaLojas:
+    """Tenant-scoped Loja query and current filter selections."""
+
+    queryset: QuerySet[Loja]
+    termo: str
+    corpos_requisitados: tuple[str, ...]
+    corpos_filtro: tuple[dict, ...]
+    vale: Vale | None
+    vale_id: str = ''
+    uf: str = ''
+    cidade: str = ''
+    opcoes_vales: tuple[dict, ...] = ()
+    opcoes_ufs: tuple[str, ...] = ()
+    opcoes_cidades: tuple[str, ...] = ()
 
 
 def _vale_do_request(request):
@@ -92,19 +149,20 @@ def _vale_do_request(request):
     return Vale.objects.filter(tenant_id=tenant_id, status='ATIVA').first()
 
 
-def _eh_admin_global(request):
-    """admin_saas e ADM operam em todos os Vales/Lojas."""
-    return _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM)
-
-
 def _lojas_visiveis(request):
-    """Queryset de Lojas operáveis; None quando sem contexto e sem perfil global."""
+    """Queryset de Lojas operáveis; None quando sem contexto de tenant.
+
+    Admin SaaS e ADM são globais: consultam Lojas de todos os tenants sem
+    selecionar um Vale (mesma política de /vales/ e membros).
+    """
     base = (
         Loja.objects
-        .select_related('tenant__vales', 'deputado_mestre')
+        .select_related(
+            'tenant__vales', 'deputado_mestre', 'secretario', 'tesoureiro',
+        )
         .annotate(total_membros=Count('membros', distinct=True))
     )
-    if _eh_admin_global(request):
+    if _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM):
         return base
     vale = _vale_do_request(request)
     if vale is None:
@@ -115,7 +173,10 @@ def _lojas_visiveis(request):
 def _para_contexto_loja(loja):
     # Tenant pode não ter Vale cadastrado (ex.: tenant demo) — o reverso
     # OneToOne levanta Vale.DoesNotExist; tolera como sem Vale.
-    vale = Vale.objects.filter(tenant_id=loja.tenant_id).order_by('-status').first()
+    try:
+        vale = loja.tenant.vales
+    except Vale.DoesNotExist:
+        vale = None
     mensalidade = (
         f'{loja.mensalidade:.2f}'.replace('.', ',')
         if loja.mensalidade is not None else ''
@@ -162,6 +223,7 @@ def _para_contexto_loja(loja):
         'id': loja.pk,
         'nome': loja.nome,
         'numero': loja.numero,
+        'corpo': loja.get_corpo_display(),
         'telefone': loja.telefone,
         'email': loja.email,
         'prefeitura': (vale.nome if vale else ''),
@@ -184,6 +246,7 @@ def _para_contexto_loja(loja):
         'tesoureiro_telefone': tesoureiro_telefone,
         'mensalidade': mensalidade,
         'situacao': loja.situacao,
+        'situacao_display': loja.get_situacao_display(),
         'cidade': loja.cidade,
         'uf': loja.uf,
         'endereco': loja.endereco,
@@ -198,9 +261,10 @@ def _para_contexto_loja(loja):
 
 def _dados_da_loja(request):
     mensalidade = (request.POST.get('mensalidade', '') or '').strip()
-    return {
+    dados = {
         'nome': request.POST.get('nome', '').strip(),
         'numero': request.POST.get('numero', '').strip(),
+        'corpo': request.POST.get('corpo', '').strip(),
         'telefone': request.POST.get('telefone', '').strip(),
         'email': request.POST.get('email', '').strip(),
         'secretario_email': request.POST.get('secretario_email', '').strip(),
@@ -212,6 +276,10 @@ def _dados_da_loja(request):
         'endereco': request.POST.get('endereco', '').strip(),
         'mensalidade': normalizar_valor(mensalidade) if mensalidade else None,
     }
+    for campo in ('presidente_nome', 'secretario_nome', 'tesoureiro_nome'):
+        if campo in request.POST:
+            dados[campo] = request.POST.get(campo, '').strip()
+    return dados
 
 
 def _membro_do_tenant(tenant_id, membro_id):
@@ -225,50 +293,99 @@ def _membro_do_tenant(tenant_id, membro_id):
     return Membro.objects.filter(pk=pk, tenant_id=tenant_id).first()
 
 
-def _cargos_do_post(request, tenant_id):
-    """Lê os três cargos do formulário; cargos vagos viram None.
+def _cargos_do_post(request, tenant_id, *, selecionar_membros=True):
+    """Resolve os vínculos de cargos legados quando a edição usa selects.
 
-    Devolve (presidente, secretario, tesoureiro, erro). Erro quando um ID não
-    pertence ao tenant ou quando a mesma pessoa ocupa dois cargos.
+    A criação recebe nomes de contato em texto e não deve vincular nenhum
+    Membro à Loja por esses campos. A edição mantém os vínculos existentes.
     """
-    presidente = _membro_do_tenant(
-        tenant_id, request.POST.get('deputado_mestre'),
-    )
-    secretario = _membro_do_tenant(
-        tenant_id, request.POST.get('secretario'),
-    )
-    tesoureiro = _membro_do_tenant(
-        tenant_id, request.POST.get('tesoureiro'),
-    )
-    if (
-        (request.POST.get('deputado_mestre') or '').strip() and presidente is None
-        or (request.POST.get('secretario') or '').strip() and secretario is None
-        or (request.POST.get('tesoureiro') or '').strip() and tesoureiro is None
-    ):
+    if not selecionar_membros:
+        return None, None, None, None
+
+    ids = {
+        'presidente': (request.POST.get('deputado_mestre') or '').strip(),
+        'secretario': (request.POST.get('secretario') or '').strip(),
+        'tesoureiro': (request.POST.get('tesoureiro') or '').strip(),
+    }
+    membros = {
+        cargo: _membro_do_tenant(tenant_id, membro_id)
+        for cargo, membro_id in ids.items()
+    }
+    if any(ids[cargo] and membros[cargo] is None for cargo in ids):
         return None, None, None, 'Selecione membros válidos para os cargos.'
-    escolhidos = [m.pk for m in (presidente, secretario, tesoureiro) if m is not None]
+    escolhidos = [m.pk for m in membros.values() if m is not None]
     if len(escolhidos) != len(set(escolhidos)):
         return None, None, None, 'A mesma pessoa não pode ocupar dois cargos.'
-    return presidente, secretario, tesoureiro, None
-
-
-def _grupos_membros_por_vale(vales):
-    """Membros agrupados por Vale para os selects de cargo."""
-    tenant_ids = [v.tenant_id for v in vales]
-    membros_por_tenant = {}
-    for membro in Membro.objects.filter(tenant_id__in=tenant_ids).order_by('nome', 'id'):
-        membros_por_tenant.setdefault(membro.tenant_id, []).append(membro)
-    return [
-        {'vale': vale, 'membros': membros_por_tenant.get(vale.tenant_id, [])}
-        for vale in vales
-    ]
+    return (
+        membros['presidente'],
+        membros['secretario'],
+        membros['tesoureiro'],
+        None,
+    )
 
 
 @web_login_required
 def lojas(request):
+    consulta = _consulta_lojas_filtradas(request)
+    if consulta is None:
+        return HttpResponseForbidden('Selecione um tenant ativo com Vale para consultar as lojas.')
+
+    page_obj = Paginator(consulta.queryset, 20).get_page(request.GET.get('page', 1))
+    itens = [_para_contexto_loja(loja) for loja in page_obj.object_list]
+    return render(request, 'contatos/lojas.html', {
+        'lojas': itens,
+        'q': consulta.termo,
+        'corpos_filtro': consulta.corpos_filtro,
+        'total': page_obj.paginator.count,
+        'vale': consulta.vale,
+        'vale_filtro': consulta.vale_id,
+        'uf_filtro': consulta.uf,
+        'cidade_filtro': consulta.cidade,
+        'opcoes_vales': consulta.opcoes_vales,
+        'opcoes_ufs': consulta.opcoes_ufs,
+        'opcoes_cidades': consulta.opcoes_cidades,
+        'pode_criar_loja': _pode_criar_loja(request),
+        'page_obj': page_obj,
+        'pagination_urls': urls_paginacao(
+            request, page_obj, base_path=reverse('lojas'),
+        ),
+    })
+
+
+@web_login_required
+@require_GET
+def lojas_exportar(request, formato):
+    """Download all Loja rows matching the current tenant and filters."""
+    consulta = _consulta_lojas_filtradas(request)
+    if consulta is None:
+        return HttpResponseForbidden(
+            'Selecione um tenant ativo com Vale para exportar as lojas.',
+        )
+    if formato not in _MIMES_RELATORIO_LOJAS:
+        return HttpResponseBadRequest('Formato de relatório inválido.')
+
+    lojas_filtradas = list(consulta.queryset)
+    linhas = [_para_contexto_loja(loja) for loja in lojas_filtradas]
+    gerado_em = timezone.localdate()
+    if formato == 'pdf':
+        conteudo = gerar_pdf_lojas(linhas, gerado_em)
+        extensao = 'pdf'
+    else:
+        conteudo = gerar_xlsx_lojas(linhas, gerado_em)
+        extensao = 'xlsx'
+
+    resposta = HttpResponse(conteudo, content_type=_MIMES_RELATORIO_LOJAS[formato])
+    resposta['Content-Disposition'] = (
+        f'attachment; filename="lojas-{gerado_em.isoformat()}.{extensao}"'
+    )
+    return resposta
+
+
+def _consulta_lojas_filtradas(request):
+    """Resolve the shared tenant-scoped Loja queryset and GET filters."""
     qs = _lojas_visiveis(request)
     if qs is None:
-        return HttpResponseForbidden('Selecione um tenant ativo com Vale para consultar as lojas.')
+        return None
 
     termo = request.GET.get('q', '').strip()
     if termo:
@@ -278,13 +395,81 @@ def lojas(request):
             | Q(cidade__icontains=termo)
             | Q(uf__icontains=termo)
         )
-    itens = [_para_contexto_loja(loja) for loja in qs.order_by('nome', 'id')]
-    return render(request, 'contatos/lojas.html', {
-        'lojas': itens,
-        'q': termo,
-        'total': len(itens),
-        'vale': _vale_do_request(request),
-    })
+
+    # Escopo para as opções do card (mesma política de visibilidade da listagem).
+    escopo_global = _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM)
+    vale_sessao = None if escopo_global else _vale_do_request(request)
+    vales_qs = Vale.objects.filter(status='ATIVA').order_by('nome', 'id')
+    lojas_base = Loja.objects
+    if not escopo_global:
+        if vale_sessao is None:
+            vales_qs = vales_qs.none()
+            lojas_base = lojas_base.none()
+        else:
+            vales_qs = vales_qs.filter(tenant_id=vale_sessao.tenant_id)
+            lojas_base = lojas_base.filter(tenant_id=vale_sessao.tenant_id)
+    opcoes_vales = tuple(
+        {'id': str(v.pk), 'nome': v.nome} for v in vales_qs
+    )
+
+    vale_id = (request.GET.get('vale') or '').strip()
+    if vale_id:
+        try:
+            vale_filtro = vales_qs.get(pk=int(vale_id))
+        except (Vale.DoesNotExist, TypeError, ValueError):
+            vale_filtro = None
+        qs = qs.filter(tenant_id=vale_filtro.tenant_id) if vale_filtro else qs.none()
+
+    uf = (request.GET.get('uf') or '').strip().upper()
+    if uf:
+        qs = qs.filter(uf=uf)
+    cidade = (request.GET.get('cidade') or '').strip()
+    if cidade:
+        qs = qs.filter(cidade=cidade)
+
+    corpos_requisitados = request.GET.getlist('corpo')
+    corpos_validos = dict(Loja.CORPO_CHOICES)
+    if any(corpo not in corpos_validos for corpo in corpos_requisitados):
+        qs = qs.none()
+    elif corpos_requisitados:
+        qs = qs.filter(corpo__in=corpos_requisitados)
+    # Faixas de grau nos chips — mesmo padrão visual de /membros/ e
+    # /membros/acompanhamento/ (Performance→SC33) sobre o 'corpo' da Loja.
+    CORPO_FAIXA = {
+        'perfeicao': '4º-14º',
+        'capitulo': '15º-18º',
+        'kadosh': '19º-30º',
+        'consistorio': '31º-32º',
+        'sc33': '33º',
+    }
+    corpos_filtro = tuple(
+        {
+            'valor': valor,
+            'rotulo': rotulo,
+            'faixa': CORPO_FAIXA[valor],
+            'selecionado': valor in corpos_requisitados,
+        }
+        for valor, rotulo in Loja.CORPO_CHOICES
+    )
+    opcoes_ufs = list(
+        lojas_base.exclude(uf='').order_by('uf').values_list('uf', flat=True).distinct()
+    )
+    opcoes_cidades = list(
+        lojas_base.exclude(cidade='').order_by('cidade').values_list('cidade', flat=True).distinct()
+    )
+    return ConsultaLojas(
+        queryset=qs.order_by('nome', 'pk'),
+        termo=termo,
+        corpos_requisitados=tuple(corpos_requisitados),
+        corpos_filtro=corpos_filtro,
+        vale=_vale_do_request(request),
+        vale_id=vale_id,
+        uf=uf,
+        cidade=cidade,
+        opcoes_vales=opcoes_vales,
+        opcoes_ufs=tuple(opcoes_ufs),
+        opcoes_cidades=tuple(opcoes_cidades),
+    )
 
 
 @web_login_required
@@ -293,9 +478,31 @@ def loja_detalhe(request, pk):
     if qs is None:
         return HttpResponseForbidden('Selecione um tenant ativo com Vale para consultar as lojas.')
     loja = get_object_or_404(qs, pk=pk)
+    membros = list(
+        loja.membros.filter(tenant_id=loja.tenant_id).order_by('nome', 'pk')
+    )
+    percentuais = PresencaServico.percentuais_da_loja(membros, loja)
+    membros_presenca = [
+        {
+            'id': membro.pk,
+            'nome': membro.nome,
+            'situacao': membro.get_situacao_display(),
+            'presenca': (
+                round(percentuais[membro.pk])
+                if percentuais[membro.pk] is not None else None
+            ),
+            'presenca_abaixo_50': (
+                percentuais[membro.pk] is not None and percentuais[membro.pk] < 50
+            ),
+        }
+        for membro in membros
+    ]
+    loja_contexto = _para_contexto_loja(loja)
+    loja_contexto['total_membros'] = len(membros)
     pdf = LojaPdf.objects.filter(loja=loja).first()
     return render(request, 'contatos/loja_detalhe.html', {
-        'loja': _para_contexto_loja(loja),
+        'loja': loja_contexto,
+        'membros_presenca': membros_presenca,
         'pdf': pdf,
         'erro_pdf': _MENSAGENS_ERRO.get(request.GET.get('erro', '')),
         'ok_pdf': _MENSAGENS_OK.get(request.GET.get('ok', '')),
@@ -306,49 +513,95 @@ def loja_detalhe(request, pk):
 def loja_membros_json(request, pk):
     qs = _lojas_visiveis(request)
     if qs is None:
-        return HttpResponseForbidden('Selecione um tenant ativo com Vale para consultar membros.')
+        # ADM/admin_saas em "Todos os tenants": o drill-down de /vales/ lista
+        # lojas de todos os vales, então a leitura fica escopada à própria
+        # loja (tenant dela), nunca além do registro já visível na página.
+        if _role(request) not in (ROLE_ADMIN_SAAS, ROLE_ADM):
+            return HttpResponseForbidden(
+                'Selecione um tenant ativo com Vale para consultar membros.',
+            )
+        qs = Loja.objects.select_related('tenant')
     loja = get_object_or_404(qs, pk=pk)
     membros = list(
         loja.membros.filter(tenant_id=loja.tenant_id)
-        .order_by('nome', 'id')
-        .values('id', 'nome', 'situacao')
+        .prefetch_related('graus__grau')
+        .order_by('nome', 'pk')
     )
-    return JsonResponse({'membros': membros})
+    percentuais = PresencaServico.percentuais_da_loja(membros, loja)
+    linhas = []
+    for membro in membros:
+        grau_mais_alto = max(
+            (historico.grau.numero for historico in membro.graus.all()),
+            default=None,
+        )
+        percentual = percentuais[membro.pk]
+        linhas.append({
+            'id': membro.pk,
+            'nome': membro.nome,
+            'situacao': membro.situacao,
+            'cadastro': (
+                str(membro.cadastro_numero)
+                if membro.cadastro_numero is not None
+                else (membro.cadastro_maconico or '')
+            ),
+            'grau': grau_mais_alto,
+            'presenca': round(percentual) if percentual is not None else None,
+            'presenca_abaixo_50': percentual is not None and percentual < 50,
+        })
+    return JsonResponse({'membros': linhas})
 
 
 @web_login_required
-@web_requer_tenant_context
 @web_requer_edicao
 def loja_nova(request):
-    if not _pode_criar_loja(request):
+    role = _role(request)
+    vale_do_delegado = _vale_do_delegado(request)
+    if role in (ROLE_ADMIN_SAAS, ROLE_ADM):
+        vale_sessao = _vale_do_request(request)
+        if vale_sessao is None and role != ROLE_ADMIN_SAAS:
+            return HttpResponseForbidden('Selecione um tenant ativo com Vale para criar uma loja.')
+        # SaaS admins may choose the target tenant through an active Vale below.
+        vales = list(Vale.objects.filter(status='ATIVA').order_by('nome', 'id'))
+    elif role == ROLE_DELEGADO and vale_do_delegado is not None:
+        # Delegado: Vale travado no dele (`prefeitura_id`) — vale para
+        # qualquer loja que ele crie dentro do seu Vale.
+        vale_sessao = vale_do_delegado
+        vales = [vale_do_delegado]
+    else:
+        # Presidente de loja, secretário e demais cargos não criam nada.
         return HttpResponseForbidden('Sem permissão para cadastrar uma Loja.')
 
-    vale_sessao = _vale_do_request(request)
-    if vale_sessao is None:
-        return HttpResponseForbidden('Selecione um tenant ativo com Vale para criar uma loja.')
-
-    usuario = getattr(request, 'usuario_logado', None)
-    snapshot = request.session.get('usuario', {})
-    role = getattr(usuario, 'role', None) or (
-        snapshot.get('role') if isinstance(snapshot, dict) else None
-    )
-    if role == ROLE_ADMIN_SAAS:
-        vales = list(Vale.objects.filter(status='ATIVA').order_by('nome', 'id'))
-    else:
-        vales = [vale_sessao]
-
     erro = None
+    corpo_atual = ''
     if request.method == 'POST':
         dados = _dados_da_loja(request)
+        corpo_atual = (
+            dados['corpo']
+            if dados['corpo'] in dict(Loja.CORPO_CHOICES)
+            else ''
+        )
         vale_id = (request.POST.get('vale_id') or '').strip()
-        vale_escolhido = next((v for v in vales if str(v.pk) == vale_id), None)
+        # Para o delegado, o Vale do POST é ignorado: vale sempre o dele.
+        vale_escolhido = (
+            vale_do_delegado if vale_do_delegado is not None
+            else next((v for v in vales if str(v.pk) == vale_id), None)
+        )
+        if vale_id == '':
+            # Sem Vale no POST: o tenant ativo determina o Vale (spec de
+            # isolamento). Delegados já receberam o Vale deles acima; admin
+            # sem tenancy selection continua sem Vale e cai no erro abaixo.
+            vale_escolhido = vale_sessao
         if not dados['nome']:
             erro = 'Informe o nome da loja.'
+        elif dados['corpo'] not in dict(Loja.CORPO_CHOICES):
+            erro = 'Selecione um Corpo válido.'
         elif vale_escolhido is None:
             erro = 'Selecione o Vale da loja.'
         else:
             presidente, secretario, tesoureiro, erro = _cargos_do_post(
-                request, vale_escolhido.tenant_id,
+                request,
+                vale_escolhido.tenant_id,
+                selecionar_membros=False,
             )
             if erro is None:
                 loja = Loja.objects.create(
@@ -361,13 +614,15 @@ def loja_nova(request):
                 for membro in (presidente, secretario, tesoureiro):
                     if membro is not None:
                         loja.membros.add(membro)
-                return redirect('contatos:lojas')
+                return redirect('lojas')
 
     return render(request, 'contatos/loja_nova.html', {
         'erro': erro,
         'vale': vale_sessao,
         'vales': vales,
-        'membros_por_vale': _grupos_membros_por_vale(vales),
+        'vale_travado': vale_do_delegado is not None,
+        'corpos': Loja.CORPO_CHOICES,
+        'corpo_atual': corpo_atual,
         'ufs': UFS,
         'uf_atual': 'RJ',
     })
@@ -384,11 +639,16 @@ def loja_editar(request, pk):
         return HttpResponseForbidden('Selecione um tenant ativo com Vale para alterar a loja.')
     loja = get_object_or_404(qs, pk=pk)
     erro = None
+    corpo_atual = loja.corpo
 
     if request.method == 'POST':
         dados = _dados_da_loja(request)
+        if dados['corpo'] in dict(Loja.CORPO_CHOICES):
+            corpo_atual = dados['corpo']
         if not dados['nome']:
             erro = 'Informe o nome da loja.'
+        elif dados['corpo'] not in dict(Loja.CORPO_CHOICES):
+            erro = 'Selecione um Corpo válido.'
         else:
             presidente, secretario, tesoureiro, erro = _cargos_do_post(
                 request, loja.tenant_id,
@@ -403,7 +663,7 @@ def loja_editar(request, pk):
                 for membro in (presidente, secretario, tesoureiro):
                     if membro is not None:
                         loja.membros.add(membro)
-                return redirect('contatos:lojas')
+                return redirect('lojas')
 
     membros = Membro.objects.filter(tenant_id=loja.tenant_id).order_by('nome', 'id')
     return render(request, 'contatos/loja_editar.html', {
@@ -413,6 +673,8 @@ def loja_editar(request, pk):
         'membros': membros,
         'ufs': UFS,
         'uf_atual': loja.uf or 'RJ',
+        'corpos': Loja.CORPO_CHOICES,
+        'corpo_atual': corpo_atual,
         'erro': erro,
         'sucesso': None,
     })
@@ -444,7 +706,7 @@ def loja_excluir(request, pk):
                     pdf.arquivo.delete(save=False)
                 pdf.delete()
             loja.delete()
-            return redirect('contatos:lojas')
+            return redirect('lojas')
 
     return render(request, 'contatos/loja_excluir.html', {
         'loja': _para_contexto_loja(loja),

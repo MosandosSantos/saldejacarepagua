@@ -11,7 +11,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
 
-APP_BRAND_NAME = 'SAL DA AMORIO'
+APP_BRAND_NAME = 'SAL DO REAA'
+
+# Nome da Vale (subordinada) que aparece nos titulos de secao — ex.:
+# "Calendario da Vale de Jacarepagua". Configuravel por env (VALE_NOME).
+VALE_NOME = os.getenv('VALE_NOME', 'Jacarepaguá')
 
 
 def format_from_email(configured_from_email):
@@ -24,12 +28,17 @@ def format_from_email(configured_from_email):
 
 # Código do tenant padrão no banco externo GPRB.
 GPRB_TENANT_CODE = os.getenv('GPRB_TENANT_CODE', '').strip() or 'SCG33REAA'
-# A conexão SQL direta ao banco GPRB externo fica desativada no runtime do CRM.
-GPRB_DB_ENABLED = False
+# A conexão SQL direta ao banco GPRB externo fica desativada por padrão
+# (produção). Ative no ambiente local com GPRB_DB_ENABLED=1 + GPRB_DB_HOST/...
+# quando o banco da rede interna estiver acessível — o login por celular
+# depende dela (core/gprb/users.autenticar_usuario).
 
 def _env_bool(name: str, default: str = '0') -> bool:
     """Lê uma env var como booleana — aceita 1/true/yes/on (case-insensitive)."""
     return os.getenv(name, default).strip().lower() in ('1', 'true', 'yes', 'on', 't')
+
+
+GPRB_DB_ENABLED = _env_bool('GPRB_DB_ENABLED', '0')
 
 
 # --- Fail-closed: DEBUG so e True se explicitamente pedido ---------------
@@ -174,9 +183,14 @@ TEMPLATES = [
                 'django.template.context_processors.csrf',
                 'acesso.context_processors.web_sessao',
             ],
-            # S1.1 — filtro |js (JSON seguro p/ dentro de <script>) disponivel
+            # S1.1 - filtro |js (JSON seguro p/ dentro de <script>) disponivel
             # em todos os templates, sem depender de app no INSTALLED_APPS.
-            'builtins': ['core.templatetags.seguranca'],
+            # `formatacao` traz |databr, |datahorabr, |moedabr etc. — filtros
+            # locale-aware que substituem os formatos fixos "d/m/Y" nos templates.
+            'builtins': [
+                'core.templatetags.seguranca',
+                'core.templatetags.formatacao',
+            ],
         },
     },
 ]
@@ -353,6 +367,20 @@ DEFAULT_FROM_EMAIL = format_from_email(
     os.getenv('DEFAULT_FROM_EMAIL') or 'nao-responder@esferadatasci.com.br'
 )
 EMAIL_CONFIGURADO = bool(EMAIL_HOST and EMAIL_HOST_PASSWORD)
+
+# Modo TESTE do aviso de evento (Agenda): enquanto a lista não estiver vazia,
+# TODA notificação de evento é enviada apenas para estes endereços (evita
+# spam real aos membros). Para ativar o envio verdadeiro, defina a variável
+# de ambiente EVENTO_EMAIL_PARA_TESTE vazia ('').
+EVENTO_EMAIL_PARA_TESTE = [
+    v.strip() for v in os.getenv(
+        'EVENTO_EMAIL_PARA_TESTE', 'mosansantos@yahoo.com.br',
+    ).split(',') if v.strip()
+]
+
+# Base pública do app — usada nos links de confirmação (RSVP) dos e-mails.
+# Em produção, defina BASE_URL com o domínio real (ex.: https://app.dominio.com).
+BASE_URL = (os.getenv('BASE_URL', '') or 'http://localhost:8111').rstrip('/')
 
 # ---------------------------------------------------------------------------
 # Sprint 5 — Discador (Nation Dialer): integração com o softphone

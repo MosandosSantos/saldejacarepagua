@@ -3,8 +3,10 @@
 O serviço Locust é opcional e só inicia com o perfil `load-test`. Ele simula
 usuários autenticados percorrendo páginas somente de leitura do CRM.
 
-1. Configure `LOCUST_USERNAME` e `LOCUST_PASSWORD` no `.env` com uma conta de
-   teste. Não use credenciais de produção.
+1. Configure `LOCUST_USERNAME`, `LOCUST_PASSWORD` e `LOCUST_TURNSTILE_TOKEN` no
+   `.env` com uma conta de teste. Não use credenciais de produção. Para um
+   ambiente local com as chaves oficiais de teste do Turnstile, use
+   `LOCUST_TURNSTILE_TOKEN=XXXX.DUMMY.TOKEN.XXXX`.
 2. Inicie o Locust (o Compose também inicia a aplicação e suas dependências, se
    necessário):
 
@@ -22,6 +24,6 @@ usuários autenticados percorrendo páginas somente de leitura do CRM.
    ```
 
 O cenário faz login uma vez por usuário e então acessa `/dashboard/`,
-`/recepcao/`, `/tarefas/` e `/contatos/` com requisições GET. O usuário e senha
-são lidos de `LOCUST_USERNAME` e `LOCUST_PASSWORD`; os dados de login não ficam
-gravados no código.
+`/iniciacao/`, `/tarefas/` e `/contatos/` com requisições GET. O usuário e senha
+são lidos de `LOCUST_USERNAME`, `LOCUST_PASSWORD` e `LOCUST_TURNSTILE_TOKEN`; os
+dados de login não ficam gravados no código.

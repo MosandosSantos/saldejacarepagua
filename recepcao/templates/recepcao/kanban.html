@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Funil{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Funil{% endblock %}
 
 {% block conteudo %}
 {% if web_pode_editar %}
@@ -8,48 +8,85 @@
 <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 {% endif %}
 <div class="mb-7">
-  <h1 class="hazon-titulo">Flow de Recepção</h1>
+  <h1 class="hazon-titulo">Flow de Iniciação</h1>
 </div>
 
 <div class="mb-6 flex flex-wrap items-center gap-4">
-  <form method="get" action="{% url 'recepcao:kanban' %}" class="relative">
-    <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="#a6bfc7" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nome ou empresa..."
-           class="hazon-search w-72">
+  <form method="get" action="{% url 'recepcao:kanban' %}" class="hazon-card w-full p-4 sm:p-5" aria-label="Filtros do funil">
+    <div data-filter-row="primary" class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] md:items-end">
+      <label class="block min-w-0">
+        <span for="filtro-q" class="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Buscar</span>
+        <div class="relative">
+          <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="#a6bfc7" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="filtro-q" type="search" name="q" value="{{ q }}" autocomplete="off" placeholder="Buscar por nome ou empresa…" class="hazon-search w-full">
+        </div>
+      </label>
+      <label class="block min-w-0">
+        <span for="filtro-prefeitura" class="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Vale</span>
+        <select id="filtro-prefeitura" name="prefeitura"
+                class="mt-1.5 h-10 w-full rounded-xl border border-white/15 bg-hazon-night/70 px-3 text-[13px] text-hazon-text transition-colors focus:border-hazon-accent/60 focus:outline-none focus:ring-2 focus:ring-hazon-accent/25">
+          <option value="">Todos os Vales</option>
+          {% for pf in prefeituras %}
+          <option value="{{ pf.id }}" {% if pf.id|stringformat:"s" == prefeitura_filtro|stringformat:"s" %}selected{% endif %}>{{ pf.nome }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="block min-w-0">
+        <span for="filtro-loja" class="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Loja</span>
+        <select id="filtro-loja" name="loja" onchange="this.form.requestSubmit()"
+                class="mt-1.5 h-10 w-full rounded-xl border border-white/15 bg-hazon-night/70 px-3 text-[13px] text-hazon-text transition-colors focus:border-hazon-accent/60 focus:outline-none focus:ring-2 focus:ring-hazon-accent/25">
+          <option value="">Todas as Lojas</option>
+          {% for grupo_corpo in lojas_filtro %}
+          <optgroup label="{{ grupo_corpo.rotulo }}">
+            {% for lj in grupo_corpo.lojas %}
+            <option value="{{ lj.nome }}" {% if lj.nome == loja_filtro %}selected{% endif %}>{{ lj.nome }}</option>
+            {% endfor %}
+          </optgroup>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <fieldset data-filter-section="corpos" class="min-w-0 border-t border-white/10 pt-3">
+      <span class="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Corpos do Rito</span>
+      <div class="mt-2 flex flex-wrap gap-2">
+        {% for corpo in corpos_rito %}
+        <label class="cursor-pointer">
+          <input type="checkbox" name="corpo" value="{{ corpo.valor }}"
+                 {% if corpo.valor in corpos_escolhidos %}checked{% endif %}
+                 onchange="this.form.submit()" class="peer sr-only">
+          <span class="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-2 text-xs text-[#bcd3da] transition-colors hover:border-[#5b8def]/40 hover:bg-white/10 peer-checked:border-[#4ade80]/60 peer-checked:bg-[#4ade80]/15 peer-checked:text-[#4ade80] peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-[#5b8def]/70">
+            <span class="h-2 w-2 shrink-0 rounded-full bg-white/25"></span>
+            <span class="font-semibold">{{ corpo.nome }}</span>
+            <span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[11px] text-[#a6bfc7]">{{ corpo.faixa }}</span>
+          </span>
+        </label>
+        {% endfor %}
+      </div>
+      <span id="aviso-corpos" class="{% if not aviso_corpos %}hidden {% endif %}mt-2 block text-[11px] font-medium text-[#fbbf24]">{{ aviso_corpos|default:"Nenhuma coluna de grau pertence ao corpo selecionado." }}</span>
+    </fieldset>
   </form>
-  <select id="filtro-prefeitura" class="hazon-btn hazon-btn-ghost h-9 rounded-lg border border-white/15 bg-white/5 px-3 text-[12.5px] font-semibold text-[#bcd3da] outline-none transition hover:bg-white/10 hover:text-white">
-    <option value="">Todas as Prefeituras</option>
-    {% for pf in prefeituras %}
-    <option value="{{ pf.id }}" {% if pf.id|stringformat:"s" == prefeitura_filtro|stringformat:"s" %}selected{% endif %}>{{ pf.nome }}</option>
-    {% endfor %}
-  </select>
-  {% if web_eh_admin %}
-  <select id="filtro-categoria" class="hazon-btn hazon-btn-ghost h-9 rounded-lg border border-white/15 bg-white/5 px-3 text-[12.5px] font-semibold text-[#bcd3da] outline-none transition hover:bg-white/10 hover:text-white">
-    <option value="">Todos</option>
-    <option value="MX">MX</option>
-    <option value="EN">EN</option>
-    <option value="CBCS">CBCS</option>
-  </select>
-  {% endif %}
-  <a href="{% url 'contatos:exportar_negocios' %}" class="hazon-btn hazon-btn-ghost" title="Baixar CSV dos negócios">
-    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    Exportar
-  </a>
+</div>
+
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
   <div class="flex items-center gap-2.5 rounded-xl border border-[#5b8def]/35 bg-[#5b8def]/10 px-4 py-2.5">
-    <span class="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#bcd3da]">Total de candidatos</span>
-    <span id="total-candidatos" class="font-mono text-[17px] font-bold text-[#5b8def]">{{ total_candidatos }}</span>
+    <span class="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#bcd3da]">Irmãos listados</span>
+    <span class="font-mono text-[17px] font-bold text-[#5b8def]">{{ qtd_lista }}</span>
   </div>
+  <a href="{% url 'recepcao:relatorio' %}?{{ qs_filtro }}" class="hazon-btn hazon-btn-ghost" title="Relatório (listagem) dos irmãos filtrados">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Relatório
+  </a>
 </div>
 
 {% if estagnados %}
 <div class="mb-6 rounded-2xl border border-[#fbbf24]/30 bg-[#fbbf24]/10 p-5 backdrop-blur-xl">
   <div class="mb-3 flex flex-wrap items-center gap-3">
-    <span class="text-[13.5px] font-semibold text-[#fbbf24]">⏳ Negócios parados há mais de {{ dias }} dias ({{ estagnados|length }})</span>
+    <span class="text-[13px] font-semibold text-[#fbbf24]">⏳ Negócios parados há mais de {{ dias }} dias ({{ estagnados|length }})</span>
     <form method="get" class="ml-auto flex items-center gap-2">
       {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
-      <label class="text-[11px] text-[#bcd3da]">Mostrar parados há +</label>
-      <select name="dias" onchange="this.form.submit()"
-              class="rounded-lg border border-white/10 bg-[#0a1e3d] px-2 py-1.5 text-[11.5px] text-white outline-none">
+      <label for="filtro-dias" class="text-[11px] text-[#bcd3da]">Mostrar parados há +</label>
+      <select id="filtro-dias" name="dias" onchange="this.form.submit()" aria-label="Mostrar parados há + dias"
+              class="rounded-lg border border-white/10 bg-[#0a1e3d] px-2 py-1.5 text-[11px] text-white outline-none focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
         {% for d in '3,7,15,30'|make_list %}
           <option value="{{ d }}" {% if dias == d|add:0 %}selected{% endif %}>{{ d }} dias</option>
         {% endfor %}
@@ -65,7 +102,7 @@
           <span class="shrink-0 hazon-chip px-2" style="color:{{ n.stage.color }};background:{{ n.stage.color }}1a">{{ n.stage.name }}</span>
         </div>
         <div class="mt-1.5 flex items-center justify-between gap-2">
-          <span class="font-mono text-[12.5px] font-bold text-[#fbbf24]">{{ n.valor }}</span>
+          <span class="font-mono text-[13px] font-bold text-[#fbbf24]">{{ n.valor }}</span>
           <span class="text-[11px] text-[#a6bfc7]">parado há {{ n.dias }} dia{{ n.dias|pluralize }}</span>
         </div>
       </a>
@@ -76,16 +113,16 @@
 
 <div class="flex items-stretch gap-3 overflow-x-auto pb-2">
   {% for col in colunas %}
-  <div class="kanban-col flex w-[290px] shrink-0 flex-col overflow-hidden hazon-card transition-all duration-200"
-       data-stage="{{ col.key }}">
+  <div class="kanban-col flex w-[290px] shrink-0 flex-col overflow-hidden hazon-card transition-[background-color,border-color,box-shadow] duration-200"
+       data-stage="{{ col.key }}" data-grau="{{ col.grau|default:'' }}" data-corpo="{{ col.corpo|default:'' }}">
     <div class="flex items-center gap-2.5 border-b border-white/10 px-4 py-3.5">
       <span class="h-2.5 w-2.5 shrink-0 rounded" style="background:{{ col.color }};box-shadow:0 0 8px {{ col.color }}70"></span>
-      <span class="flex-1 truncate text-[12.5px] font-semibold text-[#bcd3da]">{{ col.name }}</span>
+      <span class="flex-1 truncate text-[13px] font-semibold text-[#bcd3da]">{{ col.name }}</span>
       <span data-contador="{{ col.key }}" class="rounded-full bg-white/5 px-2.5 py-0.5 font-mono text-xs font-bold text-white">{{ col.count }}</span>
       {% if web_pode_editar %}
       <button type="button" data-etapa="{{ col.key }}" aria-label="Nova recepção em {{ col.name }}" title="Nova recepção nesta etapa"
               class="btn-lead-coluna flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#bcd3da] transition hover:border-[#5b8def]/40 hover:bg-[#5b8def]/15 hover:text-[#5b8def]">
-        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
       {% endif %}
     </div>
@@ -96,36 +133,62 @@
         <div class="kanban-card group relative hazon-card-sm p-3.5 transition hover:border-[#5b8def]/40 hover:bg-white/10"
              data-candidato="{{ card.id }}">
           <div class="mb-1.5 flex items-start justify-between gap-2">
-            <span class="text-[13.5px] font-semibold text-white">MX {{ card.nome }}</span>
+            <span class="text-[13px] font-semibold text-white">{{ card.nome }}</span>
             <div class="flex shrink-0 items-center gap-1">
-              <span class="hazon-chip px-2 text-[10px] font-bold uppercase tracking-wide"
+              <span class="hazon-chip px-2 text-[11px] font-bold uppercase tracking-wide"
                     style="color:{{ card.status_cor }};background:{{ card.status_cor }}1a"
                     title="Status da candidatura"></span>
               {% if web_pode_editar %}
               <button type="button" class="btn-excluir-cand flex h-6 w-6 items-center justify-center rounded-md text-[#a6bfc7] hover:bg-red-500/20 hover:text-red-300"
                       data-pk="{{ card.pk }}" title="Excluir candidato" aria-label="Excluir candidato">
-                <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               </button>
               {% endif %}
             </div>
           </div>
-          <div class="mb-2 text-[11.5px] text-[#a6bfc7]">
-            <span class="inline-block rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#94a3b8]">{{ card.grau|default:"MX" }}</span>
-            {% if card.prefeitura and card.prefeitura.sigla %}{{ card.prefeitura.sigla }}{% elif card.prefeitura and card.prefeitura.nome %}{{ card.prefeitura.nome }}{% else %}—{% endif %}
-            {% if card.loja %} · {{ card.loja }}{% endif %}
+          <div class="mb-2 text-[11px] text-[#a6bfc7]">
+            {% if card.prefeitura and card.prefeitura.nome %}Vale: {{ card.prefeitura.nome }}{% else %}Vale: —{% endif %}
+            {% if card.loja %} · Loja: {{ card.loja }}{% else %} · Loja: —{% endif %}
           </div>
           <div class="flex items-center justify-between gap-2 border-t border-white/10 pt-2">
-            <span class="text-[10px] font-bold uppercase tracking-[0.14em]" style="color:{{ card.status_cor }}">{{ card.status_label }}</span>
+            <span class="text-[11px] font-bold uppercase tracking-[0.14em]" style="color:{{ card.status_cor }}">{{ card.status_label }}</span>
             {% if card.status == 'FICHA_ENVIADA' or card.status == 'EM_ANALISE' %}
-              <span class="text-[10.5px] font-medium text-[#a6bfc7]">Envio: {{ card.envio_email|default:"—" }}</span>
+              <span class="text-[11px] font-medium text-[#a6bfc7]">Envio: {{ card.envio_email|default:"—" }}</span>
             {% else %}
               <button type="button" class="btn-ver-candidato hazon-btn hazon-btn-ghost h-8 px-3 text-[11px] font-semibold" data-pk="{{ card.pk }}">
-                <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 Visualizar
               </button>
             {% endif %}
           </div>
         </div>
+      {% elif card.tipo == 'membro' %}
+      <!-- Card de membro: coluna de grau lista os detentores do grau anterior -->
+      <div class="kanban-card group relative hazon-card-sm p-3.5 transition hover:border-[#4ade80]/40 hover:bg-white/10"
+           data-membro="{{ card.id }}">
+        <div class="mb-1.5 flex items-start justify-between gap-2">
+          {% if card.presenca < 50 %}
+          <a href="{% url 'membros:detalhe' card.id %}" class="text-[13px] font-semibold text-red-400 hover:text-red-300">{{ card.nome }}</a>
+          {% else %}
+          <a href="{% url 'membros:detalhe' card.id %}" class="text-[13px] font-semibold text-white hover:text-[#5b8def]">{{ card.nome }}</a>
+          {% endif %}
+          <span class="hazon-chip shrink-0 px-2 font-mono" title="Grau atual" style="color:{{ col.color }};background:{{ col.color }}1a">{% if card.grau_at %}{{ card.grau_at }}°{% else %}—{% endif %}</span>
+        </div>
+        <div class="mb-2 flex items-center gap-2 text-[11px] text-[#a6bfc7]">
+          {% if card.loja_label %}<span class="truncate">{{ card.loja_label }}</span>{% endif %}
+          <span class="hazon-chip shrink-0 px-1.5 font-mono text-[11px]" title="Presença nas chamadas"
+                style="color:{% if card.presenca < 50 %}#f87171{% else %}#4ade80{% endif %};background:{% if card.presenca < 50 %}#f87171{% else %}#4ade80{% endif %}1a">
+            Presença {{ card.presenca }}%
+          </span>
+          {% if card.situacao == 'INATIVO' %}
+          <span class="hazon-chip shrink-0 px-1.5 text-[11px] font-bold uppercase tracking-wide text-[#a6bfc7] bg-white/10" title="Situação do membro">Inativo</span>
+          {% endif %}
+        </div>
+        <div class="flex items-center justify-between gap-2 border-t border-white/10 pt-2">
+          <span class="text-[11px] font-bold uppercase tracking-[0.14em]" style="color:{{ col.color }}">Candidato</span>
+          <span class="text-[11px] font-medium text-[#bcd3da]">→ {{ col.name }}</span>
+        </div>
+      </div>
 {% else %}
         {% include 'recepcao/_card.html' %}
         {% endif %}
@@ -142,61 +205,61 @@
 
 {% if web_pode_editar %}
 <!-- Modal de novo candidato (Súplica) -->
-<div id="modal-candidato" class="fixed inset-0 z-40 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="candidato-titulo">
-  <div class="absolute inset-0" style="background:rgba(0,0,0,.62);backdrop-filter:blur(4px)" data-fechar-candidato></div>
-  <div class="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#0d1f3c] p-6">
+<div id="modal-candidato" class="fixed inset-0 z-40 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="candidato-titulo" tabindex="-1">
+  <div class="absolute inset-0" style="background:rgba(0,0,0,.62);backdrop-filter:blur(4px)" data-fechar-candidato aria-hidden="true"></div>
+  <div class="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#0d1f3c] p-6" style="overscroll-behavior:contain;max-height:88vh;overflow-y:auto">
     <div class="mb-5 flex items-center justify-between gap-3">
       <h2 id="candidato-titulo" class="font-display text-lg font-semibold text-white">Novo Candidato (Súplica)</h2>
       <button type="button" data-fechar-candidato aria-label="Fechar"
               class="flex h-9 w-9 items-center justify-center rounded-lg text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">✕</button>
     </div>
-    <p class="-mt-2 mb-5 text-[12.5px] leading-relaxed text-[#a6bfc7]">
+    <p class="-mt-2 mb-5 text-[13px] leading-relaxed text-[#a6bfc7]">
       O candidato receberá um e-mail com link para preencher sua ficha e definir senha.
     </p>
     <form id="form-candidato" class="space-y-4" novalidate>
       {% csrf_token %}
       <div>
-        <label for="candidato-nome" class="mb-1 block text-[12px] font-semibold uppercase tracking-wider text-[#bcd3da]">Nome Completo *</label>
+        <label for="candidato-nome" class="mb-1 block text-[13px] font-semibold uppercase tracking-wider text-[#bcd3da]">Nome Completo *</label>
         <input id="candidato-nome" name="nome" required autocomplete="name" placeholder="Nome do candidato"
-               class="w-full rounded-xl border border-white/12 bg-white/6 px-4 py-3 text-[13.5px] text-white placeholder-[#a6bfc7] outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10">
+               class="w-full rounded-xl border border-white/12 bg-white/6 px-4 py-3 text-[13px] text-white placeholder-[#a6bfc7] outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
       </div>
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label for="candidato-prefeitura" class="mb-1 block text-[12px] font-semibold uppercase tracking-wider text-[#bcd3da]">Prefeitura *</label>
+          <label for="candidato-prefeitura" class="mb-1 block text-[13px] font-semibold uppercase tracking-wider text-[#bcd3da]">Vale *</label>
           <select id="candidato-prefeitura" name="prefeitura" required
-                  class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13.5px] text-white outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10">
-            <option value="">Selecione...</option>
+                  class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13px] text-white outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
+            <option value="">Selecione…</option>
           </select>
         </div>
         <div>
-          <label for="candidato-loja" class="mb-1 block text-[12px] font-semibold uppercase tracking-wider text-[#bcd3da]">Loja *</label>
+          <label for="candidato-loja" class="mb-1 block text-[13px] font-semibold uppercase tracking-wider text-[#bcd3da]">Loja *</label>
           <select id="candidato-loja" name="loja" required disabled
-                  class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13.5px] text-white outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10">
-            <option value="">Selecione a prefeitura...</option>
+                  class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13px] text-white outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
+            <option value="">Selecione o vale…</option>
           </select>
         </div>
       </div>
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label for="candidato-cpf" class="mb-1 block text-[12px] font-semibold uppercase tracking-wider text-[#bcd3da]">CPF</label>
+          <label for="candidato-cpf" class="mb-1 block text-[13px] font-semibold uppercase tracking-wider text-[#bcd3da]">CPF</label>
           <input id="candidato-cpf" name="cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00"
                  maxlength="14"
-                 class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13.5px] text-white placeholder-[#a6bfc7] outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10">
+                 class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13px] text-white placeholder-[#a6bfc7] outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
         </div>
         <div>
-          <label for="candidato-celular" class="mb-1 block text-[12px] font-semibold uppercase tracking-wider text-[#bcd3da]">Celular</label>
+          <label for="candidato-celular" class="mb-1 block text-[13px] font-semibold uppercase tracking-wider text-[#bcd3da]">Celular</label>
           <input id="candidato-celular" name="celular" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000"
-                 class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13.5px] text-white placeholder-[#a6bfc7] outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10">
+                 class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13px] text-white placeholder-[#a6bfc7] outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
         </div>
       </div>
       <div>
-        <label for="candidato-email" class="mb-1 block text-[12px] font-semibold uppercase tracking-wider text-[#bcd3da]">E-mail</label>
+        <label for="candidato-email" class="mb-1 block text-[13px] font-semibold uppercase tracking-wider text-[#bcd3da]">E-mail</label>
         <input id="candidato-email" name="email" type="email" autocomplete="email" placeholder="email@exemplo.com"
-               class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13.5px] text-white placeholder-[#a6bfc7] outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10">
+               class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13px] text-white placeholder-[#a6bfc7] outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
       </div>
-      <p id="candidato-erros" class="hidden rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[12.5px] text-red-200"></p>
+      <p id="candidato-erros" class="hidden rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13px] text-red-200"></p>
       <div class="flex gap-3 pt-1">
-        <button type="submit" id="btn-candidato-salvar" class="flex-1 rounded-xl bg-[#5b8def] px-6 py-3 text-[13.5px] font-semibold text-white transition hover:brightness-110" style="min-height:44px">Criar e Enviar</button>
+        <button type="submit" id="btn-candidato-salvar" class="flex-1 rounded-xl bg-[#5b8def] px-6 py-3 text-[13px] font-semibold text-white transition hover:brightness-110" style="min-height:44px">Criar e Enviar</button>
         <button type="button" data-fechar-candidato class="rounded-xl border border-white/15 bg-white/5 px-5 text-[13px] text-[#bcd3da] transition hover:bg-white/10" style="min-height:44px">Cancelar</button>
       </div>
     </form>
@@ -229,6 +292,10 @@
   .stage-select:focus { border-color: rgba(91,141,239,.5); background: rgba(255,255,255,.1); }
   {% endif %}
   .kanban-card.dragging { opacity: 0.35; }
+  /* Durante o arraste a selecao de texto atrapalha o ponteiro */
+  .kanban-card.dragging, .kanban-card.dragging * {
+    user-select: none; -webkit-user-select: none;
+  }
   .kanban-col.is-over {
     border-color: rgba(91,141,239,0.55);
     background: rgba(91,141,239,0.08);
@@ -238,6 +305,15 @@
   @keyframes cardEntrou {
     from { transform: scale(0.92); opacity: 0; }
     to   { transform: scale(1); opacity: 1; }
+  }
+  /* Respeita a preferencia do sistema por movimento reduzido */
+  @media (prefers-reduced-motion: reduce) {
+    .kanban-card, .kanban-card *, .kanban-col, .kanban-col * {
+      animation: none !important;
+      transition: none !important;
+      scroll-behavior: auto !important;
+    }
+    .kanban-card.card-entrou { animation: none !important; }
   }
 </style>
 {% if web_pode_editar %}
@@ -273,11 +349,16 @@ function manterVazio(col) {
 }
 
 // Aviso "+N não exibidos" só para negócios (cards sem .kanban-card[data-candidato])
-function atualizarOcultos(col, count) {
+function atualizarOcultos(col, count, somenteCandidatos) {
   var cards = col.querySelector('.cards');
   if (!cards) return;
   var msg = cards.querySelector('.ocultos-msg');
-  var exibidos = cards.querySelectorAll('.kanban-card[data-id]:not([data-candidato])').length;
+  // Em colunas de candidatos, todos os cards contam; nas demais, só os
+  // negócios (cards sem .kanban-card[data-candidato]) são contabilizados.
+  var seletor = somenteCandidatos
+    ? '.kanban-card[data-id][data-candidato]'
+    : '.kanban-card[data-id]:not([data-candidato])';
+  var exibidos = cards.querySelectorAll(seletor).length;
   var ocultos = count - exibidos;
   if (ocultos > 0) {
     var texto = '+' + ocultos + ' não exibido' + (ocultos > 1 ? 's' : '');
@@ -319,7 +400,7 @@ document.querySelectorAll('.stage-select').forEach(function(sel) {
     fd.append('stage', stage);
     var busca = document.querySelector('input[name=q]');
     if (busca && busca.value) fd.append('q', busca.value);
-    fetch('/recepcao/' + id + '/mover/', {
+    fetch('/iniciacao/' + id + '/mover/', {
       method: 'POST',
       body: fd,
       headers: { 'X-CSRFToken': csrftoken(), 'X-Requested-With': 'XMLHttpRequest' },
@@ -356,8 +437,6 @@ function aplicarBoard(dados) {
     atualizarOcultos(colEl, c.count, !!temCandidato);
     manterVazio(colEl);
   });
-  var total = document.getElementById('total-candidatos');
-  if (total) total.textContent = dados.total_candidatos;
 }
 
 document.querySelectorAll('.kanban-col').forEach(function (col) {
@@ -382,7 +461,7 @@ document.querySelectorAll('.kanban-col').forEach(function (col) {
     // mantém o filtro de busca ativo no recálculo do board (contador/ocultos)
     var busca = document.querySelector('input[name=q]');
     if (busca && busca.value) fd.append('q', busca.value);
-    fetch('/recepcao/' + id + '/mover/', {
+    fetch('/iniciacao/' + id + '/mover/', {
       method: 'POST',
       body: fd,
       headers: { 'X-CSRFToken': csrftoken(), 'X-Requested-With': 'XMLHttpRequest' },
@@ -408,9 +487,6 @@ document.querySelectorAll('.kanban-col').forEach(function (col) {
         }
         var ocultos = col.querySelector('.ocultos-msg');
         if (ocultos) ocultos.remove();
-        cards.querySelectorAll('.kanban-card[data-id]:not([data-candidato])').forEach(function(c){ c.remove(); });
-        ocultos = col.querySelector('.ocultos-msg');
-        if (ocultos) ocultos.remove();
         // (o aviso correto volta no loop abaixo via atualizarOcultos)
         // atualiza contadores, somas, aviso de ocultos e total
         aplicarBoard(dados);
@@ -433,7 +509,7 @@ document.addEventListener('click', function (e) {
 
   var url, card;
   if (btnNeg) {
-    url = '/recepcao/' + btnNeg.getAttribute('data-id') + '/excluir/';
+    url = '/iniciacao/' + btnNeg.getAttribute('data-id') + '/excluir/';
     card = btnNeg.closest('.kanban-card');
   } else {
     url = '/candidato/excluir/' + btnNeg2pk(btnCand) + '/';
@@ -478,30 +554,33 @@ function abrirCandidato() {
     if (el) el.value = '';
   });
   if (selPrefeitura) selPrefeitura.value = '';
-  if (selLoja) { selLoja.value = ''; selLoja.disabled = true; selLoja.innerHTML = '<option value="">Selecione a prefeitura...</option>'; }
+   if (selLoja) { selLoja.value = ''; selLoja.disabled = true; selLoja.innerHTML = '<option value="">Selecione o vale…</option>'; }
   modalCandidato.classList.remove('hidden');
   modalCandidato.classList.add('flex');
+  // Gerenciador acessivel: focus trap, Escape e devolucao de foco
+  if (window.hazonModal) window.hazonModal.abrir(modalCandidato);
   // Carrega prefeituras se vazio (refaz a cada abertura do modal para evitar cache vazio)
   if (selPrefeitura) {
     // Só recarrega se não houver opções além do placeholder
     var temOpcoes = Array.from(selPrefeitura.options).some(function(o) { return o.value !== ''; });
     if (!temOpcoes) {
-      selPrefeitura.innerHTML = '<option value="">Selecione...</option>';
+      selPrefeitura.innerHTML = '<option value="">Selecione…</option>';
       fetch('{% url "candidatos:api_prefeituras" %}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (d.prefeituras && d.prefeituras.length > 0) {
             d.prefeituras.forEach(function(p) {
               var opt = document.createElement('option');
-              opt.value = p.id;
+              opt.value = p.nome;
+              opt.dataset.valeId = p.id;
               opt.textContent = p.nome;
               selPrefeitura.appendChild(opt);
             });
           } else {
-            console.warn('Nenhuma prefeitura encontrada ou erro na API');
+            console.warn('Nenhum vale encontrado ou erro na API');
           }
         })
-        .catch(function() { console.error('Falha ao carregar prefeituras'); });
+        .catch(function() { console.error('Falha ao carregar vales'); });
     }
   }
   var nome = document.getElementById('candidato-nome');
@@ -511,18 +590,20 @@ function fecharCandidato() {
   if (!modalCandidato) return;
   modalCandidato.classList.add('hidden');
   modalCandidato.classList.remove('flex');
+  if (window.hazonModal) window.hazonModal.fechar(modalCandidato);
 }
 
 // Cascata: ao selecionar prefeitura, carrega lojas
 if (selPrefeitura) selPrefeitura.addEventListener('change', function() {
-  var pf = selPrefeitura.value;
-  if (!pf) { selLoja.disabled = true; selLoja.innerHTML = '<option value="">Selecione a prefeitura...</option>'; return; }
+  var optSelecionada = selPrefeitura.options[selPrefeitura.selectedIndex];
+  var pf = optSelecionada ? optSelecionada.dataset.valeId : '';
+  if (!pf) { selLoja.disabled = true; selLoja.innerHTML = '<option value="">Selecione o vale…</option>'; return; }
   selLoja.disabled = true;
-  selLoja.innerHTML = '<option value="">Carregando...</option>';
+  selLoja.innerHTML = '<option value="">Carregando…</option>';
   fetch('{% url "candidatos:api_lojas_por_prefeitura" %}?prefeitura_id=' + encodeURIComponent(pf), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      selLoja.innerHTML = '<option value="">Selecione...</option>';
+      selLoja.innerHTML = '<option value="">Selecione…</option>';
       (d.lojas || []).forEach(function(l) {
         var opt = document.createElement('option');
         opt.value = l.nome;
@@ -551,7 +632,7 @@ document.addEventListener('keydown', function (e) {
 
 if (formCandidato) formCandidato.addEventListener('submit', function (e) {
   e.preventDefault();
-  if (btnCandidatoSalvar) { btnCandidatoSalvar.disabled = true; btnCandidatoSalvar.textContent = 'Criando...'; }
+  if (btnCandidatoSalvar) { btnCandidatoSalvar.disabled = true; btnCandidatoSalvar.textContent = 'Criando…'; }
   var fd = new FormData(formCandidato);
   fetch('{% url "candidatos:criar_candidato" %}', {
     method: 'POST',
@@ -602,6 +683,8 @@ function abrirDetalheCandidato(pk) {
   // Abre o modal de imediato: o usuário vê o carregamento e qualquer erro
   modalDetalhe.classList.remove('hidden');
   modalDetalhe.classList.add('flex');
+  // Gerenciador acessivel: focus trap, Escape e devolucao de foco
+  if (window.hazonModal) window.hazonModal.abrir(modalDetalhe);
 
   // Reseta o estado anterior
   modalDetalhe.querySelectorAll('[data-campo]').forEach(function(el) {
@@ -706,6 +789,7 @@ function fecharDetalheCandidato() {
   if (!modalDetalhe) return;
   modalDetalhe.classList.add('hidden');
   modalDetalhe.classList.remove('flex');
+  if (window.hazonModal) window.hazonModal.fechar(modalDetalhe);
 
   // Limpa os botões de ação
   var btnAprovar = document.getElementById('btn-aprovar-candidato');
@@ -748,7 +832,7 @@ document.getElementById('btn-aprovar-candidato')?.addEventListener('click', func
   }    if (!window.confirm('Confirmar aprovação e encaminhamento para o próximo nível?')) return;
   var btn = this;
   btn.disabled = true;
-  btn.textContent = 'Enviando...';
+  btn.textContent = 'Enviando…';
 
   fetch('{% url "candidatos:api_aprovar_encaminhar" 0 %}'.replace('/0/', '/' + pk + '/'), {
     method: 'POST',
@@ -803,7 +887,7 @@ document.getElementById('btn-devolver-candidato')?.addEventListener('click', fun
   if (!window.confirm('Confirmar devolução deste candidato ao nível anterior?')) return;
   var btn = this;
   btn.disabled = true;
-  btn.textContent = 'Enviando...';
+  btn.textContent = 'Enviando…';
 
   fetch('{% url "candidatos:api_devolver" 0 %}'.replace('/0/', '/' + pk + '/'), {
     method: 'POST',

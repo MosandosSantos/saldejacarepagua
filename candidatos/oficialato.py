@@ -12,7 +12,9 @@ As transições são atômicas e validam:
 - CPF + data_nascimento presentes na transformação em membro.
 """
 
-from django.db import transaction
+import logging
+
+from django.db import IntegrityError, transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -21,6 +23,10 @@ from .models import (
     Candidato,
     CandidatoObservacao,
 )
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import Error as DBError
+
+logger = logging.getLogger(__name__)
 
 
 def _author_slug(papel):
@@ -408,5 +414,9 @@ def iniciar_view(request, candidato_id):
             candidato.data_inicio = timezone.now()
             candidato.save(update_fields=['status', 'data_inicio', 'updated_at'])
         return _response_json(request, candidato, True, 'Candidato iniciado como membro.')
-    except Exception as e:
-        return _response_json(request, candidato, False, f'Erro ao iniciar: {e}')
+    except IntegrityError:
+        logger.warning('Integridade ao iniciar candidato %s (tenant %s)', candidato_id, tenant_id)
+        return _response_json(request, candidato, False, 'Já existe um membro com este CPF.')
+    except (DBError, DjangoValidationError):
+        logger.exception('Erro ao iniciar candidato %s', candidato_id)
+        return _response_json(request, candidato, False, 'Erro ao iniciar o candidato.')

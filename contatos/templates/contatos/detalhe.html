@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Ficha do contato{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Ficha do contato{% endblock %}
 
 {% block conteudo %}
 <div class="mx-auto max-w-4xl space-y-6">
@@ -33,7 +33,7 @@
             <h1 class="font-display text-2xl font-semibold text-white">{{ contato.nome }}</h1>
             <p class="mt-1 text-sm text-[#a6bfc7]">{{ contato.empresa }}</p>
           </div>
-          <div class="font-mono text-[28px] font-bold text-[#5b8def]">{{ contato.valor }}</div>
+          <div class="font-mono text-[28px] font-bold tabular-nums text-[#5b8def]">{{ contato.valor }}</div>
         </div>
         <div class="mt-3 flex flex-wrap items-center gap-2">
           <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold" style="color:{{ contato.stage.color }};background:{{ contato.stage.color }}1a">{{ contato.stage.name }}</span>
@@ -55,9 +55,9 @@
           <span class="inline-flex items-center gap-1 rounded-full py-1 pl-2.5 pr-1 text-[11px] font-semibold" style="color:{{ t.cor }};background:{{ t.cor }}1a">
             {{ t.nome }}
             {% if web_eh_admin %}
-              <form method="post" action="{% url 'contatos:remover_tag' contato.id t.id %}" class="inline">
+              <form method="post" action="{% url 'contatos:remover_tag' contato.id t.id %}" aria-label="Remover tag {{ t.nome }}" class="inline">
                 {% csrf_token %}
-                <button type="submit" class="rounded-full px-1 text-[10px] leading-none transition hover:bg-white/15" title="Remover tag" style="color:inherit">✕</button>
+                <button type="submit" class="rounded-full px-1 text-[10px] leading-none transition hover:bg-white/15" title="Remover tag" aria-label="Remover tag {{ t.nome }}" style="color:inherit">✕</button>
               </form>
             {% endif %}
           </span>
@@ -65,10 +65,10 @@
           <span class="text-[12.5px] text-[#a6bfc7]">Sem tags ainda.</span>
         {% endfor %}
         {% if web_pode_editar %}
-        <form method="post" action="{% url 'contatos:adicionar_tag' contato.id %}" class="inline-flex items-center gap-1.5">
+        <form method="post" action="{% url 'contatos:adicionar_tag' contato.id %}" aria-label="Adicionar nova tag" class="inline-flex items-center gap-1.5" data-unsaved-guard>
           {% csrf_token %}
-          <input type="text" name="nome" placeholder="+ Nova tag"
-                 class="w-28 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] text-white outline-none transition placeholder:text-[#a6bfc7] focus:border-[#5b8def]/40">
+          <input type="text" id="nova-tag-nome" name="nome" placeholder="+ Nova tag" aria-label="Nome da nova tag"
+                 class="w-28 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] text-white outline-none transition placeholder:text-[#a6bfc7] focus:border-[#5b8def]/40 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
           <button type="submit" class="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-[#bcd3da] transition hover:bg-white/10">OK</button>
         </form>
         {% endif %}
@@ -82,10 +82,10 @@
       <h2 class="font-display text-lg font-semibold text-white">Negócios</h2>
       <div class="flex flex-wrap items-center gap-2">
         {% if web_pode_editar and modelos_email %}
-        <form method="post" action="{% url 'emails:enviar_contato' contato.id %}" class="flex items-center gap-1.5">
+        <form method="post" action="{% url 'emails:enviar_contato' contato.id %}" aria-label="Enviar e-mail ao contato" class="flex items-center gap-1.5" data-unsaved-guard>
           {% csrf_token %}
-          <select name="modelo_id" required
-                  class="rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 py-2 text-[11.5px] text-[#bcd3da] outline-none">
+          <select name="modelo_id" id="modelo-email" required aria-label="Modelo de e-mail"
+                  class="rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 py-2 text-[11.5px] text-[#bcd3da] outline-none focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
             <option value="" disabled selected>Enviar e-mail…</option>
             {% for m in modelos_email %}
               <option value="{{ m.id }}">{{ m.nome }}</option>
@@ -109,35 +109,34 @@
             <div class="flex items-center gap-2">
               <span class="truncate text-[13.5px] font-semibold text-white">{{ n.titulo }}</span>
               {% if n.principal %}
-                <span class="text-[12px] text-[#fbbf24]" title="Negócio principal">★</span>
+                <span class="text-[12px] text-[#fbbf24]" title="Negócio principal"><span aria-hidden="true">★</span><span class="sr-only">Negócio principal</span></span>
               {% endif %}
             </div>
-            <div class="text-[11.5px] text-[#a6bfc7]">criado em {{ n.created_at|date:"d/m/Y" }} · {{ n.qtd_movs }} movimentações</div>
+            <div class="text-[11.5px] text-[#a6bfc7]">criado em {{ n.created_at|databr }} · {{ n.qtd_movs }} movimentações</div>
           </div>
           <span class="font-mono text-[15px] font-bold text-[#5b8def]">{{ n.valor }}</span>
           <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold" style="color:{{ n.stage.color }};background:{{ n.stage.color }}1a">{{ n.stage.name }}</span>
           <div class="flex items-center gap-1.5">
             <a href="{% url 'contatos:orcamento_pdf' contato.id n.id %}" title="Baixar orçamento em PDF"
-               class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#bcd3da] transition hover:border-[#5b8def]/40 hover:bg-[#5b8def]/15 hover:text-[#5b8def]">
-              <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+               class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#bcd3da] transition hover:border-[#5b8def]/40 hover:bg-[#5b8def]/15 hover:text-[#5b8def]" aria-label="Baixar orçamento em PDF">
+              <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             </a>
             {% if web_pode_editar %}
             <a href="{% url 'contatos:negocio_editar' contato.id n.id %}"
                class="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-[#bcd3da] transition hover:bg-white/10">Editar</a>
             {% endif %}
             {% if web_eh_admin and not n.principal %}
-              <form method="post" action="{% url 'contatos:negocio_tornar_principal' contato.id n.id %}" class="inline">
+              <form method="post" action="{% url 'contatos:negocio_tornar_principal' contato.id n.id %}" aria-label="Tornar {{ n.titulo }} negócio principal" class="inline">
                 {% csrf_token %}
-                <button type="submit" title="Tornar negócio principal"
+                <button type="submit" title="Tornar negócio principal" aria-label="Tornar {{ n.titulo }} negócio principal"
                         class="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-[#fbbf24] transition hover:bg-white/10">★</button>
               </form>
             {% endif %}
             {% if web_eh_admin %}
-              <form method="post" action="{% url 'contatos:negocio_excluir' contato.id n.id %}" class="inline">
+              <form method="post" action="{% url 'contatos:negocio_excluir' contato.id n.id %}" aria-label="Excluir negócio {{ n.titulo }}" class="inline">
                 {% csrf_token %}
-                <button type="submit" title="Excluir negócio"
-                        class="hazon-btn hazon-btn-danger px-2.5 py-1 text-[11px] font-semibold transition"
-                        onclick="return confirm('Excluir este negócio? Esta ação não pode ser desfeita.');">✕</button>
+                <button type="submit" title="Excluir negócio" aria-label="Excluir negócio {{ n.titulo }}"
+                        class="hazon-btn hazon-btn-danger px-2.5 py-1 text-[11px] font-semibold transition" data-confirm="Excluir este negócio? Esta ação não pode ser desfeita.">✕</button>
               </form>
             {% endif %}
           </div>
@@ -156,14 +155,14 @@
          class="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[11.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Ver todas</a>
     </div>
     {% if web_pode_editar %}
-    <form method="post" action="{% url 'tarefas:nova_para_contato' contato.id %}" class="mb-6 flex flex-wrap items-center gap-2">
+    <form method="post" action="{% url 'tarefas:nova_para_contato' contato.id %}" aria-label="Criar nova tarefa" class="mb-6 flex flex-wrap items-center gap-2" data-unsaved-guard>
       {% csrf_token %}
-      <input type="text" name="titulo" placeholder="Follow-up: ligar de volta, reenviar proposta…" required
-             class="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13px] text-white outline-none transition placeholder:text-[#a6bfc7] focus:border-[#5b8def]/40">
-      <input type="date" name="vencimento"
-             class="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-[13px] text-white outline-none transition focus:border-[#5b8def]/40">
-      <select name="prioridade"
-              class="rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40">
+      <input type="text" id="tarefa-titulo" name="titulo" placeholder="Follow-up: ligar de volta, reenviar proposta…" required aria-label="Título da tarefa"
+             class="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13px] text-white outline-none transition placeholder:text-[#a6bfc7] focus:border-[#5b8def]/40 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
+      <input type="date" id="tarefa-vencimento" name="vencimento" aria-label="Data de vencimento da tarefa"
+             class="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-[13px] text-white outline-none transition focus:border-[#5b8def]/40 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
+      <select name="prioridade" id="tarefa-prioridade" aria-label="Prioridade da tarefa"
+              class="rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
         <option value="baixa">Baixa</option>
         <option value="media" selected>Média</option>
         <option value="alta">Alta</option>
@@ -176,14 +175,14 @@
       {% for t in tarefas %}
       <div class="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
         {% if web_pode_editar %}
-        <form method="post" action="{% if t.concluida %}{% url 'tarefas:reabrir' t.id %}{% else %}{% url 'tarefas:concluir' t.id %}{% endif %}" class="inline shrink-0">
+        <form method="post" action="{% if t.concluida %}{% url 'tarefas:reabrir' t.id %}{% else %}{% url 'tarefas:concluir' t.id %}{% endif %}" aria-label="{% if t.concluida %}Reabrir{% else %}Concluir{% endif %} tarefa {{ t.titulo }}" class="inline shrink-0">
           {% csrf_token %}
           <input type="hidden" name="voltar" value="{{ request.path }}">
           <button type="submit" title="{% if t.concluida %}Reabrir tarefa{% else %}Concluir tarefa{% endif %}"
                   class="flex h-5 w-5 items-center justify-center rounded-md border transition
-                  {% if t.concluida %}border-[#4ade80]/60 bg-[#4ade80]/20 text-[#4ade80]{% else %}border-white/25 hover:border-[#4ade80]/60 hover:bg-[#4ade80]/10{% endif %}">
+                  {% if t.concluida %}border-[#4ade80]/60 bg-[#4ade80]/20 text-[#4ade80]{% else %}border-white/25 hover:border-[#4ade80]/60 hover:bg-[#4ade80]/10{% endif %}" aria-label="{% if t.concluida %}Reabrir tarefa{% else %}Concluir tarefa{% endif %}">
             {% if t.concluida %}
-            <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
             {% endif %}
           </button>
         </form>
@@ -195,17 +194,16 @@
             {% if t.atrasada %}<span class="rounded-full bg-red-400/15 px-2 py-0.5 text-[10px] font-bold uppercase text-red-300">atrasada</span>{% endif %}
           </div>
           <div class="mt-1 text-[11.5px] text-[#a6bfc7]">
-            {% if t.vencimento %}vencimento {{ t.vencimento|date:"d/m/Y" }}{% endif %}
+            {% if t.vencimento %}vencimento {{ t.vencimento|databr }}{% endif %}
             {% if t.responsavel_nome %} · {{ t.responsavel_nome }}{% endif %}
           </div>
         </div>
         {% if web_eh_admin %}
-        <form method="post" action="{% url 'tarefas:excluir' t.id %}" class="inline">
+        <form method="post" action="{% url 'tarefas:excluir' t.id %}" aria-label="Excluir tarefa {{ t.titulo }}" class="inline">
           {% csrf_token %}
           <input type="hidden" name="voltar" value="{{ request.path }}">
-          <button type="submit" title="Excluir tarefa"
-                  class="hazon-btn hazon-btn-danger px-2.5 py-1 text-[11px] font-semibold transition"
-                  onclick="return confirm('Excluir esta tarefa?');">✕</button>
+          <button type="submit" title="Excluir tarefa" aria-label="Excluir tarefa {{ t.titulo }}"
+                  class="hazon-btn hazon-btn-danger px-2.5 py-1 text-[11px] font-semibold transition" data-confirm="Excluir esta tarefa?">✕</button>
         </form>
         {% endif %}
       </div>
@@ -228,7 +226,7 @@
       <div class="rounded-xl border border-white/10 bg-white/5 p-4"><div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#a6bfc7]">Cargo</div><div class="text-[13px] text-white">{{ contato.cargo|default:"—" }}</div></div>
       <div class="rounded-xl border border-white/10 bg-white/5 p-4"><div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#a6bfc7]">Carteira</div><div class="text-[13px] text-white">{% if contato.carteira %}<a class="text-[#5b8def] transition hover:underline" href="{% url 'contatos:carteira_detalhe' contato.carteira.id %}">{{ contato.carteira.nome }}</a>{% else %}—{% endif %}</div></div>
       <div class="rounded-xl border border-white/10 bg-white/5 p-4"><div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#a6bfc7]">Endereço</div><div class="text-[13px] text-white">{{ contato.endereco|default:"—" }}</div></div>
-      <div class="rounded-xl border border-white/10 bg-white/5 p-4"><div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#a6bfc7]">Nascimento</div><div class="text-[13px] text-white">{{ contato.nascimento|date:"d/m/Y"|default:"—" }}</div></div>
+      <div class="rounded-xl border border-white/10 bg-white/5 p-4"><div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#a6bfc7]">Nascimento</div><div class="text-[13px] text-white">{{ contato.nascimento|databr|default:"—" }}</div></div>
       <div class="rounded-xl border border-white/10 bg-white/5 p-4"><div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#a6bfc7]">CPF</div><div class="font-mono text-[13px] text-white">{{ contato.cpf|default:"—" }}</div></div>
       <div class="rounded-xl border border-white/10 bg-white/5 p-4"><div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#a6bfc7]">Cidade / Bairro</div><div class="text-[13px] text-white">{% if contato.cidade or contato.bairro %}{{ contato.cidade }}{% if contato.cidade and contato.bairro %} · {% endif %}{{ contato.bairro }}{% else %}—{% endif %}</div></div>
       <div class="rounded-xl border border-white/10 bg-white/5 p-4"><div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#a6bfc7]">Procedimento de interesse</div><div class="text-[13px] text-white">{{ contato.procedimento|default:"—" }}</div></div>
@@ -252,13 +250,18 @@
         <div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#a6bfc7]">Observações</div>
         <div class="whitespace-pre-wrap text-[13px] text-white">{{ contato.observacoes }}</div>
       </div>
+    {% else %}
+      <div class="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
+        <div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#a6bfc7]">Observações</div>
+        <p class="text-[13px] text-[#a6bfc7]">Nenhuma observação registrada para este contato.</p>
+      </div>
     {% endif %}
   </div>
 
   <!-- Histórico de etapas -->
-  {% if movimentacoes %}
   <div class="hazon-card-lg p-8">
     <h2 class="mb-5 font-display text-lg font-semibold text-white">Histórico de etapas</h2>
+    {% if movimentacoes %}
     <div class="space-y-3">
       {% for mv in movimentacoes %}
         <div class="flex flex-wrap items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
@@ -272,23 +275,26 @@
           <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold" style="color:{{ mv.para.color }};background:{{ mv.para.color }}1a">{{ mv.para.name }}</span>
           <span class="ml-auto flex items-center gap-2 text-[11px] text-[#a6bfc7]">
             <span class="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#3b7ded] to-[#1450a0] text-[9px] font-bold text-white">{{ mv.autor_iniciais }}</span>
-            {{ mv.autor }} &middot; {{ mv.created_at|date:"d/m/Y H:i" }}
+            {{ mv.autor }} &middot; {{ mv.created_at|datahorabr }}
           </span>
         </div>
       {% endfor %}
     </div>
+    {% else %}
+      <p class="text-[13px] text-[#a6bfc7]">Nenhuma mudança de etapa registrada até agora.</p>
+    {% endif %}
   </div>
-  {% endif %}
 
   <!-- Notas -->
   <div class="hazon-card-lg p-8">
     <h2 class="mb-5 font-display text-lg font-semibold text-white">Notas</h2>
     {% if web_pode_editar %}
-    <form method="post" action="{% url 'contatos:adicionar_nota' contato.id %}" class="mb-6">
+    <form method="post" action="{% url 'contatos:adicionar_nota' contato.id %}" aria-label="Adicionar nota" class="mb-6">
       {% csrf_token %}
+      <label for="{{ nota_form.texto.id_for_label }}" class="hazon-label">{{ nota_form.texto.label }}</label>
       {{ nota_form.texto }}
       {% if nota_form.texto.errors %}
-        <p class="mt-1.5 text-xs text-red-300">{{ nota_form.texto.errors|striptags }}</p>
+        <p class="mt-1.5 text-xs text-red-300" role="alert">{{ nota_form.texto.errors|striptags }}</p>
       {% endif %}
       <div class="mt-3">
         <button type="submit" class="hazon-btn hazon-btn-primary px-5 py-2.5 text-[13.5px] font-semibold text-white transition hover:brightness-110">Adicionar nota</button>
@@ -302,12 +308,12 @@
             <div class="flex items-center gap-2">
               <span class="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#3b7ded] to-[#1450a0] text-[10px] font-bold text-white">{{ nota.autor_iniciais }}</span>
               <span class="text-[12px] font-semibold text-white">{{ nota.autor }}</span>
-              <span class="text-[11px] text-[#a6bfc7]">{{ nota.created_at|date:"d/m/Y H:i" }}</span>
+              <span class="text-[11px] text-[#a6bfc7]">{{ nota.created_at|datahorabr }}</span>
             </div>
             {% if web_eh_admin %}
-              <form method="post" action="{% url 'contatos:excluir_nota' contato.id nota.id %}">
+              <form method="post" action="{% url 'contatos:excluir_nota' contato.id nota.id %}" aria-label="Excluir nota de {{ nota.autor }}">
                 {% csrf_token %}
-                <button type="submit" class="rounded-lg px-2 py-1 text-[11px] text-red-300/80 transition hover:bg-red-500/10 hover:text-red-300" onclick="return confirm('Excluir esta nota?');">Excluir</button>
+                <button type="submit" class="rounded-lg px-2 py-1 text-[11px] text-red-300/80 transition hover:bg-red-500/10 hover:text-red-300" data-confirm="Excluir esta nota?">Excluir</button>
               </form>
             {% endif %}
           </div>
@@ -325,9 +331,9 @@
     <a href="{% url 'contatos:editar' contato.id %}" class="hazon-btn hazon-btn-primary px-5 py-2.5 text-[13.5px] font-semibold text-white transition hover:brightness-110">Editar</a>
     {% endif %}
     {% if web_eh_admin %}
-      <form method="post" action="{% url 'contatos:excluir' contato.id %}">
+      <form method="post" action="{% url 'contatos:excluir' contato.id %}" aria-label="Excluir contato">
         {% csrf_token %}
-        <button type="submit" class="hazon-btn hazon-btn-danger px-5 py-2.5 text-[12.5px] font-semibold transition" onclick="return confirm('Excluir este contato? Esta ação não pode ser desfeita.');">Excluir</button>
+        <button type="submit" class="hazon-btn hazon-btn-danger px-5 py-2.5 text-[12.5px] font-semibold transition" data-confirm="Excluir este contato? Esta ação não pode ser desfeita.">Excluir</button>
       </form>
     {% endif %}
   </div>

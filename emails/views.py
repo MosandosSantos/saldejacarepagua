@@ -8,9 +8,16 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from acesso.decorators import filtro_tenant, web_login_required, web_requer_edicao
+from acesso.decorators import (
+    filtro_tenant,
+    web_login_required,
+    web_requer_edicao,
+    web_requer_tenant_context,
+)
 from contatos.models import Contato
 from core.dominio import SEGS
+from core.utils import base_pixel as _base_pixel
+from core.utils import tenant_id as _tenant_id
 from emails.models import EmailEnviado, ModeloEmail
 from emails.servico import (
     EMAIL_VAZIO,
@@ -23,13 +30,7 @@ from emails.servico import (
 
 def _tem_tenant(request) -> bool:
     """Módulo de e-mail exige tenant (admin_saas da plataforma não tem)."""
-    return request.session.get('usuario', {}).get('tenant_id') is not None
-
-
-def _base_pixel(request):
-    """URL base do pixel de abertura, sem barra final (ex.: http://host/emails/aberto)."""
-    fake = '00000000-0000-0000-0000-000000000000'
-    return request.build_absolute_uri(reverse('emails:aberto', args=[fake])).replace(fake, '').rstrip('/')
+    return _tenant_id(request) is not None
 
 
 def _erros_do_form(request):
@@ -89,6 +90,7 @@ def lista(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def novo(request):
     if not _tem_tenant(request):
@@ -98,7 +100,7 @@ def novo(request):
         erros = _erros_do_form(request)
         if not erros:
             ModeloEmail.objects.create(
-                tenant_id=request.session.get('usuario', {}).get('tenant_id'),
+                tenant_id=_tenant_id(request),
                 nome=request.POST['nome'].strip(),
                 assunto=request.POST['assunto'].strip(),
                 corpo=request.POST['corpo'].strip(),
@@ -115,6 +117,7 @@ def novo(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def editar(request, pk):
     modelo = get_object_or_404(filtro_tenant(request, ModeloEmail.objects.all()), pk=pk)
@@ -138,6 +141,7 @@ def editar(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def excluir(request, pk):
     modelo = get_object_or_404(filtro_tenant(request, ModeloEmail.objects.all()), pk=pk)
@@ -156,6 +160,7 @@ def excluir(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def campanha(request):
     """Dispara um modelo de e-mail para um público (filtro por segmento), com rastreio."""
@@ -198,6 +203,7 @@ def campanha(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def enviar_contato(request, contato_id):
     """Envio individual: escolhe um modelo e dispara para um contato específico."""

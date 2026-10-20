@@ -6,23 +6,32 @@ Otimizado para performance:
   - List comprehensions em vez de loops
 """
 
+import logging
 from datetime import timedelta
 
-from django.db.models import Q
+from django.core.cache import cache
+from django.db import DatabaseError, OperationalError, ProgrammingError
+from django.db.models import Max, Q
 from django.utils import timezone
 
-from acesso.decorators import nicho_da_sessao, tenant_id_da_sessao
+from acesso.decorators import tenant_id_da_sessao
+from acesso.models import tenant_gprb
+from candidatos.models import Candidato
+from candidatos.oficialato import NIVEL_PARA_COLUNA_KANBAN
+from contatos.models import Vale
 from contatos.scoring import completude_do_contato, nivel_do_score
 from core.dominio import SEG_FALLBACK, SEGS
+from core.gprb import connect as gprb_connect
+from core.gprb.connection import resolve_tenant_code
 from core.utils import brl_curto as _brl_curto
-from recepcao.models import etapas_do_tenant, etapas_e_map_do_tenant
+
+logger = logging.getLogger(__name__)
 
 
 def tenant_id_da_sessao_ou_padrao(request):
     """Tenant da sessao; admin_saas resolve para o tenant GPRB canonico."""
     tid = tenant_id_da_sessao(request)
     if tid is None:
-        from acesso.models import tenant_gprb
         _t = tenant_gprb()
         tid = _t.id if _t else None
     return tid
@@ -93,7 +102,6 @@ def _card_dict_completo(negocio, stage_map):
 
 def _data_envio(candidato):
     """Retorna a data de envio do e-mail de convite formatada."""
-    from candidatos.models import Candidato
 
     if candidato.status not in (Candidato.Status.FICHA_ENVIADA, Candidato.Status.EM_ANALISE):
         return ''
@@ -109,47 +117,50 @@ def _data_envio(candidato):
 
 
 # Cache do indice invertido de prefeituras
-_prefeituras_cache = None
-_prefeituras_por_nome = None
+_prefeituras_cache = {}
+_prefeituras_por_nome = {}
 
 
 def prefeituras_map():
     """Retorna dict {id: {nome, sigla}} das prefeituras com cache."""
-    global _prefeituras_cache
+    tenant_code = resolve_tenant_code()
 
-    if _prefeituras_cache is not None:
-        return _prefeituras_cache
+    if tenant_code in _prefeituras_cache:
+        return _prefeituras_cache[tenant_code]
 
-    from django.core.cache import cache
-
-    cache_key = 'recepcao_prefeituras_map'
+    cache_key = f'recepcao_prefeituras_map:{tenant_code}'
     result = cache.get(cache_key)
     if result is not None:
-        _prefeituras_cache = result
+        _prefeituras_cache[tenant_code] = result
+        _init_indice_invertido(result, tenant_code)
         return result
 
     try:
-        from core.gprb import connect
-        conn = connect()
+        conn = gprb_connect()
         try:
             cur = conn.cursor()
-            cur.execute('SELECT id, nome, sigla FROM prefeitura ORDER BY nome')
+            cur.execute(
+                'SELECT p.id, p.nome, p.sigla FROM prefeitura p '
+                'JOIN tenant t ON t.id = p."tenantId" '
+                'WHERE t.code = %s ORDER BY p.nome',
+                (tenant_code,),
+            )
             result = {r[0]: {'nome': r[1], 'sigla': r[2]} for r in cur.fetchall()}
         finally:
             conn.close()
-    except BaseException:
+    except (DatabaseError, OperationalError, ProgrammingError, AttributeError, TypeError, ValueError):
+        logger.exception('Falha ao buscar prefeituras GPRB; usando mapa vazio')
         result = {}
 
     cache.set(cache_key, result, timeout=3600)
-    _prefeituras_cache = result
-    _init_indice_invertido(result)
+    _prefeituras_cache[tenant_code] = result
+    _init_indice_invertido(result, tenant_code)
     return result
 
 
-def _init_indice_invertido(prefs):
+def _init_indice_invertido(prefs, tenant_code):
     """Cria indice invertido {nome: id} para lookup O(1)."""
-    global _prefeituras_por_nome
-    _prefeituras_por_nome = {v['nome']: k for k, v in prefs.items()}
+    _prefeituras_por_nome[tenant_code] = {v['nome']: k for k, v in prefs.items()}
 
 
 def prefeitura_info(valor):
@@ -157,6 +168,7 @@ def prefeitura_info(valor):
     if not valor:
         return {'nome': '', 'sigla': ''}
 
+    tenant_code = resolve_tenant_code()
     prefs = prefeituras_map()
 
     # O(1): busca por UUID
@@ -164,35 +176,43 @@ def prefeitura_info(valor):
         return prefs[valor]
 
     # O(1): busca por nome (indice invertido)
-    global _prefeituras_por_nome
-    if _prefeituras_por_nome is None:
-        _init_indice_invertido(prefs)
+    if tenant_code not in _prefeituras_por_nome:
+        _init_indice_invertido(prefs, tenant_code)
 
-    pf_id = _prefeituras_por_nome.get(valor)
+    pf_id = _prefeituras_por_nome[tenant_code].get(valor)
     if pf_id and pf_id in prefs:
         return prefs[pf_id]
 
     return {'nome': valor, 'sigla': ''}
 
 
-def cards_candidatos(tid, limite=30, prefeitura=None):
+def cards_candidatos(tid, limite=30, prefeitura=None, loja=None):
     """Cards de candidatos para a coluna 'suplica' do kanban (com cache).
 
     Args:
         tid: ID do tenant
         limite: Limite máximo de cards (padrão 30)
-        prefeitura: Filtro opcional por nome da prefeitura
+        prefeitura: Filtro opcional por prefeitura — string ou lista de
+            padrões (iconta: id do Vale como string e/ou nome do Vale)
+        loja: Filtro opcional por nome da loja do candidato
     """
-    from django.core.cache import cache
-    from candidatos.models import Candidato
 
     # Usa versão do cache para invalidação eficiente
+    # Invalidação automática ao renomear/editar Vale: inclui max Vale.updated_at.
+    try:
+        vale_rev = Vale.objects.filter(tenant_id=tid).aggregate(m=Max('updated_at'))['m']
+        vale_rev = int(vale_rev.timestamp()) if vale_rev else 0
+    except (AttributeError, TypeError, ValueError, DatabaseError, OperationalError, ProgrammingError):
+        vale_rev = 0
+
     version_key = f'recepcao_cards_candidatos_version_{tid}'
     version = cache.get(version_key, 0)
 
     # Inclui prefeitura e versão na chave do cache
-    pf_key = prefeitura.replace(' ', '_') if prefeitura else 'todas'
-    cache_key = f'recepcao_cards_candidatos_{tid}_{limite}_{pf_key}_v{version}'
+    padroes_pf = [prefeitura] if isinstance(prefeitura, str) else list(prefeitura or [])
+    pf_key = '_'.join(p.replace(' ', '_') for p in padroes_pf) or 'todas'
+    loja_key = loja.replace(' ', '_') if loja else 'todas'
+    cache_key = f'recepcao_cards_candidatos_{tid}_{limite}_{pf_key}_{loja_key}_v{version}_vr{vale_rev}'
     cached = cache.get(cache_key)
     if cached is not None:
         return cached
@@ -202,25 +222,48 @@ def cards_candidatos(tid, limite=30, prefeitura=None):
         status__in=Candidato.STATUS_KANBAN,
     )
 
-    # Filtro por prefeitura
-    if prefeitura:
-        qs = qs.filter(prefeitura__icontains=prefeitura)
+    # Filtro por prefeitura (id string e/ou nome — candidatos guardam os dois)
+    if padroes_pf:
+        filtro_pf = Q()
+        for padrao in padroes_pf:
+            filtro_pf |= Q(prefeitura__icontains=padrao)
+        qs = qs.filter(filtro_pf)
 
-    cands = qs.order_by('-created_at')[:limite]
+    # Filtro por loja (armazenada como nome no candidato)
+    if loja:
+        qs = qs.filter(loja__icontains=loja)
 
-    result = [_card_candidato(c) for c in cands]
-    cache.set(cache_key, result, timeout=300)  # 5 minutos
+    cands = list(qs.order_by('-created_at')[:limite])
+    vales_locais = _vales_locais_por_tenant(tid) if cands else {}
+
+    result = [_card_candidato(c, vales_locais) for c in cands]
+    cache.set(cache_key, result, timeout=300)  # 5 minutos; cache_key already includes vales version? no
     return result
 
 
-def _card_candidato(c):
-    """Monta dict de um candidato (extraido para clareza)."""
-    from candidatos.models import Candidato
-    from candidatos.oficialato import NIVEL_PARA_COLUNA_KANBAN
+def _vales_locais_por_tenant(tenant_id):
+    """Map local tenant Vale(s) to their name by several stable keys."""
+    vales = list(Vale.objects.filter(tenant_id=tenant_id).values('id', 'nome'))
+    mapa = {}
+    for vale in vales:
+        mapa[str(vale['id'])] = vale['nome']
+        mapa[vale['nome'].casefold()] = vale['nome']
+        mapa[str(tenant_id)] = mapa.get(str(tenant_id), vale['nome'])
+    return mapa
 
+
+def _card_candidato(c, vales_locais=None):
+    """Monta dict de um candidato (extraido para clareza)."""
     # A coluna segue o nível de revisão quando existe; depois da aprovação o
     # status tem prioridade (ex.: APROVADO → prefeito).
     coluna = NIVEL_PARA_COLUNA_KANBAN.get(c.status) or NIVEL_PARA_COLUNA_KANBAN.get(c.revisao_atual, 'suplica')
+    prefeitura = (c.prefeitura or '').strip()
+    tenant_key = str(getattr(c, 'tenant_id', ''))
+    nome_vale = (
+        (vales_locais or {}).get(prefeitura)
+        or (vales_locais or {}).get(prefeitura.casefold())
+        or (vales_locais or {}).get(tenant_key)
+    )
 
     return {
         'tipo': 'candidato',
@@ -230,10 +273,12 @@ def _card_candidato(c):
         'status': c.status,
         'status_label': c.get_status_display(),
         'status_cor': Candidato.COR_STATUS_KANBAN.get(c.status, '#94a3b8'),
-        'prefeitura': prefeitura_info(c.prefeitura),
+        'prefeitura': (
+            {'nome': nome_vale, 'sigla': ''}
+            if nome_vale else prefeitura_info(c.prefeitura)
+        ),
         'loja': c.loja,
         'email': c.email,
-        'grau': c.grau,
         'envio_email': _data_envio(c),
         'revisao': c.revisao_atual or '',
         'coluna': coluna,

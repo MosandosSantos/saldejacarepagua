@@ -1,0 +1,102 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}Pagamento de graus — {{ membro.nome }}{% endblock %}
+
+{% block conteudo %}
+<div class="mb-6">
+  <a href="{% url 'membros:detalhe' membro.id %}" class="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#a6bfc7] transition hover:text-white">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+    Voltar ao irmão
+  </a>
+</div>
+
+<div class="mx-auto w-full max-w-2xl">
+  <div class="mb-5">
+    <h1 class="hazon-titulo">Ir para pagamento</h1>
+    <p class="hazon-sub mt-2">Graus de <b class="text-white">{{ membro.nome }}</b> — selecione para simular o pagamento.</p>
+  </div>
+
+  {% if erro %}
+    <p id="form-erro" class="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200" role="alert">{{ erro }}</p>
+  {% endif %}
+
+  <form method="post" id="form-graus" aria-label="Seleção dos graus a pagar" {% if erro %}aria-describedby="form-erro"{% endif %} class="hazon-card-sm space-y-3 p-6" data-unsaved-guard>
+    {% csrf_token %}
+    {% for item in itens %}
+      <label data-codigo="{{ item.codigo }}" class="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 transition hover:bg-white/10">
+        <span class="flex items-center gap-3">
+          <input type="checkbox" id="grau-{{ item.codigo }}" name="itens" value="{{ item.codigo }}" class="grau-check h-4 w-4 accent-[#4ade80]">
+          <span class="text-[14px] font-semibold text-white">{{ item.rotulo }}</span>
+          {% if item.codigo == 'todos' %}
+            <span class="rounded-md bg-[#4ade80]/15 px-1.5 py-0.5 text-[10px] font-bold text-[#4ade80]">ECONOMIA DE R$ 150</span>
+          {% endif %}
+        </span>
+        <span class="font-mono text-[14px] font-bold tabular-nums text-[#7aa8f5]">{{ item.preco_brl }}</span>
+      </label>
+    {% endfor %}
+    <p class="px-1 text-[11.5px] text-[#6f8a93]">Grau 9 exige o 4 · Grau 14 exige 9 e 4 (seleção automática) · “Todos” é exclusivo.</p>
+
+    <div class="flex items-center justify-between rounded-xl border border-[#5b8def]/30 bg-[#5b8def]/10 px-4 py-3.5">
+      <span class="text-[13px] font-semibold text-[#a6bfc7]">Total</span>
+      <span id="total" class="font-mono text-[20px] font-bold tabular-nums text-white" aria-live="polite">{{ total|moedabr|default:0|moedabr }}</span>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-1">
+      <button type="submit" class="flex items-center gap-2 rounded-xl border border-[#4ade80]/50 bg-[#4ade80]/15 px-6 py-3 text-[14px] font-bold text-[#4ade80] transition hover:bg-[#4ade80]/25">
+        Ir para o pagamento
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+(function () {
+  var PRECOS = {4: 350, 9: 350, 14: 350, todos: 900};
+  function checks() {
+    return Array.from(document.querySelectorAll('.grau-check'));
+  }
+  function marcado(codigo) {
+    var cb = checks().find(function (c) { return c.value === codigo; });
+    return cb && cb.checked;
+  }
+  function definir(codigo, valor) {
+    var cb = checks().find(function (c) { return c.value === codigo; });
+    if (cb) cb.checked = valor;
+  }
+  function total() {
+    if (marcado('todos')) return PRECOS.todos;
+    var soma = 0;
+    ['4', '9', '14'].forEach(function (c) { if (marcado(c)) soma += PRECOS[c]; });
+    return soma;
+  }
+  function formatar(v) {
+    return 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+  function atualizar() {
+    document.getElementById('total').textContent = formatar(total());
+  }
+  checks().forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      if (cb.value === 'todos' && cb.checked) {
+        // "Todos" é exclusivo: desmarca os avulsos.
+        ['4', '9', '14'].forEach(function (c) { definir(c, false); });
+      } else if (cb.checked && cb.value !== 'todos') {
+        definir('todos', false);
+        // Cadeia de pré-requisitos.
+        if (cb.value === '9') definir('4', true);
+        if (cb.value === '14') { definir('9', true); definir('4', true); }
+      } else if (!cb.checked) {
+        // Soltar pré-requisito solta os dependentes.
+        if (cb.value === '4') { definir('9', false); definir('14', false); }
+        if (cb.value === '9') definir('14', false);
+      }
+      atualizar();
+    });
+  });
+  atualizar();
+})();
+</script>
+{% endblock %}

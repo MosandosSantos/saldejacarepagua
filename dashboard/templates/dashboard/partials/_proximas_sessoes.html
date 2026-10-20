@@ -1,7 +1,7 @@
 {% load seguranca %}
 <div class="hazon-card-sm flex flex-col p-5 backdrop-blur-xl">
   <div class="mb-4">
-    <h3 class="text-[14px] font-semibold text-white">Candidatos</h3>
+    <h2 class="text-[14px] font-semibold text-white">Candidatos</h2>
     <p class="text-[11px] text-[#6f8a93]">quem quer ingressar · recepção</p>
   </div>
 
@@ -10,9 +10,9 @@
       <table class="w-full border-collapse text-[12px]">
         <thead>
           <tr class="border-b border-white/10 text-left">
-            <th class="pb-2 pr-2 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Nome</th>
-            <th class="pb-2 pr-2 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Loja pretendida</th>
-            <th class="pb-2 pr-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Inclusão</th>
+            <th class="pb-2 pr-2 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]" scope="col">Nome</th>
+            <th class="pb-2 pr-2 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]" scope="col">Loja pretendida</th>
+            <th class="pb-2 pr-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]" scope="col">Inclusão</th>
           </tr>
         </thead>
         <tbody id="cand-table-body"></tbody>
@@ -22,7 +22,7 @@
   {% else %}
     <div class="flex flex-col items-center justify-center gap-2 py-8 text-center">
       <svg viewBox="0 0 24 24" class="h-8 w-8 opacity-60" fill="none" stroke="#5b8def" stroke-width="1.6"
-           stroke-linecap="round" stroke-linejoin="round">
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
         <path d="M19 8v6M22 11h-6"/>
@@ -39,8 +39,24 @@
   if (!dados || !dados.length) return;
 
   var perPage = 5;
-  var page = 1;
   var totalPages = Math.ceil(dados.length / perPage);
+  var PARAM = 'cand_pagina';
+
+  // O estado da paginacao vive na URL (query param) — sobrevive a recarregar/compartilhar.
+  function paginaAtualNaUrl() {
+    var v = parseInt(new URLSearchParams(window.location.search).get(PARAM) || '1', 10);
+    if (isNaN(v) || v < 1) return 1;
+    if (v > totalPages) return totalPages;
+    return v;
+  }
+  function gravarPaginaNaUrl(p) {
+    var url = new URL(window.location.href);
+    if (p > 1) url.searchParams.set(PARAM, String(p));
+    else url.searchParams.delete(PARAM);
+    window.history.replaceState({}, '', url.toString());
+  }
+
+  var page = paginaAtualNaUrl();
 
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -69,7 +85,9 @@
     if (totalPages <= 1) { pag.innerHTML = ''; return; }
     var phtml = '';
     for (var i = 1; i <= totalPages; i++) {
-      phtml += '<button data-page="' + i + '" class="cand-page h-7 min-w-[28px] rounded-lg px-2 text-[11px] font-bold transition ';
+      phtml += '<button type="button" data-page="' + i + '" aria-label="Página ' + i + '"';
+      if (i === page) phtml += ' aria-current="page"';
+      phtml += ' class="cand-page h-7 min-w-[28px] rounded-lg px-2 text-[11px] font-bold transition ';
       if (i === page) {
         phtml += 'bg-[#5b8def]/20 text-[#5b8def] border border-[#5b8def]/30';
       } else {
@@ -80,7 +98,8 @@
     pag.innerHTML = phtml;
     pag.querySelectorAll('.cand-page').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        page = parseInt(this.getAttribute('data-page'));
+        page = parseInt(this.getAttribute('data-page'), 10);
+        gravarPaginaNaUrl(page);
         render();
       });
     });

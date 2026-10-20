@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — E-mail marketing{% endblock %}
+{% block titulo %}SAL DO REAA CRM — E-mail marketing{% endblock %}
 
 {% block conteudo %}
 <div class="mx-auto max-w-5xl space-y-6">
@@ -39,11 +39,11 @@
       <div class="hazon-card-sm p-5 backdrop-blur-xl">
         <div class="text-[28px] font-bold font-mono" style="color:{{ k.cor }}">{{ k.valor }}</div>
         <div class="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">
-          {{ k.rotulo }}{% if k.pct is not None %} <span class="text-[10px] text-[#a6bfc7]">({{ k.pct }}%)</span>{% endif %}
+          {{ k.rotulo }}{% if k.pct is not None %} <span class="text-[11px] text-[#a6bfc7]">({{ k.pct }}%)</span>{% endif %}
         </div>
         {% if k.pct is not None %}
           <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/10">
-            <div class="h-full rounded-full transition-all" style="width:{{ k.pct }}%;background:{{ k.cor }}"></div>
+            <div class="h-full rounded-full transition-[width]" style="width:{{ k.pct }}%;background:{{ k.cor }}"></div>
           </div>
         {% endif %}
       </div>
@@ -60,12 +60,12 @@
       <table class="w-full min-w-[800px] border-collapse">
         <thead>
           <tr class="border-b border-white/10 text-left">
-            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Contato</th>
-            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Modelo</th>
-            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Status</th>
-            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Aberto</th>
-            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Cliques</th>
-            <th class="px-5 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Conversão</th>
+            <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Contato</th>
+            <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Modelo</th>
+            <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Status</th>
+            <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Aberto</th>
+            <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Cliques</th>
+            <th class="px-5 py-3 text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Conversão</th>
           </tr>
         </thead>
         <tbody>
@@ -73,20 +73,24 @@
             <tr class="border-b border-white/5 transition last:border-0 hover:bg-white/5">
               <td class="px-5 py-3">
                 <a href="{% url 'contatos:detalhe' e.contato_id %}" class="text-[13px] font-semibold text-white hover:text-[#5b8def]">{{ e.contato_nome }}</a>
-                <div class="text-[11.5px] text-[#a6bfc7]">{{ e.destinatario }}</div>
+                <div class="text-[11px] text-[#a6bfc7]">{{ e.destinatario }}</div>
               </td>
-              <td class="max-w-[220px] truncate px-5 py-3 text-[12.5px] text-[#bcd3da]" title="{{ e.assunto }}">{{ e.modelo_nome }}</td>
+              <td class="max-w-[220px] truncate px-5 py-3 text-[13px] text-[#bcd3da]" title="{{ e.assunto }}">{{ e.modelo_nome }}</td>
               <td class="px-5 py-3">
-                <span class="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase
+                <span class="rounded-full px-2.5 py-1 text-[11px] font-bold uppercase
                   {% if e.status == 'enviado' %}bg-[#4ade80]/15 text-[#4ade80]
                   {% elif e.status == 'simulado' %}bg-[#5b8def]/15 text-[#5b8def]
                   {% elif e.status == 'erro' %}bg-red-400/15 text-red-300
                   {% else %}bg-white/10 text-[#bcd3da]{% endif %}">{{ e.status }}</span>
               </td>
-              <td class="px-5 py-3 text-[12.5px] text-[#bcd3da]">{% if e.aberto_em %}👁 {{ e.aberto_em|date:"d/m H:i" }}{% else %}—{% endif %}</td>
-              <td class="px-5 py-3 text-[12.5px] text-[#bcd3da]">{% if e.cliques %}<b class="text-[#fbbf24]">{{ e.cliques }}x</b>{% else %}—{% endif %}</td>
-              <td class="px-5 py-3 text-[12.5px]">{% if e.convertido_em %}<b class="text-[#c084fc]">✓ {{ e.convertido_em|date:"d/m/Y" }}</b>{% else %}—{% endif %}</td>
+              <td class="px-5 py-3 text-[13px] text-[#bcd3da]">{% if e.aberto_em %}👁 {{ e.aberto_em|datahorabr }}{% else %}—{% endif %}</td>
+              <td class="px-5 py-3 text-[13px] text-[#bcd3da]">{% if e.cliques %}<b class="text-[#fbbf24]">{{ e.cliques }}x</b>{% else %}—{% endif %}</td>
+              <td class="px-5 py-3 text-[13px]">{% if e.convertido_em %}<b class="text-[#c084fc]">✓ {{ e.convertido_em|databr }}</b>{% else %}—{% endif %}</td>
             </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-5 py-12 text-center text-[13px] text-[#a6bfc7]">Nenhum registro encontrado.</td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
@@ -102,19 +106,19 @@
     {% for m in modelos %}
       <div class="flex flex-wrap items-center gap-4 border-b border-white/5 px-6 py-4 transition last:border-0 hover:bg-white/5">
         <div class="min-w-0 flex-1">
-          <div class="text-[14px] font-semibold text-white">{{ m.nome }}</div>
-          <div class="mt-0.5 truncate text-[12px] text-[#a6bfc7]">
+          <div class="text-[13px] font-semibold text-white">{{ m.nome }}</div>
+          <div class="mt-0.5 truncate text-[13px] text-[#a6bfc7]">
             {{ m.assunto }} · {{ m.total_envios }} envio{{ m.total_envios|pluralize }}
           </div>
         </div>
         {% if web_pode_editar %}
           <div class="flex items-center gap-2">
             <a href="{% url 'emails:editar' m.id %}"
-               class="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[11.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Editar</a>
+               class="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Editar</a>
             <form method="post" action="{% url 'emails:excluir' m.id %}" class="inline">
               {% csrf_token %}
               <button type="submit"
-                      class="rounded-lg border border-red-400/30 px-3 py-1.5 text-[11.5px] font-semibold text-red-300/90 transition hover:bg-red-500/10 hover:text-red-300"
+                      class="rounded-lg border border-red-400/30 px-3 py-1.5 text-[11px] font-semibold text-red-300/90 transition hover:bg-red-500/10 hover:text-red-300"
                       data-confirm="Excluir o modelo &quot;{{ m.nome }}&quot;?">Excluir</button>
             </form>
           </div>
@@ -123,14 +127,14 @@
     {% empty %}
       <div class="px-6 py-14 text-center">
         <div class="text-3xl">✉️</div>
-        <p class="mt-3 text-[13.5px] text-[#bcd3da]">Nenhum modelo ainda.</p>
-        <p class="mt-1 text-[12.5px] text-[#a6bfc7]">Crie um modelo de lembrete de retorno, agradecimento ou campanha e dispare para seus contatos.</p>
+        <p class="mt-3 text-[13px] text-[#bcd3da]">Nenhum modelo ainda.</p>
+        <p class="mt-1 text-[13px] text-[#a6bfc7]">Crie um modelo de lembrete de retorno, agradecimento ou campanha e dispare para seus contatos.</p>
         <a href="{% url 'emails:novo' %}" class="mt-4 inline-block rounded-xl border border-[#5b8def]/50 px-5 py-2 text-[13px] font-semibold text-[#5b8def] transition hover:bg-[#5b8def]/10">+ Criar primeiro modelo</a>
       </div>
     {% endfor %}
   </div>
 
-  <p class="text-[12px] text-[#a6bfc7]">
+  <p class="text-[13px] text-[#a6bfc7]">
     💡 <b class="text-[#bcd3da]">Placeholders:</b> use <code>{% templatetag openvariable %}nome{% templatetag closevariable %}</code>, <code>{% templatetag openvariable %}empresa{% templatetag closevariable %}</code>,
     <code>{% templatetag openvariable %}procedimento{% templatetag closevariable %}</code>, <code>{% templatetag openvariable %}valor{% templatetag closevariable %}</code>, <code>{% templatetag openvariable %}telefone{% templatetag closevariable %}</code> e
     <code>{% templatetag openvariable %}email{% templatetag closevariable %}</code> — eles viram os dados de cada contato na hora do envio. Total de envios registrados: <b class="text-[#5b8def]">{{ total_envios }}</b>.

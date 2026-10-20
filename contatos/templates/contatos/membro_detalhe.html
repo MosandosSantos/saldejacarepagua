@@ -1,11 +1,11 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — {{ membro.nome }}{% endblock %}
+{% block titulo %}SAL DO REAA CRM — {{ membro.nome }}{% endblock %}
 
 {% block conteudo %}
 <div class="mb-6">
   <a href="{% url 'contatos:lista' %}" class="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#a6bfc7] transition hover:text-white">
-    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
     Voltar
   </a>
 </div>
@@ -17,24 +17,31 @@
         {{ membro.nome|truncatechars:1 }}
       </span>
       <div>
-        <h1 class="font-display text-xl font-semibold text-white">{{ membro.nome }}</h1>
+        <h1 class="font-display text-xl font-semibold break-words text-white">{{ membro.nome }}</h1>
         <div class="mt-1 flex flex-wrap items-center gap-2">
-          {% if membro.classe_abbr %}
-            <span class="inline-flex items-center gap-1.5 rounded-full border border-[#5b8def]/25 bg-[#5b8def]/10 px-2.5 py-1 text-[11px] font-semibold text-[#5b8def]">
-              {{ membro.classe_abbr }}{% if membro.classe %} - {{ membro.classe }}{% endif %}
-            </span>
+          {% if membro.lojas %}
+            {% for lj in membro.lojas %}
+              <span class="inline-flex max-w-[240px] items-center gap-1 truncate rounded-full border border-white/20 bg-white/5 px-2.5 py-0.5 text-[11.5px] font-medium text-[#bcd3da]">
+                {{ lj.nome }}{% if lj.prefeitura != '—' %} · {{ lj.prefeitura }}{% endif %}
+              </span>
+            {% endfor %}
+          {% else %}
+            <span class="text-[12px] text-[#a6bfc7]">— sem loja vinculada —</span>
           {% endif %}
-          <span class="text-[12px] text-[#a6bfc7]">{{ membro.loja }}{% if membro.prefeitura != '—' %} · {{ membro.prefeitura }}{% endif %}</span>
         </div>
       </div>
     </div>
     <div class="flex gap-2">
-      <a href="{% url 'contatos:membro_editar' membro.id %}" class="flex h-9 items-center gap-2 rounded-lg border border-[#fbbf24]/30 bg-[#fbbf24]/10 px-3.5 text-[12.5px] font-semibold text-[#fbbf24] transition hover:bg-[#fbbf24]/20">
-        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <a href="{% url 'membros:pagamento' membro.id %}" class="hazon-btn hazon-btn-primary" title="Simular pagamento de graus (Asaas)">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Ir para pagamento
+      </a>
+      <a href="{% url 'membros:editar' membro.id %}" class="hazon-btn hazon-btn-primary">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Alterar
       </a>
-      <a href="{% url 'contatos:membro_excluir' membro.id %}" class="flex h-9 items-center gap-2 rounded-lg border border-[#ef4444]/30 bg-[#ef4444]/10 px-3.5 text-[12.5px] font-semibold text-[#ef4444] transition hover:bg-[#ef4444]/20">
-        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      <a href="{% url 'membros:excluir' membro.id %}" class="hazon-btn hazon-btn-danger">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         Excluir
       </a>
     </div>
@@ -45,13 +52,17 @@
     <!-- Identificação -->
     <section class="rounded-xl border border-white/10 bg-white/5 p-5">
       <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Identificação
       </h2>
       <div class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Nome completo</div>
-          <div class="mt-0.5 text-[14px] text-white">{{ membro.nome|default:"—" }}</div>
+          <div class="mt-0.5 break-words text-[14px] text-white">{{ membro.nome|default:"—" }}</div>
+        </div>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#c9a227]">Nome histórico (avatar)</div>
+          <div class="mt-0.5 text-[14px] text-[#e8d28a]">{{ membro.nome_historico|default:"—" }}</div>
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">CPF</div>
@@ -70,10 +81,6 @@
           </div>
         </div>
         <div>
-          <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Classe Atual</div>
-          <div class="mt-0.5 text-[14px] text-white">{{ membro.classe_abbr }}{% if membro.classe %} - {{ membro.classe }}{% endif %}</div>
-        </div>
-        <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Rito no simbolismo</div>
           <div class="mt-0.5 text-[14px] text-white">{{ membro.rito|default:"—" }}</div>
         </div>
@@ -87,15 +94,11 @@
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Data de Admissão</div>
-          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.data_admissao|date:"d/m/Y"|default:"—" }}</div>
+          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.data_admissao|databr|default:"—" }}</div>
         </div>
         <div class="sm:col-span-2">
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Escolaridade</div>
           <div class="mt-0.5 text-[14px] text-white">{{ membro.escolaridade|default:"—" }}</div>
-        </div>
-        <div>
-          <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Data de Iniciação</div>
-          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.data_iniciacao|date:"d/m/Y"|default:"—" }}</div>
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Potência do Simbolismo</div>
@@ -103,7 +106,7 @@
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Cargo</div>
-          <div class="mt-0.5 text-[14px] text-white">{{ membro.cargo|default:"—" }}</div>
+          <div class="mt-0.5 break-words text-[14px] text-white">{{ membro.cargo|default:"—" }}</div>
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Condição de Mensalidade</div>
@@ -115,21 +118,21 @@
     <!-- Datas Cavaleirescas -->
     <section class="rounded-xl border border-white/10 bg-white/5 p-5">
       <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 4.8L20 8l-4 3.9.9 5.6L12 14.9 7.1 17.5 8 11.9 4 8l5.6-1.2z"/></svg>
+        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 4.8L20 8l-4 3.9.9 5.6L12 14.9 7.1 17.5 8 11.9 4 8l5.6-1.2z"/></svg>
         Datas Cavaleirescas
       </h2>
       <div class="grid gap-x-6 gap-y-4">
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Recepção a Mestre de Mesa</div>
-          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.apresentacao_mx|date:"d/m/Y"|default:"—" }}</div>
+          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.apresentacao_mx|databr|default:"—" }}</div>
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Recepção a Escudeiro Noviço</div>
-          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.apresentacao_ec|date:"d/m/Y"|default:"—" }}</div>
+          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.apresentacao_ec|databr|default:"—" }}</div>
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Armadura de Mestre</div>
-          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.armadura_cbcs|date:"d/m/Y"|default:"—" }}</div>
+          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.armadura_cbcs|databr|default:"—" }}</div>
         </div>
       </div>
     </section>
@@ -137,13 +140,13 @@
     <!-- Dados Pessoais -->
     <section class="rounded-xl border border-white/10 bg-white/5 p-5">
       <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Dados Pessoais
       </h2>
       <div class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Data de Nascimento</div>
-          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.data_nascimento|date:"d/m/Y"|default:"—" }}</div>
+          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.data_nascimento|databr|default:"—" }}</div>
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Nacionalidade</div>
@@ -159,11 +162,11 @@
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Nome do Pai</div>
-          <div class="mt-0.5 text-[14px] text-white">{{ membro.pai|default:"—" }}</div>
+          <div class="mt-0.5 break-words text-[14px] text-white">{{ membro.pai|default:"—" }}</div>
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Nome da Mãe</div>
-          <div class="mt-0.5 text-[14px] text-white">{{ membro.mae|default:"—" }}</div>
+          <div class="mt-0.5 break-words text-[14px] text-white">{{ membro.mae|default:"—" }}</div>
         </div>
       </div>
     </section>
@@ -171,7 +174,7 @@
     <!-- Documentos -->
     <section class="rounded-xl border border-white/10 bg-white/5 p-5">
       <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Documentos
       </h2>
       <div class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
@@ -185,7 +188,7 @@
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Data de Emissão</div>
-          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.data_emissao|date:"d/m/Y"|default:"—" }}</div>
+          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.data_emissao|databr|default:"—" }}</div>
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">CPF</div>
@@ -197,13 +200,13 @@
     <!-- Contato -->
     <section class="rounded-xl border border-white/10 bg-white/5 p-5">
       <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/></svg>
+        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/></svg>
         Contato
       </h2>
       <div class="grid gap-x-6 gap-y-4">
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">E-mail</div>
-          <div class="mt-0.5 text-[14px] text-white">{{ membro.email|default:"—" }}</div>
+          <div class="mt-0.5 break-all text-[14px] text-white">{{ membro.email|default:"—" }}</div>
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Celular</div>
@@ -219,13 +222,13 @@
     <!-- Endereço -->
     <section class="rounded-xl border border-white/10 bg-white/5 p-5">
       <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         Endereço
       </h2>
       <div class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
         <div class="sm:col-span-2">
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Logradouro</div>
-          <div class="mt-0.5 text-[14px] text-white">{{ membro.endereco|default:"—" }}</div>
+          <div class="mt-0.5 break-words text-[14px] text-white">{{ membro.endereco|default:"—" }}</div>
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Número</div>
@@ -241,7 +244,7 @@
         </div>
         <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Cidade / UF</div>
-          <div class="mt-0.5 text-[14px] text-white">{{ membro.cidade }}{% if membro.cidade and membro.uf %} / {% endif %}{{ membro.uf|default:"" }}</div>
+          <div class="mt-0.5 truncate text-[14px] text-white">{% if membro.cidade and membro.uf %}{{ membro.cidade }} / {{ membro.uf }}{% elif membro.cidade %}{{ membro.cidade }}{% elif membro.uf %}{{ membro.uf }}{% else %}—{% endif %}</div>
         </div>
         <div class="sm:col-span-2">
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">CEP</div>
@@ -253,29 +256,21 @@
     <!-- Informações Ritualísticas -->
     <section class="rounded-xl border border-white/10 bg-white/5 p-5 lg:col-span-2">
       <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         Informações Ritualísticas
       </h2>
       <div class="grid gap-x-6 gap-y-4 sm:grid-cols-3">
         <div>
-          <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Data de Passagem</div>
-          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.data_passagem|date:"d/m/Y"|default:"—" }}</div>
-        </div>
-        <div>
-          <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Data de Elevação</div>
-          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.data_elevacao|date:"d/m/Y"|default:"—" }}</div>
-        </div>
-        <div>
           <div class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Data de Instalação</div>
-          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.data_instalacao|date:"d/m/Y"|default:"—" }}</div>
+          <div class="mt-0.5 font-mono text-[14px] text-white">{{ membro.data_instalacao|databr|default:"—" }}</div>
         </div>
       </div>
     </section>
   </div>
 
   <div class="mt-5 flex items-center gap-4 text-[12px] text-[#a6bfc7]">
-    <span>Cadastro: <b class="font-mono text-white">{{ membro.criado_em|date:"d/m/Y H:i" }}</b></span>
-    <span>Atualizado: <b class="font-mono text-white">{{ membro.atualizado_em|date:"d/m/Y H:i" }}</b></span>
+    <span>Cadastro: <b class="font-mono tabular-nums text-white">{{ membro.criado_em|datahorabr }}</b></span>
+    <span>Atualizado: <b class="font-mono tabular-nums text-white">{{ membro.atualizado_em|datahorabr }}</b></span>
   </div>
 </div>
-{% endblock %}
+{% endblock %}

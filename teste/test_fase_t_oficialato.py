@@ -14,7 +14,7 @@ import pytest
 from django.test import Client
 
 from acesso.models import Usuario
-from candidatos.models import Candidato
+from candidatos.models import Candidato, CandidatoObservacao
 from teste.conftest import criar_usuario
 
 
@@ -140,7 +140,6 @@ def test_deputado_criador_envia_ao_prefeito(tenant_aurora, deputado, outro_deput
 @pytest.mark.django_db
 def test_observacoes_do_deputado_nao_sao_apagadas(tenant_aurora, deputado, prefeito):
     """Prefeito pode acrescentar observações; as do criador permanecem."""
-    from candidatos.models import CandidatoObservacao
     c = _cliente_web(deputado)
     cand = _criar_suplica(c, tenant_aurora, deputado)
     _ficha_enviada(cand)

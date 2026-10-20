@@ -1,5 +1,5 @@
 <div class="flex items-center gap-6">
-  <div class="w-[42%] min-w-0 shrink-0">{{ funil_svg|safe }}</div>
+  <div class="w-[42%] min-w-0 shrink-0" id="funil-grafico">{{ funil_svg|safe }}</div>
   <div class="flex min-w-0 flex-1 flex-col gap-1.5">
     {% for f in funil %}
       <div class="flex items-center gap-3 rounded-[11px] border border-white/10 bg-white/5 px-3 py-2.5 transition hover:border-[#5b8def]/40 hover:bg-[#5b8def]/10">
@@ -8,6 +8,20 @@
         <span class="font-mono text-[13.5px] font-bold text-white">{{ f.count }}</span>
         <span class="w-12 shrink-0 text-right font-mono text-[11px] text-[#5b8def]">{{ f.pct }}%</span>
       </div>
+    {% empty %}
+      <p class="text-[12px] text-[#a6bfc7]">Nenhum dado disponível</p>
     {% endfor %}
   </div>
 </div>
+
+<script>
+(function () {
+  // O SVG e injetado pelo backend: garante role="img" + rotulo acessivel no proprio SVG.
+  var svg = document.getElementById('funil-grafico');
+  if (!svg) return;
+  svg = svg.querySelector('svg');
+  if (!svg) return;
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', 'Grafico de funil por etapa do fluxo de iniciacao');
+})();
+</script>

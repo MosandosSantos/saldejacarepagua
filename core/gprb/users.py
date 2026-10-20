@@ -2,7 +2,7 @@
 
 import bcrypt
 
-from core.gprb.connection import _DummyConnection, connect
+from core.gprb.connection import _DummyConnection, connect, resolve_tenant_code
 
 
 ROLE_LABELS_GPRB = {
@@ -34,12 +34,13 @@ def label_role_gprb(role):
     return ROLE_LABELS_GPRB.get(role, role.replace('_', ' ').title())
 
 
-def autenticar_usuario(identifier, senha, tenant_code='GPRB'):
+def autenticar_usuario(identifier, senha, tenant_code=None):
     """Autentica um usuario pelo loginIdentifier (telefone/email) contra o banco GPRB.
 
     Retorna dict com dados do usuario ou None se falhar:
         {'id': ..., 'name': ..., 'email': ..., 'role': ..., 'tenant_id': ...}
     """
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     if isinstance(conn, _DummyConnection):
         # Modo degradado (specs/legacy/database.md): sem banco GPRB a
@@ -83,12 +84,13 @@ def autenticar_usuario(identifier, senha, tenant_code='GPRB'):
         conn.close()
 
 
-def existe_usuario(identifier, tenant_code='GPRB'):
+def existe_usuario(identifier, tenant_code=None):
     """Verifica se um loginIdentifier/email existe no banco GPRB (independente de senha).
 
     Usado pelo login para saber se o identificador pertence ao GPRB — nesse caso
     a palavra final sobre a senha é sempre do banco GPRB (nunca do espelho local).
     """
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     if isinstance(conn, _DummyConnection):
         # Modo degradado: nenhum usuário GPRB consultável — o login usa o
@@ -109,8 +111,9 @@ def existe_usuario(identifier, tenant_code='GPRB'):
         conn.close()
 
 
-def listar_usuarios_sistema(tenant_code='GPRB', *, q='', loja_id='', perfil='', status=''):
+def listar_usuarios_sistema(tenant_code=None, *, q='', loja_id='', perfil='', status=''):
     """Lista usuários do sistema GPRB com filtros opcionais."""
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -164,8 +167,9 @@ def listar_usuarios_sistema(tenant_code='GPRB', *, q='', loja_id='', perfil='', 
         conn.close()
 
 
-def opcoes_lojas_usuario(tenant_code='GPRB'):
+def opcoes_lojas_usuario(tenant_code=None):
     """Lojas do tenant para filtro/cadastro de usuários."""
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -183,8 +187,9 @@ def opcoes_lojas_usuario(tenant_code='GPRB'):
         conn.close()
 
 
-def opcoes_prefeituras_usuario(tenant_code='GPRB'):
+def opcoes_prefeituras_usuario(tenant_code=None):
     """Prefeituras do tenant para cadastro de usuários."""
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -199,8 +204,9 @@ def opcoes_prefeituras_usuario(tenant_code='GPRB'):
         conn.close()
 
 
-def opcoes_perfis_usuario(tenant_code='GPRB'):
+def opcoes_perfis_usuario(tenant_code=None):
     """Perfis distintos cadastrados no tenant (para filtro)."""
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -219,8 +225,9 @@ def opcoes_perfis_usuario(tenant_code='GPRB'):
         conn.close()
 
 
-def obter_usuario_sistema(user_id, tenant_code='GPRB'):
+def obter_usuario_sistema(user_id, tenant_code=None):
     """Detalhe de um usuário GPRB pelo id (UUID)."""
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -251,16 +258,20 @@ def obter_usuario_sistema(user_id, tenant_code='GPRB'):
         conn.close()
 
 
-def atualizar_usuario_sistema(user_id, *, nome, email, celular, role, prefeitura_id=''):
+def atualizar_usuario_sistema(
+    user_id, *, nome, email, celular, role, prefeitura_id='', tenant_code=None,
+):
     """Atualiza campos básicos de um usuário GPRB."""
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
         cur.execute(
             'UPDATE "user" SET name = %s, email = %s, "loginIdentifier" = %s, '
             'role = %s, "prefeituraId" = %s, "updatedAt" = NOW() '
-            'WHERE id = %s AND "deletedAt" IS NULL',
-            (nome, email, celular or email, role, prefeitura_id or None, user_id),
+            'WHERE id = %s AND "tenantId" IN '
+            '(SELECT id FROM tenant WHERE code = %s) AND "deletedAt" IS NULL',
+            (nome, email, celular or email, role, prefeitura_id or None, user_id, tenant_code),
         )
         conn.commit()
         return cur.rowcount > 0
@@ -268,15 +279,17 @@ def atualizar_usuario_sistema(user_id, *, nome, email, celular, role, prefeitura
         conn.close()
 
 
-def excluir_usuario_sistema(user_id):
+def excluir_usuario_sistema(user_id, tenant_code=None):
     """Soft-delete de usuário GPRB."""
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
         cur.execute(
             'UPDATE "user" SET "deletedAt" = NOW(), "updatedAt" = NOW() '
-            'WHERE id = %s AND "deletedAt" IS NULL',
-            (user_id,),
+            'WHERE id = %s AND "tenantId" IN '
+            '(SELECT id FROM tenant WHERE code = %s) AND "deletedAt" IS NULL',
+            (user_id, tenant_code),
         )
         conn.commit()
         return cur.rowcount > 0

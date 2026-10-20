@@ -23,4 +23,5 @@ sentry-sdk>=1.40  # Error tracking
 bcrypt>=4.0
 google-api-python-client>=2.100  # Exportacao da agenda ao Google Calendar
 google-auth>=2.20
+python-dateutil>=2.9
 

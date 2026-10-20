@@ -1,7 +1,23 @@
 # ============================================
+# STAGE 0: Assets - Compila Tailwind a partir dos templates do projeto
+# ============================================
+ARG PYTHON_VERSION=3.13
+FROM node:22-alpine AS tailwind_builder
+
+WORKDIR /app
+COPY theme/static_src/package.json theme/static_src/package-lock.json ./theme/static_src/
+WORKDIR /app/theme/static_src
+RUN npm ci
+
+WORKDIR /app
+COPY . .
+WORKDIR /app/theme/static_src
+RUN npm run build
+
+# ============================================
 # STAGE 1: Build - Instala dependências
 # ============================================
-FROM python:${PYTHON_VERSION:-3.13}-slim AS builder
+FROM python:${PYTHON_VERSION}-slim AS builder
 
 # Evita warnings de buffer
 ENV PYTHONUNBUFFERED=1 \
@@ -24,7 +40,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 # ============================================
 # STAGE 2: Runtime - Imagem leve de produção
 # ============================================
-FROM python:${PYTHON_VERSION:-3.13}-slim
+FROM python:${PYTHON_VERSION}-slim
 
 # Evita warnings de buffer
 ENV PYTHONUNBUFFERED=1 \
@@ -45,20 +61,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean
 
 # Cria estrutura de diretórios
-RUN mkdir -p ${APP_HOME}/{media,staticfiles,logs} \
+RUN mkdir -p ${APP_HOME}/media ${APP_HOME}/staticfiles ${APP_HOME}/logs \
     && chown -R appuser:appuser ${APP_HOME}
 
 WORKDIR ${APP_HOME}
 
 # Copia dependências instaladas do stage de build
-COPY --from=builder /root/.local /root/.local
-ENV PATH=/root/.local/bin:$PATH
+COPY --from=builder /root/.local/lib /usr/local/lib
+COPY --from=builder /root/.local/bin /usr/local/bin
 
 # Copia código da aplicação
 COPY --chown=appuser:appuser . .
+COPY --from=tailwind_builder --chown=appuser:appuser /app/theme/static/css /app/theme/static/css
 
 # Permissões
-RUN chmod +x manage.py \
+RUN sed -i 's/\r$//' entrypoint.sh \
+    && chmod +x manage.py entrypoint.sh \
+    && /bin/bash -n entrypoint.sh \
+    && DJANGO_DEBUG=1 \
+       DJANGO_SECRET_KEY=static-build-placeholder-not-production \
+       DATABASE_URL=postgresql://static:static@127.0.0.1:5432/static \
+       python manage.py collectstatic --noinput \
+    && chown -R appuser:appuser /app/staticfiles \
     && find . -name "*.py" -exec chmod 644 {} \; \
     && find . -type d -exec chmod 755 {} \;
 
@@ -66,24 +90,24 @@ RUN chmod +x manage.py \
 USER appuser
 
 # Expose port
-EXPOSE 8000
+EXPOSE 8111
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/')" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8111/healthz/')" || exit 1
 
 # ============================================
 # Comandos disponíveis
 # ============================================
 
 # Development: rodar servidor de desenvolvimento
-# docker run -p 8000:8000 -e DJANGO_DEBUG=True gprbr-app:latest
+# docker run -p 8111:8111 -e DJANGO_DEBUG=True gprbr-app:latest
 
 # Production: rodar com Gunicorn + Uvicorn
-# docker run -p 8000:8000 gprbr-app:latest
+# docker run -p 8111:8111 gprbr-app:latest
 
 # ============================================
 # Default: Entrypoint com migrações e servidor
 # ============================================
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8111"]

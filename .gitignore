@@ -64,3 +64,19 @@ htmlcov/
 # Arquivos auxiliares
 cookie.txt
 _legacy/
+
+# Semgrep artifacts
+.semgrep/
+*.semgrep.json
+semgrep-results.json
+
+
+# Dumps de banco - DOCS/README.md: "fica fora do repositorio"
+backups/
+
+# Screenshots temporarios de validacao visual
+tmp_*.png
+tmp/
+
+# Snapshots do navegador (automatizacao)
+.playwright-mcp/

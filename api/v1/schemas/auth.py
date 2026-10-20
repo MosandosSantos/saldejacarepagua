@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-Role = Literal['admin_saas', 'admin_company', 'operacional', 'viewer']
+Role = Literal['admin_saas', 'viewer']
 
 
 class LoginIn(BaseModel):

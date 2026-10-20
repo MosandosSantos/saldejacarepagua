@@ -62,6 +62,7 @@ def load_locustfile(monkeypatch):
 def test_locust_user_logs_in_with_configured_credentials_and_csrf(monkeypatch):
     monkeypatch.setenv('LOCUST_USERNAME', 'load-test@example.com')
     monkeypatch.setenv('LOCUST_PASSWORD', 'test-password')
+    monkeypatch.setenv('LOCUST_TURNSTILE_TOKEN', 'XXXX.DUMMY.TOKEN.XXXX')
     module = load_locustfile(monkeypatch)
     user = module.CrmUser()
 
@@ -76,6 +77,7 @@ def test_locust_user_logs_in_with_configured_credentials_and_csrf(monkeypatch):
                 'data': {
                     'email': 'load-test@example.com',
                     'senha': 'test-password',
+                    'cf-turnstile-response': 'XXXX.DUMMY.TOKEN.XXXX',
                     'csrfmiddlewaretoken': 'csrf-test-token',
                 },
                 'allow_redirects': False,
@@ -116,7 +118,7 @@ def test_locust_user_loads_only_read_only_crm_pages(monkeypatch):
 
     assert [(method, path) for method, path, _ in user.client.requests] == [
         ('GET', '/dashboard/'),
-        ('GET', '/recepcao/'),
+        ('GET', '/iniciacao/'),
         ('GET', '/tarefas/'),
         ('GET', '/contatos/'),
     ]

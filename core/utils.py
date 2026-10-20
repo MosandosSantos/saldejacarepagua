@@ -4,6 +4,10 @@ Centraliza funções auxiliares que estavam duplicadas em dashboard, contatos,
 tarefas, gestao, funil, relatorios, campanhas, automacoes e orcamento.
 """
 from contextlib import contextmanager
+from decimal import Decimal, InvalidOperation
+
+from django.http import HttpResponse
+from django.urls import reverse
 
 # ---------------------------------------------------------------------------
 # Formatação
@@ -28,7 +32,6 @@ def brl_curto(n):
 
 def parse_brl(raw):
     """Converte string BRL para Decimal: '1.500,00' → Decimal('1500.00')."""
-    from decimal import Decimal, InvalidOperation
     if not raw:
         return Decimal(0)
     try:
@@ -53,13 +56,40 @@ def iniciais(nome):
 # ---------------------------------------------------------------------------
 
 def tenant_id(request):
-    """Retorna o tenant_id armazenado na sessão do request."""
-    return request.session.get('usuario', {}).get('tenant_id')
+    """Retorna o tenant efetivo do request."""
+    from acesso.tenant_context import resolve_tenant_id
+
+    return resolve_tenant_id(request)
 
 
 # ---------------------------------------------------------------------------
 # Context manager para conexões GPRB
 # ---------------------------------------------------------------------------
+
+def base_pixel(request):
+    """URL base do pixel de abertura, sem barra final (ex.: http://host/emails/aberto)."""
+    fake = '00000000-0000-0000-0000-000000000000'
+    return request.build_absolute_uri(reverse('emails:aberto', args=[fake])).replace(fake, '').rstrip('/')
+
+
+def resposta_csv(nome_arquivo):
+    """Resposta CSV com BOM (Excel abre acentos corretamente)."""
+    resposta = HttpResponse(content_type='text/csv; charset=utf-8')
+    resposta['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
+    resposta.write('\ufeff')
+    return resposta
+
+
+def csv_seguro(valor):
+    """Previne injeção de fórmula no Excel (CSV injection).
+
+    Célula iniciando com `=`, `+`, `-` ou `@` vira texto com apóstrofo inicial.
+    """
+    texto = str(valor or '')
+    if texto.startswith(('=', '+', '-', '@')):
+        return "'" + texto
+    return texto
+
 
 @contextmanager
 def gprb_connection():

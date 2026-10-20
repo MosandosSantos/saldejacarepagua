@@ -1,0 +1,57 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}SAL DO REAA CRM — Relatório de Iniciação{% endblock %}
+
+{% block conteudo %}
+<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="hazon-titulo">Relatório de Iniciação</h1>
+    <p class="mt-1 text-[12px] text-[#a6bfc7]">{{ linhas|length }} irmão{{ linhas|length|pluralize }} listado{{ linhas|length|pluralize }}</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'recepcao:relatorio_exportar' 'pdf' %}?{{ qs_filtro }}" class="hazon-btn hazon-btn-ghost" title="Baixar o relatório em PDF">
+      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Baixar PDF
+    </a>
+    <a href="{% url 'recepcao:relatorio_exportar' 'xlsx' %}?{{ qs_filtro }}" class="hazon-btn hazon-btn-ghost" title="Baixar o relatório em Excel">
+      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Baixar Excel
+    </a>
+    <a href="{% url 'recepcao:kanban' %}?{{ qs_filtro }}" class="hazon-btn hazon-btn-ghost">Voltar ao quadro</a>
+  </div>
+</div>
+
+<div class="hazon-card mb-5 p-4">
+  <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Seleção do relatório</p>
+  <p class="mt-1 text-[14px] font-semibold text-hazon-text">
+    {% if descritor.corpos %}{{ descritor.corpos|join:", " }}{% else %}Todos os corpos do Rito{% endif %}{% if descritor.loja %} · Loja: {{ descritor.loja }}{% endif %}{% if descritor.vale %} · Vale: {{ descritor.vale }}{% endif %}
+  </p>
+</div>
+
+<div class="hazon-card overflow-x-auto p-0">
+  <table class="w-full min-w-[640px] text-left text-[13px] text-hazon-text">
+    <thead>
+      <tr class="border-b border-white/10 text-[10px] uppercase tracking-[0.12em] text-[#a6bfc7]">
+        <th class="px-4 py-3" scope="col">Cadastro</th>
+        <th class="px-4 py-3" scope="col">Nome do Irmão</th>
+        <th class="px-4 py-3 text-center" scope="col">Grau</th>
+        <th class="px-4 py-3 text-center" scope="col">Último grau</th>
+        <th class="px-4 py-3 text-center" scope="col">Presença</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for linha in linhas %}
+      <tr class="{% if not forloop.first %}border-t border-white/5{% endif %}">
+        <td class="px-4 py-2.5 font-mono text-[12px] text-[#a6bfc7]">{% if not linha.cadastro %}—{% else %}{{ linha.cadastro }}{% endif %}</td>
+        <td class="break-words px-4 py-2.5">{% if linha.presenca < 50 %}<span class="text-[#f87171]">{% endif %}{{ linha.nome }}{% if linha.presenca < 50 %}</span>{% endif %}</td>
+        <td class="px-4 py-2.5 text-center">{{ linha.grau }}º</td>
+        <td class="px-4 py-2.5 text-center text-[#a6bfc7]">{% if not linha.data_ultimo %}—{% else %}{{ linha.data_ultimo|date:'d/m/Y' }}{% endif %}</td>
+        <td class="px-4 py-2.5 text-center font-semibold {% if linha.presenca < 50 %}text-[#f87171]{% else %}text-[#4ade80]{% endif %}">{{ linha.presenca }}%</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="px-4 py-8 text-center text-[#a6bfc7]">Nenhum irmão encontrado para esses filtros.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

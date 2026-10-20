@@ -11,7 +11,12 @@ from django.test import Client
 
 from contatos.models import Contato, criar_negocio
 from emails.models import EmailEnviado, ModeloEmail
-from emails.servico import _encurtar_url, reescrever_links
+from emails.servico import (
+    _encurtar_url,
+    _expandir_url,
+    disparar_campanha,
+    reescrever_links,
+)
 
 SENHA = 'senha123'
 
@@ -77,7 +82,6 @@ def test_nao_reescreve_mailto():
 def test_url_roundtrip():
     url = 'https://exemplo.com/proposta?valor=1500&utm=1'
     codigo = _encurtar_url(url)
-    from emails.servico import _expandir_url
 
     assert _expandir_url(codigo) == url
 
@@ -166,7 +170,6 @@ def test_clique_sem_login_e_sem_csrf():
 
 @pytest.mark.django_db
 def test_campanha_reescreve_links_no_corpo(tenant_aurora, admin_company):
-    from emails.servico import disparar_campanha
 
     modelo = _modelo(tenant_aurora)
     contato = _contato(tenant_aurora)
@@ -179,7 +182,6 @@ def test_campanha_reescreve_links_no_corpo(tenant_aurora, admin_company):
 
 @pytest.mark.django_db
 def test_campanha_envia_um_por_contato(tenant_aurora, admin_company):
-    from emails.servico import disparar_campanha
 
     modelo = _modelo(tenant_aurora)
     c1 = _contato(tenant_aurora, email='c1@x.com')
@@ -198,9 +200,9 @@ def test_fechar_no_funil_marca_conversao(tenant_aurora, admin_company):
     modelo = _modelo(tenant_aurora)
     contato = _contato(tenant_aurora)
     envio = _envio(contato, modelo)
-    negocio = criar_negocio(contato, stage='interessado', tenant_id=tenant_aurora.id)
+    negocio = criar_negocio(contato, stage='suplica', tenant_id=tenant_aurora.id)
     c = _cliente_web(admin_company)
-    r = c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'fechado'})
+    r = c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'diploma'})
     assert r.status_code in (200, 302)  # redirect sem AJAX; JSON com X-Requested-With
     envio.refresh_from_db()
     assert envio.convertido_em is not None
@@ -211,9 +213,9 @@ def test_nao_marca_conversao_sem_fechamento(tenant_aurora, admin_company):
     modelo = _modelo(tenant_aurora)
     contato = _contato(tenant_aurora)
     envio = _envio(contato, modelo)
-    negocio = criar_negocio(contato, stage='interessado', tenant_id=tenant_aurora.id)
+    negocio = criar_negocio(contato, stage='suplica', tenant_id=tenant_aurora.id)
     c = _cliente_web(admin_company)
-    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'orcamento'})
+    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'comunicacao'})
     envio.refresh_from_db()
     assert envio.convertido_em is None
 
@@ -229,7 +231,7 @@ def test_fechar_no_formulario_marca_conversao(tenant_aurora, admin_company):
     c = _cliente_web(admin_company)
     c.post(f'/contatos/{contato.id}/editar/', {
         'nome': 'Ana', 'empresa': 'X', 'tel': '(11) 98888-7777', 'email': 'ana@x.com',
-        'seg': 'geral', 'stage': 'fechado', 'ultima_consulta': '2026-01-15',
+        'seg': 'geral', 'stage': 'diploma', 'ultima_consulta': '2026-01-15',
         'procedimento': 'Laser',
     })
     envio.refresh_from_db()
@@ -246,7 +248,7 @@ def test_negocio_novo_em_fechado_marca_conversao(tenant_aurora, admin_company):
     envio = _envio(contato, modelo)
     c = _cliente_web(admin_company)
     c.post(f'/contatos/{contato.id}/negocios/novo/', {
-        'titulo': 'Deal fechado', 'stage': 'fechado', 'valor': '500',
+        'titulo': 'Deal diploma', 'stage': 'diploma', 'valor': '500',
     })
     envio.refresh_from_db()
     assert envio.convertido_em is not None
@@ -260,10 +262,10 @@ def test_fechar_negocio_no_formulario_marca_conversao(tenant_aurora, admin_compa
     modelo = _modelo(tenant_aurora)
     contato = _contato(tenant_aurora)
     envio = _envio(contato, modelo)
-    negocio = criar_negocio(contato, stage='interessado', tenant_id=tenant_aurora.id)
+    negocio = criar_negocio(contato, stage='suplica', tenant_id=tenant_aurora.id)
     c = _cliente_web(admin_company)
     c.post(f'/contatos/{contato.id}/negocios/{negocio.id}/editar/', {
-        'titulo': 'Deal', 'stage': 'fechado', 'valor': '500',
+        'titulo': 'Deal', 'stage': 'diploma', 'valor': '500',
     })
     envio.refresh_from_db()
     assert envio.convertido_em is not None
@@ -285,12 +287,12 @@ def test_api_fechar_marca_conversao(client, tenant_aurora, usuario_operacional):
     modelo = _modelo(tenant_aurora)
     headers = _login(client, usuario_operacional)
     r = client.post('/api/v1/contatos', json={
-        'nome': 'Ana', 'seg': 'geral', 'stage': 'interessado',
+        'nome': 'Ana', 'seg': 'geral', 'stage': 'suplica',
     }, headers=headers)
     contato_id = r.json()['id']
     contato_api = Contato.objects.get(pk=contato_id)
     envio = _envio(contato_api, modelo)
-    r = client.patch(f'/api/v1/contatos/{contato_id}/stage', headers=headers, json={'stage': 'fechado'})
+    r = client.patch(f'/api/v1/contatos/{contato_id}/stage', headers=headers, json={'stage': 'diploma'})
     assert r.status_code == 200
     envio.refresh_from_db()
     assert envio.convertido_em is not None
@@ -306,7 +308,7 @@ def test_api_atualizar_para_fechado_marca_conversao(client, tenant_aurora, usuar
     envio = _envio(contato, modelo)
     headers = _login(client, usuario_operacional)
     r = client.put(f'/api/v1/contatos/{contato.id}', headers=headers, json={
-        'nome': contato.nome, 'seg': 'geral', 'stage': 'fechado',
+        'nome': contato.nome, 'seg': 'geral', 'stage': 'diploma',
     })
     assert r.status_code == 200
     envio.refresh_from_db()

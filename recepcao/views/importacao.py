@@ -44,9 +44,10 @@ def _ler_arquivo_csv(arquivo):
     try:
         return arquivo.read().decode('utf-8-sig')
     except UnicodeDecodeError:
+        arquivo.seek(0)
         try:
             return arquivo.read().decode('latin-1')
-        except Exception:
+        except (UnicodeDecodeError, OSError):
             return _erro('Nao foi possivel ler o arquivo. Use UTF-8 ou Latin-1.')
 
 

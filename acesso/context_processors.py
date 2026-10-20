@@ -6,8 +6,8 @@ from django.conf import settings
 from django.urls import reverse
 
 from acesso.models import (
-    ROLE_ADMIN_SAAS,
     ROLE_ADM,
+    ROLE_ADMIN_SAAS,
     ROLE_DELEGADO,
     ROLE_PRESIDENTE_CORPO,
     ROLE_SECRETARIO,
@@ -40,9 +40,6 @@ _ICONE_EQUIPE = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="c
                  '<circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>')
 _ICONE_CARTEIRA = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
                    'stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>')
-_ICONE_FINANCEIRO = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
-                     'stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/>'
-                     '<path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>')
 _ICONE_CAMPANHA = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" '
                    'stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>')
 
@@ -52,11 +49,12 @@ _ICONE_CAMPANHA = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke=
 #   carteiras ficam com 'Carteiras' ativo, não 'Contatos')
 _ROTAS = [
     ('Dashboard', 'dashboard', 'dashboard:index', _ICONE_DASH, None, set()),
-    ('Vale', 'contatos', 'contatos:prefeituras', _ICONE_CARTEIRA, {'prefeituras'}, set()),
-    ('Lojas', 'contatos', 'contatos:lojas', _ICONE_CARTEIRA, {'lojas', 'loja_detalhe'}, set()),
-    ('Membros', 'contatos', 'contatos:lista', _ICONE_CONTATOS, None, {'carteiras', 'carteira_detalhe'}),
-    ('Financeiro', 'contatos', 'contatos:financeiro', _ICONE_FINANCEIRO, {'financeiro'}, set()),
-    ('Agenda', 'tarefas', 'tarefas:ranking', _ICONE_TAREFAS, None, set()),
+    ('Vale', 'contatos', 'vales', _ICONE_CARTEIRA, {'vales', 'prefeituras'}, set()),
+    ('Lojas', 'contatos', 'lojas', _ICONE_CARTEIRA, {'lojas', 'loja_detalhe'}, set()),
+    ('Membros', 'membros', 'membros:lista', _ICONE_CONTATOS, None, set()),
+    ('Acompanhamento', 'membros', 'membros:acompanhamento', _ICONE_CONTATOS,
+     {'acompanhamento', 'acompanhamento_exportar'}, set()),
+    ('Agenda', 'tarefas', 'agendas', _ICONE_TAREFAS, {'agendas', 'ranking'}, set()),
     ('Comunicações', 'gestao', 'comunicacoes', _ICONE_CAMPANHA, {'comunicacoes'}, set()),
     ('Iniciação', 'recepcao', 'recepcao:kanban', _ICONE_FUNIL, None, set()),
     # Equipe/Usuários: gestão — oficialato (ADM, Delegado, ...) + admin da plataforma.
@@ -140,6 +138,7 @@ def web_sessao(request):
     app_atual = resolver.app_name if resolver else ''
     contexto = {
         'APP_BRAND_NAME': settings.APP_BRAND_NAME,
+        'VALE_NOME': settings.VALE_NOME,
         'css_versao': _css_versao(),
         'NAV_ITENS': _nav_itens(
             url_name, app_atual, tarefas_atrasadas=resumo['atrasadas'], role=role

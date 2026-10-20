@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Perfil dos leads{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Perfil dos leads{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7 flex flex-wrap items-end justify-between gap-3">
@@ -15,7 +15,7 @@
 <div class="mb-6 flex flex-wrap gap-2">
   {% for op in nivel_opcoes %}
     {% if op.chave == nivel %}
-      <span class="rounded-xl px-4 py-2.5 text-[13px] font-bold" style="color:{{ op.cor }};background:{{ op.cor }}1a">{{ op.rotulo }} <span class="font-mono opacity-70">{{ op.qtd }}</span></span>
+      <span class="rounded-xl px-4 py-2.5 text-[13px] font-bold" style="color:{{ op.cor }};background:{{ op.cor }}1a" aria-current="page">{{ op.rotulo }} <span class="font-mono tabular-nums opacity-70">{{ op.qtd }}</span></span>
     {% else %}
       <a href="?nivel={{ op.chave }}" class="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13px] font-medium text-[#bcd3da] transition hover:bg-white/10 hover:text-white">{{ op.rotulo }} <span class="font-mono opacity-60">{{ op.qtd }}</span></a>
     {% endif %}
@@ -24,7 +24,7 @@
 
 <div class="mb-6 flex items-center gap-3 rounded-2xl border px-5 py-4"
      style="border-color:{{ cor_nivel }}33;background:{{ cor_nivel }}14">
-  <span class="flex h-9 w-9 items-center justify-center rounded-full font-mono text-[15px] font-bold" style="color:{{ cor_nivel }};background:{{ cor_nivel }}1f">{{ total }}</span>
+  <span class="flex h-9 w-9 items-center justify-center rounded-full font-mono text-[15px] font-bold tabular-nums" style="color:{{ cor_nivel }};background:{{ cor_nivel }}1f">{{ total }}</span>
   <p class="text-[13.5px] text-[#bcd3da]">
     <b style="color:{{ cor_nivel }}">{{ rotulo_nivel }}</b>
     {% if total %}<span class="text-[#a6bfc7]">— cada ficha completada aumenta o score de prioridade.</span>{% endif %}
@@ -36,21 +36,21 @@
   {% for c in itens %}
   <div class="hazon-card-sm flex flex-col p-5 transition hover:bg-white/10">
     <div class="mb-3 flex items-start justify-between gap-3">
-      <a href="{% url 'contatos:detalhe' c.id %}" class="text-[14.5px] font-semibold text-white transition hover:text-[#5b8def]">{{ c.nome }}</a>
+      <a href="{% url 'contatos:detalhe' c.id %}" class="min-w-0 truncate text-[14.5px] font-semibold text-white transition hover:text-[#5b8def]">{{ c.nome }}</a>
       <span class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold" style="color:{{ c.stage.color }};background:{{ c.stage.color }}1a">{{ c.stage.name }}</span>
     </div>
     <div class="mb-3 space-y-1 text-[12.5px] text-[#a6bfc7]">
-      {% if c.empresa and c.empresa != '—' %}<div>{{ c.empresa }}</div>{% endif %}
+      {% if c.empresa and c.empresa != '—' %}<div class="truncate">{{ c.empresa }}</div>{% endif %}
       <div class="font-mono text-[#bcd3da]">{{ c.tel }}</div>
       {% if c.email and c.email != '—' %}<div class="break-all text-[#bcd3da]">{{ c.email }}</div>{% endif %}
-      {% if c.origem and c.origem != '—' %}<div>origem: {{ c.origem }}</div>{% endif %}
+      {% if c.origem and c.origem != '—' %}<div class="truncate">origem: {{ c.origem }}</div>{% endif %}
     </div>
 
     <!-- Completude -->
     <div class="mt-auto">
       <div class="mb-1.5 flex items-center justify-between">
         <span class="text-[10px] font-bold uppercase tracking-[0.1em] text-[#a6bfc7]">Perfil</span>
-        <span class="font-mono text-[12px] font-bold" style="color:{{ c.completude.cor }}">{{ c.completude.total }}%</span>
+        <span class="font-mono text-[12px] font-bold tabular-nums" style="color:{{ c.completude.cor }}">{{ c.completude.total }}%</span>
       </div>
       <div class="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
         <div class="h-full rounded-full" style="width:{{ c.completude.total }}%;background:{{ c.completude.cor }}"></div>
@@ -61,7 +61,7 @@
       </p>
       {% endif %}
       <div class="flex items-center justify-between gap-3 border-t border-white/10 pt-3">
-        <span class="font-mono text-[13.5px] font-bold text-[#5b8def]">{{ c.valor }}</span>
+        <span class="font-mono text-[13.5px] font-bold tabular-nums text-[#5b8def]">{{ c.valor }}</span>
         {% if web_pode_editar %}
         <a href="{% url 'contatos:editar' c.id %}?focar={{ c.completude.faltam|join:','|urlencode }}"
            class="hazon-btn hazon-btn-primary px-3.5 py-1.5 text-[12px] font-semibold text-white transition hover:brightness-110"

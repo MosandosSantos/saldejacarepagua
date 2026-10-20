@@ -10,6 +10,7 @@ todas usando o repository em repositories/gprb_repository.py
 from datetime import date
 
 from django.conf import settings
+from django.http import HttpResponseForbidden
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -17,11 +18,13 @@ from acesso.decorators import (
     e_admin_do_tenant,
     filtro_tenant,
     nicho_da_sessao,
+    tenant_id_da_sessao,
     web_login_required,
     web_requer_edicao,
+    web_requer_tenant_context,
 )
 from contatos.forms import ContatoForm, NotaForm
-from contatos.models import Contato, Movimentacao
+from contatos.models import Contato, Loja, Membro, Movimentacao, Vale
 from contatos.scoring import completude_do_contato
 from contatos.services import atualizar_negocio_do_contato, criar_negocio_para_contato
 from contatos.views.campos import (
@@ -43,7 +46,6 @@ from contatos.views.helpers import (
 from contatos.views.notas_tags import _aplicar_nova_tag
 from emails.models import ModeloEmail
 from recepcao.models import etapa_map_do_tenant
-from repositories import gprb_repository as repo
 from tarefas.models import PRIORIDADE_CORES
 
 # ---- Helpers de lista() ----
@@ -61,21 +63,24 @@ def _parse_filtros_lista(request):
         situacao = ''
     prefeitura_id = request.GET.get('prefeitura', '').strip()
     loja_id = request.GET.get('loja', '').strip()
+    corpos = request.GET.getlist('corpo')
     uf = request.GET.get('uf', '').strip().upper()
     cidade = _limpar_texto(request.GET.get('cidade'))
     anuidade = request.GET.get('anuidade', '').strip()
     if anuidade not in ('em_dia', 'atrasada', 'nunca'):
         anuidade = ''
 
-    filtros_ativos = bool(termo or situacao or prefeitura_id or loja_id
-                          or uf or cidade or anuidade)
+    filtros_ativos = bool(
+        termo or situacao or prefeitura_id or loja_id or corpos
+        or uf or cidade or anuidade
+    )
 
     qs_base = request.GET.copy()
     qs_base.pop('page', None)
 
     return {
         'termo': termo, 'situacao': situacao, 'prefeitura_id': prefeitura_id,
-        'loja_id': loja_id, 'uf': uf, 'cidade': cidade,
+        'loja_id': loja_id, 'corpos': corpos, 'uf': uf, 'cidade': cidade,
         'anuidade': anuidade, 'filtros_ativos': filtros_ativos,
         'qs': qs_base.urlencode(),
     }
@@ -121,29 +126,108 @@ def _formatar_membro_lista(row, ano_corrente, em_q1):
 
 @web_login_required
 def lista(request):
-    """Lista de membros do banco GPRB — busca + filtros acumulativos."""
+    """Lista de membros do banco local — busca + filtros acumulativos.
+
+    Papéis: admin_saas enxerga todos os tenants (identidade global, sem
+    seleção de cabeçalho); ADM e demais papéis ficam escopados ao tenant da
+    conta e exigem Vale ativa.
+    """
+    from django.db.models import F, Q
+
+    from acesso.models import ROLE_ADMIN_SAAS
+
     hoje = date.today()
     ano_corrente = hoje.year
     em_q1 = hoje.month <= 3
 
     filtros = _parse_filtros_lista(request)
 
-    opcoes = repo.listar_membros_filtros()
-    todos = repo.listar_membros({
-        'termo': filtros['termo'], 'situacao': filtros['situacao'],
-        'prefeitura_id': filtros['prefeitura_id'], 'loja_id': filtros['loja_id'],
-        'uf': filtros['uf'], 'cidade': filtros['cidade'],
-    })
+    usuario = getattr(request, 'usuario_logado', None)
+    snapshot = request.session.get('usuario', {})
+    role = getattr(usuario, 'role', None) or (
+        snapshot.get('role') if isinstance(snapshot, dict) else None
+    )
+    if role == ROLE_ADMIN_SAAS:
+        tenant_ids = None
+    else:
+        tid = tenant_id_da_sessao(request)
+        vale_ativo = (
+            Vale.objects.filter(tenant_id=tid, status='ATIVA').first()
+            if tid else None
+        )
+        if vale_ativo is None:
+            return HttpResponseForbidden(
+                'Selecione um tenant ativo com Vale para consultar membros.',
+            )
+        tenant_ids = [tid]
 
-    if filtros['anuidade']:
-        todos = [r for r in todos
-                 if _categoria_anuidade(r[13], ano_corrente, em_q1) == filtros['anuidade']]
+    qs = Membro.objects.order_by('nome', 'id')
+    if tenant_ids is not None:
+        qs = qs.filter(tenant_id__in=tenant_ids)
+    if filtros['termo']:
+        termo = filtros['termo']
+        qs = qs.filter(
+            Q(nome__icontains=termo) | Q(email__icontains=termo)
+            | Q(cpf__icontains=termo) | Q(celular__icontains=termo),
+        )
+    if filtros['situacao']:
+        qs = qs.filter(situacao=filtros['situacao'])
+    if filtros['prefeitura_id']:
+        try:
+            vale = Vale.objects.get(pk=int(filtros['prefeitura_id']))
+        except (Vale.DoesNotExist, TypeError, ValueError):
+            vale = None
+        qs = qs.filter(tenant_id=vale.tenant_id) if vale else qs.none()
+    loja_pk = None
+    if filtros['loja_id']:
+        try:
+            loja_pk = int(filtros['loja_id'])
+        except (TypeError, ValueError):
+            qs = qs.none()
+    corpos = filtros['corpos']
+    if any(corpo not in dict(Loja.CORPO_CHOICES) for corpo in corpos):
+        qs = qs.none()
+    elif corpos:
+        filtros_loja = {
+            'lojas__corpo__in': corpos,
+            'lojas__tenant_id': F('tenant_id'),
+        }
+        if loja_pk is not None:
+            filtros_loja['lojas__pk'] = loja_pk
+        qs = qs.filter(**filtros_loja).distinct()
+    elif loja_pk is not None:
+        qs = qs.filter(lojas__id=loja_pk).distinct()
+    if filtros['uf']:
+        qs = qs.filter(uf=filtros['uf'])
+    if filtros['cidade']:
+        qs = qs.filter(cidade=filtros['cidade'])
+    if filtros['anuidade'] in ('em_dia', 'atrasada'):
+        # O banco local não registra pagamentos: só 'nunca' tem resultado.
+        qs = qs.none()
 
-    total = len(todos)
+    total = qs.count()
     page_num = request.GET.get('page', 1)
-    paginator = Paginator(todos, 25)
+    paginator = Paginator(qs, 20)
     page_obj = paginator.get_page(page_num)
-    membros = [_formatar_membro_lista(row, ano_corrente, em_q1) for row in page_obj]
+    # Percentual de presença em lote (uma consulta para a página inteira).
+    from tarefas.presencas import PresencaServico
+    percentuais_presenca = PresencaServico.percentuais(list(page_obj.object_list))
+    membros = [
+        _formatar_membro_local(membro, ano_corrente, em_q1, percentuais_presenca)
+        for membro in page_obj.object_list.prefetch_related(
+            'lojas__tenant', 'graus__grau',
+        )
+    ]
+
+    base_opcoes = Membro.objects
+    if tenant_ids is not None:
+        base_opcoes = base_opcoes.filter(tenant_id__in=tenant_ids)
+    vales_opcoes = Vale.objects.filter(status='ATIVA')
+    if tenant_ids is not None:
+        vales_opcoes = vales_opcoes.filter(tenant_id__in=tenant_ids)
+    lojas_opcoes = Loja.objects
+    if tenant_ids is not None:
+        lojas_opcoes = lojas_opcoes.filter(tenant_id__in=tenant_ids)
 
     return render(request, 'contatos/lista.html', {
         'itens': membros, 'q': filtros['termo'],
@@ -153,11 +237,67 @@ def lista(request):
         'loja': filtros['loja_id'], 'uf': filtros['uf'],
         'cidade': filtros['cidade'],
         'anuidade': filtros['anuidade'], 'filtros_ativos': filtros['filtros_ativos'],
-        'opcoes_prefeituras': opcoes['prefeituras'],
-        'opcoes_lojas': opcoes['lojas'], 'opcoes_ufs': opcoes['ufs'],
-        'opcoes_cidades': opcoes['cidades'],
+        'corpos_filtro': [
+            {
+                'valor': valor,
+                'rotulo': rotulo,
+                'selecionado': valor in corpos,
+            }
+            for valor, rotulo in Loja.CORPO_CHOICES
+        ],
+        'opcoes_prefeituras': [
+            {'id': str(v.pk), 'nome': v.nome} for v in vales_opcoes.order_by('nome', 'id')
+        ],
+        'opcoes_lojas': [
+            {'id': str(l.pk), 'nome': l.nome} for l in lojas_opcoes.order_by('nome', 'id')
+        ],
+        'opcoes_ufs': list(
+            base_opcoes.exclude(uf='').order_by('uf').values_list('uf', flat=True).distinct()
+        ),
+        'opcoes_cidades': list(
+            base_opcoes.exclude(cidade='').order_by('cidade').values_list('cidade', flat=True).distinct()
+        ),
         'qs': filtros['qs'],
     })
+
+
+def _formatar_membro_local(membro, ano_corrente, em_q1, percentuais_presenca):
+    """Converte um Membro local em dict para o template da lista."""
+    cor, label = _cor_anuidade(None, ano_corrente, em_q1)
+    lojas = []
+    for loja in membro.lojas.all().order_by('nome', 'id'):
+        try:
+            vale = loja.tenant.vales
+            vale_nome, vale_sigla = vale.nome, vale.sigla
+        except Vale.DoesNotExist:
+            vale_nome, vale_sigla = '', ''
+        lojas.append({
+            'loja': loja.nome, 'sigla': vale_sigla, 'potencia': vale_nome,
+            'anuidade_loja': None, 'presencas_loja': 0,
+        })
+    # Grau mais alto conquistado (historico de graus), se houver.
+    grau_atual = (
+        membro.graus.select_related('grau').order_by('-grau__numero').first()
+    )
+    loja_principal = next(iter(lojas), {}).get('loja', '')
+    return {
+        'id': membro.pk, 'nome': membro.nome or '', 'email': membro.email or '',
+        'celular': membro.celular or '', 'cpf': membro.cpf or '',
+        'cidade': membro.cidade or '', 'uf': membro.uf or '',
+        'situacao': membro.situacao or '',
+        'ativo': (membro.situacao or '') == 'ATIVO',
+        'lojas': lojas,
+        'grau_atual': (
+            {'numero': grau_atual.grau.numero, 'nome': grau_atual.grau.nome}
+            if grau_atual else None
+        ),
+        'loja_nome': loja_principal,
+        'presencas_ano': 0,
+        'presenca_percentual': percentuais_presenca.get(membro.pk),
+        'nascimento': membro.data_nascimento,
+        'criado_em': membro.created_at,
+        'anuidade': label, 'anuidade_cor': cor,
+    }
 
 
 def _serializar_negocios(contato, stage_map):
@@ -236,6 +376,7 @@ def detalhe(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def novo(request):
     nicho = nicho_da_sessao(request)
@@ -272,6 +413,7 @@ def novo(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def editar(request, pk):
     nicho = nicho_da_sessao(request)
@@ -322,6 +464,7 @@ def editar(request, pk):
     })
 
 @web_login_required
+@web_requer_tenant_context
 def excluir(request, pk):
     """Excluir contato — apenas admin (operacional nao pode remover)."""
     if not e_admin_do_tenant(request):

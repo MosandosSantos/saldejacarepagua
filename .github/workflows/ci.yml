@@ -45,6 +45,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install ruff bandit pip-audit pytest-cov
 
       - name: Run checks
         run: python manage.py check
@@ -57,6 +58,38 @@ jobs:
           PGHOST: localhost
           PGPORT: 5432
 
+      - name: Check migration drift
+        run: python manage.py makemigrations --check --dry-run
+        env:
+          DJANGO_SETTINGS_MODULE: core.settings
+          DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
+          PGDATABASE: gprbr_test
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGHOST: localhost
+          PGPORT: 5432
+
+      - name: Run Ruff on feature files
+        run: >-
+          python -m ruff check
+          acesso/context_processors.py
+          contatos/forms_graus.py
+          contatos/models.py
+          contatos/views/gprb_membros.py
+          contatos/views/acompanhamento.py
+          contatos/membros_urls.py
+          contatos/views/__init__.py
+          contatos/management/commands/limpar_historico_graus_teste.py
+          teste/test_acompanhamento_graus.py
+          teste/test_membro_grau_web.py
+          teste/test_membro_local.py
+          teste/test_vale_navigation.py
+
+      - name: Build Docker image and verify Tailwind bundle
+        run: |
+          docker build --tag gprbrcrm-ci .
+          docker run --rm --entrypoint python gprbrcrm-ci -c "from pathlib import Path; css = Path('/app/staticfiles/css/dist/styles.css').read_text(); assert 'minmax(0,2fr)' in css"
+
       - name: Run migrations
         run: python manage.py migrate
         env:
@@ -68,8 +101,38 @@ jobs:
           PGHOST: localhost
           PGPORT: 5432
 
+      - name: Seed degree catalog
+        run: python manage.py seed_graus
+        env:
+          DJANGO_SETTINGS_MODULE: core.settings
+          DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
+          PGDATABASE: gprbr_test
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGHOST: localhost
+          PGPORT: 5432
+
+      - name: Run member tracking feature tests
+        run: >-
+          python -m pytest --create-db
+          teste/test_acompanhamento_graus.py
+          teste/test_membro_grau_web.py
+          teste/test_membro_local.py
+          teste/test_membro_web.py
+          teste/test_vale_navigation.py
+          -v --tb=short
+        env:
+          DJANGO_SETTINGS_MODULE: core.settings_vale_test
+          VALE_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gprbr_test
+          DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
+          PGDATABASE: gprbr_test
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGHOST: localhost
+          PGPORT: 5432
+
       - name: Run tests
-        run: python -m pytest teste/ -v --tb=short
+        run: python -m pytest --create-db teste/ -v --tb=short
         env:
           DJANGO_SETTINGS_MODULE: core.settings_vale_test
           VALE_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gprbr_test
@@ -82,7 +145,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          python -m pytest teste/ --cov=. --cov-report=xml --cov-report=term-missing
+          python -m pytest --create-db teste/ --cov=. --cov-report=xml --cov-report=term-missing
         env:
           DJANGO_SETTINGS_MODULE: core.settings_vale_test
           VALE_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gprbr_test
@@ -93,8 +156,14 @@ jobs:
           PGHOST: localhost
           PGPORT: 5432
 
+      - name: Security scan (Bandit)
+        run: python -m bandit -r acesso candidatos contatos core dashboard emails funil gestao recepcao repositories tarefas -lll
+
+      - name: Dependency audit (pip-audit)
+        run: pip-audit -r requirements.txt
+
       - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.13'
+        if: success()
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml

@@ -160,9 +160,9 @@ def test_detalhe_filtra_por_etapa(tenant_aurora, admin_company):
     carteira = Carteira.objects.create(nome='Cobrança', tenant=tenant_aurora)
     c1 = Contato.objects.create(nome='Ana', seg='geral', tenant=tenant_aurora, carteira=carteira)
     c2 = Contato.objects.create(nome='Bia', seg='geral', tenant=tenant_aurora, carteira=carteira)
-    Negocio.objects.create(contato=c1, stage='fechado', valor=100, tenant=tenant_aurora)
-    Negocio.objects.create(contato=c2, stage='interessado', valor=0, tenant=tenant_aurora)
-    r = _cliente_web(admin_company).get(f'/contatos/carteiras/{carteira.id}/?etapa=fechado')
+    Negocio.objects.create(contato=c1, stage='diploma', valor=100, tenant=tenant_aurora)
+    Negocio.objects.create(contato=c2, stage='suplica', valor=0, tenant=tenant_aurora)
+    r = _cliente_web(admin_company).get(f'/contatos/carteiras/{carteira.id}/?etapa=diploma')
     html = r.content.decode()
     assert 'Ana' in html
     assert 'Bia' not in html
@@ -217,7 +217,7 @@ def test_formulario_salva_cargo_e_carteira(tenant_aurora, admin_company):
     carteira = Carteira.objects.create(nome='Cobrança', tenant=tenant_aurora)
     r = _cliente_web(admin_company).post('/contatos/novo/', {
         'nome': 'João', 'empresa': 'Tech', 'tel': '(11) 97777-2222', 'email': 'joao@x.com',
-        'seg': 'geral', 'stage': 'interessado', 'cargo': 'Diretor', 'carteira': str(carteira.id),
+        'seg': 'geral', 'stage': 'suplica', 'cargo': 'Diretor', 'carteira': str(carteira.id),
         'ultima_consulta': '2026-01-15', 'procedimento': 'Laser',
     })
     assert r.status_code == 302
@@ -349,7 +349,7 @@ def test_api_contato_aceita_cargo_e_carteira(client, tenant_aurora, usuario_oper
     carteira = Carteira.objects.create(nome='Cobrança', tenant=tenant_aurora)
     headers = _login(client, usuario_operacional)
     r = client.post('/api/v1/contatos', json={
-        'nome': 'Ana', 'seg': 'geral', 'stage': 'interessado',
+        'nome': 'Ana', 'seg': 'geral', 'stage': 'suplica',
         'cargo': 'Diretora', 'carteira_id': carteira.id,
     }, headers=headers)
     assert r.status_code == 201
@@ -363,7 +363,7 @@ def test_api_contato_carteira_de_outro_tenant_rejeitada(client, tenant_aurora, t
     carteira_beta = Carteira.objects.create(nome='Da Beta', tenant=tenant_beta)
     headers = _login(client, usuario_operacional)
     r = client.post('/api/v1/contatos', json={
-        'nome': 'Ana', 'seg': 'geral', 'stage': 'interessado', 'carteira_id': carteira_beta.id,
+        'nome': 'Ana', 'seg': 'geral', 'stage': 'suplica', 'carteira_id': carteira_beta.id,
     }, headers=headers)
     assert r.status_code == 400  # carteira fora do tenant
 

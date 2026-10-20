@@ -12,7 +12,7 @@ import unicodedata
 from datetime import date
 from decimal import Decimal, InvalidOperation
 
-from contatos.models import Contato, Tag
+from contatos.models import Carteira, Contato, Tag
 from contatos.services import criar_negocio_para_contato
 from core.dominio import SEGS, STAGE_MAP, stages_do_nicho
 
@@ -304,7 +304,6 @@ def importar_linhas(cabecalhos, linhas, mapeamento, tenant_id, nicho='saude',
             contato.tenant_id = tenant_id
         if carteira_id is not None:
             # Associa à carteira escolhida (escopada ao tenant — id de outra empresa cai fora)
-            from contatos.models import Carteira
 
             contato.carteira = Carteira.objects.filter(pk=carteira_id, tenant_id=tenant_id).first()
         contato.save()

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<meta property="og:title" content="SAL DO REAA — Nova sessão agendada">
+<meta property="og:description" content="{{ loja_nome }} — {{ tipo_display }}: {{ evento.titulo }} em {{ inicio_display }}.">
+<meta property="og:image" content="{{ url_logo }}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SAL DO REAA — Nova sessão agendada">
+<meta name="twitter:image" content="{{ url_logo }}">
+<title>{{ evento.titulo }}</title>
+<style>
+  :root { color-scheme: light; supported-color-schemes: light; }
+  body { background-color: #f3eeea !important; color: #1f1216; }
+  table { background-color: inherit; }
+  /* Modo escuro do leitor: mantém o padrão vinho/creme claro */
+  [data-ogsc] .email-card, .email-card { background-color: #ffffff !important; }
+</style>
+</head>
+<body bgcolor="#f3eeea" style="margin:0; padding:0; background-color:#f3eeea !important; font-family:Arial,Helvetica,sans-serif; color:#1f1216;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f3eeea" style="background-color:#f3eeea; padding:28px 12px;">
+    <tr>
+      <td align="center">
+
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" bgcolor="#ffffff" class="email-card" style="max-width:600px; width:100%; background-color:#ffffff !important; border-radius:6px; overflow:hidden; border:1px solid #e2d6c8;">
+          <!--============= CABEÇALHO — vinho profundo =============-->
+          <tr>
+            <td style="background:linear-gradient(140deg,#4a0e1f 0%,#621127 55%,#350b17 100%); background-color:#4a0e1f; padding:30px 32px 24px 32px; text-align:center;" bgcolor="#4a0e1f">
+              {% if url_logo %}<img src="{{ url_logo }}" alt="SAL DO REAA" width="72" height="72" style="display:block; margin:0 auto 10px auto; width:72px; height:72px; border-radius:8px; object-fit:contain;">
+              <div style="margin-top:6px; font-size:10px; color:#c9a227; letter-spacing:4px; text-transform:uppercase;">Ordo Ab Chao</div>{% endif %}
+              <div style="font-size:10px; color:#c9a227; letter-spacing:4px; text-transform:uppercase;">Sal do REAA</div>
+              <div style="margin-top:8px; font-family:Georgia,'Times New Roman',serif; font-size:26px; font-weight:normal; color:#ffffff; letter-spacing:2px;">{{ loja_nome }}</div>
+              <!-- assinatura: afio dourado com losango -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
+                <tr>
+                  <td align="center">
+                    <table role="presentation" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td width="70" style="border-top:1px solid #c9a227; height:1px; font-size:0; line-height:0;">&nbsp;</td>
+                        <td width="14" align="center" style="color:#c9a227; font-size:9px; line-height:1px;">&#9670;</td>
+                        <td width="70" style="border-top:1px solid #c9a227; height:1px; font-size:0; line-height:0;">&nbsp;</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <div style="margin-top:14px; font-size:11px; color:#e8d28a; letter-spacing:2.5px; text-transform:uppercase;">Agenda de Sessões</div>
+            </td>
+          </tr>
+
+          <!--============= TÍTULO + GRAU =============-->
+          <tr>
+            <td style="padding:30px 32px 0 32px; text-align:center;">
+              <span style="display:inline-block; padding:6px 16px; border-radius:3px; border:1px solid #c9a227; background-color:#faf6ee; color:#4a0e1f; font-size:11px; font-weight:bold; letter-spacing:1.5px; text-transform:uppercase;">{{ tipo_display }}</span>
+              <div style="margin-top:16px; font-family:Georgia,'Times New Roman',serif; font-size:24px; color:#1f1216; line-height:1.25;">{{ evento.titulo }}</div>
+              <div style="margin-top:6px; font-size:13px; color:#8a7a7e;">Nova sessão agendada para a {{ loja_nome }}</div>
+            </td>
+          </tr>
+
+          <!--============= DETALHES =============-->
+          <tr>
+            <td style="padding:22px 32px 0 32px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e2d6c8;">
+                <tr>
+                  <td style="padding:14px 4px 12px 4px; border-bottom:1px solid #f0e8dc;">
+                    <div style="font-size:10px; color:#c9a227; letter-spacing:2px; text-transform:uppercase;">Início</div>
+                    <div style="margin-top:3px; font-family:Georgia,serif; font-size:17px; color:#1f1216;">{{ inicio_display }}</div>
+                  </td>
+                  <td width="18">&nbsp;</td>
+                  <td style="padding:14px 4px 12px 4px; border-bottom:1px solid #f0e8dc;">
+                    <div style="font-size:10px; color:#c9a227; letter-spacing:2px; text-transform:uppercase;">Término previsto</div>
+                    <div style="margin-top:3px; font-family:Georgia,serif; font-size:17px; color:#1f1216;">{{ fim_display }}</div>
+                  </td>
+                </tr>
+                {% if evento.descricao %}
+                <tr>
+                  <td colspan="3" style="padding:14px 4px 12px 4px;">
+                    <div style="font-size:10px; color:#c9a227; letter-spacing:2px; text-transform:uppercase;">Observações</div>
+                    <div style="margin-top:3px; font-size:14px; color:#1f1216; line-height:1.55;">{{ evento.descricao|linebreaksbr }}</div>
+                  </td>
+                </tr>
+                {% endif %}
+              </table>
+            </td>
+          </tr>
+
+          <!--============= CONFIRMAÇÃO DE PRESENÇA (RSVP) =============-->
+          {% if url_vou %}
+          <tr>
+            <td style="padding:22px 32px 0 32px;">
+              <div style="text-align:center; font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#4a0e1f; font-weight:bold;">Confirme sua presença</div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
+                <tr>
+                  <td align="center">
+                    <table role="presentation" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td>
+                          <a href="{{ url_vou }}" target="_blank" rel="noopener"
+                             style="display:inline-block; padding:13px 22px; border-radius:4px; background-color:#1f5c3d; color:#ffffff; font-size:13px; font-weight:bold; letter-spacing:0.8px; text-decoration:none; text-transform:uppercase;">
+                            Vou comparecer
+                          </a>
+                        </td>
+                        <td width="14">&nbsp;</td>
+                        <td>
+                          <a href="{{ url_nao }}" target="_blank" rel="noopener"
+                             style="display:inline-block; padding:13px 22px; border-radius:4px; background-color:#7a1024; color:#ffffff; font-size:13px; font-weight:bold; letter-spacing:0.8px; text-decoration:none; text-transform:uppercase;">
+                            Não poderei
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <div style="margin-top:8px; font-size:11px; color:#8a7a7e; text-align:center;">O link abre a página onde a resposta fica registrada — a confirmação é única por e-mail.</div>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!--============= BOTÃO — Google Agenda =============-->
+          <tr>
+            <td align="center" style="padding:24px 32px 8px 32px;">
+              <a href="{{ url_google }}" target="_blank" rel="noopener"
+                 style="display:inline-block; padding:14px 34px; border-radius:4px; background:linear-gradient(135deg,#c9a227 0%,#b08a1e 100%); background-color:#c9a227; color:#2b0810; font-size:13px; font-weight:bold; letter-spacing:1px; text-decoration:none; text-transform:uppercase;">
+                + Adicionar ao Google Agenda
+              </a>
+              <div style="margin-top:8px; font-size:11px; color:#8a7a7e;">O evento vai para o seu calendário pessoal depois do clique em “Adicionar”.</div>
+            </td>
+          </tr>
+
+          <!--============= FECHO — afio dourado =============-->
+          <tr>
+            <td align="center" style="padding:22px 0 0 0;">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="110" style="border-top:1px solid #e8d28a; height:1px; font-size:0; line-height:0;">&nbsp;</td>
+                  <td width="14" align="center" style="color:#c9a227; font-size:9px; line-height:1px;">&#9670;</td>
+                  <td width="110" style="border-top:1px solid #e8d28a; height:1px; font-size:0; line-height:0;">&nbsp;</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!--============= RODAPÉ =============-->
+          <tr>
+            <td style="padding:16px 32px 26px 32px; font-size:11px; color:#8a7a7e; line-height:1.6; text-align:center;">
+              Você recebe este aviso por estar vinculado à {{ loja_nome }}{% if vale_nome %} — {{ vale_nome }}{% endif %}.<br>
+              Ordem Constitucionalista — e-mail automático, não responda.
+              {% if modo_teste %}<br><br><span style="background-color:#4a0e1f; color:#e8d28a; padding:3px 10px; border-radius:3px; font-size:10px; letter-spacing:1px;">MODO&nbsp;TESTE&nbsp;—&nbsp;DESTINATÁRIO&nbsp;DE&nbsp;TESTE</span>{% endif %}
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

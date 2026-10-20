@@ -8,29 +8,27 @@ from django.conf.urls.static import static
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import include, path
-from django.views.generic import RedirectView
 
 
 def healthz(request):
     """Endpoint de saude para o healthcheck do Railway (sem autenticacao).
-    
+
     Verifica:
     - Status geral
     - Conexao com banco de dados
     """
-    from django.db import connection
-    
+
     status = {'status': 'ok', 'servico': 'gprbr'}
-    
+
     # Verifica conexao com banco
     try:
         with connection.cursor() as cursor:
             cursor.execute('SELECT 1')
         status['database'] = 'ok'
-    except Exception as e:
+    except DBError as e:
         status['status'] = 'degraded'
-        status['database'] = f'error: {str(e)}'
-    
+        status['database'] = f'error: {e!s}'
+
     http_status = 200 if status['status'] == 'ok' else 503
     return JsonResponse(status, status=http_status)
 
@@ -38,6 +36,8 @@ from acesso import views as acesso_views
 from contatos import views as contatos_views
 from core import views as core_views
 from gestao import views as gestao_views
+from tarefas import views as tarefas_views
+from django.db import Error as DBError, connection
 
 urlpatterns = [
     path('premium/<str:recurso>/', core_views.versao_educativa, name='versao_educativa'),
@@ -58,7 +58,17 @@ urlpatterns = [
     path('dashboard/', include('dashboard.urls')),
     path('iniciacao/', include('recepcao.urls', namespace='recepcao')),
     path('recepcao/', include('recepcao.urls', namespace='recepcao_legacy')),
-    path('contatos/', include('contatos.urls')),
+    path('vales/', contatos_views.prefeituras, name='vales'),
+    path('lojas/', contatos_views.lojas, name='lojas'),
+    # Agenda: /agendas/ canônico; /tarefas/ranking/ continua funcionando.
+    path('agendas/', tarefas_views.ranking, name='agendas'),
+    path(
+        'lojas/relatorio/<str:formato>/',
+        contatos_views.lojas_exportar,
+        name='lojas_exportar',
+    ),
+    path('contatos/', include('contatos.urls')),  # namespace 'contatos' — raiz redireciona para /membros/; CRUD de vales/lojas/carteiras continua aqui
+    path('membros/', include('contatos.membros_urls')),
     path('agenda/', include('agenda.urls')),
     path('emails/', include('emails.urls')),
     path('tarefas/', include('tarefas.urls')),

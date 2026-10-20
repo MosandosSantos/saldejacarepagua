@@ -1,0 +1,61 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}SAL DO REAA CRM — Iniciação a Graus{% endblock %}
+
+{% block conteudo %}
+<!--
+DESIGN CONTRACT
+THESIS: Make Grade 9 eligibility auditable from its source data, not a hidden score.
+OWN-WORLD: HAZON navy glass surfaces, Manrope labels, mono values, restrained blue/green accents.
+STORY: Officers can identify an eligible Vale member and inspect the date and presence evidence.
+FIRST VIEWPORT: Page title followed by one Grade 9 eligibility ledger with Vale, member, Grade 4 date, and presence.
+FORM: Eligibility ledger, grounded structure 3; surface seed b8ed25cf.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="hazon-titulo">Iniciação a Graus</h1>
+    <p class="hazon-sub mt-2">Membros que atendem aos critérios de progressão.</p>
+  </div>
+  <span class="text-[13px] text-[#a6bfc7]">
+    <b class="font-mono text-white tabular-nums">{{ total }}</b> candidato{{ total|pluralize:"s" }} ao Grau 9
+  </span>
+</div>
+
+<section aria-labelledby="candidatos-grau9-titulo" class="hazon-card overflow-hidden">
+  <div class="border-b border-white/10 px-5 py-4">
+    <h2 id="candidatos-grau9-titulo" class="text-[13px] font-bold text-white">Candidatos ao Grau 9</h2>
+    <p class="mt-1 text-[12.5px] text-[#a6bfc7]">Grau atual 8, Grau 4 há mais de seis meses e presença mínima de 50% no Vale.</p>
+  </div>
+
+  {% if candidatos %}
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[680px] border-collapse text-left">
+      <caption class="sr-only">Candidatos ao Grau 9 e os dados usados no cálculo de elegibilidade</caption>
+      <thead class="bg-white/[0.03]">
+        <tr class="border-b border-white/10">
+          <th scope="col" class="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Vale</th>
+          <th scope="col" class="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Membro</th>
+          <th scope="col" class="px-5 py-3 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Grau 4 desde</th>
+          <th scope="col" class="px-5 py-3 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Presença no Vale</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for candidato in candidatos %}
+        <tr data-candidato-grau9="{{ candidato.id }}" class="border-b border-white/5 last:border-0 hover:bg-white/[0.03]">
+          <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]"><span class="block truncate">{{ candidato.vale|default:"—" }}</span></td>
+          <th scope="row" class="max-w-[240px] truncate px-5 py-3.5 text-[13px] font-semibold text-white">{{ candidato.nome }}</th>
+          <td class="px-5 py-3.5 text-center font-mono text-[12.5px] tabular-nums text-[#bcd3da]">{{ candidato.data_grau_4|databr }}</td>
+          <td class="px-5 py-3.5 text-center">
+            <span class="inline-flex min-w-[3.5rem] items-center justify-center rounded-lg border border-[#4ade80]/30 bg-[#4ade80]/10 px-2 py-1 font-mono text-[12.5px] font-bold tabular-nums text-[#4ade80]">{{ candidato.presenca }}%</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="px-5 py-10 text-center text-[13px] text-[#a6bfc7]">Nenhum membro atende aos critérios para o Grau 9 no momento.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -25,7 +25,7 @@ _parsed_database_url = urlsplit(_database_url)
 _docker_target = (
     _parsed_database_url.username == 'gprbr'
     and _parsed_database_url.hostname in ('localhost', '127.0.0.1', 'db')
-    and _parsed_database_url.path == '/saldabritanea'
+    and _parsed_database_url.path in ('/saldabritanea', '/saldoreaa')
 )
 _ci_target = (
     _parsed_database_url.username == 'postgres'

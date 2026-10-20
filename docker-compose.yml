@@ -104,7 +104,6 @@ services:
       - GOOGLE_RANKING_CALENDAR_ID=${GOOGLE_RANKING_CALENDAR_ID:-}
     volumes:
       - ./media:/app/media
-      - ./staticfiles:/app/staticfiles
       - ./logs:/app/logs
     ports:
       - "${APP_PORT:-8111}:8111"

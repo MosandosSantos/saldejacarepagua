@@ -1,33 +1,33 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Carteira: {{ carteira.nome }}{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Carteira: {{ carteira.nome }}{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7 flex flex-wrap items-end justify-between gap-4">
   <div>
-    <h1 class="hazon-titulo">{{ carteira.nome }}</h1>
+    <h1 class="hazon-titulo break-words">{{ carteira.nome }}</h1>
     {% if carteira.descricao %}
-      <p class="hazon-sub mt-2">{{ carteira.descricao }}</p>
+      <p class="hazon-sub mt-2 break-words">{{ carteira.descricao }}</p>
     {% else %}
       <p class="hazon-sub mt-2">{{ carteira.total }} contato{{ carteira.total|pluralize }} nesta carteira.</p>
     {% endif %}
   </div>
   <div class="flex flex-wrap items-center gap-3">
-    <a href="{% url 'contatos:carteiras' %}" class="text-[13px] font-semibold text-[#5b8def] transition hover:underline">← todas as carteiras</a>
+    <a href="{% url 'contatos:carteiras' %}" class="text-[13px] font-semibold text-[#5b8def] transition hover:underline"><span aria-hidden="true">←</span> todas as carteiras</a>
     <a href="{% url 'contatos:lista' %}?carteira={{ carteira.id }}"
        class="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-[12.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">
       Ver na lista de contatos
     </a>
     {% if web_eh_admin %}
-    <button type="button" onclick="document.getElementById('editar-carteira').classList.toggle('hidden')"
+    <button type="button" id="btn-editar-carteira"
+            aria-expanded="false" aria-controls="editar-carteira"
             class="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-[12.5px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">
-      Editar
+      Editar carteira
     </button>
-    <form method="post" class="inline"
-          onsubmit="return confirm('Excluir esta carteira? Os contatos continuam existindo, apenas deixam de estar nesta carteira.');">
+    <form method="post" aria-label="Excluir carteira" class="inline">
       {% csrf_token %}
       <input type="hidden" name="acao" value="excluir">
-      <button type="submit" class="hazon-btn hazon-btn-danger px-4 py-2 text-[12px] font-semibold transition">Excluir</button>
+      <button type="submit" data-confirm="Excluir esta carteira? Os contatos continuam existindo, apenas deixam de estar nesta carteira." class="hazon-btn hazon-btn-danger px-4 py-2 text-[12px] font-semibold transition">Excluir carteira</button>
     </form>
     {% endif %}
   </div>
@@ -36,21 +36,21 @@
 {% if web_eh_admin %}
 <div id="editar-carteira" class="mb-6 hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
   {% for e in erros %}
-    <p class="mb-3 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-2.5 text-[12.5px] text-red-200">{{ e }}</p>
+    <p id="form-erro" class="mb-3 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-2.5 text-[12.5px] text-red-200" role="alert">{{ e }}</p>
   {% endfor %}
   {% if sucesso %}
-    <p class="mb-3 rounded-xl border border-[#4ade80]/30 bg-[#4ade80]/10 px-4 py-2.5 text-[12.5px] text-[#4ade80]">{{ sucesso }}</p>
+    <p class="mb-3 rounded-xl border border-[#4ade80]/30 bg-[#4ade80]/10 px-4 py-2.5 text-[12.5px] text-[#4ade80]" role="status">{{ sucesso }}</p>
   {% endif %}
-  <form method="post" class="flex flex-wrap items-end gap-3 hazon-form">
+  <form method="post" aria-label="Editar carteira" {% if erros %}aria-describedby="form-erro"{% endif %} class="flex flex-wrap items-end gap-3 hazon-form" data-unsaved-guard>
     {% csrf_token %}
     <input type="hidden" name="acao" value="editar">
     <div class="min-w-[200px] flex-1">
       <label for="id_nome" class="hazon-label">Nome</label>
-      <input type="text" id="id_nome" name="nome" value="{{ carteira.nome }}" required maxlength="120" class="w-full">
+      <input type="text" id="id_nome" name="nome" value="{{ carteira.nome }}" required maxlength="120" autocomplete="off" class="w-full">
     </div>
     <div class="min-w-[220px] flex-1">
       <label for="id_descricao" class="hazon-label">Descrição (opcional)</label>
-      <input type="text" id="id_descricao" name="descricao" value="{{ carteira.descricao }}" maxlength="200" class="w-full">
+      <input type="text" id="id_descricao" name="descricao" value="{{ carteira.descricao }}" maxlength="200" autocomplete="off" class="w-full">
     </div>
     <button type="submit" class="hazon-btn hazon-btn-primary px-5 py-2.5 text-[12.5px] font-semibold text-white transition hover:brightness-110">Salvar</button>
   </form>
@@ -60,15 +60,17 @@
 <!-- Resumo por etapa + filtro -->
 <div class="mb-6 flex flex-wrap items-center gap-2">
   <a href="{% url 'contatos:carteira_detalhe' carteira.id %}"
+     {% if not etapa_ativa %}aria-current="page"{% endif %}
      class="rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition
             {% if not etapa_ativa %}border-[#5b8def]/60 bg-[#5b8def]/15 text-[#5b8def]{% else %}border-white/15 bg-white/5 text-[#bcd3da] hover:bg-white/10{% endif %}">
     Todos ({{ carteira.total }})
   </a>
   {% for s in resumo_etapas %}
     <a href="{% url 'contatos:carteira_detalhe' carteira.id %}?etapa={{ s.key }}"
+       {% if etapa_ativa == s.key %}aria-current="page"{% endif %}
        class="rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition
               {% if etapa_ativa == s.key %}border-[#5b8def]/60 bg-[#5b8def]/15 text-[#5b8def]{% else %}border-white/15 bg-white/5 text-[#bcd3da] hover:bg-white/10{% endif %}">
-      <span class="mr-1 inline-block h-2 w-2 rounded-full" style="background:{{ s.color }}"></span>
+      <span class="mr-1 inline-block h-2 w-2 rounded-full" style="background:{{ s.color }}" aria-hidden="true"></span>
       {{ s.name }} ({{ s.qtd }})
     </a>
   {% endfor %}
@@ -78,23 +80,23 @@
   <table class="w-full min-w-[900px] border-collapse">
     <thead>
       <tr class="border-b border-white/10 text-left">
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Contato</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Empresa / Cargo</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Telefone</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Etapa</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Segmento</th>
-        <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Valor</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Contato</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Empresa / Cargo</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Telefone</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Etapa</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Segmento</th>
+        <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Valor</th>
       </tr>
     </thead>
     <tbody>
       {% for c in itens %}
-        <tr class="cursor-pointer border-b border-white/10 transition last:border-0 hover:bg-white/5" onclick="window.location='{% url 'contatos:detalhe' c.id %}'">
-          <td class="px-5 py-4"><a class="font-semibold text-white hover:text-[#5b8def]" href="{% url 'contatos:detalhe' c.id %}">{{ c.nome }}</a></td>
-          <td class="px-5 py-4 text-[13px] text-[#bcd3da]">{{ c.empresa }}{% if c.cargo %}<span class="text-[#a6bfc7]"> · {{ c.cargo }}</span>{% endif %}</td>
+        <tr class="cursor-pointer border-b border-white/10 transition last:border-0 hover:bg-white/5" data-href="{% url 'contatos:detalhe' c.id %}">
+          <td class="px-5 py-4"><a class="block max-w-[220px] truncate font-semibold text-white hover:text-[#5b8def]" href="{% url 'contatos:detalhe' c.id %}">{{ c.nome }}</a></td>
+          <td class="px-5 py-4 text-[13px] text-[#bcd3da]"><span class="block max-w-[220px] truncate">{{ c.empresa }}{% if c.cargo %}<span class="text-[#a6bfc7]"> · {{ c.cargo }}</span>{% endif %}</span></td>
           <td class="px-5 py-4 font-mono text-[12.5px] text-[#bcd3da]">{{ c.tel }}</td>
           <td class="px-5 py-4"><span class="rounded-full px-2.5 py-1 text-[10px] font-semibold" style="color:{{ c.stage.color }};background:{{ c.stage.color }}1a">{{ c.stage.name }}</span></td>
           <td class="px-5 py-4"><span class="rounded-full px-2.5 py-1 text-[10px] font-semibold" style="color:{{ c.seg.color }};background:{{ c.seg.color }}1a">{{ c.seg.label }}</span></td>
-          <td class="px-5 py-4 text-right font-mono font-bold text-[#5b8def]">{{ c.valor }}</td>
+          <td class="px-5 py-4 text-right font-mono font-bold tabular-nums text-[#5b8def]">{{ c.valor }}</td>
         </tr>
       {% empty %}
         <tr><td colspan="6" class="px-5 py-12 text-center text-sm text-[#a6bfc7]">Nenhum contato nesta carteira{% if etapa_ativa %} nesta etapa{% endif %}.</td></tr>
@@ -103,3 +105,27 @@
   </table>
 </div>
 {% endblock %}
+
+<script>
+  (function () {
+    /* Clique na linha navega para o detalhe. A navegacao de verdade fica no
+       <a> da primeira celula (acessivel por teclado, Cmd/Ctrl+click e
+       botao do meio); aqui e apenas um atalho para o mouse. */
+    document.querySelectorAll('tr[data-href]').forEach(function (tr) {
+      tr.addEventListener('click', function (e) {
+        if (e.target.closest('a, button, input, select, textarea, label')) return;
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+        window.location.href = tr.getAttribute('data-href');
+      });
+    });
+
+    var btnEditar = document.getElementById('btn-editar-carteira');
+    var painel = document.getElementById('editar-carteira');
+    if (btnEditar && painel) {
+      btnEditar.addEventListener('click', function () {
+        var aberto = painel.classList.toggle('hidden') === false;
+        btnEditar.setAttribute('aria-expanded', aberto ? 'true' : 'false');
+      });
+    }
+  })();
+</script>

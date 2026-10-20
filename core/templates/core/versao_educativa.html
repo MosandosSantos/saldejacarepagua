@@ -1,33 +1,33 @@
 {% extends 'base/basic.html' %}
 {% load static %}
 
-{% block titulo %}GPRBRCRM — {{ titulo }}{% endblock %}
+{% block titulo %}SAL DO REAA CRM — {{ titulo }}{% endblock %}
 
 {% block conteudo %}
 <div class="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4">
   <div class="max-w-lg text-center">
     <!-- Ícone de cadeado -->
     <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#2aa1a8]/20 to-[#075b60]/20 border border-[#2aa1a8]/30">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#2aa1a8" stroke-width="1.5" class="h-10 w-10" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#2aa1a8" stroke-width="1.5" class="h-10 w-10" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
     </div>
 
-    <h1 class="font-display mb-3 text-2xl font-bold text-white">{{ titulo }}</h1>
+    <h1 class="font-display mb-3 break-words text-2xl font-bold text-white">{{ titulo }}</h1>
 
     <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-300">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4" aria-hidden="true">
         <path d="M12 9v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
       </svg>
       Versão Educativa
     </div>
 
     <p class="mb-4 text-lg text-white/80">
-      Esta é a versão educativa do <strong class="text-white">NeuroEmpreender</strong>.
+      Esta é a versão educativa do <strong class="text-white" translate="no">NeuroEmpreender</strong>.
     </p>
     <p class="mb-8 text-base text-white/60">
-      Adquira a versão <strong class="text-[#74b3c6]">Professional</strong> para ter acesso a todas as funcionalidades, incluindo <strong class="text-white">{{ titulo }}</strong>.
+      Adquira a versão <strong class="text-[#74b3c6]" translate="no">Professional</strong> para ter acesso a todas as funcionalidades, incluindo <strong class="text-white">{{ titulo }}</strong>.
     </p>
 
     <div class="flex flex-col sm:flex-row items-center justify-center gap-4">

@@ -3,14 +3,18 @@
 import re
 from pathlib import Path
 
-from acesso.context_processors import _nav_itens
 from django.urls import reverse
+
+from acesso.context_processors import _nav_itens
 
 
 ROOT = Path(__file__).resolve().parents[1]
 POTENCIA_OTHER_CONCEPTS = (
     'Potência do Simbolismo',
     'Potência no Simbolismo',
+    # Placeholder do select "Potência do Simbolismo" — reticência tipográfica
+    # (U+2026) e não "..." (a forma antiga continua aceita).
+    'Potência…',
     'Potência...',
 )
 
@@ -20,7 +24,7 @@ def test_vale_follows_dashboard_and_uses_the_existing_page():
     labels = [item['label'] for item in items]
 
     assert labels[:2] == ['Dashboard', 'Vale']
-    assert items[1]['url'] == reverse('contatos:prefeituras')
+    assert items[1]['url'] == reverse('vales')
 
 
 def test_prefeitura_entity_no_longer_uses_potencia_in_templates():

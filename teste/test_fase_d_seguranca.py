@@ -2,7 +2,7 @@
 import pytest
 from django.test import Client, override_settings
 
-from api.v1.rate_limit import RateLimiter, limpar_limitadores
+from api.v1.rate_limit import _chave_do_request, limpar_limitadores, RateLimiter
 from core import segredos
 
 
@@ -56,6 +56,9 @@ class TestCriptografia:
 # ---------------------------------------------------------------------------
 
 class TestHeadersWeb:
+    # A pagina publica de login consulta o banco (agenda publica e contagem
+    # de Vales) — o teste precisa de acesso ao banco para exercita-la.
+    @pytest.mark.django_db
     def test_pagina_publica_tem_headers(self):
         r = Client().get('/login/')
         assert r.status_code == 200
@@ -71,6 +74,7 @@ class TestHeadersWeb:
         assert 'https://fonts.gstatic.com' in csp
         assert 'https://brasilapi.com.br' in csp
 
+    @pytest.mark.django_db
     def test_hsts_ausente_em_dev(self):
         """Em DEBUG=1 (dev/testes) o HSTS nao e enviado — nao quebra o localhost."""
         r = Client().get('/login/', secure=True)
@@ -82,6 +86,7 @@ class TestHeadersWeb:
         SECURE_HSTS_INCLUDE_SUBDOMAINS=True,
         SECURE_HSTS_PRELOAD=True,
     )
+    @pytest.mark.django_db
     def test_hsts_presente_em_producao(self):
         r = Client().get('/login/', secure=True)
         assert 'Strict-Transport-Security' in r.headers
@@ -167,7 +172,6 @@ class TestRateLimit:
         """Sem DJANGO_TRUST_PROXY, a chave e o client.host (anti-spoofing)."""
         from starlette.requests import Request
 
-        from api.v1.rate_limit import _chave_do_request
 
         monkeypatch.delenv('DJANGO_TRUST_PROXY', raising=False)
         request = Request({
@@ -181,7 +185,6 @@ class TestRateLimit:
         """Com DJANGO_TRUST_PROXY=1, usa o primeiro hop do X-Forwarded-For."""
         from starlette.requests import Request
 
-        from api.v1.rate_limit import _chave_do_request
 
         monkeypatch.setenv('DJANGO_TRUST_PROXY', '1')
         request = Request({

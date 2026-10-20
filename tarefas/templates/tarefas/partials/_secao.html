@@ -7,7 +7,7 @@
     {% for t in lista %}
       {% include 'tarefas/partials/_linha.html' %}
     {% empty %}
-      <p class="text-[13px] text-[#a6bfc7]">{{ vazio }}</p>
+      <p class="text-[13px] text-[#a6bfc7]">{{ vazio|default:"Nenhum registro encontrado." }}</p>
     {% endfor %}
   </div>
 </section>

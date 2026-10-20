@@ -25,7 +25,7 @@ def _dados_contato(nome, **overrides):
     """POST válido do formulário de contato (todas as colunas que o form exige)."""
     dados = {
         'nome': nome, 'empresa': 'Empresa X', 'tel': '(11) 90000-0000', 'email': 'novo@x.com',
-        'seg': 'estetica', 'stage': 'interessado', 'valor': '0',
+        'seg': 'beleza', 'stage': 'suplica', 'valor': '0',
         'origem': 'Instagram', 'pagamento': 'Particular',
         'procedimento': 'Laser', 'ultima_consulta': '2026-01-01',
     }
@@ -45,7 +45,7 @@ def _cliente_web(usuario):
 
 
 def _contato(tenant, **kw):
-    dados = {'nome': 'Ana', 'seg': 'estetica'}
+    dados = {'nome': 'Ana', 'seg': 'beleza'}
     dados.update(kw)
     return Contato.objects.create(tenant=tenant, **dados)
 
@@ -168,19 +168,19 @@ def test_contato_novo_dispara_tarefa_com_placeholder(tenant_aurora, admin_compan
 
 @pytest.mark.django_db
 def test_trigger_movido_filtra_por_etapa_destino(tenant_aurora, admin_company):
-    auto = _auto(tenant_aurora, trigger='negocio_movido', parametros={'para_etapa': 'orcamento'},
+    auto = _auto(tenant_aurora, trigger='negocio_movido', parametros={'para_etapa': 'comunicacao'},
                  criado_por=admin_company)
     _passo(auto, 'nota', texto='Chegou no orçamento!')
     contato = _contato(tenant_aurora)
-    negocio = criar_negocio(contato, stage='interessado', tenant_id=tenant_aurora.id)
+    negocio = criar_negocio(contato, stage='suplica', tenant_id=tenant_aurora.id)
     c = _cliente_web(admin_company)
 
     # move para etapa errada → nada acontece
-    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'avaliacao_feita'})
+    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'iniciacao'})
     assert Nota.objects.count() == 0
 
     # move para o orçamento → dispara
-    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'orcamento'})
+    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'comunicacao'})
     nota = Nota.objects.get()
     assert nota.texto == 'Chegou no orçamento!'
     assert nota.contato_id == contato.id
@@ -192,9 +192,9 @@ def test_trigger_movido_sem_etapa_dispara_qualquer_mudanca(tenant_aurora, admin_
     auto = _auto(tenant_aurora, trigger='negocio_movido', parametros={}, criado_por=admin_company)
     _passo(auto, 'tag', tag='Movido')
     contato = _contato(tenant_aurora)
-    negocio = criar_negocio(contato, stage='interessado', tenant_id=tenant_aurora.id)
+    negocio = criar_negocio(contato, stage='suplica', tenant_id=tenant_aurora.id)
     c = _cliente_web(admin_company)
-    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'avaliacao_feita'})
+    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'iniciacao'})
     assert contato.tags.filter(nome='Movido').exists()
 
 
@@ -256,9 +256,9 @@ def test_placeholders_de_etapa_e_valor(tenant_aurora, admin_company):
     auto = _auto(tenant_aurora, trigger='negocio_movido', parametros={}, criado_por=admin_company)
     _passo(auto, 'nota', texto='{{nome}} agora em {{etapa}} ({{valor}})')
     contato = _contato(tenant_aurora, empresa='Clínica X')
-    negocio = criar_negocio(contato, stage='interessado', valor=1500, tenant_id=tenant_aurora.id)
+    negocio = criar_negocio(contato, stage='suplica', valor=1500, tenant_id=tenant_aurora.id)
     c = _cliente_web(admin_company)
-    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'orcamento'})
+    c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'comunicacao'})
     nota = Nota.objects.get()
     assert nota.texto == 'Ana agora em Orçamento enviado (R$ 1.500,00)'
 
@@ -295,7 +295,7 @@ def test_comando_estagnados_dispara_para_negocio_parado(tenant_aurora, admin_com
                  criado_por=admin_company)
     _passo(auto, 'tarefa', titulo='Recuperar negócio de {{nome}}')
     contato = _contato(tenant_aurora)
-    negocio = criar_negocio(contato, stage='interessado', tenant_id=tenant_aurora.id)
+    negocio = criar_negocio(contato, stage='suplica', tenant_id=tenant_aurora.id)
     # simula um negócio sem movimentação há 10 dias
     Negocio.objects.filter(pk=negocio.pk).update(updated_at=timezone.now() - timedelta(days=10))
 
@@ -305,7 +305,7 @@ def test_comando_estagnados_dispara_para_negocio_parado(tenant_aurora, admin_com
     assert RegistroExecucao.objects.filter(automacao=auto).count() == 1
 
     # negócio fechado/perdido não é varrido
-    Negocio.objects.filter(pk=negocio.pk).update(stage='fechado')
+    Negocio.objects.filter(pk=negocio.pk).update(stage='diploma')
     call_command('verificar_estagnados', '--tenant', str(tenant_aurora.id))
     assert Tarefa.objects.count() == 1
 
@@ -315,7 +315,7 @@ def test_botao_estagnadas_na_web(tenant_aurora, admin_company):
     _auto(tenant_aurora, trigger='negocio_estagnado', parametros={'dias': 1})
     _passo(Automacao.objects.get(), 'tarefa', titulo='Recuperar')
     contato = _contato(tenant_aurora)
-    negocio = criar_negocio(contato, stage='interessado', tenant_id=tenant_aurora.id)
+    negocio = criar_negocio(contato, stage='suplica', tenant_id=tenant_aurora.id)
     Negocio.objects.filter(pk=negocio.pk).update(updated_at=timezone.now() - timedelta(days=3))
     c = _cliente_web(admin_company)
     r = c.post('/automacoes/estagnadas/', {})
@@ -385,7 +385,7 @@ def test_api_cria_contato_dispara_automacao(client, tenant_aurora, headers_opera
     auto = _auto(tenant_aurora, criado_por=admin_company)
     _passo(auto, 'tarefa', titulo='API: {{nome}}')
     r = client.post('/api/v1/contatos/', json={
-        'nome': 'Contato API', 'seg': 'estetica', 'stage': 'interessado', 'valor': 500,
+        'nome': 'Contato API', 'seg': 'beleza', 'stage': 'suplica', 'valor': 500,
     }, headers=headers_operacional)
     assert r.status_code == 201
     t = Tarefa.objects.get()
@@ -398,14 +398,14 @@ def test_editar_contato_muda_etapa_dispara(client, tenant_aurora, admin_company)
     auto = _auto(tenant_aurora, trigger='negocio_movido', parametros={}, criado_por=admin_company)
     _passo(auto, 'nota', texto='Etapa alterada')
     contato = _contato(tenant_aurora)
-    criar_negocio(contato, stage='interessado', tenant_id=tenant_aurora.id)
+    criar_negocio(contato, stage='suplica', tenant_id=tenant_aurora.id)
     c = _cliente_web(admin_company)
-    r = c.post(f'/contatos/{contato.id}/editar/', _dados_contato(contato.nome, stage='avaliacao_agendada'))
+    r = c.post(f'/contatos/{contato.id}/editar/', _dados_contato(contato.nome, stage='pagamento'))
     assert r.status_code == 302
     assert Nota.objects.filter(texto='Etapa alterada').count() == 1
 
     # mesmo stage → não dispara de novo
-    r = c.post(f'/contatos/{contato.id}/editar/', _dados_contato(contato.nome, stage='avaliacao_agendada'))
+    r = c.post(f'/contatos/{contato.id}/editar/', _dados_contato(contato.nome, stage='pagamento'))
     assert Nota.objects.filter(texto='Etapa alterada').count() == 1
 
 
@@ -428,7 +428,7 @@ def test_negocio_novo_na_ficha_dispara_negocio_criado(tenant_aurora, admin_compa
     contato = _contato(tenant_aurora)
     c = _cliente_web(admin_company)
     r = c.post(f'/contatos/{contato.id}/negocios/novo/', {
-        'titulo': 'Tratamento completo', 'stage': 'orcamento', 'valor': '2500,00',
+        'titulo': 'Tratamento completo', 'stage': 'comunicacao', 'valor': '2500,00',
     })
     assert r.status_code == 302
     t = Tarefa.objects.get()

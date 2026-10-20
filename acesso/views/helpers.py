@@ -24,6 +24,7 @@ from acesso.models import (
     Usuario,
 )
 from acesso.session import iniciar_sessao
+from acesso.tenant_context import resolve_tenant_id
 from core.gprb import autenticar_usuario as gprb_autenticar
 from core.gprb import existe_usuario as gprb_existe_usuario
 from core.gprb import (
@@ -33,6 +34,8 @@ from core.gprb import (
     opcoes_prefeituras_usuario,
 )
 from recepcao.models import EtapaFunil
+import psycopg
+from django.core.signing import BadSignature
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +87,7 @@ def gprb_autenticar_seguro(login_id, senha):
         if user is not None:
             return user, True
         return None, gprb_existe_usuario(login_id)
-    except Exception as e:
+    except (psycopg.Error, OSError, ValueError) as e:
         logger.error('Erro na autenticacao GPRB para %s: %s', login_id, e)
         return None, None
 
@@ -94,10 +97,12 @@ def entrar_com_usuario_gprb(request, gprb_user, senha, origem='gprb'):
     local_user = Usuario.objects.filter(email__iexact=gprb_user['email']).first()
     crm_role = _GPRB_ROLE_MAP.get(gprb_user['role'], ROLE_VIEWER)
     tenant_gprb = None if crm_role == ROLE_ADMIN_SAAS else tenant_gprb_local()
+    celular_gprb = gprb_user.get('login_identifier') or ''
     if local_user is None:
         local_user = Usuario.objects.create(
             nome=gprb_user['name'] or gprb_user['email'] or '',
             email=gprb_user['email'],
+            celular=celular_gprb,
             senha=make_password(senha),
             role=crm_role,
             tenant=tenant_gprb,
@@ -105,6 +110,8 @@ def entrar_com_usuario_gprb(request, gprb_user, senha, origem='gprb'):
     else:
         if local_user.nome != (gprb_user['name'] or local_user.nome):
             local_user.nome = gprb_user['name'] or local_user.nome
+        if not local_user.celular and celular_gprb:
+            local_user.celular = celular_gprb
         if local_user.role != crm_role:
             local_user.role = crm_role
         if crm_role == ROLE_ADMIN_SAAS:
@@ -113,7 +120,7 @@ def entrar_com_usuario_gprb(request, gprb_user, senha, origem='gprb'):
             local_user.tenant = tenant_gprb
         if not local_user.senha or local_user.senha == SENHA_PENDENTE:
             local_user.senha = make_password(senha)
-        local_user.save(update_fields=['nome', 'role', 'senha', 'tenant', 'updated_at'])
+        local_user.save(update_fields=['nome', 'celular', 'role', 'senha', 'tenant', 'updated_at'])
     request.session.flush()
     iniciar_sessao(
         request, local_user,
@@ -125,12 +132,19 @@ def entrar_com_usuario_gprb(request, gprb_user, senha, origem='gprb'):
 
 
 def guard_equipe(request):
-    """Redireciona se o usuario nao pode gerir equipe."""
+    """Redireciona se o usuario nao pode gerir equipe.
+
+    O tenant efetivo vem de resolve_tenant_id (a seleção SaaS do admin da
+    plataforma fica em chave própria da sessão, não no snapshot). Sem tenant
+    selecionado, o admin_saas ainda pode consultar (vê tudo); escritas são
+    bloqueadas por web_requer_tenant_context nas views.
+    """
     if not pode_gerir_usuarios(request):
         return redirect('dashboard:index')
-    # Sem tenant (ex.: admin_saas da plataforma) não gere equipe de nenhum tenant.
-    if request.session.get('usuario', {}).get('tenant_id') is None:
-        return redirect('dashboard:index')
+    if resolve_tenant_id(request) is None:
+        role = request.session.get('usuario', {}).get('role')
+        if role != ROLE_ADMIN_SAAS:
+            return redirect('dashboard:index')
     if Usuario.objects.filter(id=request.session.get('usuario_id')).first() is None:
         return redirect('acesso:login')
     return None
@@ -225,7 +239,7 @@ def opcoes_equipe_gprb():
             'perfis': opcoes_perfis_usuario(),
             'gprb_ok': True,
         }
-    except Exception as e:
+    except (psycopg.Error, OSError, ValueError) as e:
         logger.warning('GPRB indisponivel para opcoes de equipe: %s', e)
         perfis = [{'key': r, 'label': ROLE_LABELS.get(r, r)} for r in ROLES_ATRIB_CRIACAO]
         return {'lojas': [], 'perfis': perfis, 'gprb_ok': False}
@@ -238,7 +252,7 @@ def sessoes_do_usuario(usuario_id, atual_key):
     for s in Session.objects.filter(expire_date__gt=agora):
         try:
             dados = s.get_decoded()
-        except Exception as e:
+        except BadSignature as e:
             logger.warning('Erro ao decodificar sessao %s: %s', s.session_key, e)
             continue
         if dados.get('usuario_id') != usuario_id:
@@ -305,6 +319,6 @@ def usuario_para_edicao(user_id, tid):
 def prefeituras_para_form():
     try:
         return opcoes_prefeituras_usuario()
-    except Exception as e:
+    except (psycopg.Error, OSError, ValueError) as e:
         logger.warning('Erro ao carregar prefeituras para formulario: %s', e)
         return []

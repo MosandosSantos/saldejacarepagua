@@ -23,10 +23,11 @@ from gestao.models import Inscricao, Pagamento
 from recepcao.models import etapa_map_do_tenant, etapas_do_tenant
 from tarefas.models import Tarefa
 
-from dashboard.repositories.gprb_repository import GprbRepository
+from dashboard.repositories.local_repository import LocalRepository
 from dashboard.services.cache_service import DashboardCache, DjangoCacheBackend
 
 from core.gprb import anuidade_ano_referencia
+from django.db import Error as DBError
 
 # _brl, _brl_curto, _iniciais → importados de core.utils
 
@@ -118,28 +119,33 @@ def _funnel_svg(funil, *, color_map=None, id_prefix='f3g'):
     return f'<svg viewBox="0 0 {W} {shadowY + 8}" class="w-full">' + c + '</svg>'
 
 
-_BAII_COLORS = ['#1a5fb4', '#3b7ded', '#93b8f7']  # base (mais membros) -> topo
+_BAII_COLORS = ['#1a5fb4', '#3b7ded', '#93b8f7']  # base -> topo
 
 
-def _para_svg_pyramide(potencias):
-    """Itens da piramide de Potencias — `potencias` vem ordenado por total DESC."""
-    itens = [{'name': p['name'], 'count': p['total']} for p in potencias]
+def _para_svg_pyramide(faixas):
+    """Shape de renderização das faixas, recebidas na ordem base → topo."""
+    itens = [
+        {
+            'name': faixa['name'], 'label': faixa['label'],
+            'count': faixa['total'],
+        }
+        for faixa in faixas
+    ]
     total = sum(i['count'] for i in itens) or 1
     n = len(itens)
     for k, i in enumerate(itens):
         i['pct'] = round(i['count'] / total * 100)
-        # k=0 (mais membros, base) = azul profundo; topo = azul claro
+        # k=0 (faixa da base) = azul profundo; topo = azul claro
         cor_idx = round(k / max(n - 1, 1) * (len(_BAII_COLORS) - 1))
         i['color'] = _BAII_COLORS[cor_idx]
     return itens
 
 
 def _pyramide_svg(itens):
-    """Piramide 3D de Potencias — base larga com a de mais membros embaixo.
+    """Pirâmide 3D: recebe faixas da base ao topo e desenha o ápice primeiro.
 
-    Inversao do grafico de funil: desenha de cima (menos vinculados, faixa
-    estreita) para baixo (mais vinculados, faixa larga na base). Potencias
-    sem membros vinculados ficam de fora. Sem dados, renderiza vazio.
+    A largura representa a posição da faixa, não a quantidade de membros.
+    Os totais e nomes são exibidos dentro de cada fatia.
     """
     if not itens:
         return ''
@@ -186,8 +192,12 @@ def _pyramide_svg(itens):
               f'{nr + depthX:.1f},{y2 - depthY:.1f} {nl:.1f},{y2:.1f}" fill="url(#bairiS{i})"/>')
         c += (f'<line x1="{fl:.1f}" y1="{y1:.1f}" x2="{fr:.1f}" y2="{y1:.1f}" '
               f'stroke="rgba(255,255,255,0.24)" stroke-width="1.2"/>')
-        c += (f'<text x="{cx:.1f}" y="{(y1 + sliceH / 2 + 4):.1f}" text-anchor="middle" font-size="14" '
-              f'font-weight="700" font-family="JetBrains Mono, monospace" fill="#fff" opacity="0.92">{s["count"]}</text>')
+        c += (f'<text x="{cx:.1f}" y="{(y1 + sliceH / 2 - 3):.1f}" text-anchor="middle" font-size="10" '
+              f'font-weight="600" font-family="Manrope, sans-serif" fill="#f4fafb" opacity="0.9">'
+              f'{_esc_attr(s["name"])}</text>')
+        c += (f'<text x="{cx:.1f}" y="{(y1 + sliceH / 2 + 15):.1f}" text-anchor="middle" font-size="14" '
+              f'font-weight="700" font-family="JetBrains Mono, monospace" fill="#fff" opacity="0.96">'
+              f'{s["count"]}</text>')
         if i == n - 1:
             # "boca" 3D embaixo da base larga (invertendo a do funil)
             ecx = (nl + nr + depthX) / 2
@@ -281,15 +291,19 @@ def _resumo(request, negocios=None):
     meta_pct = round(float(valor_fechados_mes) / meta_valor * 100) if meta_valor else None
     meta_bar_pct = min(100, meta_pct) if meta_pct is not None else None
 
-    # ---- KPIs do saldorer (banco GPRB, 1 query unica) ----
+    # ---- KPIs de Lojas/Membros (banco local) ----
     ano_corrente = hoje.year
-    gprb_repo = GprbRepository()
-    gprb = gprb_repo.dashboard_kpis(ano=ano_corrente) or {}
-    lojas_ativas = gprb.get('lojas_ativas', 0)
-    lojas_total = gprb.get('lojas_total', 0)
-    membros_ativos = gprb.get('membros_ativos', 0)
-    membros_total = gprb.get('membros_total', 0)
-    novos_membros = gprb.get('novos_membros_ano', 0)
+    tid_local = request.session.get('usuario', {}).get('tenant_id')
+    try:
+        local = LocalRepository(tid_local).dashboard_kpis(ano=ano_corrente)
+    except DBError as e:
+        logger.error('Erro nos KPIs locais do dashboard: %s', e)
+        local = {}
+    lojas_ativas = local.get('lojas_ativas', 0)
+    lojas_total = local.get('lojas_total', 0)
+    membros_ativos = local.get('membros_ativos', 0)
+    membros_total = local.get('membros_total', 0)
+    novos_membros = local.get('novos_membros_ano', 0)
     sessoes_ano = Inscricao.objects.filter(
         criado_em__year=ano_corrente,
     ).count()
@@ -312,7 +326,7 @@ def _resumo(request, negocios=None):
         'meta_valor': _brl(meta_valor) if meta_valor is not None else None,
         'meta_pct': meta_pct,
         'meta_bar_pct': meta_bar_pct,
-        # Saldorer (GPRB)
+        # Lojas/Membros (banco local)
         'lojas_ativas': lojas_ativas,
         'lojas_total': lojas_total,
         'membros_ativos': membros_ativos,
@@ -349,10 +363,11 @@ def anuidade_dados(request):
     """
     prefeitura_id = request.GET.get('potencia') or None
     loja_id = request.GET.get('loja') or None
+    tid = request.session.get('usuario', {}).get('tenant_id')
     try:
-        dados_card = GprbRepository().anuidade_card(
+        dados_card = LocalRepository(tid).anuidade_card(
             anuidade_ano_referencia(), prefeitura_id=prefeitura_id, loja_id=loja_id)
-    except Exception as e:
+    except DBError as e:
         logger.error('Erro no endpoint anuidade_dados: %s', e)
         dados_card = {'pagantes': 0, 'pendentes': 0, 'total': 0,
                       'percentual': 0, 'lojas': []}
@@ -626,21 +641,19 @@ def _calcular_velocidade(negocios, stage_map):
     return velocidade
 
 
-def _buscar_dados_baii(gprb_repo=None):
-    """Piramide de Potencias — membros ativos vinculados por Potencia.
+def _buscar_dados_baii(tenant_id=None):
+    """Pirâmide de graus — membros ativos agrupados pelo maior grau registrado.
 
-    Substitui o antigo funil de situacao (BAII): cada faixa da piramide e a
-    Potencia (prefeitura) com membros ligados via loja; a base trara a com
-    mais membros e as sem vinculados ficam fora.
+    A ordem das faixas é fixa: base 4–14, depois 15–18, 19–30, 31–32 e 33.
+    Membros sem grau registrado não entram no total.
     """
-    repo = gprb_repo or GprbRepository()
     try:
-        potencias = repo.membros_por_potencia_vinculo()
-    except Exception as e:
-        logger.error('Erro ao buscar membros por potencia (vinculo): %s', e)
-        potencias = []
+        faixas = LocalRepository(tenant_id).membros_ativos_por_faixa_de_graus()
+    except DBError as e:
+        logger.error('Erro ao buscar membros por faixa de grau: %s', e)
+        faixas = []
 
-    itens = _para_svg_pyramide(potencias)
+    itens = _para_svg_pyramide(faixas)
     return {
         'baii_ativos': itens, 'baii_ativos_svg': _pyramide_svg(itens),
         'baii_ativos_total': sum(i['count'] for i in itens),
@@ -667,14 +680,14 @@ def _buscar_candidatos(tid):
     return {'itens': itens, 'total': len(itens)}
 
 
-def _buscar_dados_gprb(ano_corrente, gprb_repo=None):
-    """Busca todos os dados GPRB do dashboard com tratamento de erro."""
-    repo = gprb_repo or GprbRepository()
+def _buscar_dados_gprb(ano_corrente, tenant_id=None):
+    """Busca os dados de membros do dashboard no banco local, com fallback vazio."""
+    repo = LocalRepository(tenant_id)
 
     def _safe(fn, *a, **kw):
         try:
             return fn(*a, **kw)
-        except Exception as e:
+        except DBError as e:
             logger.error('Erro ao buscar %s: %s', fn.__name__, e)
             return [] if fn.__name__ != 'anuidade_card' else {}
 
@@ -698,7 +711,6 @@ def index(request):
     stage_map = etapa_map_do_tenant(tid, nicho)
     negocios = filtro_tenant(request, Negocio.objects.select_related('contato'))
 
-    gprb_repo = GprbRepository()
     dashboard_cache = DashboardCache(DjangoCacheBackend())
 
     cached = dashboard_cache.get_kpis(tid, nicho)
@@ -746,8 +758,8 @@ def index(request):
     metas_dashboard = _buscar_metas_vendedor(tid, hoje)
     tarefas_alerta = _buscar_tarefas_alerta(tid, hoje)
     atividade = _buscar_atividade_time(tid, inicio30)
-    baii = _buscar_dados_baii(gprb_repo)
-    dados_gprb = _buscar_dados_gprb(ano_corrente, gprb_repo)
+    baii = _buscar_dados_baii(tid)
+    dados_gprb = _buscar_dados_gprb(ano_corrente, tid)
     chart_data = dados_gprb.get('chart_labels', ([], []))
     if isinstance(chart_data, tuple) and len(chart_data) == 2:
         chart_labels, chart_valores = chart_data

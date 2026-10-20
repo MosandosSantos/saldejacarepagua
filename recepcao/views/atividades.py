@@ -13,12 +13,14 @@ from acesso.decorators import (
     tenant_id_da_sessao,
     web_login_required,
     web_requer_edicao,
+    web_requer_tenant_context,
 )
 from contatos.models import Contato
 from tarefas.models import PRIORIDADES, Tarefa
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def nova_atividade(request):
     """Cria uma tarefa/atividade vinculada a um contato a partir do funil (AJAX)."""

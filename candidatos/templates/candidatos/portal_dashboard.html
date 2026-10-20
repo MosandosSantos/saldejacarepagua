@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal — SAL do RER</title>
+<title>Portal — REAA</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -19,16 +19,16 @@
       linear-gradient(150deg,#0f2a52 0%,#0a1e3d 55%,#0a1e3d 100%);
   }
   .cabecalho {
-    background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 55%, #dc2626 100%);
+    background: #0a0a0a;
     padding: 48px 24px 40px; text-align: center; position: relative; z-index: 1;
   }
   .cabecalho img { width: 88px; height: 88px; border-radius: 50%;
-    border: 3px solid rgba(255,255,255,.85); background: #fff; padding: 5px; }
+    border: 3px solid #c9a227; background: #fff; padding: 5px; }
   .cabecalho h1 { margin-top: 18px; color: #fff; font-size: 21px; font-weight: 400; letter-spacing: 2.5px; }
   .cabecalho p { margin-top: 4px; color: rgba(255,255,255,.8); font-size: 11px; letter-spacing: 4px; text-transform: uppercase; }
-  .faixa { height: 4px; position: relative; z-index: 1;
-    background: repeating-linear-gradient(90deg, #fff 0, #fff 12px, transparent 12px, transparent 20px);
-    background-color: #991b1b; }
+  .cabecalho .lema { margin-top: 10px; color: #c9a227; font-size: 12px; font-style: italic; letter-spacing: 4px; }
+  .faixa { height: 3px; position: relative; z-index: 1;
+    background-color: #c9a227; }
   .container { max-width: 640px; margin: 0 auto; padding: 44px 16px 60px; position: relative; z-index: 1; }
   .card {
     background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
@@ -43,8 +43,8 @@
   .status-box b { letter-spacing: 1px; }
   .cta { text-align: center; margin-top: 22px; }
   .btn-enviar {
-    background: linear-gradient(135deg, #7f1d1d, #b91c1c);
-    color: #fff; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #0a0a0a, #2a2a2a);
+    color: #c9a227; border: 1px solid #c9a227; cursor: pointer;
     padding: 17px 54px; border-radius: 8px; font-size: 15px; letter-spacing: 1.5px;
     transition: filter .15s, transform .1s;
   }
@@ -52,22 +52,24 @@
   .btn-enviar:active { transform: scale(.98); }
   .nota { margin-top: 16px; font-size: 12px; color: #9ca3af; font-style: italic; text-align: center; }
   .rodape { text-align: center; padding: 30px 16px 40px; color: #9ca3af; font-size: 11px; line-height: 1.7; position: relative; z-index: 1; }
-  .rodape b { color: #991b1b; letter-spacing: 2px; }
+  .rodape b { color: #c9a227; letter-spacing: 2px; }
+  .break-words { overflow-wrap: break-word; word-break: break-word; }
 </style>
 </head>
 <body>
 <div class="bg-fundo"></div>
 
 <div class="cabecalho">
-  <img src="{% static 'img/gprbr.png' %}" alt="Símbolo do Priorado">
-  <h1>GRANDE PRIORADO RETIFICADO</h1>
-  <p>do Brasil — SAL do RER</p>
+  <img src="{% static 'img/logo.png' %}" alt="AMORIO" width="88" height="88" translate="no">
+  <h1 translate="no">SUPREMO CONSELHO DO GRAU 33</h1>
+  <p>Rito Escocês Antigo e Aceito · República Federativa do Brasil</p>
+  <p class="lema" translate="no">Ordo ab Chao · 33°</p>
 </div>
 <div class="faixa"></div>
 
 <div class="container">
   <div class="card">
-    <h2 style="font-size: 23px; font-weight: 400; color: #ef4444; margin-bottom: 14px;">
+    <h2 class="break-words" style="font-size: 23px; font-weight: 400; color: #c9a227; margin-bottom: 14px;">
       Olá, {{ candidato.nome_completo|default:'Candidato' }}
     </h2>
     <div class="status-box">
@@ -103,8 +105,8 @@
 </div>
 
 <div class="rodape">
-  <b>GRANDE PRIORADO RETIFICADO DO BRASIL</b><br>
-  SAL do RER · Portal do Candidato
+  <b>SUPREMO CONSELHO DO GRAU 33 · REAA</b><br>
+  República Federativa do Brasil · Portal do Candidato
 </div>
 
 </body>

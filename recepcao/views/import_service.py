@@ -9,6 +9,8 @@ import io
 from dataclasses import dataclass, field
 from decimal import Decimal
 
+from django.db import transaction
+
 from automacoes.engine import disparar
 from contatos.models import Contato, criar_negocio, registrar_movimentacao
 from contatos.scoring import atualizar_score
@@ -76,8 +78,6 @@ class ImportService:
         usuario_id: int | None,
     ) -> ImportResult:
         """Processa todas as linhas do CSV em uma transacao."""
-        from django.db import transaction
-
         resultado = ImportResult()
 
         with transaction.atomic():
@@ -135,7 +135,7 @@ class ImportService:
             return Decimal(0)
         try:
             return parse_brl(raw)
-        except Exception:
+        except (ValueError, ArithmeticError):
             return Decimal(0)
 
     def _criar_contato(self, dados: dict, tenant_id: int) -> Contato:

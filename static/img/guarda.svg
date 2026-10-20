@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#1a3a6e"/>
+  <!-- Bearskin hat (tall black hat) -->
+  <rect x="196" y="40" width="120" height="180" rx="20" fill="#1a1a1a"/>
+  <rect x="186" y="200" width="140" height="30" rx="8" fill="#1a1a1a"/>
+  <!-- Chin strap -->
+  <path d="M196 215 Q196 260 210 280" stroke="#c9a84c" stroke-width="4" fill="none"/>
+  <path d="M316 215 Q316 260 302 280" stroke="#c9a84c" stroke-width="4" fill="none"/>
+  <!-- Face -->
+  <ellipse cx="256" cy="290" rx="55" ry="60" fill="#f0c8a0"/>
+  <!-- Eyes -->
+  <ellipse cx="236" cy="278" rx="8" ry="6" fill="#2c2c2c"/>
+  <ellipse cx="276" cy="278" rx="8" ry="6" fill="#2c2c2c"/>
+  <!-- Cheeks -->
+  <ellipse cx="226" cy="298" rx="10" ry="6" fill="#e8a090" opacity="0.5"/>
+  <ellipse cx="286" cy="298" rx="10" ry="6" fill="#e8a090" opacity="0.5"/>
+  <!-- Mouth -->
+  <path d="M240 310 Q256 322 272 310" stroke="#c07060" stroke-width="3" fill="none"/>
+  <!-- Red tunic -->
+  <path d="M180 340 Q180 330 200 330 L312 330 Q332 330 332 340 L340 500 L172 500 Z" fill="#cc2222"/>
+  <!-- White belt -->
+  <rect x="172" y="370" width="168" height="18" fill="#ffffff"/>
+  <!-- Gold buttons -->
+  <circle cx="256" cy="360" r="6" fill="#c9a84c"/>
+  <circle cx="256" cy="395" r="6" fill="#c9a84c"/>
+  <circle cx="256" cy="430" r="6" fill="#c9a84c"/>
+  <!-- Epaulettes -->
+  <ellipse cx="180" cy="340" rx="18" ry="10" fill="#c9a84c"/>
+  <ellipse cx="332" cy="340" rx="18" ry="10" fill="#c9a84c"/>
+  <!-- Hat badge -->
+  <circle cx="256" cy="170" r="16" fill="#c9a84c"/>
+  <text x="256" y="177" font-family="serif" font-size="18" font-weight="bold" fill="#1a1a1a" text-anchor="middle">S</text>
+</svg>

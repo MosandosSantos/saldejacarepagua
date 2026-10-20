@@ -1,6 +1,7 @@
 """Configuracao dos testes — client HTTP, usuarios, tenants e headers de autenticacao."""
 import os
 
+import psycopg
 import pytest
 
 # Desliga o rate limiting da API nos testes (a suite faz centenas de requests).
@@ -8,6 +9,14 @@ import pytest
 os.environ['DJANGO_RATE_LIMIT'] = '0'
 
 SENHA = 'senha123'
+
+
+@pytest.fixture(autouse=True)
+def turnstile_locally_verified(monkeypatch):
+    """Keep normal login tests offline; Turnstile behavior has isolated tests."""
+    from acesso.views import auth as auth_views
+
+    monkeypatch.setattr(auth_views, 'verify_turnstile_token', lambda _token: True, raising=False)
 
 
 @pytest.fixture
@@ -116,6 +125,7 @@ def headers_admin_saas(client, admin_saas):
 def headers_admin_company(client, admin_company):
     return fazer_login(client, admin_company.email)
 
+
 # ---------------------------------------------------------------------------
 # Banco GPRB de teste (specs/002-problema-pagamento)
 # ---------------------------------------------------------------------------
@@ -128,7 +138,7 @@ def _resetar_conexao_gprb():
     if antiga is not None:
         try:
             antiga.close()
-        except Exception:
+        except (psycopg.Error, OSError):
             pass
     gconn._tls.conn = None
 

@@ -1,6 +1,9 @@
-<div id="modal-visualizar-candidato" class="fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="visualizar-candidato-titulo">
-  <div class="absolute inset-0" style="background:rgba(0,0,0,.62);backdrop-filter:blur(4px)" data-fechar-visualizar-candidato></div>
-  <div class="relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#0d1f3c] p-6 shadow-2xl">
+<div id="modal-visualizar-candidato" class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+     role="dialog" aria-modal="true" aria-labelledby="visualizar-candidato-titulo" tabindex="-1">
+  <div class="absolute inset-0" style="background:rgba(0,0,0,.62);backdrop-filter:blur(4px)"
+       data-fechar-visualizar-candidato aria-hidden="true"></div>
+  <div class="relative w-full max-w-lg rounded-2xl border border-white/10 bg-[#0d1f3c] p-6 shadow-2xl"
+       style="overscroll-behavior:contain;max-height:88vh;overflow-y:auto">
     <div class="mb-5 flex items-center justify-between gap-3">
       <h2 id="visualizar-candidato-titulo" class="font-display text-lg font-semibold text-white">Detalhe do Candidato</h2>
       <button type="button" data-fechar-visualizar-candidato aria-label="Fechar"
@@ -12,3 +15,28 @@
     </div>
   </div>
 </div>
+
+<script>
+(function () {
+  // Abre/fecha o modal usando o gerenciador acessivel global (focus trap, Escape,
+  // devolucao de foco). O clique no overlay continua funcionando (data-fechar-*).
+  var modal = document.getElementById('modal-visualizar-candidato');
+  if (!modal) return;
+
+  function abrir() {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    if (window.hazonModal) window.hazonModal.abrir(modal);
+  }
+  function fechar() {
+    if (window.hazonModal) window.hazonModal.fechar(modal);
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+  window.abrirModalVisualizarCandidato = abrir;
+
+  modal.querySelectorAll('[data-fechar-visualizar-candidato]').forEach(function (el) {
+    el.addEventListener('click', fechar);
+  });
+})();
+</script>

@@ -1,0 +1,83 @@
+{% extends 'base/basic.html' %}
+
+{% block titulo %}Check-in de Presença{% endblock %}
+
+{% block cabecalho %}{% endblock %}
+
+{% block extra_head %}
+{% if turnstile_configured %}
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% endif %}
+<style>
+  html, body { height: 100%; }
+  .checkin-bg { position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(26,95,180,0.35) 0%, transparent 60%),
+      linear-gradient(150deg,#0f2a52 0%,#0c2245 55%,#0a1e3d 100%); }
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="checkin-bg"></div>
+<div class="relative z-10 mx-auto flex min-h-[80vh] w-full max-w-md items-center justify-center px-4 py-10">
+  <div class="hazon-card-sm w-full p-7 backdrop-blur-xl" style="background: var(--hazon-surface)">
+    {% if not valido %}
+      <h1 class="hazon-titulo text-[18px]">Link inválido</h1>
+      <p class="mt-3 text-[14px] text-[#a6bfc7]">{{ erro|default:"Este link de check-in não é válido." }}</p>
+    {% elif sucesso %}
+      <div class="flex flex-col items-center py-4 text-center">
+        <span class="flex h-14 w-14 items-center justify-center rounded-full bg-[#4ade80]/15">
+          <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        <h1 class="hazon-titulo mt-4 text-[18px]">Presença registrada</h1>
+        <p class="mt-2 text-[14px] text-white">{{ nome }}</p>
+        <p class="mt-1 text-[12.5px] text-[#a6bfc7]">{{ evento.titulo }} — {{ evento.data_inicio|datahorabr }}</p>
+      </div>
+    {% else %}
+      <div class="mb-5 flex items-center gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#4ade80]/15">
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </span>
+        <div>
+          <h1 class="font-display text-lg font-semibold text-white">Check-in de Presença</h1>
+          <p class="text-[13px] text-[#a6bfc7]">Confirme sua presença na sessão</p>
+        </div>
+      </div>
+
+      <div class="mb-5 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+        <div class="text-[15px] font-bold text-white">{{ evento.titulo }}</div>
+        <div class="mt-1 text-[12.5px] text-[#a6bfc7]">{{ evento.get_tipo_display }} · {{ loja_nome }}</div>
+        <div class="mt-0.5 font-mono text-[12.5px] text-[#7aa8f5]">{{ evento.data_inicio|datahorabr }} — {{ evento.data_fim|horabr }}</div>
+      </div>
+
+      {% if not aberto %}
+        <p class="rounded-xl border border-[#fbbf24]/30 bg-[#fbbf24]/10 px-4 py-3 text-[13px] text-[#fbbf24]">Check-in fora da janela (abre 2h antes e fecha 24h após a sessão).</p>
+      {% else %}
+        {% if erro %}
+          <p class="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ erro }}</p>
+        {% endif %}
+        <form method="post" class="grid gap-4" data-unsaved-guard>
+          {% csrf_token %}
+          <input type="hidden" name="t" value="{{ token }}">
+          <div>
+            <label for="identifier" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Número do cadastro</label>
+            <input id="identifier" name="identifier" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Número do seu cadastro" autocomplete="username" required
+                   class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          </div>
+          <div>
+            <label for="senha" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Senha</label>
+            <input id="senha" name="senha" type="password" placeholder="Sua senha" autocomplete="current-password" required
+                   class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          </div>
+          {% if turnstile_configured %}
+            <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark" data-action="checkin"></div>
+          {% endif %}
+          <button type="submit" class="flex items-center justify-center gap-2 rounded-xl border border-[#4ade80]/50 bg-[#4ade80]/15 px-6 py-3 text-[14px] font-bold text-[#4ade80] transition hover:bg-[#4ade80]/25">
+            Confirmar presença
+          </button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

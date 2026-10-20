@@ -1,22 +1,38 @@
 from django.urls import path
 
+from django.shortcuts import redirect
+
 from contatos import views
 
 app_name = 'contatos'
 
 urlpatterns = [
-    path('', views.lista, name='lista'),
+    # A lista de membros vive em /membros/ (app 'membros'). A rota histórica
+    # 'contatos:lista' é mantida para reversões legadas, mas /contatos/
+    # redireciona para o endereço novo.
+    path('', lambda request: redirect('membros:lista', permanent=True), name='lista'),
     path('prefeituras/', views.prefeituras, name='prefeituras'),
     path('prefeitura/<str:pk>/lojas-json/', views.prefeitura_lojas_json, name='prefeitura_lojas_json'),
     path('loja/<str:pk>/membros-json/', views.loja_membros_json, name='loja_membros_json'),
     path('prefeitura/nova/', views.prefeitura_nova, name='prefeitura_nova'),
+    path(
+        'lojas/relatorio/<str:formato>/',
+        views.lojas_exportar,
+        name='lojas_exportar',
+    ),
     path('lojas/', views.lojas, name='lojas'),
+    path('financeiro/', views.financeiro, name='financeiro'),
     path('loja/nova/', views.loja_nova, name='loja_nova'),
     path('loja/<str:pk>/', views.loja_detalhe, name='loja_detalhe'),
     path('loja/<str:pk>/editar/', views.loja_editar, name='loja_editar'),
+    path('loja/<str:pk>/pdf/', views.loja_pdf_upload, name='loja_pdf_upload'),
+    path('loja/<str:pk>/pdf/remover/', views.loja_pdf_remover, name='loja_pdf_remover'),
     path('loja/<str:pk>/excluir/', views.loja_excluir, name='loja_excluir'),
+    path('prefeitura/<str:pk>/', views.prefeitura_detalhe, name='prefeitura_detalhe'),
     path('prefeitura/<str:pk>/editar/', views.prefeitura_editar, name='prefeitura_editar'),
     path('prefeitura/<str:pk>/excluir/', views.prefeitura_excluir, name='prefeitura_excluir'),
+    path('prefeitura/<str:pk>/reativar/', views.prefeitura_reativar, name='prefeitura_reativar'),
+    path('membro/novo/', views.membro_novo, name='membro_novo'),
     path('membro/<str:pk>/', views.membro_detalhe, name='membro_detalhe'),
     path('membro/<str:pk>/editar/', views.membro_editar, name='membro_editar'),
     path('membro/<str:pk>/excluir/', views.membro_excluir, name='membro_excluir'),

@@ -1,6 +1,44 @@
 <div class="w-full overflow-x-auto">
-  {{ timeline_svg|safe }}
+  <div id="timeline-grafico">{{ timeline_svg|safe }}</div>
 </div>
-<p class="mb-6 mt-4 border-t border-white/10 pt-3 text-center font-mono text-[10px] text-[#a6bfc7]">
-  {{ timeline|length }} dias &middot; contatos/dia &middot; passe o mouse para detalhes
+<p class="mb-4 mt-4 border-t border-white/10 pt-3 text-center font-mono text-[10px] text-[#a6bfc7]">
+  {{ timeline|length }} dias &middot; contatos/dia &middot; passe o mouse para detalhes ou use a tabela abaixo
 </p>
+
+<details class="mb-6 rounded-xl border border-white/10 bg-white/5 p-4">
+  <summary class="cursor-pointer text-[12px] font-semibold text-[#bcd3da]">Ver dados por dia (acessível por teclado)</summary>
+  <div class="mt-3 overflow-x-auto">
+    <table class="w-full border-collapse text-[12px]">
+      <thead>
+        <tr class="border-b border-white/10 text-left">
+          <th class="pb-2 pr-2 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]" scope="col">Dia</th>
+          <th class="pb-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]" scope="col">Contatos</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in timeline %}
+          <tr class="border-b border-white/5">
+            <td class="py-1.5 pr-2 font-mono text-[#bcd3da]">{{ t.data }}</td>
+            <td class="py-1.5 text-center font-mono text-[#a6bfc7]">{{ t.valor }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="2" class="py-3 text-center text-[#a6bfc7]">Nenhum dado disponível</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<script>
+(function () {
+  // O SVG e injetado pelo backend: garante role="img" + rotulo acessivel no proprio SVG.
+  var svg = document.getElementById('timeline-grafico');
+  if (!svg) return;
+  svg = svg.querySelector('svg');
+  if (!svg) return;
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', 'Grafico de contatos por dia nos ultimos {{ timeline|length }} dias');
+})();
+</script>

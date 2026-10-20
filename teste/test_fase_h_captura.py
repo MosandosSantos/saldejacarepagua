@@ -29,7 +29,7 @@ def _link(tenant):
 
 
 def _dados(nome='Maria Lead', tel='(11) 99999-0000', **extra):
-    dados = {'nome': nome, 'tel': tel, 'email': 'maria@lead.com', 'seg': 'estetica',
+    dados = {'nome': nome, 'tel': tel, 'email': 'maria@lead.com', 'seg': 'beleza',
              'procedimento': 'Laser CO2'}
     dados.update(extra)
     return dados
@@ -58,7 +58,7 @@ def test_post_cria_contato_e_negocio_na_primeira_etapa(tenant_aurora):
     assert contato.tenant_id == tenant_aurora.id
     assert contato.tel == '(11) 99999-0000'
     assert contato.email == 'maria@lead.com'
-    assert contato.seg == 'estetica'
+    assert contato.seg == 'beleza'
     assert contato.procedimento == 'Laser CO2'
     assert contato.origem == 'Site'  # origem padrão do tenant
 

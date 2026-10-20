@@ -126,7 +126,7 @@ def test_cards_candidatos_cache_inclui_prefeitura(tenant_aurora, candidato_auror
 @pytest.mark.django_db
 def test_invalidar_cache_kanban_invalida_via_versao(tenant_aurora, candidato_aurora):
     """RED: _invalidar_cache_kanban deve invalidar cache via versão."""
-    from candidatos.views import _invalidar_cache_kanban
+    from candidatos.views.cache import invalidar_cache_kanban as _invalidar_cache_kanban
     from recepcao.views.helpers import cards_candidatos
 
     # Limpa cache antes do teste

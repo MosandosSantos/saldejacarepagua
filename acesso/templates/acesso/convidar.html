@@ -1,7 +1,7 @@
 {% extends 'base/basic.html' %}
 {% load static %}
 
-{% block titulo %}SAL DA BRITÂNEA CRM — Aceitar convite{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Aceitar convite{% endblock %}
 
 {% block cabecalho %}{% endblock %}
 
@@ -71,7 +71,7 @@
     <section class="conv-card">
       <div class="mb-6 flex items-center gap-3">
         <div class="flex h-11 w-11 items-center justify-center rounded-[13px] bg-gradient-to-br from-[#3b7ded] to-[#1450a0] shadow-lg shadow-[#1a5fb4]/70">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" class="h-6 w-6" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" class="h-6 w-6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.6" fill="#fff"/>
           </svg>
         </div>
@@ -92,10 +92,10 @@
         </p>
 
         {% for e in erros %}
-          <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ e }}</div>
+          <div role="alert" class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ e }}</div>
         {% endfor %}
 
-        <form method="post" novalidate>
+        <form method="post" novalidate data-unsaved-guard>
           {% csrf_token %}
           <div class="mb-[18px]">
             <label for="nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-white/60">Seu nome</label>

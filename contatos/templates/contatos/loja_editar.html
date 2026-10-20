@@ -1,19 +1,19 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}SAL DA BRITÂNEA CRM — Editar {{ loja.nome }}{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Editar {{ loja.nome }}{% endblock %}
 
 {% block conteudo %}
 <div class="mb-6">
-  <a href="{% url 'contatos:lojas' %}" class="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#a6bfc7] transition hover:text-white">
-    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  <a href="{% url 'lojas' %}" class="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#a6bfc7] transition hover:text-white">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
     Voltar
   </a>
 </div>
 
-<div class="hazon-card-sm p-7 backdrop-blur-xl">
+<div class="hazon-card-sm p-5 backdrop-blur-xl sm:p-7">
   <div class="mb-7 flex flex-wrap items-center gap-4">
     <span class="flex h-14 w-14 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#3b7ded] to-[#1a5fb4] shadow-lg shadow-[#5b8def]/30">
-      <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
     </span>
     <div>
       <h1 class="font-display text-xl font-semibold text-white">Editar Loja</h1>
@@ -33,69 +33,88 @@
   </div>
 
   {% if erro %}
-    <div class="mb-5 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ erro }}</div>
+    <div id="form-erro" class="mb-5 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]" role="alert">{{ erro }}</div>
   {% endif %}
   {% if sucesso %}
-    <div class="mb-5 rounded-xl border border-[#4ade80]/40 bg-[#4ade80]/15 px-4 py-3 text-[13.5px] font-semibold text-[#a7f3d0]">{{ sucesso }}</div>
+    <div class="mb-5 rounded-xl border border-[#4ade80]/40 bg-[#4ade80]/15 px-4 py-3 text-[13.5px] font-semibold text-[#a7f3d0]" role="status">{{ sucesso }}</div>
   {% endif %}
 
-  <form method="post">
+  <form method="post" aria-label="Editar loja" {% if erro %}aria-describedby="form-erro"{% endif %} data-unsaved-guard>
     {% csrf_token %}
 
     <div>
       <label for="nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome da Loja *</label>
-      <input type="text" id="nome" name="nome" value="{{ loja.nome }}" required
-             class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+      <input type="text" id="nome" autocomplete="organization" name="nome" value="{{ loja.nome }}" required
+             class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none sm:text-[14px] transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
     </div>
 
-    <div class="mt-5 grid gap-5 sm:grid-cols-2">
-      <div>
-        <label for="telefone" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone</label>
-        <input type="tel" id="telefone" name="telefone" value="{{ loja.telefone }}"
-               class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
-      </div>
-      <div>
-        <label for="email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail</label>
-        <input type="email" id="email" name="email" value="{{ loja.email }}"
-               class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+    <div class="mt-5">
+      <span class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Vale</span>
+      <div class="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white">
+        {{ vale.nome }} <span class="ml-1 font-mono text-[11px] text-[#5b8def]">{{ vale.sigla }}</span>
       </div>
     </div>
 
     <div class="mt-5">
-      <label for="prefeitura" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Potência</label>
-      <select id="prefeitura" name="prefeitura"
+      <label for="corpo" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Corpo *</label>
+      <select id="corpo" name="corpo" required
               class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
-        <option value="" class="bg-[#0a1e3d]">— Selecione —</option>
-        {% for pf in prefeituras %}
-          <option value="{{ pf.id }}" {% if pf.id == loja.prefeitura_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ pf.nome }}</option>
+        <option value="" {% if not corpo_atual %}selected{% endif %} class="bg-[#0a1e3d]">Selecione o Corpo</option>
+        {% for valor, rotulo in corpos %}
+        <option value="{{ valor }}" {% if valor == corpo_atual %}selected{% endif %} class="bg-[#0a1e3d]">{{ rotulo }}</option>
         {% endfor %}
       </select>
     </div>
 
-    <div class="mt-5">
-      <label for="deputado_mestre" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Presidente</label>
-      <select id="deputado_mestre" name="deputado_mestre"
-              class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
-        <option value="" class="bg-[#0a1e3d]">— Selecione um membro da loja —</option>
-        {% for m in membros %}
-          <option value="{{ m.id }}" {% if m.id == loja.deputado_mestre_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ m.nome }}</option>
-        {% endfor %}
-      </select>
-      <p class="mt-1.5 text-[11.5px] text-[#a6bfc7]">Recebe as comunicações enviadas para esta loja (e-mail/Zap do Presidente).</p>
+    <div class="mt-5 border-t border-white/10 pt-5">
+      <p class="mb-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#5b8def]">Presidente</p>
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <label for="loja-deputado-mestre" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Presidente</label>
+          <select id="loja-deputado-mestre" name="deputado_mestre"
+                  class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none sm:text-[14px] transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+            <option value="" class="bg-[#0a1e3d]">— Cargo vago —</option>
+            {% for m in membros %}
+              <option value="{{ m.id }}" {% if m.id == loja.deputado_mestre_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ m.nome }}</option>
+            {% endfor %}
+          </select>
+          <p class="mt-1.5 text-[11.5px] text-[#a6bfc7]">Recebe as comunicações enviadas para esta loja (e-mail/Zap do Presidente).</p>
+        </div>
+        <div>
+          <label for="email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Presidente</label>
+          <input type="email" id="email" name="email" value="{{ loja.email }}"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none sm:text-[14px] transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+        </div>
+        <div>
+          <label for="telefone" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone do Presidente</label>
+          <input type="tel" id="telefone" name="telefone" value="{{ loja.telefone }}"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none sm:text-[14px] transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+        </div>
+      </div>
     </div>
 
     <div class="mt-5 border-t border-white/10 pt-5">
       <p class="mb-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#5b8def]">Secretaria</p>
       <div class="grid gap-5 sm:grid-cols-2">
         <div>
-          <label for="secretario_nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Secretário</label>
-          <input type="text" id="secretario_nome" name="secretario_nome" value="{{ loja.secretario_nome }}" placeholder="Nome do secretário"
-                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          <label for="secretario" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Secretário</label>
+          <select id="secretario" name="secretario"
+                  class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15 sm:text-[14px]">
+            <option value="" class="bg-[#0a1e3d]">— Cargo vago —</option>
+            {% for m in membros %}
+              <option value="{{ m.id }}" {% if m.id == loja.secretario_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ m.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="secretario_email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Secretário</label>
+          <input type="email" id="secretario_email" name="secretario_email" value="{{ loja.secretario_email }}"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15 sm:text-[14px]">
         </div>
         <div>
           <label for="secretario_telefone" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone do Secretário</label>
-          <input type="tel" id="secretario_telefone" name="secretario_telefone" value="{{ loja.secretario_telefone }}" placeholder="(21) 99999-9999"
-                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          <input type="tel" id="secretario_telefone" name="secretario_telefone" value="{{ loja.secretario_telefone }}"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15 sm:text-[14px]">
         </div>
       </div>
     </div>
@@ -104,14 +123,24 @@
       <p class="mb-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#5b8def]">Tesouraria</p>
       <div class="grid gap-5 sm:grid-cols-2">
         <div>
-          <label for="tesoureiro_nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Tesoureiro</label>
-          <input type="text" id="tesoureiro_nome" name="tesoureiro_nome" value="{{ loja.tesoureiro_nome }}" placeholder="Nome do tesoureiro"
-                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          <label for="tesoureiro" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Tesoureiro</label>
+          <select id="tesoureiro" name="tesoureiro"
+                  class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15 sm:text-[14px]">
+            <option value="" class="bg-[#0a1e3d]">— Cargo vago —</option>
+            {% for m in membros %}
+              <option value="{{ m.id }}" {% if m.id == loja.tesoureiro_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ m.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="tesoureiro_email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Tesoureiro</label>
+          <input type="email" id="tesoureiro_email" name="tesoureiro_email" value="{{ loja.tesoureiro_email }}"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15 sm:text-[14px]">
         </div>
         <div>
           <label for="tesoureiro_telefone" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone do Tesoureiro</label>
-          <input type="tel" id="tesoureiro_telefone" name="tesoureiro_telefone" value="{{ loja.tesoureiro_telefone }}" placeholder="(21) 99999-9999"
-                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          <input type="tel" id="tesoureiro_telefone" name="tesoureiro_telefone" value="{{ loja.tesoureiro_telefone }}"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15 sm:text-[14px]">
         </div>
       </div>
     </div>
@@ -121,8 +150,8 @@
       <div class="grid gap-5 sm:grid-cols-2">
         <div>
           <label for="mensalidade" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Valor da Mensalidade (R$)</label>
-          <input type="text" id="mensalidade" name="mensalidade" value="{{ loja.mensalidade }}" placeholder="Ex: 150,00" inputmode="decimal"
-                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#4ade80]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#4ade80]/15">
+          <input type="text" id="mensalidade" autocomplete="off" inputmode="decimal" name="mensalidade" value="{{ loja.mensalidade }}" placeholder="Ex: 150,00" inputmode="decimal"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none sm:text-[14px] transition placeholder:text-white/40 focus:border-[#4ade80]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#4ade80]/15">
         </div>
         <div class="flex items-end">
           <p class="text-[12px] leading-relaxed text-[#a6bfc7]">Valor mensal cobrado da loja. Deixe em branco se ainda não houver valor definido.</p>
@@ -135,31 +164,35 @@
       <div class="grid gap-5">
         <div>
           <label for="endereco" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Endereço</label>
-          <input type="text" id="endereco" name="endereco" value="{{ loja.endereco }}" placeholder="Ex: Rua das Flores, 123, Centro"
-                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          <input type="text" id="endereco" autocomplete="street-address" name="endereco" value="{{ loja.endereco }}" placeholder="Ex: Rua das Flores, 123, Centro"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none sm:text-[14px] transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           <p class="mt-1.5 text-[11.5px] text-[#a6bfc7]">Rua, número e bairro — tudo junto, em um só campo.</p>
         </div>
       </div>
       <div class="mt-5 grid gap-5 sm:grid-cols-2">
         <div>
           <label for="cidade" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Cidade</label>
-          <input type="text" id="cidade" name="cidade" value="{{ loja.cidade }}"
-                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          <input type="text" id="cidade" autocomplete="address-level2" name="cidade" value="{{ loja.cidade }}"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none sm:text-[14px] transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
         </div>
         <div>
           <label for="uf" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">UF</label>
-          <input type="text" id="uf" name="uf" value="{{ loja.uf }}" maxlength="2" placeholder="PR"
-                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white uppercase outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+          <select id="uf" name="uf"
+                  class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] uppercase text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15 sm:text-[14px]">
+            {% for sigla, nome in ufs %}
+            <option value="{{ sigla }}" {% if sigla == uf_atual %}selected{% endif %} class="bg-[#0a1e3d]">{{ sigla }} — {{ nome }}</option>
+            {% endfor %}
+          </select>
         </div>
       </div>
     </div>
 
-    <div class="mt-7 flex items-center gap-3">
-      <button type="submit" class="flex items-center gap-2 rounded-xl border border-[#5b8def]/50 bg-gradient-to-br from-[#1a5fb4] to-[#1450a0] px-6 py-3 text-[14px] font-bold text-white shadow-lg shadow-[#1a5fb4]/30 transition hover:brightness-110">
-        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    <div class="sticky bottom-0 z-10 -mx-5 mt-7 flex items-center gap-3 border-t border-white/10 bg-[#0a1e3d]/85 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+      <button type="submit" class="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#5b8def]/50 bg-gradient-to-br from-[#1a5fb4] to-[#1450a0] px-6 py-3 text-[14px] font-bold text-white shadow-lg shadow-[#1a5fb4]/30 transition hover:brightness-110 sm:flex-none">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Salvar
       </button>
-      <a href="{% url 'contatos:lojas' %}" class="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-[14px] font-medium text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">
+      <a href="{% url 'lojas' %}" class="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-[14px] font-medium text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">
         Cancelar
       </a>
     </div>

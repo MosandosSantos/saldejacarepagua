@@ -15,11 +15,12 @@ from acesso.ativacao import (
     reenviar_ativacao,
 )
 from acesso.context_processors import ROLE_LABELS
-from acesso.decorators import web_login_required
+from acesso.decorators import web_login_required, web_requer_tenant_context
 from acesso.models import (
     ROLES_ATRIB_CRIACAO,
     Usuario,
 )
+from acesso.tenant_context import resolve_tenant_id
 from core.gprb import (
     ROLE_LABELS_GPRB,
     atualizar_usuario_sistema,
@@ -37,6 +38,7 @@ from .helpers import (
     usuarios_locais_ativos,
     usuarios_locais_pendentes,
 )
+import psycopg
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +95,7 @@ def _carregar_usuarios_equipe(tid, q, loja, perfil, status):
             usuarios.extend(usuarios_locais_ativos(
                 tid, emails_vistos, q=q, perfil=perfil, loja=loja, status=status,
             ))
-    except Exception:
+    except (psycopg.Error, OSError, ValueError):
         logger.exception('Erro ao carregar usuarios do GPRB')
         opcoes['gprb_ok'] = False
         emails_gprb = set()
@@ -128,11 +130,12 @@ def _carregar_usuarios_equipe(tid, q, loja, perfil, status):
 
 
 @web_login_required
+@web_requer_tenant_context
 def equipe(request):
     """Lista de usuarios do sistema com busca e filtros."""
     if redir := guard_equipe(request):
         return redir
-    tid = request.session.get('usuario', {}).get('tenant_id')
+    tid = resolve_tenant_id(request)
 
     if request.method == 'POST':
         erros, sucesso, link_simulado = _processar_reenvio_ativacao(request, tid)
@@ -171,11 +174,12 @@ def equipe(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 def equipe_novo(request):
     """Formulario para criar usuario do sistema (sem senha — link de ativacao 72h)."""
     if redir := guard_equipe(request):
         return redir
-    tid = request.session.get('usuario', {}).get('tenant_id')
+    tid = resolve_tenant_id(request)
     criador = Usuario.objects.filter(id=request.session.get('usuario_id')).first()
 
     erros = []
@@ -184,7 +188,7 @@ def equipe_novo(request):
     prefeituras = []
     try:
         prefeituras = opcoes_prefeituras_usuario()
-    except Exception as e:
+    except (psycopg.Error, OSError, ValueError) as e:
         logger.warning('Erro ao carregar prefeituras: %s', e)
 
     if request.method == 'POST':
@@ -205,7 +209,7 @@ def equipe_novo(request):
             if Usuario.objects.filter(email__iexact=email).exists():
                 erros.append(f'Já existe um usuário com o e-mail {email}.')
         if not celular:
-            erros.append('Informe o celular — ele será usado como login.')
+            erros.append('Informe o celular do usuário.')
         if papel not in ROLES_ATRIB_CRIACAO:
             erros.append('Escolha um perfil válido.')
         if not erros:
@@ -238,11 +242,12 @@ def equipe_novo(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 def equipe_editar(request, user_id):
     """Edicao de um usuario do sistema (GPRB ou local)."""
     if redir := guard_equipe(request):
         return redir
-    tid = request.session.get('usuario', {}).get('tenant_id')
+    tid = resolve_tenant_id(request)
 
     usuario, espelho_local = usuario_para_edicao(user_id, tid)
     if usuario is None:
@@ -310,11 +315,12 @@ def equipe_editar(request, user_id):
 
 
 @web_login_required
+@web_requer_tenant_context
 def equipe_excluir(request, user_id):
     """Exclusao de um usuario do sistema."""
     if redir := guard_equipe(request):
         return redir
-    tid = request.session.get('usuario', {}).get('tenant_id')
+    tid = resolve_tenant_id(request)
 
     usuario, espelho_local = usuario_para_edicao(user_id, tid)
     if usuario is None:

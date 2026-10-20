@@ -5,13 +5,14 @@ import pytest
 from contatos.forms import ContatoForm
 from contatos.models import (
     Contato,
-    Movimentacao,
     criar_negocio,
+    Movimentacao,
     registrar_movimentacao,
+    tornar_principal,
 )
 
 
-def _contato_com_negocio(nome, tenant, stage='interessado', valor=0, **kwargs):
+def _contato_com_negocio(nome, tenant, stage='suplica', valor=0, **kwargs):
     """Cria contato + negócio via factory (igual ao app): o primeiro vira o principal."""
     seg = kwargs.pop('seg', '')
     contato = Contato.objects.create(nome=nome, seg=seg, tenant=tenant, **kwargs)
@@ -33,13 +34,13 @@ def test_importacao_grava_tel_normalizado(tenant_aurora):
     importar_linhas(cab, [['Ana', '(11) 99999-7777']], {'nome': 0, 'tel': 1}, tenant_aurora.id)
     contato = Contato.objects.get(nome='Ana')
     assert contato.tel_normalizado == '11999997777'
-    assert contato.negocio.stage == 'interessado'
+    assert contato.negocio.stage == 'suplica'
 
 
 def _dados_form(tel):
     return {
         'nome': 'Novo', 'empresa': 'Empresa X', 'tel': tel, 'email': 'novo@x.com',
-        'seg': 'estetica', 'stage': 'interessado', 'valor': '0',
+        'seg': 'beleza', 'stage': 'suplica', 'valor': '0',
         'origem': 'Instagram', 'pagamento': 'Particular',
         'procedimento': 'Laser', 'ultima_consulta': '2026-01-01',
     }
@@ -63,9 +64,9 @@ def test_form_aceita_telefone_de_outro_tenant(tenant_aurora, tenant_beta):
 @pytest.mark.django_db
 def test_registrar_movimentacao(tenant_aurora, usuario_operacional):
     negocio = _contato_com_negocio('Ana', tenant_aurora).negocio
-    mv = registrar_movimentacao(negocio, 'interessado', 'fechado', usuario_operacional.id)
-    assert mv.de_stage == 'interessado'
-    assert mv.para_stage == 'fechado'
+    mv = registrar_movimentacao(negocio, 'suplica', 'diploma', usuario_operacional.id)
+    assert mv.de_stage == 'suplica'
+    assert mv.para_stage == 'diploma'
     assert mv.autor_id == usuario_operacional.id
     assert negocio.movimentacoes.count() == 1
 
@@ -73,7 +74,7 @@ def test_registrar_movimentacao(tenant_aurora, usuario_operacional):
 @pytest.mark.django_db
 def test_registrar_movimentacao_ignora_sem_mudanca(tenant_aurora):
     negocio = _contato_com_negocio('Ana', tenant_aurora).negocio
-    assert registrar_movimentacao(negocio, 'interessado', 'interessado', None) is None
+    assert registrar_movimentacao(negocio, 'suplica', 'suplica', None) is None
     assert Movimentacao.objects.count() == 0
 
 
@@ -93,35 +94,35 @@ def _sessao_web(client, usuario):
 def test_mover_ajax_atualiza_board(tenant_aurora, usuario_operacional):
     from django.test import Client
 
-    contato = _contato_com_negocio('Ana', tenant_aurora, stage='interessado', valor=100)
+    contato = _contato_com_negocio('Ana', tenant_aurora, stage='suplica', valor=100)
     c = Client()
     _sessao_web(c, usuario_operacional)
     # a URL do funil move o NEGÓCIO (pk = id do negocio, não do contato)
     resp = c.post(
-        f'/recepcao/{contato.negocio.id}/mover/', {'stage': 'fechado'},
+        f'/recepcao/{contato.negocio.id}/mover/', {'stage': 'diploma'},
         HTTP_X_REQUESTED_WITH='XMLHttpRequest',
     )
     assert resp.status_code == 200
     dados = resp.json()
     assert dados['ok'] is True
     colunas = {col['key']: col for col in dados['colunas']}
-    assert colunas['interessado']['count'] == 0
-    assert colunas['fechado']['count'] == 1
-    assert colunas['fechado']['soma'] == 'R$ 100'
+    assert colunas['suplica']['count'] == 0
+    assert colunas['diploma']['count'] == 1
+    assert colunas['diploma']['soma'] == 'R$ 100'
     contato.refresh_from_db()
-    assert contato.negocio.stage == 'fechado'
+    assert contato.negocio.stage == 'diploma'
     assert contato.negocio.movimentacoes.count() == 1
-    assert contato.negocio.movimentacoes.first().para_stage == 'fechado'
+    assert contato.negocio.movimentacoes.first().para_stage == 'diploma'
 
 
 @pytest.mark.django_db
 def test_dashboard_renderiza_analise(tenant_aurora, usuario_operacional):
     from django.test import Client
 
-    _contato_com_negocio('Ana', tenant_aurora, stage='interessado', valor=1000,
-                         origem='Instagram', seg='estetica')
-    _contato_com_negocio('Bia', tenant_aurora, stage='fechado', valor=2000,
-                         origem='Google', seg='estetica')
+    _contato_com_negocio('Ana', tenant_aurora, stage='suplica', valor=1000,
+                         origem='Instagram', seg='beleza')
+    _contato_com_negocio('Bia', tenant_aurora, stage='diploma', valor=2000,
+                         origem='Google', seg='beleza')
     c = Client()
     _sessao_web(c, usuario_operacional)
     resp = c.get('/dashboard/')
@@ -135,11 +136,11 @@ def test_dashboard_renderiza_analise(tenant_aurora, usuario_operacional):
 @pytest.mark.django_db(transaction=True)
 def test_api_cria_negocio_para_contato(client, headers_operacional):
     resp = client.post('/api/v1/contatos', headers=headers_operacional, json={
-        'nome': 'Ana Souza', 'seg': 'estetica', 'stage': 'orcamento', 'valor': 2500,
+        'nome': 'Ana Souza', 'seg': 'beleza', 'stage': 'comunicacao', 'valor': 2500,
     })
     assert resp.status_code == 201
     contato = Contato.objects.get(pk=resp.json()['id'])
-    assert contato.negocio.stage == 'orcamento'
+    assert contato.negocio.stage == 'comunicacao'
     assert contato.negocio.valor == 2500
     assert contato.negocio.updated_at is not None
 
@@ -155,16 +156,16 @@ def test_form_web_cria_e_atualiza_negocio(tenant_aurora, usuario_operacional):
     resp = c.post('/contatos/novo/', _dados_form('(11) 97777-6666'))
     assert resp.status_code == 302
     contato = Contato.objects.get(nome='Novo')
-    assert contato.negocio.stage == 'interessado'
+    assert contato.negocio.stage == 'suplica'
 
     # edição muda etapa e valor do negócio + grava histórico
     dados = _dados_form('(11) 97777-6666')
-    dados['stage'] = 'fechado'
+    dados['stage'] = 'diploma'
     dados['valor'] = '500'
     resp = c.post(f'/contatos/{contato.id}/editar/', dados)
     assert resp.status_code == 302
     contato.refresh_from_db()
-    assert contato.negocio.stage == 'fechado'
+    assert contato.negocio.stage == 'diploma'
     assert float(contato.negocio.valor) == 500
     assert contato.negocio.movimentacoes.count() == 2  # criação + mudança
 
@@ -174,18 +175,18 @@ def test_form_web_cria_e_atualiza_negocio(tenant_aurora, usuario_operacional):
 
 @pytest.mark.django_db
 def test_primeiro_negocio_e_principal(tenant_aurora):
-    contato = _contato_com_negocio('Ana', tenant_aurora, stage='interessado', valor=100)
+    contato = _contato_com_negocio('Ana', tenant_aurora, stage='suplica', valor=100)
     assert contato.negocio is not None
     assert contato.negocio.principal is True
-    assert contato.stage == 'interessado'
+    assert contato.stage == 'suplica'
     assert float(contato.valor) == 100
 
 
 @pytest.mark.django_db
 def test_segundo_negocio_nao_vira_principal(tenant_aurora):
-    contato = _contato_com_negocio('Ana', tenant_aurora, stage='interessado', valor=100)
+    contato = _contato_com_negocio('Ana', tenant_aurora, stage='suplica', valor=100)
     principal_antes = contato.negocio
-    segundo = criar_negocio(contato, stage='orcamento', valor=500, tenant_id=tenant_aurora.id)
+    segundo = criar_negocio(contato, stage='comunicacao', valor=500, tenant_id=tenant_aurora.id)
     assert segundo.principal is False
     # o principal continua sendo o primeiro
     contato.refresh_from_db()
@@ -195,10 +196,9 @@ def test_segundo_negocio_nao_vira_principal(tenant_aurora):
 
 @pytest.mark.django_db
 def test_tornar_principal_remarca_os_demais(tenant_aurora):
-    from contatos.models import tornar_principal
 
-    contato = _contato_com_negocio('Ana', tenant_aurora, stage='interessado', valor=100)
-    segundo = criar_negocio(contato, stage='orcamento', valor=500, tenant_id=tenant_aurora.id)
+    contato = _contato_com_negocio('Ana', tenant_aurora, stage='suplica', valor=100)
+    segundo = criar_negocio(contato, stage='comunicacao', valor=500, tenant_id=tenant_aurora.id)
     tornar_principal(segundo)
     contato.refresh_from_db()
     assert contato.negocio.id == segundo.id
@@ -214,7 +214,7 @@ def test_primeiro_negocio_pela_view_e_principal(tenant_aurora, usuario_operacion
     c = Client()
     _sessao_web(c, usuario_operacional)
     r = c.post(f'/contatos/{contato.id}/negocios/novo/', {
-        'titulo': 'Deal 1', 'stage': 'interessado', 'valor': '100',
+        'titulo': 'Deal 1', 'stage': 'suplica', 'valor': '100',
     })
     assert r.status_code == 302
     assert contato.negocios.count() == 1
@@ -225,20 +225,20 @@ def test_primeiro_negocio_pela_view_e_principal(tenant_aurora, usuario_operacion
 def test_funil_move_negocio_nao_principal(tenant_aurora, usuario_operacional):
     from django.test import Client
 
-    contato = _contato_com_negocio('Ana', tenant_aurora, stage='interessado', valor=100)
-    segundo = criar_negocio(contato, stage='interessado', valor=500, tenant_id=tenant_aurora.id)
+    contato = _contato_com_negocio('Ana', tenant_aurora, stage='suplica', valor=100)
+    segundo = criar_negocio(contato, stage='suplica', valor=500, tenant_id=tenant_aurora.id)
     c = Client()
     _sessao_web(c, usuario_operacional)
     resp = c.post(
-        f'/recepcao/{segundo.id}/mover/', {'stage': 'fechado'},
+        f'/recepcao/{segundo.id}/mover/', {'stage': 'diploma'},
         HTTP_X_REQUESTED_WITH='XMLHttpRequest',
     )
     assert resp.status_code == 200
     segundo.refresh_from_db()
-    assert segundo.stage == 'fechado'
+    assert segundo.stage == 'diploma'
     # o negócio principal não foi afetado
     contato.refresh_from_db()
-    assert contato.negocio.stage == 'interessado'
+    assert contato.negocio.stage == 'suplica'
 
 
 @pytest.mark.django_db
@@ -246,9 +246,9 @@ def test_dashboard_movimentacoes_isoladas_por_tenant(tenant_aurora, tenant_beta,
     from django.test import Client
 
     c_beta = _contato_com_negocio('Beta Cliente', tenant_beta)
-    registrar_movimentacao(c_beta.negocio, 'interessado', 'fechado', None)
+    registrar_movimentacao(c_beta.negocio, 'suplica', 'diploma', None)
     c_aurora = _contato_com_negocio('Aurora Cliente', tenant_aurora)
-    registrar_movimentacao(c_aurora.negocio, 'interessado', 'fechado', None)
+    registrar_movimentacao(c_aurora.negocio, 'suplica', 'diploma', None)
 
     c = Client()
     _sessao_web(c, usuario_operacional)

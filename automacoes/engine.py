@@ -29,6 +29,9 @@ from emails.models import EmailEnviado, ModeloEmail
 from emails.servico import EMAIL_VAZIO, enviar_um
 from recepcao.models import etapa_map_do_tenant
 from tarefas.models import PRIORIDADES, Tarefa
+import smtplib
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import Error as DBError
 
 ETAPAS_ENCERRADAS = ('fechado', 'perdido')
 
@@ -177,7 +180,8 @@ def _executar(auto, contato=None, negocio=None, passos=None):
         try:
             runner(passo, auto, contato, negocio)
             executadas += 1
-        except Exception as exc:
+        except (DBError, DjangoValidationError, smtplib.SMTPException,
+                OSError, ValueError, TypeError) as exc:
             erros.append(f'{passo.get_acao_display()}: {exc}')
     auto.total_execucoes += 1
     auto.ultima_execucao = timezone.now()

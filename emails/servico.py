@@ -7,7 +7,9 @@ continua funcionando — ideal para demonstrar o fluxo sem custo.
 """
 import logging
 import re
+import smtplib
 from base64 import b64decode, urlsafe_b64decode, urlsafe_b64encode
+from binascii import Error as BinasciiError
 
 from django.conf import settings
 from django.core.mail import EmailMessage
@@ -43,7 +45,7 @@ def _expandir_url(codigo):
     pad = '=' * (-len(codigo) % 4)
     try:
         return urlsafe_b64decode((codigo + pad).encode('ascii')).decode('utf-8')
-    except Exception:
+    except (ValueError, BinasciiError, UnicodeDecodeError):
         return None
 
 
@@ -108,7 +110,7 @@ def enviar_mensagem(assunto, corpo, destinatario, anexo=None, anexo_nome='anexo'
             msg.attach(anexo_nome, anexo, conteudo_tipo)
         msg.send(fail_silently=False)
         return 'enviado'
-    except Exception:
+    except (OSError, smtplib.SMTPException):
         logger.exception('falha ao enviar e-mail para %s', destinatario)
         return 'erro'
 

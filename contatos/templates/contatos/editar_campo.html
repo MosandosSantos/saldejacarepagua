@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Editar campo{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Editar campo{% endblock %}
 
 {% block conteudo %}
 <div class="mx-auto max-w-2xl">
@@ -10,23 +10,26 @@
   </div>
 
   {% for e in erros %}
-    <div class="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ e }}</div>
+    <div id="form-erro" class="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200" role="alert">{{ e }}</div>
   {% endfor %}
 
-  <form method="post" class="hazon-card-lg space-y-4 p-6 hazon-form">
+  <form method="post" aria-label="Editar campo personalizado" {% if erros %}aria-describedby="form-erro"{% endif %} class="hazon-card-lg space-y-4 p-6 hazon-form" data-unsaved-guard>
     {% csrf_token %}
     <div>
       <label for="id_nome" class="hazon-label">Nome do campo</label>
       {{ form.nome }}
+      {% if form.nome.errors %}<p class="mt-1 text-[11.5px] text-red-300" role="alert">{{ form.nome.errors|striptags }}</p>{% endif %}
     </div>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <div>
         <label for="id_tipo" class="hazon-label">Tipo</label>
         {{ form.tipo }}
+        {% if form.tipo.errors %}<p class="mt-1 text-[11.5px] text-red-300" role="alert">{{ form.tipo.errors|striptags }}</p>{% endif %}
       </div>
       <div>
         <label for="id_ordem" class="hazon-label">Ordem</label>
         {{ form.ordem }}
+        {% if form.ordem.errors %}<p class="mt-1 text-[11.5px] text-red-300" role="alert">{{ form.ordem.errors|striptags }}</p>{% endif %}
       </div>
       <div class="flex items-end">
         <label for="id_obrigatorio" class="flex items-center gap-2 pb-[7px] text-[13px] text-[#bcd3da]">
@@ -39,6 +42,7 @@
     <div>
       <label for="id_opcoes" class="hazon-label">Opções (tipo Lista)</label>
       {{ form.opcoes }}
+      {% if form.opcoes.errors %}<p class="mt-1 text-[11.5px] text-red-300" role="alert">{{ form.opcoes.errors|striptags }}</p>{% endif %}
       <p class="mt-1 text-[11px] text-[#a6bfc7]">Separadas por vírgula — ex.: Bronze, Prata, Ouro</p>
     </div>
     <div class="flex flex-wrap gap-3 pt-2">

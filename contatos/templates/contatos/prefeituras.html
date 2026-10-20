@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}SAL DA BRITÂNEA CRM — Vales{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Vales{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7 flex items-end justify-between">
@@ -8,24 +8,23 @@
     <h1 class="hazon-titulo">Vales</h1>
     <p class="hazon-sub mt-2">Cadastro local dos Vales e dos contatos de Secretaria e Tesouraria.</p>
   </div>
-  <a href="{% url 'contatos:prefeitura_nova' %}" class="flex items-center gap-2 rounded-xl border border-[#4ade80]/50 bg-[#4ade80]/15 px-5 py-2.5 text-[13px] font-semibold text-[#4ade80] transition hover:bg-[#4ade80]/25">
-    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  {% if pode_criar_vale %}<a href="{% url 'contatos:prefeitura_nova' %}" class="flex items-center gap-2 rounded-xl border border-[#4ade80]/50 bg-[#4ade80]/15 px-5 py-2.5 text-[13px] font-semibold text-[#4ade80] transition hover:bg-[#4ade80]/25">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     Incluir Vale
-  </a>
+  </a>{% endif %}
 </div>
 
 <div class="overflow-x-auto hazon-card">
-  <table class="w-full min-w-[1380px] border-collapse">
+  <table class="w-full min-w-[900px] border-collapse">
     <thead>
       <tr class="border-b border-white/10 text-left">
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Vale</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Delegado</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Secretaria</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Tesouraria</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Telefone</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Mensalidade</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Vencimento</th>
-        <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Acoes</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Vale</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Secretaria</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Tesouraria</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Lojas</th>
+        <th class="px-5 py-4 text-center text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Membros</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Status</th>
+        <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Ações</th>
       </tr>
     </thead>
     <tbody>
@@ -34,42 +33,150 @@
       <tr class="border-b border-white/5 transition hover:bg-white/5" data-pf-id="{{ p.id }}">
         <td class="px-5 py-3.5">
           <div class="flex items-center gap-2">
-            <span class="text-[13.5px] font-medium text-white">{{ p.nome }}</span>
+            <button type="button"
+                    class="btn-expand-vale inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5b8def]/70"
+                    data-vale-id="{{ p.id }}" aria-expanded="false"
+                    aria-controls="lojas-vale-{{ p.id }}"
+                    aria-label="Expandir lojas de {{ p.nome }}" title="Expandir lojas">
+              <svg class="expand-icon h-3.5 w-3.5 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <span class="truncate text-[13.5px] font-medium text-white">{{ p.nome }}</span>
             {% if p.sigla %}<span class="rounded-md bg-[#5b8def]/15 px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#5b8def]">{{ p.sigla }}</span>{% endif %}
           </div>
         </td>
-        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ p.prefeito|default:"—" }}</td>
-        <td class="px-5 py-3.5 text-[12.5px] text-[#bcd3da]">
-          <div class="font-medium text-white">{{ p.secretario_nome|default:"—" }}</div>
-          <div class="mt-1 break-all">{{ p.secretario_email|default:"—" }}</div>
-          <div class="mt-0.5">{{ p.secretario_telefone|default:"—" }}</div>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">
+          {% if p.secretario_nome %}<div class="truncate font-medium text-white">{{ p.secretario_nome }}</div>{% endif %}
+          <div class="text-[12px] leading-relaxed text-[#a6bfc7]">
+            {% if p.secretario_email %}<div class="truncate">{{ p.secretario_email }}</div>{% endif %}
+            {% if p.secretario_telefone %}<div>{{ p.secretario_telefone }}</div>{% endif %}
+            {% if not p.secretario_nome and not p.secretario_email and not p.secretario_telefone %}—{% endif %}
+          </div>
         </td>
-        <td class="px-5 py-3.5 text-[12.5px] text-[#bcd3da]">
-          <div class="font-medium text-white">{{ p.tesoureiro_nome|default:"—" }}</div>
-          <div class="mt-1 break-all">{{ p.tesoureiro_email|default:"—" }}</div>
-          <div class="mt-0.5">{{ p.tesoureiro_telefone|default:"—" }}</div>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">
+          {% if p.tesoureiro_nome %}<div class="truncate font-medium text-white">{{ p.tesoureiro_nome }}</div>{% endif %}
+          <div class="text-[12px] leading-relaxed text-[#a6bfc7]">
+            {% if p.tesoureiro_email %}<div class="truncate">{{ p.tesoureiro_email }}</div>{% endif %}
+            {% if p.tesoureiro_telefone %}<div>{{ p.tesoureiro_telefone }}</div>{% endif %}
+            {% if not p.tesoureiro_nome and not p.tesoureiro_email and not p.tesoureiro_telefone %}—{% endif %}
+          </div>
         </td>
-        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ p.telefone|default:"—" }}</td>
-        <td class="px-5 py-3.5 text-[13px] font-semibold text-[#4ade80]">{{ p.valor_anuidade_fmt|default:"—" }}</td>
-        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ p.vencimento_fmt|default:"—" }}</td>
+        <td class="px-5 py-3.5 text-[13px]"><span class="font-mono font-semibold tabular-nums text-[#5b8def]">{{ p.lojas_count }}</span></td>
+        <td class="px-5 py-3.5 text-center font-mono text-[14px] font-bold tabular-nums text-white">{{ p.membros_total|default:0 }}</td>
+        <td class="px-5 py-3.5">
+          {% if p.status == 'INATIVA' %}
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-[#a6bfc7]">Arquivado</span>
+          {% else %}
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-[#4ade80]/25 bg-[#4ade80]/10 px-2.5 py-1 text-[11px] font-semibold text-[#4ade80]">Ativo</span>
+          {% endif %}
+        </td>
         <td class="px-5 py-3.5">
           <div class="flex items-center justify-end gap-2">
-            <a href="{% url 'contatos:prefeitura_editar' p.id %}" title="Alterar" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#fbbf24]/15 hover:text-[#fbbf24]">
-              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <a href="{% url 'contatos:prefeitura_detalhe' p.id %}" title="Consultar" aria-label="Consultar {{ p.nome }}" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def]">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </a>
-            <a href="{% url 'contatos:prefeitura_excluir' p.id %}" title="Excluir" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#ef4444]/15 hover:text-[#ef4444]">
-              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            </a>
+            {% if web_usuario.role == 'admin_saas' or web_usuario.role == 'ADM' %}
+              {% if p.status == 'INATIVA' %}
+                <form method="post" action="{% url 'contatos:prefeitura_reativar' p.id %}" aria-label="Reativar {{ p.nome }}">
+                  {% csrf_token %}
+                  <button type="submit" title="Reativar" aria-label="Reativar {{ p.nome }}" class="flex h-8 w-8 items-center justify-center rounded-lg border border-[#4ade80]/25 bg-[#4ade80]/10 text-[#4ade80] transition hover:bg-[#4ade80]/20">
+                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.3"/><polyline points="20 4 20 11 13 11"/></svg>
+                  </button>
+                </form>
+              {% else %}
+                <a href="{% url 'contatos:prefeitura_editar' p.id %}" title="Alterar" aria-label="Alterar {{ p.nome }}" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#fbbf24]/15 hover:text-[#fbbf24]">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </a>
+                <a href="{% url 'contatos:prefeitura_excluir' p.id %}" title="Arquivar" aria-label="Arquivar {{ p.nome }}" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#ef4444]/15 hover:text-[#ef4444]">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </a>
+              {% endif %}
+            {% elif web_usuario.role == 'delegado' %}
+              <a href="{% url 'contatos:prefeitura_editar' p.id %}" title="Alterar" aria-label="Alterar {{ p.nome }}" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#fbbf24]/15 hover:text-[#fbbf24]">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </a>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      <tr id="lojas-vale-{{ p.id }}" class="drill-lojas-vale" data-vale-id="{{ p.id }}" style="display:none;">
+        <td colspan="7" class="px-0 py-0">
+          <div class="bg-white/[0.02] px-5 py-3 sm:px-12">
+            {% if p.lojas %}
+            <table class="w-full border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 text-left">
+                  <th scope="col" class="px-3 py-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Loja</th>
+                  <th scope="col" class="px-3 py-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Corpo</th>
+                  <th scope="col" class="px-3 py-2.5 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Membros</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for loja in p.lojas %}
+                <tr class="border-b border-white/[0.04] hover:bg-white/[0.03]">
+                  <td class="px-3 py-2.5">
+                    <div class="flex items-center gap-2">
+                      <button type="button"
+                              class="btn-expand-loja inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5b8def]/70"
+                              data-loja-id="{{ loja.id }}" data-loja-name="{{ loja.nome }}" data-loaded="false"
+                              aria-expanded="false" aria-controls="membros-loja-{{ loja.id }}"
+                              aria-label="Expandir membros de {{ loja.nome }}" title="Expandir membros">
+                        <svg class="expand-icon h-3.5 w-3.5 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      </button>
+                      <span class="truncate text-[12.5px] font-medium text-white">{{ loja.nome }}</span>
+                    </div>
+                  </td>
+                  <td class="px-3 py-2.5 text-[12px] text-[#bcd3da]">{{ loja.corpo }}</td>
+                  <td class="px-3 py-2.5 text-center font-mono text-[12px] font-bold tabular-nums text-white">{{ loja.membros_total }}</td>
+                </tr>
+                <tr id="membros-loja-{{ loja.id }}" class="drill-membros-loja" data-loja-id="{{ loja.id }}" style="display:none;">
+                  <td colspan="3" class="px-0 py-0">
+                    <div class="bg-white/[0.02] px-5 py-2 sm:px-10">
+                      <div class="membros-container-loja" data-loja-id="{{ loja.id }}" aria-live="polite" aria-busy="false">
+                        <p class="py-4 text-center text-[12px] text-[#6f8a93]">Os membros serão carregados ao expandir esta Loja.</p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% else %}
+            <p class="py-4 text-center text-[12px] text-[#a6bfc7]">Nenhuma loja cadastrada neste Vale.</p>
+            {% endif %}
           </div>
         </td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="8" class="px-5 py-12 text-center text-[14px] text-[#a6bfc7]">Nenhum Vale cadastrado ainda. Inclua o primeiro Vale para começar.</td>
+        <td colspan="7" class="px-5 py-12 text-center text-[14px] text-[#a6bfc7]">Nenhum Vale cadastrado ainda. Inclua o primeiro Vale para começar.</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
 
+{% include 'contatos/partials/_paginacao.html' %}
+
+{% endblock %}
+
+{% block js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.btn-expand-vale').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var valeId = this.getAttribute('data-vale-id');
+      var drillRow = document.querySelector('.drill-lojas-vale[data-vale-id="' + valeId + '"]');
+      var icon = this.querySelector('.expand-icon');
+      var isOpen = this.getAttribute('aria-expanded') === 'true';
+
+      drillRow.style.display = isOpen ? 'none' : '';
+      this.setAttribute('aria-expanded', String(!isOpen));
+      this.setAttribute('aria-label', (isOpen ? 'Expandir lojas de ' : 'Recolher lojas de ') + this.parentElement.querySelector('span').textContent);
+      this.title = isOpen ? 'Expandir lojas' : 'Recolher lojas';
+      icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(45deg)';
+    });
+  });
+});
+</script>
+{% include 'contatos/partials/_loja_membros_expandir_js.html' %}
 {% endblock %}

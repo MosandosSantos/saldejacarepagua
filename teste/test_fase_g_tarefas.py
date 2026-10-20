@@ -34,7 +34,7 @@ def _tarefa(tenant, titulo='Ligar de volta', **kw):
 
 
 def _contato(tenant, nome='Ana'):
-    return Contato.objects.create(nome=nome, seg='estetica', tenant=tenant, origem='Indicacao')
+    return Contato.objects.create(nome=nome, seg='beleza', tenant=tenant, origem='Indicacao')
 
 
 # --- CRUD básico ---

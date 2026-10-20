@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from candidatos import views
 
 app_name = 'candidatos'
 
@@ -12,8 +12,6 @@ urlpatterns = [
     path('api/aprovar/<int:pk>/', views.candidato_aprovar, name='api_aprovar'),
     path('api/aprovar-encaminhar/<int:pk>/', views.candidato_aprovar_encaminhar, name='api_aprovar_encaminhar'),
     path('api/devolver/<int:pk>/', views.candidato_devolver, name='api_devolver'),
-
-
     path('api/prefeituras/', views.api_prefeituras, name='api_prefeituras'),
     path('api/lojas/', views.api_lojas_por_prefeitura, name='api_lojas_por_prefeitura'),
     path('portal/<str:token>/', views.candidato_dashboard, name='portal_dashboard'),

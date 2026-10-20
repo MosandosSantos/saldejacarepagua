@@ -78,7 +78,7 @@ def _nova_conexao():
         # No host (testes, runserver fora do compose) o .env pode ser carregado
         # literal: '$$' é escape do docker compose — volta a ser '$'. Dentro do
         # container o compose já desescapou e '$$' nunca ocorre (no-op).
-        # Senha explicitamente vazia também impede fallback ao .env.
+        # Uma variável explicitamente vazia também impede fallback ao .env.
         password = pw.replace('$$', '$')
     else:
         # Fallback: lê do .env do projeto (aceita GPRB_DB_PASSWORD ou PGPASSWORD)
@@ -146,6 +146,15 @@ def connect():
     return _ConnProxy(conn)
 
 
+def resolve_tenant_code(explicit=None):
+    """Resolve o código de tenant explícito ou o padrão configurado."""
+    if isinstance(explicit, str) and explicit.strip():
+        return explicit.strip()
+    from django.conf import settings
+
+    return (getattr(settings, 'GPRB_TENANT_CODE', '') or '').strip() or 'SCG33REAA'
+
+
 @contextmanager
 def gprb_transaction():
     """Transação explícita para escritas multi-statement no banco GPRB.
@@ -174,7 +183,8 @@ def coluna_existe(cur, tabela, coluna):
     return cur.fetchone() is not None
 
 
-def _tenant_id_por_codigo(cur, tenant_code='GPRB'):
+def _tenant_id_por_codigo(cur, tenant_code=None):
+    tenant_code = resolve_tenant_code(tenant_code)
     cur.execute('SELECT id FROM tenant WHERE code = %s', (tenant_code,))
     row = cur.fetchone()
     return row[0] if row else None

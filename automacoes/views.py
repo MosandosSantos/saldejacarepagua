@@ -17,6 +17,7 @@ from acesso.decorators import (
     e_admin_do_tenant,
     web_login_required,
     web_requer_admin,
+    web_requer_tenant_context,
 )
 from acesso.models import Usuario
 from automacoes.engine import disparar, executar_estagnados
@@ -263,12 +264,13 @@ def _ctx_form(request, automacao, erros):
         'modelos': modelos,
         'prioridades': PRIORIDADES,
         'passos_edit': passos,
-        # JSONs consumidos pelo builder JS (pares [valor, rótulo]). Nomes vêm do
-        # banco e entram dentro de <script> — escapa '<' (e '>'/'&') para impedir
-        # quebra da tag (XSS). O JSON.parse/JS decodifica \u003c de volta.
-        'membros_json': json.dumps([[str(m['id']), m['nome']] for m in membros]).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026'),
-        'modelos_json': json.dumps([[str(m['id']), m['nome']] for m in modelos]).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026'),
-        'passos_json': json.dumps(passos).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026'),
+        # Listas cruas consumidas pelo builder JS. A serializacao segura
+        # (escape de '<', '>', '&', U+2028/U+2029) e feita pelo filtro
+        # template |js, que ja e builtin — evita duplicar a logica de escape
+        # aqui e no template.
+        'membros_json': [[str(m['id']), m['nome']] for m in membros],
+        'modelos_json': [[str(m['id']), m['nome']] for m in modelos],
+        'passos_json': passos,
     }
 
 
@@ -324,6 +326,7 @@ def lista(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_admin
 def nova(request):
     tid = _tenant_id(request)
@@ -338,6 +341,7 @@ def nova(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_admin
 def editar(request, pk):
     tid = _tenant_id(request)
@@ -351,6 +355,7 @@ def editar(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_admin
 def ativar(request, pk):
     automacao = get_object_or_404(Automacao.objects.filter(tenant_id=_tenant_id(request)), pk=pk)
@@ -361,6 +366,7 @@ def ativar(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_admin
 def duplicar(request, pk):
     automacao = get_object_or_404(Automacao.objects.filter(tenant_id=_tenant_id(request)), pk=pk)
@@ -381,6 +387,7 @@ def duplicar(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_admin
 def excluir(request, pk):
     automacao = get_object_or_404(Automacao.objects.filter(tenant_id=_tenant_id(request)), pk=pk)
@@ -390,6 +397,7 @@ def excluir(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_admin
 def testar(request, pk):
     """Executa a automação uma vez contra o contato mais recente do tenant (sanity check)."""
@@ -412,6 +420,7 @@ def testar(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_admin
 def estagnadas(request):
     """Verifica agora os negócios parados e dispara as automações de estagnação."""

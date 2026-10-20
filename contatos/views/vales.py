@@ -3,9 +3,11 @@
 from datetime import date
 
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from acesso.decorators import (
@@ -14,9 +16,10 @@ from acesso.decorators import (
     web_login_required,
     web_requer_edicao,
 )
-from acesso.models import ROLE_ADMIN_SAAS, ROLE_ADM, ROLE_DELEGADO
+from acesso.models import ROLE_ADM, ROLE_ADMIN_SAAS, ROLE_DELEGADO
 from contatos.importador import normalizar_valor
-from contatos.models import Vale
+from contatos.models import Loja, Membro, Vale
+from contatos.paginacao import urls_paginacao
 from contatos.vale_services import provisionar_vale
 from core.utils import brl
 
@@ -53,8 +56,12 @@ def _vales_do_request(request):
 
 
 def _vales_do_tenant_para_edicao(request):
-    """Writes target one explicit tenant, except global admins (all Vales)."""
-    if _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM):
+    """Writes target one explicit tenant, except ADM (all Vales).
+
+    admin_saas só grava com um tenant selecionado; sem seleção devolve None
+    e as views respondem 403 (spec de isolamento de tenant).
+    """
+    if _role(request) == ROLE_ADM:
         return Vale.objects.filter(status='ATIVA')
     tenant_id = tenant_id_da_sessao(request)
     if tenant_id is None:
@@ -145,20 +152,40 @@ def _para_contexto_vale(vale):
 @web_login_required
 def prefeituras(request):
     """List local Vales visible to the current tenant."""
-    from django.db.models import Count
+    from django.db.models import Count, F, Q
 
-    from contatos.models import Loja, Membro
 
     vales = _vales_do_request(request)
     if vales is None:
         return HttpResponseForbidden('Tenant obrigatório.')
-    vales = vales.order_by('nome', 'id')
+    page_obj = Paginator(vales.order_by('nome', 'id'), 20).get_page(
+        request.GET.get('page', 1),
+    )
+    vales = list(page_obj.object_list)
+    tenant_ids = [vale.tenant_id for vale in vales]
     lojas_por_vale = {}
-    for loja in Loja.objects.filter(tenant_id__in=[v.tenant_id for v in vales]).order_by('nome'):
-        lojas_por_vale.setdefault(loja.tenant_id, []).append(loja.nome)
+    lojas = (
+        Loja.objects
+        .filter(tenant_id__in=tenant_ids)
+        .annotate(
+            membros_total=Count(
+                'membros',
+                filter=Q(membros__tenant_id=F('tenant_id')),
+                distinct=True,
+            ),
+        )
+        .order_by('nome', 'id')
+    )
+    for loja in lojas:
+        lojas_por_vale.setdefault(loja.tenant_id, []).append({
+            'id': loja.pk,
+            'nome': loja.nome,
+            'corpo': loja.get_corpo_display(),
+            'membros_total': loja.membros_total,
+        })
     membros_por_tenant = dict(
         Membro.objects
-        .filter(tenant_id__in=[v.tenant_id for v in vales], situacao='ATIVO')
+        .filter(tenant_id__in=tenant_ids, situacao='ATIVO')
         .values_list('tenant_id')
         .annotate(total=Count('id'))
         .values_list('tenant_id', 'total')
@@ -166,13 +193,19 @@ def prefeituras(request):
     vales_ctx = []
     for vale in vales:
         ctx = _para_contexto_vale(vale)
-        ctx['lojas_count'] = len(lojas_por_vale.get(vale.tenant_id, []))
-        ctx['lojas_nomes'] = lojas_por_vale.get(vale.tenant_id, [])
+        ctx['lojas'] = lojas_por_vale.get(vale.tenant_id, [])
+        ctx['lojas_count'] = len(ctx['lojas'])
+        ctx['lojas_nomes'] = [loja['nome'] for loja in ctx['lojas']]
         ctx['membros_total'] = membros_por_tenant.get(vale.tenant_id, 0)
         vales_ctx.append(ctx)
     return render(request, 'contatos/prefeituras.html', {
         'prefeituras': vales_ctx,
-        'total_pf': vales.count(),
+        'total_pf': page_obj.paginator.count,
+        'page_obj': page_obj,
+        'pagination_urls': urls_paginacao(
+            request, page_obj, base_path=reverse('vales'),
+        ),
+        'pode_criar_vale': _pode_gerir_vale(request),
     })
 
 
@@ -193,7 +226,7 @@ def prefeitura_nova(request):
         else:
             request.session['admin_tenant_id'] = vale.tenant_id
             request.session.modified = True
-            return redirect('contatos:prefeituras')
+            return redirect('vales')
 
     return render(request, 'contatos/prefeitura_nova.html', {'erro': erro})
 
@@ -238,7 +271,7 @@ def prefeitura_editar(request, pk):
                 if tenant.nome != vale.sigla:
                     tenant.nome = vale.sigla
                     tenant.save(update_fields=['nome', 'updated_at'])
-            return redirect('contatos:prefeituras')
+            return redirect('vales')
 
     return render(request, 'contatos/prefeitura_editar.html', {
         'prefeitura': _para_contexto_vale(vale),
@@ -263,7 +296,7 @@ def prefeitura_excluir(request, pk):
         if _role(request) == ROLE_ADMIN_SAAS:
             request.session.pop('admin_tenant_id', None)
             request.session.modified = True
-            return redirect('contatos:prefeituras')
+            return redirect('vales')
         return redirect('dashboard:index')
 
     return render(request, 'contatos/prefeitura_excluir.html', {
@@ -285,4 +318,4 @@ def prefeitura_reativar(request, pk):
     vale.save(update_fields=['status', 'updated_at'])
     request.session['admin_tenant_id'] = vale.tenant_id
     request.session.modified = True
-    return redirect('contatos:prefeituras')
+    return redirect('vales')

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta property="og:title" content="SAL DO REAA — Confirmação de presença">
+<meta property="og:description" content="Confirme sua presença na sessão da {{ conf.evento.loja_nome|default:'sua loja' }}.">
+{% if url_logo %}<meta property="og:image" content="{{ url_logo }}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SAL DO REAA — Confirmação de presença">
+<meta name="twitter:image" content="{{ url_logo }}">{% endif %}
+<title>Confirmação de presença — Sal do REAA</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f3eeea; font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3eeea; padding:28px 12px;">
+    <tr>
+      <td align="center">
+
+        {% if invalido %}
+        <table role="presentation" width="460" cellpadding="0" cellspacing="0" style="max-width:460px; width:100%; background-color:#ffffff; border-radius:6px; border:1px solid #e2d6c8;">
+          <tr>
+            <td style="background-color:#4a0e1f; padding:24px; text-align:center;">
+              <div style="font-family:Georgia,'Times New Roman',serif; color:#ffffff; font-size:18px; letter-spacing:3px;">SAL&nbsp;DO&nbsp;REAA</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:26px 30px; text-align:center;">
+              <div style="font-family:Georgia,serif; font-size:18px; color:#1f1216;">Link de confirmação inválido ou expirado.</div>
+              <div style="margin-top:8px; font-size:13px; color:#8a7a7e;">Solicite um novo convite ao Secretário da sua Loja.</div>
+            </td>
+          </tr>
+        </table>
+        {% else %}
+
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:6px; overflow:hidden; border:1px solid #e2d6c8;">
+          <!-- Cabeçalho -->
+          <tr>
+            <td style="background:linear-gradient(140deg,#4a0e1f 0%,#621127 55%,#350b17 100%); background-color:#4a0e1f; padding:26px 28px 20px 28px; text-align:center;" bgcolor="#4a0e1f">
+              {% if url_logo %}<img src="{{ url_logo }}" alt="SAL DO REAA" width="64" height="64" style="display:block; margin:0 auto 10px auto; width:64px; height:64px; border-radius:8px; object-fit:contain;">
+              <div style="margin-top:4px; font-size:10px; color:#c9a227; letter-spacing:4px; text-transform:uppercase;">Ordo Ab Chao</div>{% endif %}
+              <div style="font-size:10px; color:#c9a227; letter-spacing:4px; text-transform:uppercase;">Sal do REAA</div>
+              <div style="margin-top:8px; font-family:Georgia,'Times New Roman',serif; font-size:22px; color:#ffffff; letter-spacing:2px;">{{ conf.evento.loja_nome|default:"Sua Loja" }}</div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">
+                <tr>
+                  <td align="center">
+                    <table role="presentation" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td width="70" style="border-top:1px solid #c9a227; height:1px; font-size:0; line-height:0;">&nbsp;</td>
+                        <td width="14" align="center" style="color:#c9a227; font-size:9px; line-height:1px;">&#9670;</td>
+                        <td width="70" style="border-top:1px solid #c9a227; height:1px; font-size:0; line-height:0;">&nbsp;</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Corpo -->
+          <tr>
+            <td style="padding:26px 30px 0 30px; text-align:center;">
+              <div style="font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#c9a227; font-weight:bold;">Confirmação de presença</div>
+              <div style="margin-top:10px; font-family:Georgia,serif; font-size:22px; color:#1f1216;">{{ conf.evento.titulo }}</div>
+              <div style="margin-top:6px; font-size:14px; color:#5a7184;">{{ tipo_display }} · {{ inicio_display }}</div>
+              {% if salvo %}
+              <div style="margin-top:18px; display:inline-block; padding:10px 20px; border-radius:6px; background-color:#eef6f0; border:1px solid #bfdcc9; color:#1f5c3d; font-size:14px; font-weight:bold;">
+                Resposta registrada: {{ conf.get_resposta_display }}{% if conf.respondido_em %} · {{ conf.respondido_em|datahorabr }}{% endif %}
+              </div>
+              {% elif conf.resposta %}
+              <div style="margin-top:18px; display:inline-block; padding:10px 20px; border-radius:6px; background-color:#f7f1ec; border:1px solid #e2d6c8; color:#4a0e1f; font-size:14px; font-weight:bold;">
+                ✓ Resposta registrada: {{ conf.get_resposta_display }}{% if conf.respondido_em %} · {{ conf.respondido_em|datahorabr }}{% endif %}
+              </div>
+              <div style="margin-top:8px; font-size:12px; color:#8a7a7e;">A confirmação é única por e-mail — não é possível alterá-la.</div>
+              {% else %}
+              <div style="margin-top:12px; font-size:14px; color:#5a7184; line-height:1.6;">Você vai comparecer a esta sessão?<br>Escolha abaixo — a resposta é única e não pode ser alterada.</div>
+              {% endif %}
+            </td>
+          </tr>
+
+          <!-- Botões (somente quando ainda não há resposta) -->
+          {% if not conf.resposta %}
+          <tr>
+            <td>
+              <form method="post" action="" style="margin:0;">
+                {% csrf_token %}
+                <input type="hidden" name="resposta" value="VOU">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:20px 30px 0 30px;">
+                  <tr>
+                    <td align="center">
+                      <button type="submit" style="border:0; cursor:pointer; padding:14px 30px; border-radius:4px; background-color:#1f5c3d; color:#ffffff; font-size:14px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">
+                        Vou comparecer
+                      </button>
+                    </td>
+                  </tr>
+                </table>
+              </form>
+              <form method="post" action="" style="margin:0;">
+                {% csrf_token %}
+                <input type="hidden" name="resposta" value="NAO_VOU">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:10px 30px 0 30px;">
+                  <tr>
+                    <td align="center">
+                      <button type="submit" style="border:0; cursor:pointer; padding:12px 30px; border-radius:4px; background-color:#ffffff; color:#7a1024; font-size:13px; font-weight:bold; letter-spacing:1px; text-transform:uppercase; border:1px solid #7a1024;">
+                        Não poderei
+                      </button>
+                    </td>
+                  </tr>
+                </table>
+              </form>
+              {% if erro %}<div role="alert" style="margin-top:10px; text-align:center; font-size:13px; color:#7a1024;">{{ erro }}</div>{% endif %}
+              {% if url_google %}
+              <div style="padding:22px 30px 0 30px; text-align:center;">
+                <a href="{{ url_google }}" target="_blank" rel="noopener" style="font-size:12px; color:#3d6fd8; text-decoration:none; font-weight:bold;">+ Adicionar ao Google Agenda</a>
+              </div>
+              {% endif %}
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- Rodapé -->
+          <tr>
+            <td align="center" style="padding:20px 0 0 0;">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="110" style="border-top:1px solid #e8d28a; height:1px; font-size:0; line-height:0;">&nbsp;</td>
+                  <td width="14" align="center" style="color:#c9a227; font-size:9px; line-height:1px;">&#9670;</td>
+                  <td width="110" style="border-top:1px solid #e8d28a; height:1px; font-size:0; line-height:0;">&nbsp;</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:14px 30px 24px 30px; font-size:11px; color:#8a7a7e; text-align:center; line-height:1.6;">
+              Link pessoal e intransferível · A confirmação é única por e-mail.<br>
+              E-mail automático do sistema Sal do REAA.
+            </td>
+          </tr>
+        </table>
+        {% endif %}
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

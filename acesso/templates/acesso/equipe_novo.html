@@ -1,11 +1,11 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}SAL DA BRITÂNEA CRM — Novo usuário{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Novo usuário{% endblock %}
 
 {% block conteudo %}
 <div class="mb-6">
   <a href="{% url 'equipe' %}" class="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#a6bfc7] transition hover:text-white">
-    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
     Voltar
   </a>
 </div>
@@ -14,7 +14,7 @@
   <div class="hazon-card-sm p-7 backdrop-blur-xl">
     <div class="mb-6 flex items-center gap-3">
       <span class="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#5b8def]/15">
-        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#5b8def" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#5b8def" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
       </span>
       <div>
         <h1 class="font-display text-lg font-semibold text-white">Novo usuário</h1>
@@ -23,7 +23,7 @@
     </div>
 
     {% for e in erros %}
-      <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ e }}</div>
+      <div role="alert" class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ e }}</div>
     {% endfor %}
     {% if sucesso %}
       <div class="mb-4 rounded-xl border border-[#4ade80]/40 bg-[#4ade80]/15 px-4 py-3 text-[13.5px] font-semibold text-[#4ade80]">{{ sucesso }}</div>
@@ -34,7 +34,7 @@
       </div>
     {% endif %}
 
-    <form method="post" class="grid gap-5">
+    <form method="post" class="grid gap-5" data-unsaved-guard>
       {% csrf_token %}
 
       <div>
@@ -51,20 +51,20 @@
 
       <div>
         <label for="nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do usuário *</label>
-        <input type="text" id="nome" name="nome" value="{{ request.POST.nome }}" required
+        <input type="text" id="nome" name="nome" value="{{ request.POST.nome }}" required autocomplete="name"
                class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
       </div>
 
       <div>
         <label for="email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail *</label>
-        <input type="email" id="email" name="email" placeholder="usuario@exemplo.com" value="{{ request.POST.email }}" required
+        <input type="email" id="email" name="email" placeholder="usuario@exemplo.com" value="{{ request.POST.email }}" required autocomplete="email" spellcheck="false"
                class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
         <p class="mt-1.5 text-[12px] text-[#a6bfc7]">Informe o e-mail de contato do usuário.</p>
       </div>
 
       <div>
         <label for="celular" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Celular *</label>
-        <input type="tel" id="celular" name="celular" placeholder="11999999999" value="{{ request.POST.celular }}" required
+        <input type="tel" id="celular" name="celular" placeholder="11999999999" value="{{ request.POST.celular }}" required autocomplete="tel"
                class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
         <p class="mt-1.5 text-[12px] text-[#a6bfc7]">Informe o celular que será usado como login.</p>
       </div>
@@ -82,7 +82,7 @@
 
       <div class="flex items-center gap-3 pt-2">
         <button type="submit" class="flex items-center gap-2 rounded-xl border border-[#5b8def]/50 bg-gradient-to-br from-[#1a5fb4] to-[#1450a0] px-6 py-3 text-[14px] font-bold text-white shadow-lg shadow-[#1a5fb4]/30 transition hover:brightness-110">
-          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Cadastrar e enviar link
         </button>
         <a href="{% url 'equipe' %}" class="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-[14px] font-medium text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">

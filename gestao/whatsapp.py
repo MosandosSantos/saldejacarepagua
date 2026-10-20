@@ -15,6 +15,16 @@ import time
 
 logger = logging.getLogger(__name__)
 
+
+class ErroEnvioWhatsApp(Exception):
+    """Falha ao enviar uma mensagem via PyWhatKit.
+
+    O pywhatkit nao expoe uma hierarquia de erros utilizavel, entao o
+    adaptador (`_enviar_um`) traduz qualquer erro do pacote para este tipo
+    proprio. Quem chama captura `ErroEnvioWhatsApp` — nunca `Exception`.
+    """
+
+
 # Intervalo minimo entre mensagens (politica WA — PRD §7)
 INTERVALO_LOTE = 90
 
@@ -41,7 +51,7 @@ def _pywhatkit_disponivel(ttl=60):
         import pywhatkit  # noqa: F401
         _CACHE_DISPONIVEL.update(ts=agora, ok=True)
         return True
-    except Exception:
+    except (ImportError, OSError):
         logger.warning('pywhatkit indisponivel (pacote ausente ou sem internet)')
         _CACHE_DISPONIVEL.update(ts=agora, ok=False)
         return False
@@ -63,18 +73,27 @@ def _enviar_um(numero, texto):
     O pywhatkit exige o numero com '+' (CountryCodeException caso contrario) e
     preenche o texto via parametro `text` da URL. O log proprio dele (arquivo em
     disco, `pywhatkit_log.txt`) e desligado em favor do nosso `logger`.
+
+    O pywhatkit nao define uma hierarquia de erros consistente — varias falhas
+    chegam como `Exception` ou `NameError` (o modulo `exceptions` que ele cita
+    nem existe na versao instalada). Por isso este adaptador traduz QUALQUER
+    erro do pacote para `ErroEnvioWhatsApp`: quem chama captura um tipo proprio
+    e nunca `Exception`.
     """
     import pywhatkit
     from pywhatkit.core import log as _log_pywhatkit
 
     _log_pywhatkit.log_message = lambda *_a, **_k: None
 
-    pywhatkit.sendwhatmsg_instantly(
-        '+' + numero,
-        texto,
-        wait_time=_WAIT_PAGINA,
-        tab_close=False,  # evita o Ctrl+W+Enter do pywhatkit em aba alheia
-    )
+    try:
+        pywhatkit.sendwhatmsg_instantly(
+            '+' + numero,
+            texto,
+            wait_time=_WAIT_PAGINA,
+            tab_close=False,  # evita o Ctrl+W+Enter do pywhatkit em aba alheia
+        )
+    except Exception as exc:  # adaptador: pywhatkit nao tipa os erros
+        raise ErroEnvioWhatsApp(f'{numero}: {exc}') from exc
 
 
 def verificar_conexao():
@@ -142,7 +161,7 @@ def enviar_lote(envios, intervalo=INTERVALO_LOTE):
             try:
                 _enviar_um(numero, envio.get('texto', ''))
                 ok += 1
-            except Exception:
+            except ErroEnvioWhatsApp:
                 logger.exception('falha no envio WhatsApp para %s', numero)
                 falhas += 1
             if i < total - 1:

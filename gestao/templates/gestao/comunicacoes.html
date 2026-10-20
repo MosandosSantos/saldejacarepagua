@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Comunicações{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Comunicações{% endblock %}
 
 {% block conteudo %}
 <div class="mx-auto max-w-5xl">
@@ -25,13 +25,14 @@
   <section id="zap-painel" class="hazon-card-lg mb-6 hidden p-7">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <h2 class="font-display text-lg font-semibold text-white">Status do WhatsApp</h2>
-      <span id="zap-badge" class="rounded-full px-3 py-1 text-[11px] font-bold bg-white/10 text-[#a6bfc7]">verificando…</span>
+      <span id="zap-badge" class="rounded-full px-3 py-1 text-[11px] font-bold bg-white/10 text-[#a6bfc7]" role="status" aria-live="polite">verificando…</span>
     </div>
     <div id="zap-qr-area" class="hidden">
       <p class="mb-3 text-[12.5px] text-[#a6bfc7]">O envio usa o WhatsApp Web do navegador padrão (PyWhatKit). Pareie uma única vez: no celular vá em Ajustes → Aparelhos conectados → Conectar aparelho e escaneie o QR code exibido.</p>
-      <img id="zap-qr-img" alt="QR Code do WhatsApp" class="h-56 w-56 rounded-2xl border border-white/10 bg-white p-2">
+      <img id="zap-qr-img" alt="QR Code do WhatsApp" class="h-56 w-56 rounded-2xl border border-white/10 bg-white p-2" width="224" height="224">
     </div>
-    <p id="zap-detalhe" class="text-[12.5px] text-[#a6bfc7]"></p>
+    <p id="zap-erro" role="alert" class="hidden rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[12.5px] text-red-200"></p>
+    <p id="zap-detalhe" class="text-[12.5px] text-[#a6bfc7]" aria-live="polite"></p>
     <div class="mt-4 flex items-center gap-3">
       <button type="button" id="zap-gerar-qr"
               class="hazon-btn hazon-btn-primary px-5 py-2 text-[12.5px] font-semibold text-white transition hover:brightness-110">
@@ -45,9 +46,9 @@
   </section>
 
   <!-- Formulário de envio -->
-  <form method="post" class="hazon-card-lg p-8">
+  <form method="post" class="hazon-card-lg p-8" data-unsaved-guard>
     {% csrf_token %}
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="grid grid-cols-1">
       <div>
         <label class="hazon-label" for="id-canal">Canal</label>
         <select id="id-canal" name="canal" onchange="mudarCanal()">
@@ -56,6 +57,8 @@
           {% endfor %}
         </select>
       </div>
+    </div>
+    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
         <label class="hazon-label" for="id-origem">Destino</label>
         <select id="id-origem" name="origem" onchange="mudarOrigem()">
@@ -70,11 +73,11 @@
     <div id="origem-individual" class="mt-4 hidden grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
         <label class="hazon-label" for="id-ind-nome">Nome (opcional)</label>
-        <input type="text" id="id-ind-nome" name="ind_nome" placeholder="Nome da pessoa" value="{{ request.POST.ind_nome }}">
+        <input type="text" id="id-ind-nome" name="ind_nome" placeholder="Nome da pessoa" value="{{ request.POST.ind_nome }}" autocomplete="off">
       </div>
       <div>
         <label class="hazon-label" for="id-ind-contato">Contato (e-mail ou celular)</label>
-        <input type="text" id="id-ind-contato" name="ind_contato" placeholder="pessoa@email.com ou 21999990000" value="{{ request.POST.ind_contato }}" required>
+        <input type="text" id="id-ind-contato" name="ind_contato" placeholder="pessoa@email.com ou 21999990000" value="{{ request.POST.ind_contato }}" autocomplete="off" required>
       </div>
     </div>
 
@@ -82,44 +85,40 @@
     <div id="origem-prefeituras" class="mt-4 hidden">
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label class="hazon-label" for="id-prefeitura">Prefeitura</label>
+          <label class="hazon-label" for="id-prefeitura">Vale</label>
           <select id="id-prefeitura" name="filtro_prefeitura" onchange="mudarPrefeitura()">
-            <option value="">Todas as prefeituras</option>
+            <option value="">Todos os Vales</option>
             {% for pf in prefeituras %}
               <option value="{{ pf.id }}" {% if pf.id == prefeitura_selecionada %}selected{% endif %}>{{ pf.nome }}</option>
             {% endfor %}
           </select>
         </div>
-        <!-- Select de lojas (mesma linha da prefeitura; aparece quando uma é escolhida) -->
-        <div id="loja-grupo" class="{% if not prefeitura_selecionada %}hidden{% endif %}">
-          <label class="hazon-label" for="id-loja">Loja</label>
-          <select id="id-loja" name="filtro_loja">
-            <option value="">— Prefeito da prefeitura —</option>
-            {% for lj in lojas_da_prefeitura %}
-              <option value="{{ lj.id }}" {% if lj.id == loja_selecionada %}selected{% endif %}>{{ lj.nome }}</option>
-            {% endfor %}
-          </select>
-          <p class="mt-1.5 text-[11.5px] text-[#a6bfc7]">Prefeitura → e-mail/Zap do <b class="text-[#bcd3da]">Prefeito</b> · Loja → e-mail/Zap do <b class="text-[#bcd3da]">Deputado Mestre</b> da loja.</p>
+        <!-- Lojas do Vale: Todas (prefeitos do Vale) ou uma em especial -->
+        <div id="loja-grupo" class="{% if not prefeitura_selecionada %}hidden{% endif %}" style="display:block; margin-top: 0;">
+          <div>
+            <label class="hazon-label" for="id-loja">Lojas do Vale</label>
+            <select id="id-loja" name="filtro_loja">
+              <option value="">Todas (envia ao Deputado Estadual de cada uma)</option>
+              {% for lj in lojas_da_prefeitura %}
+                <option value="{{ lj.id }}" {% if lj.id == loja_selecionada %}selected{% endif %}>{{ lj.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div id="loja-especifica-info" class="{% if not loja_selecionada %}hidden{% endif %}">
+            <p class="mt-1.5 text-[11.5px] text-[#a6bfc7]">Enviando para a loja em especial.</p>
+          </div>
         </div>
       </div>
-
-      {% if not prefeituras %}
-        <div class="mt-4 rounded-xl border border-[#fbbf24]/30 bg-[#fbbf24]/10 px-4 py-3 text-[12.5px] text-[#fbbf24]">
-          ⚠️ Banco GPRB indisponível no momento — sem prefeituras para selecionar. Tente novamente em instantes.
-        </div>
-      {% endif %}
     </div>
 
     <div id="assunto-grupo" class="mt-4">
       <label class="hazon-label" for="id-assunto">Assunto (e-mail)</label>
-      <input type="text" id="id-assunto" name="assunto" placeholder="Assunto da mensagem">
+      <input type="text" id="id-assunto" name="assunto" value="{{ request.POST.assunto }}" autocomplete="off">
     </div>
 
     <div class="mt-4">
       <label class="hazon-label" for="id-corpo">Corpo da mensagem</label>
-      <textarea id="id-corpo" name="corpo" rows="8" required
-                placeholder="Olá {% templatetag openvariable %}NOME{% templatetag closevariable %}, tudo bem?&#10;Acesse o link do evento: …">{{ request.POST.corpo }}</textarea>
-      <p class="mt-1.5 text-[11.5px] text-[#a6bfc7]">Placeholders: <code>{% templatetag openvariable %}NOME{% templatetag closevariable %}</code>, <code>{% templatetag openvariable %}EMAIL{% templatetag closevariable %}</code>, <code>{% templatetag openvariable %}CELULAR{% templatetag closevariable %}</code></p>
+      <textarea id="id-corpo" name="corpo" rows="8" autocomplete="off" required>{{ request.POST.corpo }}</textarea>
     </div>
 
     <div class="mt-6">
@@ -138,13 +137,13 @@
       <table class="w-full border-collapse">
         <thead>
           <tr class="border-b border-white/10 text-left">
-            <th class="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Canal</th>
-            <th class="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Conteúdo</th>
-            <th class="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Origem</th>
-            <th class="px-4 py-3 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Enviados</th>
-            <th class="px-4 py-3 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Falhas</th>
-            <th class="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Status</th>
-            <th class="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Data</th>
+            <th class="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Canal</th>
+            <th class="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Conteúdo</th>
+            <th class="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Origem</th>
+            <th class="px-4 py-3 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Enviados</th>
+            <th class="px-4 py-3 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Falhas</th>
+            <th class="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Status</th>
+            <th class="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Data</th>
           </tr>
         </thead>
         <tbody>
@@ -174,7 +173,7 @@
                   <span class="rounded-full bg-white/10 px-2.5 py-1 text-[10.5px] font-semibold text-[#a6bfc7]">Rascunho</span>
                 {% endif %}
               </td>
-              <td class="px-4 py-3 font-mono text-[11.5px] text-[#a6bfc7]">{{ c.criado_em|date:"d/m/Y H:i" }}</td>
+              <td class="px-4 py-3 font-mono text-[11.5px] text-[#a6bfc7]">{{ c.criado_em|datahorabr }}</td>
             </tr>
           {% empty %}
             <tr>
@@ -203,7 +202,7 @@
   form select { height: 34px; }
   form textarea { min-height: 120px; resize: vertical; }
   form select:focus, form input:focus, form textarea:focus { border-color: rgba(91,141,239,0.4); }
-  form select option { background: #0a1e3d; }
+  form select option { background: #0a1e3d; color: #f4fafb; }
   code { color: #4ade80; }
 </style>
 <script>
@@ -218,22 +217,24 @@
     var origem = document.getElementById('id-origem').value;
     document.getElementById('origem-individual').classList.toggle('hidden', origem !== 'individual');
     document.getElementById('origem-prefeituras').classList.toggle('hidden', origem !== 'prefeituras');
-  }
-
-  // Carrega as lojas da prefeitura escolhida (endpoint existente do modulo contatos)
+  }  // Carrega as lojas do Vale escolhido (endpoint existente do modulo contatos)
   function mudarPrefeitura() {
     var id = document.getElementById('id-prefeitura').value;
     var grupo = document.getElementById('loja-grupo');
     var select = document.getElementById('id-loja');
+    var info = document.getElementById('loja-especifica-info');
+
     if (!id) {
       grupo.classList.add('hidden');
       select.value = '';
+      if (info) info.classList.add('hidden');
       return;
     }
     grupo.classList.remove('hidden');
-    select.innerHTML = '<option value="">— Prefeito da prefeitura —</option>';
+    select.innerHTML = '<option value="">Todas (envia ao Deputado Estadual de cada uma)</option>';
     select.disabled = true;
-    fetch('/contatos/prefeitura/' + encodeURIComponent(id) + '/lojas-json/')
+    if (info) info.classList.add('hidden');
+    fetch('/membros/lojas-por-vale/?vale=' + encodeURIComponent(id))
       .then(function (r) { return r.json(); })
       .then(function (d) {
         (d.lojas || []).forEach(function (lj) {
@@ -242,13 +243,27 @@
           opt.textContent = lj.nome;
           select.appendChild(opt);
         });
+        if (!d.lojas || !d.lojas.length) {
+          var vazio = document.createElement('option');
+          vazio.value = '';
+          vazio.textContent = '— Este Vale não tem lojas cadastradas —';
+          select.appendChild(vazio);
+        }
         select.disabled = false;
       })
       .catch(function () {
-        select.innerHTML = '<option value="">— Prefeito da prefeitura —</option>';
+        select.innerHTML = '<option value="">Todas (envia ao Deputado Estadual de cada uma)</option>';
         select.disabled = false;
       });
   }
+
+  // Marca o aviso quando uma loja em especial é escolhida
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.id === 'id-loja') {
+      var info = document.getElementById('loja-especifica-info');
+      if (info) info.classList.toggle('hidden', !e.target.value);
+    }
+  });
 
   function verificarZap() {
     var badge = document.getElementById('zap-badge');
@@ -275,12 +290,20 @@
       });
   }
 
+  function mostrarErroZap(msg) {
+    var el = document.getElementById('zap-erro');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.classList.toggle('hidden', !msg);
+  }
+
   function gerarQR() {
+    mostrarErroZap('');
     fetch('{% url "zap_qrcode" %}')
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (d.logado) {
-          alert('WhatsApp já conectado!');
+          mostrarErroZap('');
           verificarZap();
           return;
         }
@@ -292,10 +315,10 @@
           document.getElementById('zap-qr-area').classList.add('hidden');
           document.getElementById('zap-detalhe').textContent = d.detalhe;
         } else {
-          alert(d.erro || 'Não foi possível gerar o QR code.');
+          mostrarErroZap(d.erro || 'Não foi possível gerar o QR code.');
         }
       })
-      .catch(function () { alert('Falha ao gerar o QR code.'); });
+      .catch(function () { mostrarErroZap('Falha ao gerar o QR code.'); });
   }
 
   document.addEventListener('DOMContentLoaded', function () {

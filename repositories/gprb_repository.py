@@ -8,13 +8,12 @@ from contextlib import contextmanager
 from datetime import date
 
 from core.gprb import coluna_existe, connect
-from core.gprb.connection import gprb_transaction
+from core.gprb.connection import _DummyConnection, gprb_transaction, resolve_tenant_code
 
 
 @contextmanager
 def gprb_cursor():
     """Context manager que abre e fecha conexao GPRB automaticamente."""
-    from core.gprb.connection import _DummyConnection
     conn = connect()
     try:
         yield conn.cursor()
@@ -48,7 +47,7 @@ _COLUNAS_MEMBER_PERMITIDAS = frozenset({
 def _obter_tenant_gprb():
     """Retorna o id do tenant GPRB (None se indisponível)."""
     with gprb_cursor() as cur:
-        cur.execute("SELECT id FROM tenant WHERE code = 'GPRB'")
+        cur.execute('SELECT id FROM tenant WHERE code = %s', (resolve_tenant_code(),))
         row = cur.fetchone()
         tid = row[0] if row else None
         if tid == 0:
@@ -62,6 +61,9 @@ def _obter_tenant_gprb():
 
 def buscar_membro(member_id):
     """Busca um membro pelo ID — todos os campos da ficha + lojas (N:N)."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return None
     with gprb_cursor() as cur:
         cur.execute('''
         SELECT m.id, m."nomeCompleto", m.email, m.celular, m.cpf,
@@ -79,10 +81,10 @@ def buscar_membro(member_id):
            l."nomeFantasia", l.numero as loja_numero,
            p.nome as prefeitura_nome, p.sigla as prefeitura_sigla
         FROM member m
-        LEFT JOIN loja l ON m."lojaId" = l.id
-        LEFT JOIN prefeitura p ON l."prefeituraId" = p.id
-        WHERE m.id = %s
-        ''', (member_id,))
+         LEFT JOIN loja l ON m."lojaId" = l.id AND l."tenantId" = m."tenantId"
+         LEFT JOIN prefeitura p ON l."prefeituraId" = p.id AND p."tenantId" = m."tenantId"
+         WHERE m.id = %s AND m."tenantId" = %s
+        ''', (member_id, tid))
         row = cur.fetchone()
         if row is None:
             return None
@@ -123,25 +125,52 @@ def atualizar_membro(member_id, dados):
 
     Aceita chaves com ou sem aspas (ex.: '"nomeCompleto"' ou 'email').
     """
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return False
+    if any(k.strip(chr(34)) == 'tenantId' for k in dados):
+        raise ValueError('A atualização do membro não pode alterar o tenant.')
     with gprb_transaction(), gprb_cursor() as cur:
+        loja_id = next(
+            (value for key, value in dados.items() if key.strip(chr(34)) == 'lojaId'),
+            None,
+        )
+        if loja_id:
+            cur.execute(
+                'SELECT 1 FROM loja WHERE id = %s AND "tenantId" = %s',
+                (loja_id, tid),
+            )
+            if cur.fetchone() is None:
+                raise ValueError('A loja informada não pertence ao tenant atual.')
         colunas = ', '.join(f'"{k.strip(chr(34))}" = %s' for k in dados)
-        valores = list(dados.values()) + [member_id]
-        cur.execute(f'UPDATE member SET {colunas}, "updatedAt" = NOW() WHERE id = %s', valores)  # nosec B608
+        valores = list(dados.values()) + [member_id, tid]
+        cur.execute(
+            f'UPDATE member SET {colunas}, "updatedAt" = NOW() '
+            'WHERE id = %s AND "tenantId" = %s',
+            valores,
+        )  # nosec B608
 
 
 def inativar_membro(member_id):
     """Marca membro como INATIVO."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return False
     with gprb_transaction(), gprb_cursor() as cur:
         cur.execute(
-            'UPDATE member SET situacao = %s, "updatedAt" = NOW() WHERE id = %s',
-            ('INATIVO', member_id),
+            'UPDATE member SET situacao = %s, "updatedAt" = NOW() '
+            'WHERE id = %s AND "tenantId" = %s',
+            ('INATIVO', member_id, tid),
         )
 
 
 def excluir_membro(member_id):
     """Exclui um membro do banco GPRB."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return False
     with gprb_transaction(), gprb_cursor() as cur:
-        cur.execute('DELETE FROM member WHERE id = %s', (member_id,))
+        cur.execute('DELETE FROM member WHERE id = %s AND "tenantId" = %s', (member_id, tid))
 
 
 def lojas_do_membro(member_id):
@@ -150,18 +179,23 @@ def lojas_do_membro(member_id):
     Retorna lista de dicts: {'id', 'nome', 'numero', 'prefeitura',
     'prefeitura_sigla', 'data_inclusao'}.
     """
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return []
     with gprb_cursor() as cur:
         cur.execute('''
         SELECT l.id,
                COALESCE(l."nomeFantasia", l."lojaMX", 'Loja ' || COALESCE(l.numero::text, '')) as nome,
                l.numero, p.nome as prefeitura, p.sigla as prefeitura_sigla,
                ml."dataInclusao"
-        FROM member_loja ml
-        JOIN loja l ON ml."lojaId" = l.id
-        LEFT JOIN prefeitura p ON l."prefeituraId" = p.id
-        WHERE ml."memberId" = %s
-        ORDER BY ml."dataInclusao", 2
-        ''', (member_id,))
+         FROM member_loja ml
+         JOIN member m ON m.id = ml."memberId"
+         JOIN loja l ON ml."lojaId" = l.id
+         JOIN tenant t ON m."tenantId" = t.id
+         LEFT JOIN prefeitura p ON l."prefeituraId" = p.id AND p."tenantId" = l."tenantId"
+         WHERE ml."memberId" = %s AND t.id = %s AND l."tenantId" = m."tenantId"
+         ORDER BY ml."dataInclusao", 2
+        ''', (member_id, tid))
         return [
             {
                 'id': r[0], 'nome': r[1] or '—', 'numero': r[2],
@@ -182,10 +216,36 @@ def definir_lojas_membro(member_id, loja_ids, datas_inclusao=None):
     """
     loja_ids = [str(x) for x in (loja_ids or []) if x]
     datas_inclusao = datas_inclusao or {}
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return False
     with gprb_transaction(), gprb_cursor() as cur:
-        cur.execute('SELECT "lojaId", "dataInclusao" FROM member_loja WHERE "memberId" = %s', (member_id,))
+        cur.execute(
+            'SELECT id FROM member WHERE id = %s AND "tenantId" = %s FOR UPDATE',
+            (member_id, tid),
+        )
+        if cur.fetchone() is None:
+            return False
+        if loja_ids:
+            cur.execute(
+                'SELECT id FROM loja WHERE "tenantId" = %s AND id = ANY(%s)',
+                (tid, loja_ids),
+            )
+            lojas_validas = {str(row[0]) for row in cur.fetchall()}
+            if lojas_validas != set(loja_ids):
+                raise ValueError('Uma ou mais lojas pertencem a outro tenant.')
+        cur.execute(
+            'SELECT ml."lojaId", ml."dataInclusao" FROM member_loja ml '
+            'JOIN loja l ON l.id = ml."lojaId" '
+            'WHERE ml."memberId" = %s AND l."tenantId" = %s',
+            (member_id, tid),
+        )
         atuais = {r[0]: r[1] for r in cur.fetchall()}
-        cur.execute('DELETE FROM member_loja WHERE "memberId" = %s', (member_id,))
+        cur.execute(
+            'DELETE FROM member_loja WHERE "memberId" = %s '
+            'AND "lojaId" IN (SELECT id FROM loja WHERE "tenantId" = %s)',
+            (member_id, tid),
+        )
         for loja_id in dict.fromkeys(loja_ids):  # dedup preservando ordem
             data = datas_inclusao.get(loja_id) or atuais.get(loja_id)
             if data:
@@ -202,8 +262,9 @@ def definir_lojas_membro(member_id, loja_ids, datas_inclusao=None):
                 )
         principal = loja_ids[0] if loja_ids else None
         cur.execute(
-            'UPDATE member SET "lojaId" = %s, "updatedAt" = NOW() WHERE id = %s',
-            (principal, member_id),
+            'UPDATE member SET "lojaId" = %s, "updatedAt" = NOW() '
+            'WHERE id = %s AND "tenantId" = %s',
+            (principal, member_id, tid),
         )
 
 
@@ -260,7 +321,7 @@ def listar_membros(filtros):
     Retorna lista de tuples (row format) com 17 colunas (15: presencas no ano).
     """
     where = 'WHERE t.code = %s'
-    params = ['GPRB']
+    params = [resolve_tenant_code()]
     if filtros.get('termo'):
         where += ' AND (m."nomeCompleto" ILIKE %s OR m.email ILIKE %s OR m.celular ILIKE %s)'
         params.extend([f'%{filtros["termo"]}%'] * 3)
@@ -270,14 +331,23 @@ def listar_membros(filtros):
     elif filtros.get('situacao') == 'INATIVO':
         where += " AND m.situacao IS DISTINCT FROM 'ATIVO'"
     if filtros.get('prefeitura_id'):
-        where += (' AND (p.id = %s OR EXISTS (SELECT 1 FROM member_loja mlx '
+        where += (' AND EXISTS (SELECT 1 FROM prefeitura pf_filter '
+                  'WHERE pf_filter.id = %s AND pf_filter."tenantId" = m."tenantId") '
+                  'AND (p.id = %s OR EXISTS (SELECT 1 FROM member_loja mlx '
                   'JOIN loja lx ON mlx."lojaId" = lx.id '
-                  'WHERE mlx."memberId" = m.id AND lx."prefeituraId" = %s))')
+                  'WHERE mlx."memberId" = m.id AND lx."tenantId" = m."tenantId" '
+                  'AND lx."prefeituraId" = %s))')
+        params.append(filtros['prefeitura_id'])
         params.append(filtros['prefeitura_id'])
         params.append(filtros['prefeitura_id'])
     if filtros.get('loja_id'):
-        where += (' AND (m."lojaId" = %s OR m.id IN '
-                  '(SELECT "memberId" FROM member_loja WHERE "lojaId" = %s))')
+        where += (' AND EXISTS (SELECT 1 FROM loja l_filter WHERE l_filter.id = %s '
+                  'AND l_filter."tenantId" = m."tenantId") '
+                  'AND (m."lojaId" = %s OR m.id IN '
+                  '(SELECT ml_filter."memberId" FROM member_loja ml_filter '
+                  'JOIN loja l_filter ON l_filter.id = ml_filter."lojaId" '
+                  'WHERE ml_filter."lojaId" = %s AND l_filter."tenantId" = m."tenantId"))')
+        params.append(filtros['loja_id'])
         params.append(filtros['loja_id'])
         params.append(filtros['loja_id'])
     if filtros.get('uf'):
@@ -296,36 +366,40 @@ def listar_membros(filtros):
            l."nomeFantasia", l.numero as loja_numero,
            p.nome as prefeitura_nome, p.sigla as prefeitura_sigla,
            m."createdAt",
-           (SELECT MAX(pp.year) FROM payment_status ps2
-            JOIN payment_period pp ON ps2."periodId" = pp.id
-            WHERE ps2."memberId" = m.id AND pp.type = 'ANNUAL'
-              AND ps2.status = 'PAID') as ultima_anuidade,
+            (SELECT MAX(pp.year) FROM payment_status ps2
+             JOIN payment_period pp ON ps2."periodId" = pp.id
+             WHERE ps2."memberId" = m.id AND pp.type = 'ANNUAL'
+               AND ps2.status = 'PAID' AND ps2."tenantId" = m."tenantId"
+               AND pp."tenantId" = m."tenantId") as ultima_anuidade,
            (SELECT COALESCE(json_agg(json_build_object(
                         'loja', COALESCE(l2."nomeFantasia", l2."lojaMX",
                                  'Loja ' || COALESCE(l2.numero::text, '')),
                         'potencia', p2.nome, 'sigla', p2.sigla,
-                        'anuidade_loja', (SELECT MAX(pay.year) FROM payment pay
-                              WHERE pay."memberId" = m.id AND pay."lojaId" = l2.id
-                               AND UPPER(pay.type) LIKE 'ANUA%%' AND UPPER(pay.status) = 'PAID'),
-                        'presencas_loja', (SELECT COUNT(*) FROM attendance a3
-                              JOIN meeting mt3 ON a3."meetingId" = mt3.id
-                             WHERE a3."memberId" = m.id AND mt3."lojaId" = l2.id
-                               AND a3.status = 'PRESENTE'
+                         'anuidade_loja', (SELECT MAX(pay.year) FROM payment pay
+                               WHERE pay."memberId" = m.id AND pay."lojaId" = l2.id
+                                AND pay."tenantId" = m."tenantId"
+                                AND UPPER(pay.type) LIKE 'ANUA%%' AND UPPER(pay.status) = 'PAID'),
+                         'presencas_loja', (SELECT COUNT(*) FROM attendance a3
+                               JOIN meeting mt3 ON a3."meetingId" = mt3.id
+               WHERE a3."memberId" = m.id AND mt3."lojaId" = l2.id
+                                AND a3."tenantId" = m."tenantId" AND mt3."tenantId" = m."tenantId"
+                                AND a3.status = 'PRESENTE'
                                AND EXTRACT(YEAR FROM mt3."dataSessao") = {ano_presencas}))
                     ORDER BY l2."nomeFantasia"), '[]'::json)
-              FROM member_loja ml2
-              JOIN loja l2 ON ml2."lojaId" = l2.id
-              LEFT JOIN prefeitura p2 ON l2."prefeituraId" = p2.id
-             WHERE ml2."memberId" = m.id) as lojas_drill,
-           (SELECT COUNT(*) FROM attendance a2
-              JOIN meeting mt2 ON a2."meetingId" = mt2.id
-             WHERE a2."memberId" = m.id AND a2.status = 'PRESENTE'
+               FROM member_loja ml2
+               JOIN loja l2 ON ml2."lojaId" = l2.id AND l2."tenantId" = m."tenantId"
+               LEFT JOIN prefeitura p2 ON l2."prefeituraId" = p2.id AND p2."tenantId" = m."tenantId"
+              WHERE ml2."memberId" = m.id) as lojas_drill,
+            (SELECT COUNT(*) FROM attendance a2
+               JOIN meeting mt2 ON a2."meetingId" = mt2.id
+              WHERE a2."memberId" = m.id AND a2."tenantId" = m."tenantId"
+                AND mt2."tenantId" = m."tenantId" AND a2.status = 'PRESENTE'
                AND EXTRACT(YEAR FROM mt2."dataSessao") = {ano_presencas}) as presencas_ano,
            m."dataNascimento"
         FROM member m
         JOIN tenant t ON m."tenantId" = t.id
-        LEFT JOIN loja l ON m."lojaId" = l.id
-        LEFT JOIN prefeitura p ON l."prefeituraId" = p.id
+        LEFT JOIN loja l ON m."lojaId" = l.id AND l."tenantId" = m."tenantId"
+        LEFT JOIN prefeitura p ON l."prefeituraId" = p.id AND p."tenantId" = m."tenantId"
         {where}
         ORDER BY m."createdAt" DESC
         '''
@@ -339,12 +413,13 @@ def listar_membros(filtros):
 # Lojas
 # ---------------------------------------------------------------------------
 
-def membros_por_situacao(tenant_code='GPRB', apenas_ativos=True, ano=None):
+def membros_por_situacao(tenant_code=None, apenas_ativos=True, ano=None):
     """Contagem de membros por situacao (ATIVO/INATIVO), N:N-aware.
 
     Substitui membros_por_classe (classes nao se aplicam ao projeto).
     Retorna [{'name': 'ATIVO', 'total': n}, ...].
     """
+    tenant_code = resolve_tenant_code(tenant_code)
     conditions = ["t.code = %s"]
     params = [tenant_code]
     if apenas_ativos:
@@ -397,8 +472,9 @@ def listar_lojas(termo=''):
                COUNT(DISTINCT m.id) as total_membros,
                l."mensalidade_regular"
         FROM loja l
-        LEFT JOIN prefeitura p ON l."prefeituraId" = p.id
-        LEFT JOIN member m ON (m."lojaId" = l.id OR m.id IN (SELECT "memberId" FROM member_loja WHERE "lojaId" = l.id))
+        LEFT JOIN prefeitura p ON l."prefeituraId" = p.id AND p."tenantId" = l."tenantId"
+        LEFT JOIN member m ON m."tenantId" = l."tenantId" AND
+            (m."lojaId" = l.id OR m.id IN (SELECT "memberId" FROM member_loja WHERE "lojaId" = l.id))
         {where}
         GROUP BY l.id, l."nomeFantasia", l.numero, l.telefone, l.email,
                  l."enderecoCidade", l."enderecoUf", l.situacao,
@@ -424,7 +500,8 @@ def listar_lojas(termo=''):
         if coluna_existe(cur, 'loja', 'deputadoMestreId'):
             cur.execute(
                 'SELECT l.id, dm."nomeCompleto" FROM loja l '  # nosec B608
-                'LEFT JOIN member dm ON dm.id = l."deputadoMestreId" ' + where,
+                'LEFT JOIN member dm ON dm.id = l."deputadoMestreId" '
+                'AND dm."tenantId" = l."tenantId" ' + where,
                 params,
             )
             deputados = {r[0]: r[1] for r in cur.fetchall()}
@@ -447,6 +524,9 @@ def listar_lojas(termo=''):
 
 def buscar_loja(loja_id):
     """Busca detalhe de uma loja. Retorna dict ou None."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return None
     with gprb_cursor() as cur:
         cur.execute('''
         SELECT l.id, l."nomeFantasia", l.numero, l.telefone, l.email,
@@ -456,8 +536,8 @@ def buscar_loja(loja_id):
            p.nome as prefeitura,
            l."mensalidade_regular"
         FROM loja l LEFT JOIN prefeitura p ON l."prefeituraId" = p.id
-        WHERE l.id = %s
-        ''', (loja_id,))
+         WHERE l.id = %s AND l."tenantId" = %s
+        ''', (loja_id, tid))
         r = cur.fetchone()
         if r is None:
             return None
@@ -472,19 +552,27 @@ def buscar_loja(loja_id):
         }
         cur.execute(
             'SELECT COUNT(DISTINCT m.id) FROM member m '
-            'WHERE m."lojaId" = %s OR m.id IN (SELECT "memberId" FROM member_loja WHERE "lojaId" = %s)',
-            (loja_id, loja_id),
+            'WHERE m."tenantId" = %s AND '
+            '(m."lojaId" = %s OR m.id IN '
+            '(SELECT "memberId" FROM member_loja WHERE "lojaId" = %s))',
+            (tid, loja_id, loja_id),
         )
         loja['total_membros'] = cur.fetchone()[0]
 
         loja['deputado_mestre_id'] = ''
         loja['deputado_mestre'] = '—'
         if coluna_existe(cur, 'loja', 'deputadoMestreId'):
-            cur.execute('SELECT "deputadoMestreId" FROM loja WHERE id = %s', (loja_id,))
+            cur.execute(
+                'SELECT "deputadoMestreId" FROM loja WHERE id = %s AND "tenantId" = %s',
+                (loja_id, tid),
+            )
             dm_id = cur.fetchone()[0]
             if dm_id:
                 loja['deputado_mestre_id'] = dm_id
-                cur.execute('SELECT "nomeCompleto" FROM member WHERE id = %s', (dm_id,))
+                cur.execute(
+                    'SELECT "nomeCompleto" FROM member WHERE id = %s AND "tenantId" = %s',
+                    (dm_id, tid),
+                )
                 dm = cur.fetchone()
                 loja['deputado_mestre'] = dm[0] if dm else '—'
 
@@ -495,8 +583,9 @@ def buscar_loja(loja_id):
         if coluna_existe(cur, 'loja', 'secretarioNome'):
             cur.execute(
                 'SELECT "secretarioNome", "secretarioTelefone", '
-                '"tesoureiroNome", "tesoureiroTelefone" FROM loja WHERE id = %s',
-                (loja_id,),
+                '"tesoureiroNome", "tesoureiroTelefone" FROM loja '
+                'WHERE id = %s AND "tenantId" = %s',
+                (loja_id, tid),
             )
             s_row = cur.fetchone()
             if s_row:
@@ -526,6 +615,12 @@ def criar_loja(dados):
         raise ValueError('A Potência (prefeitura) e obrigatoria para a loja.')
     loja_id = str(uuid.uuid4())
     with gprb_transaction(), gprb_cursor() as cur:
+        cur.execute(
+            'SELECT 1 FROM prefeitura WHERE id = %s AND "tenantId" = %s',
+            (prefeitura_id, tid),
+        )
+        if cur.fetchone() is None:
+            raise ValueError('A Potência informada não pertence ao tenant atual.')
         cur.execute('''
         INSERT INTO loja (id, "tenantId", "lojaMX", "nomeFantasia", numero, telefone, email,
         "prefeituraId", "enderecoLogradouro", "enderecoCidade", "enderecoUf", "mensalidade_regular", situacao,
@@ -553,19 +648,44 @@ def criar_loja(dados):
                     "secretarioNome" = %s, "secretarioTelefone" = %s,
                     "tesoureiroNome" = %s, "tesoureiroTelefone" = %s,
                     "updatedAt" = NOW()
-                WHERE id = %s
+                WHERE id = %s AND "tenantId" = %s
                 ''', (
                     dados.get('secretario_nome') or None,
                     dados.get('secretario_telefone') or None,
                     dados.get('tesoureiro_nome') or None,
                     dados.get('tesoureiro_telefone') or None,
-                    loja_id,
+                    loja_id, tid,
                 ))
 
 
 def atualizar_loja(loja_id, dados):
     """Atualiza uma loja. `dados` e um dict com os campos."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return False
     with gprb_transaction(), gprb_cursor() as cur:
+        cur.execute(
+            'SELECT id FROM loja WHERE id = %s AND "tenantId" = %s FOR UPDATE',
+            (loja_id, tid),
+        )
+        if cur.fetchone() is None:
+            return False
+        prefeitura_id = (dados.get('prefeitura_id') or '').strip()
+        if prefeitura_id:
+            cur.execute(
+                'SELECT 1 FROM prefeitura WHERE id = %s AND "tenantId" = %s',
+                (prefeitura_id, tid),
+            )
+            if cur.fetchone() is None:
+                raise ValueError('A Potência informada não pertence ao tenant atual.')
+        deputado_mestre = (dados.get('deputado_mestre') or '').strip()
+        if deputado_mestre:
+            cur.execute(
+                'SELECT 1 FROM member WHERE id = %s AND "tenantId" = %s',
+                (deputado_mestre, tid),
+            )
+            if cur.fetchone() is None:
+                raise ValueError('O membro informado não pertence ao tenant atual.')
         if coluna_existe(cur, 'loja', 'deputadoMestreId'):
             cur.execute('''
             UPDATE loja SET "nomeFantasia" = %s, telefone = %s, email = %s,
@@ -573,7 +693,7 @@ def atualizar_loja(loja_id, dados):
                 "enderecoCidade" = %s, "enderecoUf" = %s,
                 "mensalidade_regular" = %s,
                 "deputadoMestreId" = %s, "updatedAt" = NOW()
-            WHERE id = %s
+            WHERE id = %s AND "tenantId" = %s
             ''', (
                 dados['nome'],
                 dados.get('telefone') or None,
@@ -583,8 +703,8 @@ def atualizar_loja(loja_id, dados):
                 dados.get('cidade') or None,
                 dados.get('uf') or None,
                 dados.get('mensalidade') or None,
-                dados.get('deputado_mestre') or None,
-                loja_id,
+                deputado_mestre or None,
+                loja_id, tid,
             ))
         else:
             cur.execute('''
@@ -593,7 +713,7 @@ def atualizar_loja(loja_id, dados):
                 "enderecoCidade" = %s, "enderecoUf" = %s,
                 "mensalidade_regular" = %s,
                 "updatedAt" = NOW()
-            WHERE id = %s
+            WHERE id = %s AND "tenantId" = %s
             ''', (
                 dados['nome'],
                 dados.get('telefone') or None,
@@ -603,7 +723,7 @@ def atualizar_loja(loja_id, dados):
                 dados.get('cidade') or None,
                 dados.get('uf') or None,
                 dados.get('mensalidade') or None,
-                loja_id,
+                loja_id, tid,
             ))
 
         # Diretoria — so grava quando o schema tiver as colunas.
@@ -612,42 +732,54 @@ def atualizar_loja(loja_id, dados):
             UPDATE loja SET "secretarioNome" = %s, "secretarioTelefone" = %s,
                 "tesoureiroNome" = %s, "tesoureiroTelefone" = %s,
                 "updatedAt" = NOW()
-            WHERE id = %s
+            WHERE id = %s AND "tenantId" = %s
             ''', (
                 dados.get('secretario_nome') or None,
                 dados.get('secretario_telefone') or None,
                 dados.get('tesoureiro_nome') or None,
                 dados.get('tesoureiro_telefone') or None,
-                loja_id,
+                loja_id, tid,
             ))
 
 
 def contar_membros_loja(loja_id):
     """Conta quantos membros pertencem a uma loja (relacao N:N)."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return 0
     with gprb_cursor() as cur:
         cur.execute(
-            'SELECT COUNT(*) FROM member WHERE "lojaId" = %s '
-            'OR id IN (SELECT "memberId" FROM member_loja WHERE "lojaId" = %s)',
-            (loja_id, loja_id),
+            'SELECT COUNT(DISTINCT m.id) FROM member m '
+            'WHERE m."tenantId" = %s '
+            'AND EXISTS (SELECT 1 FROM loja l WHERE l.id = %s AND l."tenantId" = %s) '
+            'AND (m."lojaId" = %s OR m.id IN '
+            '(SELECT "memberId" FROM member_loja WHERE "lojaId" = %s))',
+            (tid, loja_id, tid, loja_id, loja_id),
         )
         return cur.fetchone()[0]
 
 
 def excluir_loja(loja_id):
     """Exclui uma loja."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return False
     with gprb_transaction(), gprb_cursor() as cur:
-        cur.execute('DELETE FROM loja WHERE id = %s', (loja_id,))
+        cur.execute('DELETE FROM loja WHERE id = %s AND "tenantId" = %s', (loja_id, tid))
 
 
 def buscar_loja_para_edicao(loja_id):
     """Busca dados de loja para o formulario de edicao."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return None
     with gprb_cursor() as cur:
         cur.execute('''
         SELECT l.id, l."nomeFantasia", l.numero, l.telefone, l.email,
            l."prefeituraId", l."enderecoCidade", l."enderecoUf", l.situacao,
            l."enderecoLogradouro", l."mensalidade_regular"
-        FROM loja l WHERE l.id = %s
-        ''', (loja_id,))
+        FROM loja l WHERE l.id = %s AND l."tenantId" = %s
+        ''', (loja_id, tid))
         r = cur.fetchone()
         if r is None:
             return None
@@ -658,20 +790,23 @@ def buscar_loja_para_edicao(loja_id):
             'situacao': r[8] or '',
             'endereco': r[9] or '', 'mensalidade': _formatar_moeda(r[10]),
         }
-        tid = _obter_tenant_gprb()
         cur.execute('SELECT id, nome FROM prefeitura WHERE "tenantId" = %s ORDER BY nome', (tid,))
         prefeituras = [{'id': pr[0], 'nome': pr[1]} for pr in cur.fetchall()]
         cur.execute(
             'SELECT id, "nomeCompleto" FROM member '
-            'WHERE ("lojaId" = %s OR id IN (SELECT "memberId" FROM member_loja WHERE "lojaId" = %s)) '
+            'WHERE "tenantId" = %s AND '
+            '("lojaId" = %s OR id IN (SELECT "memberId" FROM member_loja WHERE "lojaId" = %s)) '
             'AND situacao = %s ORDER BY "nomeCompleto"',
-            (loja_id, loja_id, 'ATIVO'),
+            (tid, loja_id, loja_id, 'ATIVO'),
         )
         membros = [{'id': mr[0], 'nome': mr[1]} for mr in cur.fetchall()]
 
         loja['deputado_mestre_id'] = ''
         if coluna_existe(cur, 'loja', 'deputadoMestreId'):
-            cur.execute('SELECT "deputadoMestreId" FROM loja WHERE id = %s', (loja_id,))
+            cur.execute(
+                'SELECT "deputadoMestreId" FROM loja WHERE id = %s AND "tenantId" = %s',
+                (loja_id, tid),
+            )
             dm_row = cur.fetchone()
             loja['deputado_mestre_id'] = (dm_row[0] or '') if dm_row else ''
 
@@ -682,8 +817,9 @@ def buscar_loja_para_edicao(loja_id):
         if coluna_existe(cur, 'loja', 'secretarioNome'):
             cur.execute(
                 'SELECT "secretarioNome", "secretarioTelefone", '
-                '"tesoureiroNome", "tesoureiroTelefone" FROM loja WHERE id = %s',
-                (loja_id,),
+                '"tesoureiroNome", "tesoureiroTelefone" FROM loja '
+                'WHERE id = %s AND "tenantId" = %s',
+                (loja_id, tid),
             )
             s_row = cur.fetchone()
             if s_row:
@@ -707,13 +843,21 @@ def listar_lojas_para_select():
 
 def listar_membros_loja(loja_id):
     """Lista membros de uma loja (relacao N:N, para drill-down JSON)."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return []
     with gprb_cursor() as cur:
         cur.execute('''
         SELECT m.id, m."nomeCompleto", m.situacao, m."dataIniciacao"
         FROM member m
-        WHERE m."lojaId" = %s OR m.id IN (SELECT "memberId" FROM member_loja WHERE "lojaId" = %s)
+        JOIN tenant t ON t.id = m."tenantId"
+        JOIN loja l ON l.id = %s AND l."tenantId" = m."tenantId"
+        WHERE t.id = %s
+          AND (m."lojaId" = l.id OR m.id IN (
+              SELECT "memberId" FROM member_loja WHERE "lojaId" = l.id
+          ))
         ORDER BY m.situacao, m."nomeCompleto"
-        ''', (loja_id, loja_id))
+        ''', (loja_id, tid))
         return [
             {
                 'id': r[0], 'nome': r[1] or '',
@@ -725,16 +869,22 @@ def listar_membros_loja(loja_id):
 
 def listar_lojas_por_prefeitura(prefeitura_id):
     """Lista lojas de uma prefeitura (para drill-down JSON)."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return []
     with gprb_cursor() as cur:
         cur.execute('''
         SELECT l.id, l."nomeFantasia", l."lojaMX", l.numero, l.situacao,
            COUNT(m.id) as membros
         FROM loja l
-        LEFT JOIN member m ON (m."lojaId" = l.id OR m.id IN (SELECT "memberId" FROM member_loja WHERE "lojaId" = l.id)) AND m.situacao = 'ATIVO'
-        WHERE l."prefeituraId" = %s
+        JOIN prefeitura p ON p.id = %s AND p."tenantId" = %s
+        LEFT JOIN member m ON m."tenantId" = l."tenantId" AND
+            (m."lojaId" = l.id OR m.id IN (SELECT "memberId" FROM member_loja WHERE "lojaId" = l.id))
+            AND m.situacao = 'ATIVO'
+        WHERE l."prefeituraId" = p.id AND l."tenantId" = p."tenantId"
         GROUP BY l.id, l."nomeFantasia", l."lojaMX", l.numero, l.situacao
         ORDER BY l."nomeFantasia"
-        ''', (prefeitura_id,))
+        ''', (prefeitura_id, tid))
         return [
             {
                 'id': r[0], 'nome': r[1] or r[2] or f'Loja #{r[3]}',
@@ -786,8 +936,13 @@ def listar_prefeituras():
                COUNT(DISTINCT l.id) as total_lojas,
                COUNT(DISTINCT m.id) as total_membros
         FROM prefeitura p
-        LEFT JOIN loja l ON l."prefeituraId" = p.id
-        LEFT JOIN member m ON (m."lojaId" = l.id OR m.id IN (SELECT "memberId" FROM member_loja WHERE "lojaId" = l.id)) AND m.situacao = 'ATIVO'
+        LEFT JOIN loja l ON l."prefeituraId" = p.id AND l."tenantId" = p."tenantId"
+        LEFT JOIN member m ON m."tenantId" = p."tenantId" AND
+            (m."lojaId" = l.id OR m.id IN (
+                SELECT ml."memberId" FROM member_loja ml
+                JOIN loja lx ON lx.id = ml."lojaId" AND lx."tenantId" = p."tenantId"
+                WHERE ml."lojaId" = l.id
+            )) AND m.situacao = 'ATIVO'
         WHERE p."tenantId" = %s
         GROUP BY p.id, p.nome, p.sigla, p.prefeito, p.telefone, p.email,
                  p."secretarioEmail", p."secretarioTelefone",
@@ -841,12 +996,15 @@ def criar_prefeitura(dados):
 
 def buscar_prefeitura(prefeitura_id):
     """Busca dados de uma prefeitura. Retorna dict ou None."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return None
     with gprb_cursor() as cur:
         cur.execute('''
         SELECT id, nome, sigla, prefeito, telefone, email,
                "secretarioEmail", "secretarioTelefone", "tesoureiroEmail", "tesoureiroTelefone",
                pix, "valorAnuidade", "dataVencimentoAnuidade"
-        FROM prefeitura WHERE id = %s''', (prefeitura_id,))
+        FROM prefeitura WHERE id = %s AND "tenantId" = %s''', (prefeitura_id, tid))
         r = cur.fetchone()
         if r is None:
             return None
@@ -865,6 +1023,9 @@ def buscar_prefeitura(prefeitura_id):
 
 def atualizar_prefeitura(prefeitura_id, dados):
     """Atualiza uma prefeitura (exibida como Potencia)."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return False
     with gprb_transaction(), gprb_cursor() as cur:
         cur.execute('''
         UPDATE prefeitura SET nome = %s, sigla = %s, prefeito = %s, telefone = %s, email = %s,
@@ -872,7 +1033,7 @@ def atualizar_prefeitura(prefeitura_id, dados):
                "tesoureiroEmail" = %s, "tesoureiroTelefone" = %s,
                pix = %s, "valorAnuidade" = %s, "dataVencimentoAnuidade" = %s,
                "updatedAt" = NOW()
-        WHERE id = %s''', (
+        WHERE id = %s AND "tenantId" = %s''', (
             dados['nome'], dados.get('sigla') or None, dados.get('prefeito') or None,
             dados.get('telefone') or None, dados.get('email') or None,
             dados.get('secretario_email') or None,
@@ -882,21 +1043,34 @@ def atualizar_prefeitura(prefeitura_id, dados):
             dados.get('pix') or None,
             dados.get('valor_anuidade') or None,
             dados.get('vencimento_anuidade') or None,
-            prefeitura_id,
+            prefeitura_id, tid,
         ))
 
 
 def contar_lojas_prefeitura(prefeitura_id):
     """Conta lojas vinculadas a uma prefeitura."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return 0
     with gprb_cursor() as cur:
-        cur.execute('SELECT COUNT(*) FROM loja WHERE "prefeituraId" = %s', (prefeitura_id,))
+        cur.execute(
+            'SELECT COUNT(*) FROM loja l JOIN prefeitura p ON p.id = l."prefeituraId" '
+            'WHERE p.id = %s AND p."tenantId" = %s AND l."tenantId" = p."tenantId"',
+            (prefeitura_id, tid),
+        )
         return cur.fetchone()[0]
 
 
 def excluir_prefeitura(prefeitura_id):
     """Exclui uma prefeitura."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return False
     with gprb_transaction(), gprb_cursor() as cur:
-        cur.execute('DELETE FROM prefeitura WHERE id = %s', (prefeitura_id,))
+        cur.execute(
+            'DELETE FROM prefeitura WHERE id = %s AND "tenantId" = %s',
+            (prefeitura_id, tid),
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -906,11 +1080,17 @@ def excluir_prefeitura(prefeitura_id):
 
 def listar_lojas_select():
     """Lista lojas (com sua potencia) para select (form de membro)."""
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return []
     with gprb_cursor() as cur:
         cur.execute(
             'SELECT l.id, COALESCE(l."nomeFantasia", l."lojaMX", \'Loja \' || l.numero::text), '
             'p.nome, p.sigla '
-            'FROM loja l LEFT JOIN prefeitura p ON l."prefeituraId" = p.id ORDER BY 2'
+            'FROM loja l LEFT JOIN prefeitura p ON l."prefeituraId" = p.id '
+            'WHERE l."tenantId" = %s AND (p.id IS NULL OR p."tenantId" = l."tenantId") '
+            'ORDER BY 2',
+            (tid,),
         )
         return [
             {'id': str(r[0]), 'nome': r[1], 'prefeitura': r[2] or r[3] or ''}
@@ -922,10 +1102,15 @@ def valores_distintos(coluna):
     """Retorna valores distintos de uma coluna do member (para autocomplete)."""
     if coluna not in _COLUNAS_MEMBER_PERMITIDAS:
         raise ValueError(f'Coluna nao permitida: {coluna}')
+    tid = _obter_tenant_gprb()
+    if tid is None:
+        return []
     with gprb_cursor() as cur:
         cur.execute(
             f'SELECT DISTINCT "{coluna}" FROM member '  # nosec B608
-            f'WHERE "{coluna}" IS NOT NULL AND "{coluna}" <> \'\' ORDER BY 1'
+            f'WHERE "tenantId" = %s AND "{coluna}" IS NOT NULL '
+            f'AND "{coluna}" <> \'\' ORDER BY 1',
+            (tid,),
         )
         return [r[0] for r in cur.fetchall()]
 

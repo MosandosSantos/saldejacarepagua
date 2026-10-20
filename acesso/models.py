@@ -182,6 +182,22 @@ class Usuario(models.Model):
         max_length=36, blank=True, default='',
         help_text='UUID da loja GPRB vinculada ao usuário (opcional)',
     )
+    membro = models.OneToOneField(
+        'contatos.Membro',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='usuario',
+        help_text=('Membro cujo número de cadastro serve de login ao usuário '
+                   '(None = contas administrativas entram por e-mail)'),
+    )
+    cadastro_numero = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        unique=True,
+        help_text=('Número de cadastro próprio da conta, usado no login '
+                   '(para contas administrativas sem membro vinculado)'),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

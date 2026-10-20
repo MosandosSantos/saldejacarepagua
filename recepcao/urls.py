@@ -12,6 +12,12 @@ app_name = 'recepcao'
 
 urlpatterns = [
     path('', kanban.kanban, name='kanban'),
+    path('relatorio/', kanban.relatorio, name='relatorio'),
+    path(
+        'relatorio/<str:formato>/',
+        kanban.relatorio_exportar,
+        name='relatorio_exportar',
+    ),
     path('novo-lead/', leads.novo_lead, name='novo_lead'),
     path('nova-atividade/', atividades.nova_atividade, name='nova_atividade'),
     path('importar/', importacao.importar_leads, name='importar_leads'),

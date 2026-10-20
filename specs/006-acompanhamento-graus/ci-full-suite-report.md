@@ -1,0 +1,287 @@
+# Full-suite CI result ? Acompanhamento de Membros
+
+**Run:** `python -m pytest --create-db --ds=core.settings_vale_test teste/ -v --tb=short`
+**Test database:** dedicated local `test_saldabritanea_vales`, recreated with `--create-db` after confirming stale schema under `--reuse-db`.
+**Summary:** 209 failed, 608 passed, 48 skipped, 67 warnings, 13 errors in 1440.63s (0:24:00)
+**Test nodes:** 209 failed, 13 errors.
+
+The full-suite snapshot preceded the final duplicate-grade error-message fix, Vale/Loja column removal with 20-row pagination, and degree presets. The focused feature/regression suite was rerun afterward: 59 passed, 9 skipped. This report does not assume the other failures predate this branch; it records their test names for triage. No CI failure is hidden or marked as a successful release gate.
+
+## Failures and errors by test module
+
+- `teste/test_atividades_view.py` ? 11
+- `teste/test_branding_emails.py` ? 4
+- `teste/test_cache_invalidation.py` ? 1
+- `teste/test_campos_personalizados.py` ? 7
+- `teste/test_comunicacao.py` ? 4
+- `teste/test_contatos_api.py` ? 13
+- `teste/test_dashboard_avancado.py` ? 7
+- `teste/test_equipe.py` ? 9
+- `teste/test_external_tenant_cache.py` ? 3
+- `teste/test_fase_a_funil.py` ? 9
+- `teste/test_fase_b_config.py` ? 1
+- `teste/test_fase_e_export_email.py` ? 6
+- `teste/test_fase_f_pipeline.py` ? 10
+- `teste/test_fase_g_tarefas.py` ? 7
+- `teste/test_fase_i_automacoes.py` ? 18
+- `teste/test_fase_j_lead_orcamento_metas.py` ? 10
+- `teste/test_fase_k_timestamps.py` ? 2
+- `teste/test_fase_n_carteiras.py` ? 16
+- `teste/test_fase_o_email_avancado.py` ? 6
+- `teste/test_fase_r_lead_rapido.py` ? 14
+- `teste/test_fase_s8_interface_seguranca.py` ? 5
+- `teste/test_fase_s_candidatos.py` ? 1
+- `teste/test_fase_t_oficialato.py` ? 4
+- `teste/test_header_branding.py` ? 1
+- `teste/test_import_view.py` ? 8
+- `teste/test_importador.py` ? 1
+- `teste/test_kanban_views.py` ? 2
+- `teste/test_lead_service.py` ? 1
+- `teste/test_leads_view.py` ? 7
+- `teste/test_loja_local.py` ? 2
+- `teste/test_loja_pdf_local.py` ? 2
+- `teste/test_mensalidade_labels.py` ? 1
+- `teste/test_potencia_web.py` ? 2
+- `teste/test_ranking_presenca.py` ? 11
+- `teste/test_rbac_api.py` ? 6
+- `teste/test_rbac_web.py` ? 2
+- `teste/test_role_retirement_migration.py` ? 1
+- `teste/test_saas_tenant_write_scope.py` ? 3
+- `teste/test_vale_templates.py` ? 1
+- `teste/test_viewer.py` ? 3
+
+## Failing/error test node IDs
+
+- **FAILED** `teste/test_atividades_view.py::test_nova_atividade_requer_post`
+- **FAILED** `teste/test_atividades_view.py::test_nova_atividade_requer_titulo`
+- **FAILED** `teste/test_atividades_view.py::test_nova_atividade_prioridade_invalida`
+- **FAILED** `teste/test_atividades_view.py::test_nova_atividade_cria_tarefa`
+- **FAILED** `teste/test_atividades_view.py::test_nova_atividade_com_vencimento`
+- **FAILED** `teste/test_atividades_view.py::test_nova_atividade_com_hora`
+- **FAILED** `teste/test_atividades_view.py::test_nova_atividade_hora_invalida`
+- **FAILED** `teste/test_atividades_view.py::test_nova_atividade_data_invalida`
+- **FAILED** `teste/test_atividades_view.py::test_nova_atividade_vincula_contato`
+- **FAILED** `teste/test_atividades_view.py::test_nova_atividade_contato_invalido`
+- **FAILED** `teste/test_atividades_view.py::test_nova_atividade_atribui_responsavel`
+- **FAILED** `teste/test_cache_invalidation.py::test_excluir_candidato_invalida_cache`
+- **FAILED** `teste/test_campos_personalizados.py::test_fluxo_web_cria_contato_com_campo`
+- **FAILED** `teste/test_campos_personalizados.py::test_campo_obrigatorio_bloqueia_criacao`
+- **FAILED** `teste/test_campos_personalizados.py::test_campo_obrigatorio_preenchido_permite_criar`
+- **FAILED** `teste/test_campos_personalizados.py::test_gestao_campos_isola_tenant`
+- **FAILED** `teste/test_campos_personalizados.py::test_campo_com_espacos_e_salvo_limpo`
+- **FAILED** `teste/test_campos_personalizados.py::test_data_invalida_no_campo_bloqueia_contato`
+- **FAILED** `teste/test_campos_personalizados.py::test_criar_campo_duplicado_no_tenant`
+- **FAILED** `teste/test_comunicacao.py::test_post_individual_email_cria_e_envia_campanha`
+- **FAILED** `teste/test_comunicacao.py::test_post_todas_prefeituras_email_cria_e_envia_campanha`
+- **FAILED** `teste/test_comunicacao.py::test_post_loja_deputado_mestre_email_cria_campanha`
+- **FAILED** `teste/test_comunicacao.py::test_post_sem_destinatarios_validos_nao_cria_campanha`
+- **FAILED** `teste/test_dashboard_avancado.py::test_dashboard_renderiza_blocos_avancados`
+- **FAILED** `teste/test_dashboard_avancado.py::test_receita_projetada_ponderada`
+- **FAILED** `teste/test_dashboard_avancado.py::test_meta_do_mes_progresso`
+- **FAILED** `teste/test_dashboard_avancado.py::test_fechados_do_mes_ignora_meses_anteriores`
+- **FAILED** `teste/test_dashboard_avancado.py::test_melhores_negocios_ordenados`
+- **FAILED** `teste/test_dashboard_avancado.py::test_atividade_do_time_conta_movs_e_notas`
+- **FAILED** `teste/test_dashboard_avancado.py::test_dados_isolado_por_tenant`
+- **FAILED** `teste/test_equipe.py::test_admin_company_acessa_equipe`
+- **FAILED** `teste/test_equipe.py::test_admin_company_cadastra_operacional`
+- **FAILED** `teste/test_equipe.py::test_convite_isolado_por_tenant`
+- **FAILED** `teste/test_equipe.py::test_email_duplicado_rejeitado`
+- **FAILED** `teste/test_equipe.py::test_papel_invalido_rejeitado`
+- **FAILED** `teste/test_equipe.py::test_operacional_nao_ve_botao_excluir`
+- **FAILED** `teste/test_equipe.py::test_email_invalido_rejeitado`
+- **FAILED** `teste/test_equipe.py::test_admin_company_exclui_contato`
+- **FAILED** `teste/test_equipe.py::test_equipe_mostra_badge_dono_e_botao`
+- **FAILED** `teste/test_external_tenant_cache.py::test_prefeitura_cache_ignores_legacy_unscoped_entry`
+- **FAILED** `teste/test_external_tenant_cache.py::test_loja_cache_is_namespaced_by_tenant`
+- **FAILED** `teste/test_external_tenant_cache.py::test_recepcao_prefeitura_map_ignores_legacy_cache`
+- **FAILED** `teste/test_fase_a_funil.py::test_importacao_grava_tel_normalizado`
+- **FAILED** `teste/test_fase_a_funil.py::test_form_aceita_telefone_de_outro_tenant`
+- **FAILED** `teste/test_fase_a_funil.py::test_mover_ajax_atualiza_board`
+- **FAILED** `teste/test_fase_a_funil.py::test_dashboard_renderiza_analise`
+- **FAILED** `teste/test_fase_a_funil.py::test_form_web_cria_e_atualiza_negocio`
+- **FAILED** `teste/test_fase_a_funil.py::test_primeiro_negocio_pela_view_e_principal`
+- **FAILED** `teste/test_fase_a_funil.py::test_funil_move_negocio_nao_principal`
+- **FAILED** `teste/test_fase_a_funil.py::test_dashboard_movimentacoes_isoladas_por_tenant`
+- **FAILED** `teste/test_fase_b_config.py::test_admin_cria_convite_e_gera_link`
+- **FAILED** `teste/test_fase_e_export_email.py::test_estagnados_ignoram_fechados`
+- **FAILED** `teste/test_fase_e_export_email.py::test_dias_configuravel`
+- **FAILED** `teste/test_fase_e_export_email.py::test_criar_modelo_email`
+- **FAILED** `teste/test_fase_e_export_email.py::test_admin_saas_sem_tenant_nao_cria_modelo`
+- **FAILED** `teste/test_fase_e_export_email.py::test_envio_individual_simulado`
+- **FAILED** `teste/test_fase_e_export_email.py::test_campanha_filtra_publico`
+- **FAILED** `teste/test_fase_f_pipeline.py::test_kanban_sem_etapas_mostra_nicho`
+- **FAILED** `teste/test_fase_f_pipeline.py::test_garantir_etapas_semeia_do_nicho`
+- **FAILED** `teste/test_fase_f_pipeline.py::test_onboarding_semeia_etapas_do_nicho_escolhido`
+- **FAILED** `teste/test_fase_f_pipeline.py::test_etapa_sistema_pode_renomear_mas_nao_excluir`
+- **FAILED** `teste/test_fase_f_pipeline.py::test_mover_para_etapa_customizada`
+- **FAILED** `teste/test_fase_f_pipeline.py::test_form_contato_usa_etapas_do_tenant`
+- **FAILED** `teste/test_fase_f_pipeline.py::test_receita_projetada_usa_peso_da_etapa`
+- **FAILED** `teste/test_fase_f_pipeline.py::test_adotar_nicho_renomeia_padrao_mas_nao_customizado`
+- **FAILED** `teste/test_fase_f_pipeline.py::test_importador_reconhece_etapas_do_tenant`
+- **FAILED** `teste/test_fase_g_tarefas.py::test_cria_tarefa_pela_lista`
+- **FAILED** `teste/test_fase_g_tarefas.py::test_tarefa_sem_titulo_rejeitada`
+- **FAILED** `teste/test_fase_g_tarefas.py::test_edita_tarefa`
+- **FAILED** `teste/test_fase_g_tarefas.py::test_concluir_e_reabrir`
+- **FAILED** `teste/test_fase_g_tarefas.py::test_excluir_somente_admin`
+- **FAILED** `teste/test_fase_g_tarefas.py::test_ficha_mostra_tarefas_e_cria_rapido`
+- **FAILED** `teste/test_fase_g_tarefas.py::test_criar_tarefa_ignora_contato_de_outro_tenant`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_admin_cria_automacao_pela_web`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_form_sem_acoes_rejeitado`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_edita_automacao_e_atualiza_passos`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_duplicar_cria_copia_desativada`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_ativar_desativar_toggle`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_contato_novo_dispara_tarefa_com_placeholder`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_trigger_movido_filtra_por_etapa_destino`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_trigger_movido_sem_etapa_dispara_qualquer_mudanca`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_acao_email_simula_envio`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_acao_tarefa_descarta_responsavel_de_outro_tenant`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_placeholders_de_etapa_e_valor`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_automacao_de_outra_clinica_nao_dispara`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_comando_estagnados_dispara_para_negocio_parado`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_botao_estagnadas_na_web`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_editar_contato_muda_etapa_dispara`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_testar_executa_uma_vez`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_negocio_novo_na_ficha_dispara_negocio_criado`
+- **FAILED** `teste/test_fase_j_lead_orcamento_metas.py::test_score_calcula_por_origem_segmento_e_contato`
+- **FAILED** `teste/test_fase_j_lead_orcamento_metas.py::test_score_negocio_fechado_e_quente`
+- **FAILED** `teste/test_fase_j_lead_orcamento_metas.py::test_contato_novo_web_recebe_score`
+- **FAILED** `teste/test_fase_j_lead_orcamento_metas.py::test_nota_aumenta_score`
+- **FAILED** `teste/test_fase_j_lead_orcamento_metas.py::test_mover_etapa_atualiza_score_e_kanban`
+- **FAILED** `teste/test_fase_j_lead_orcamento_metas.py::test_lista_ordena_por_score`
+- **FAILED** `teste/test_fase_j_lead_orcamento_metas.py::test_negocio_form_grava_responsavel`
+- **FAILED** `teste/test_fase_j_lead_orcamento_metas.py::test_dashboard_mostra_atingimento_da_meta`
+- **FAILED** `teste/test_fase_j_lead_orcamento_metas.py::test_metas_isoladas_por_tenant`
+- **FAILED** `teste/test_fase_k_timestamps.py::test_todos_os_modelos_tem_created_at_e_updated_at`
+- **FAILED** `teste/test_fase_k_timestamps.py::test_equipe_mostra_criado_em`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_lista_carteiras_renderiza`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_criar_carteira_admin`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_criar_carteira_sem_nome_da_erro`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_criar_carteira_duplicada_no_tenant`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_editar_carteira_admin`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_excluir_carteira_admin`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_formulario_mostra_cargo_e_carteira`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_formulario_salva_cargo_e_carteira`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_lista_filtra_por_carteira`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_importar_pagina_oferece_seletor_de_carteira`
+- **FAILED** `teste/test_fase_o_email_avancado.py::test_fechar_no_funil_marca_conversao`
+- **FAILED** `teste/test_fase_o_email_avancado.py::test_fechar_no_formulario_marca_conversao`
+- **FAILED** `teste/test_fase_o_email_avancado.py::test_negocio_novo_em_fechado_marca_conversao`
+- **FAILED** `teste/test_fase_o_email_avancado.py::test_fechar_negocio_no_formulario_marca_conversao`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_cadastro_rapido_cria_contato_pobre_e_negocio`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_cadastro_rapido_grava_campos_opcionais`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_cadastro_rapido_aparece_no_kanban`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_kanban_mover_lead_passa_verificacao_csrf`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_cadastro_rapido_sem_nome_rejeita`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_cadastro_rapido_etapa_invalida_rejeita`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_cadastro_rapido_valor_invalido_rejeita`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_cadastro_rapido_telefone_duplicado_rejeita`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_relatorio_leads_pobres_lista_so_pobres`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_lista_contatos_mostra_coluna_perfil_e_link`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_kanban_coluna_tem_botao_plus`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_relatorio_abas_filtram_por_nivel`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_relatorio_completar_leva_foco_aos_campos_faltantes`
+- **FAILED** `teste/test_fase_r_lead_rapido.py::test_form_edicao_renderiza_script_de_foco`
+- **FAILED** `teste/test_fase_s8_interface_seguranca.py::test_admin_acessa_campos`
+- **FAILED** `teste/test_fase_s8_interface_seguranca.py::test_botao_novo_contato_usando_design_system`
+- **FAILED** `teste/test_fase_s8_interface_seguranca.py::test_botao_excluir_usa_hazon_btn_danger`
+- **FAILED** `teste/test_fase_s8_interface_seguranca.py::test_confirmacao_exclusao_campo_usa_hazon_btn_danger`
+- **FAILED** `teste/test_fase_s_candidatos.py::test_candidato_criado_por_admin_saas_aparece_no_kanban`
+- **FAILED** `teste/test_fase_t_oficialato.py::test_deputado_criador_envia_ao_prefeito`
+- **FAILED** `teste/test_fase_t_oficialato.py::test_observacoes_do_deputado_nao_sao_apagadas`
+- **FAILED** `teste/test_fase_t_oficialato.py::test_cadeia_prefeito_tesoureiro_chanceler_e_devolucao`
+- **FAILED** `teste/test_fase_t_oficialato.py::test_aprovacao_final_restrita`
+- **FAILED** `teste/test_header_branding.py::test_header_exibe_vales_marca_amorio_e_logo`
+- **FAILED** `teste/test_import_view.py::test_importar_leads_requer_post`
+- **FAILED** `teste/test_import_view.py::test_importar_leads_requer_arquivo`
+- **FAILED** `teste/test_import_view.py::test_importar_leads_csv_vazio`
+- **FAILED** `teste/test_import_view.py::test_importar_leads_importa_dados_basicos`
+- **FAILED** `teste/test_import_view.py::test_importar_leads_trata_linha_nome_vazio`
+- **FAILED** `teste/test_import_view.py::test_importar_leads_atribui_responsavel`
+- **FAILED** `teste/test_import_view.py::test_importar_leads_etapa_padrao`
+- **FAILED** `teste/test_import_view.py::test_importar_leads_trata_valor_invalido`
+- **FAILED** `teste/test_kanban_views.py::test_mover_negocio_atualiza_stage`
+- **FAILED** `teste/test_kanban_views.py::test_excluir_negocio`
+- **FAILED** `teste/test_lead_service.py::test_lead_service_atribui_responsavel`
+- **FAILED** `teste/test_leads_view.py::test_novo_lead_requer_post`
+- **FAILED** `teste/test_leads_view.py::test_novo_lead_cria_contato_e_negocio`
+- **FAILED** `teste/test_leads_view.py::test_novo_lead_rejeita_nome_vazio`
+- **FAILED** `teste/test_leads_view.py::test_novo_lead_rejeita_stage_invalido`
+- **FAILED** `teste/test_leads_view.py::test_novo_lead_valor_invalido`
+- **FAILED** `teste/test_leads_view.py::test_novo_lead_campos_opcionais_vazios`
+- **FAILED** `teste/test_leads_view.py::test_novo_lead_atribui_responsavel`
+- **FAILED** `teste/test_saas_tenant_write_scope.py::test_unselected_admin_cannot_mutate_gprb_prefeitura`
+- **FAILED** `teste/test_saas_tenant_write_scope.py::test_unselected_admin_cannot_mutate_gprb_store`
+- **FAILED** `teste/test_saas_tenant_write_scope.py::test_unselected_admin_cannot_delete_gprb_member`
+- **FAILED** `teste/test_viewer.py::test_viewer_ve_paginas_de_leitura`
+- **FAILED** `teste/test_viewer.py::test_viewer_nao_ve_botoes_de_edicao`
+- **FAILED** `teste/test_viewer.py::test_admin_saas_continua_editando_na_web`
+- **FAILED** `teste/test_contatos_api.py::test_cria_contato`
+- **FAILED** `teste/test_contatos_api.py::test_cria_contato_sem_nome_rejeitado`
+- **FAILED** `teste/test_contatos_api.py::test_cria_contato_com_valor_negativo_rejeitado`
+- **FAILED** `teste/test_contatos_api.py::test_atualiza_contato`
+- **FAILED** `teste/test_contatos_api.py::test_atualiza_contato_inexistente`
+- **FAILED** `teste/test_contatos_api.py::test_move_etapa_do_contato`
+- **FAILED** `teste/test_contatos_api.py::test_move_etapa_contato_inexistente`
+- **FAILED** `teste/test_contatos_api.py::test_move_etapa_com_stage_vazio_rejeitado`
+- **FAILED** `teste/test_contatos_api.py::test_exclui_contato`
+- **FAILED** `teste/test_contatos_api.py::test_exclui_contato_inexistente`
+- **FAILED** `teste/test_contatos_api.py::test_fluxo_completo_crud`
+- **FAILED** `teste/test_contatos_api.py::test_tenant_nao_ve_contato_de_outro_tenant`
+- **FAILED** `teste/test_contatos_api.py::test_contato_criado_fica_no_tenant_do_usuario`
+- **FAILED** `teste/test_fase_a_funil.py::test_api_cria_negocio_para_contato`
+- **FAILED** `teste/test_fase_f_pipeline.py::test_api_rejeita_etapa_fora_do_pipeline`
+- **FAILED** `teste/test_fase_i_automacoes.py::test_api_cria_contato_dispara_automacao`
+- **FAILED** `teste/test_fase_j_lead_orcamento_metas.py::test_api_cria_contato_atualiza_score`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_api_cria_carteira`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_api_carteira_nome_so_espacos_rejeitado`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_api_contato_aceita_cargo_e_carteira`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_api_contato_carteira_de_outro_tenant_rejeitada`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_api_exclui_carteira`
+- **FAILED** `teste/test_fase_n_carteiras.py::test_api_exclui_carteira_de_outro_tenant_404`
+- **FAILED** `teste/test_fase_o_email_avancado.py::test_api_fechar_marca_conversao`
+- **FAILED** `teste/test_fase_o_email_avancado.py::test_api_atualizar_para_fechado_marca_conversao`
+- **FAILED** `teste/test_loja_local.py::test_create_loja_uses_selected_tenant_without_posted_vale`
+- **FAILED** `teste/test_loja_local.py::test_admin_saas_without_selected_tenant_cannot_use_loja_routes`
+- **FAILED** `teste/test_potencia_web.py::test_unselected_admin_saas_cannot_edit_vale`
+- **FAILED** `teste/test_potencia_web.py::test_unselected_admin_saas_cannot_delete_vale`
+- **FAILED** `teste/test_rbac_api.py::test_admin_saas_cria_admin_company`
+- **FAILED** `teste/test_rbac_api.py::test_admin_saas_cria_operacional`
+- **FAILED** `teste/test_rbac_api.py::test_admin_company_sem_tenant_rejeitado`
+- **FAILED** `teste/test_rbac_api.py::test_operacional_sem_tenant_rejeitado`
+- **FAILED** `teste/test_rbac_api.py::test_tenant_inexistente_rejeitado`
+- **FAILED** `teste/test_rbac_api.py::test_email_duplicado_rejeitado`
+- **FAILED** `teste/test_rbac_web.py::test_admin_company_gerencia_equipe`
+- **FAILED** `teste/test_rbac_web.py::test_operacional_pode_acessar_contatos`
+- **FAILED** `teste/test_role_retirement_migration.py::test_existing_browser_session_uses_migrated_viewer_role`
+- **FAILED** `teste/test_vale_templates.py::test_consult_lists_complete_contact_details_without_gprb_counts`
+- **FAILED** `teste/test_branding_emails.py::test_format_from_email_preserves_address_and_replaces_name[Old Name <sender@example.test>]`
+- **FAILED** `teste/test_branding_emails.py::test_activation_email_uses_amorio_brand`
+- **FAILED** `teste/test_branding_emails.py::test_candidate_email_uses_amorio_signature_and_logo`
+- **FAILED** `teste/test_branding_emails.py::test_campaign_body_is_unchanged`
+- **FAILED** `teste/test_fase_s8_interface_seguranca.py::test_allowed_hosts_falha_fechado_fora_do_debug`
+- **FAILED** `teste/test_importador.py::test_normalizar_stage`
+- **FAILED** `teste/test_mensalidade_labels.py::test_consult_page_calls_the_amount_mensalidade`
+- **ERROR** `teste/test_ranking_presenca.py::test_presenca_unica_por_evento`
+- **ERROR** `teste/test_ranking_presenca.py::test_justificado_limites_do_model`
+- **ERROR** `teste/test_ranking_presenca.py::test_pagina_lista_membros_ativos_do_tenant`
+- **ERROR** `teste/test_ranking_presenca.py::test_pagina_mostra_estado_salvo_e_grau_atual`
+- **ERROR** `teste/test_ranking_presenca.py::test_salvar_presenca_e_grau_novo`
+- **ERROR** `teste/test_ranking_presenca.py::test_salvar_sem_grau_nao_muda_historico`
+- **ERROR** `teste/test_ranking_presenca.py::test_salvar_grau_igual_nao_duplica_historico`
+- **ERROR** `teste/test_ranking_presenca.py::test_salvar_justificado_sem_texto_rejeita`
+- **ERROR** `teste/test_ranking_presenca.py::test_re_salvar_atualiza_estado_nao_duplica`
+- **ERROR** `teste/test_ranking_presenca.py::test_roles_sem_escrita_nao_registram[viewer-302]`
+- **ERROR** `teste/test_ranking_presenca.py::test_roles_sem_escrita_nao_registram[tesoureiro-302]`
+- **ERROR** `teste/test_loja_pdf_local.py::test_upload_rejects_invalid_or_oversized_pdf[grande.pdf-%PDF-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx? (parameter elided)`
+- **ERROR** `teste/test_loja_pdf_local.py::test_upload_rejects_invalid_or_oversized_pdf[grande.pdf-%PDF-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx? (parameter elided)`
+
+## Other validation
+
+- Workflow YAML parses successfully after indentation repair.
+- `manage.py check`: no issues.
+- `makemigrations --check --dry-run`: no changes detected.
+- Ruff on feature files: all checks passed.
+- Bandit high-severity scan: no high-severity findings.
+- pip-audit: no known vulnerabilities found.
+- Docker image build now compiles Tailwind and includes its output in `STATIC_ROOT`; container verification found the three-filter grid rule. `npm ci` reported 11 build-time package advisories (3 moderate, 8 high); those Node packages are not copied into the runtime image and need separate supply-chain triage.
+- GitHub Actions was not triggered from this local workspace; no deployment was performed.

@@ -5,6 +5,8 @@ prioridade, vencimento e status. O vencimento alimenta os lembretes: atrasadas,
 de hoje, próximas — com badge no header e alerta no dashboard.
 """
 
+import uuid
+
 from django.db import models
 from django.db.models import Count, Q
 from django.utils import timezone
@@ -113,12 +115,23 @@ def reabrir_tarefa(tarefa):
 # Evento (sessão/reunião da loja maçonica)
 # ---------------------------------------------------------------------------
 
-TIPOS_EVENTO = [
+TIPOS_EVENTO_SELETOR = [
+    (f'iniciacao_grau_{grau}', f'Iniciação do grau {grau}')
+    for grau in range(4, 33)
+] + [
+    ('posse', 'Posse'),
+    ('outros', 'Outros'),
+]
+
+# Keep these choices so events saved before the catalog change still render
+# with their original labels. They are not offered for new events.
+TIPOS_EVENTO_LEGADOS = [
     ('sessao', 'Sessão'),
     ('reuniao', 'Reunião'),
     ('trabalho', 'Trabalho'),
     ('ritual', 'Ritual'),
 ]
+TIPOS_EVENTO = TIPOS_EVENTO_SELETOR + TIPOS_EVENTO_LEGADOS
 
 
 class Evento(models.Model):
@@ -162,3 +175,145 @@ class Evento(models.Model):
 
     def __str__(self):
         return f'{self.get_tipo_display()}: {self.titulo} ({self.data_inicio:%d/%m/%Y})'
+
+    @property
+    def sessao_encerrada(self):
+        """True quando a sessão já terminou (fuso configurado do projeto).
+
+        Base da regra "botão de presença só após a sessão" e do bloqueio
+        de gravação de chamada antecipada.
+        """
+        fim = self.data_fim
+        if fim is None:
+            return False
+        if timezone.is_naive(fim):
+            fim = timezone.make_aware(fim, timezone.get_default_timezone())
+        return timezone.now() >= fim
+
+
+class PresencaEvento(models.Model):
+    """Lista de chamada: presença (True) ou falta (False) de um membro num evento.
+
+    Tabela auxiliar do quadro: um registro por par (evento, membro) — atualizar
+    a chamada regrava o mesmo registro, nunca duplica. O percentual de presença
+    do membro (exibido na tabela de membros) deriva destes registros.
+    """
+
+    evento = models.ForeignKey(
+        'tarefas.Evento',
+        on_delete=models.CASCADE,
+        related_name='presencas',
+    )
+    membro = models.ForeignKey(
+        'contatos.Membro',
+        on_delete=models.CASCADE,
+        related_name='presencas_sessoes',
+    )
+    presente = models.BooleanField()
+    registrado_por = models.ForeignKey(
+        'acesso.Usuario',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='presencas_sessao_registradas',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'presencas_evento'
+        ordering = ['evento', 'membro']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['evento', 'membro'],
+                name='presenca_evento_membro_unico',
+            ),
+        ]
+
+    def __str__(self):
+        estado = 'presente' if self.presente else 'falta'
+        return f'{self.membro}: {estado} em {self.evento}'
+
+
+class EmailEventoFila(models.Model):
+    """Fila durável de envio dos avisos de evento (envio assíncrono).
+
+    O request grava as linhas e responde na hora; o worker (thread em
+    background ou o comando `enviar_emails_eventos`) consome depois —
+    o usuário nunca fica com a tela travada no SMTP.
+    """
+
+    SITUACAO_CHOICES = (
+        ('PENDENTE', 'Pendente'),
+        ('ENVIADO', 'Enviado'),
+        ('ERRO', 'Erro'),
+    )
+
+    evento = models.ForeignKey(
+        'tarefas.Evento',
+        on_delete=models.CASCADE,
+        related_name='fila_emails',
+    )
+    destinatario_nome = models.CharField(max_length=200, blank=True, default='')
+    destinatario_email = models.CharField(max_length=254)
+    situacao = models.CharField(max_length=10, choices=SITUACAO_CHOICES, default='PENDENTE')
+    tentativas = models.PositiveIntegerField(default=0)
+    erro = models.TextField(blank=True, default='')
+    criado_em = models.DateTimeField(auto_now_add=True)
+    enviado_em = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'email_evento_fila'
+        ordering = ['id']
+        indexes = [
+            models.Index(fields=['situacao', 'id']),
+        ]
+
+    def __str__(self):
+        return f'{self.destinatario_email} — {self.situacao} (evento {self.evento_id})'
+
+
+class ConfirmacaoEvento(models.Model):
+    """Confirmação de presença (RSVP) por destinatário do convite.
+
+    O token UUID é a credencial: o link por e-mail abre a página de
+    confirmação (sem login) e o POST grava VOU/NAO com data da resposta.
+    Reclique atualiza a resposta. Delegado do Vale confirma sem Membro.
+    """
+
+    RESPOSTA_CHOICES = (
+        ('VOU', 'Vou comparecer'),
+        ('NAO_VOU', 'Não poderei'),
+    )
+
+    evento = models.ForeignKey(
+        'tarefas.Evento',
+        on_delete=models.CASCADE,
+        related_name='confirmacoes',
+    )
+    membro = models.ForeignKey(
+        'contatos.Membro',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='confirmacoes_evento',
+    )
+    responsavel_nome = models.CharField(max_length=200, blank=True, default='')
+    responsavel_email = models.CharField(max_length=254)
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    resposta = models.CharField(max_length=10, choices=RESPOSTA_CHOICES, blank=True, default='')
+    respondido_em = models.DateTimeField(null=True, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'confirmacoes_evento'
+        ordering = ['responsavel_nome', 'id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['evento', 'responsavel_email'],
+                name='confirmacao_evento_destinatario_unico',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.responsavel_email or self.responsavel_nome}: {self.resposta or "sem resposta"} ({self.evento_id})'

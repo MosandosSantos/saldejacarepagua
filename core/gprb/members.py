@@ -2,16 +2,17 @@
 
 from datetime import date
 
-from core.gprb.connection import connect
+from core.gprb.connection import connect, resolve_tenant_code
 
 
-def membros_por_situacao(tenant_code='GPRB', apenas_ativos=True, ano=None):
+def membros_por_situacao(tenant_code=None, apenas_ativos=True, ano=None):
     """Retorna a contagem de membros agrupados por situacao (ATIVO/INATIVO).
 
     Substitui membros_por_classe — classes (MX/EN/CBCS) nao se aplicam mais ao
     projeto. Retorna lista de dicts:
         [{'name': 'ATIVO', 'total': 143}, ...]
     """
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -40,8 +41,9 @@ def membros_por_situacao(tenant_code='GPRB', apenas_ativos=True, ano=None):
         conn.close()
 
 
-def total_membros(tenant_code='GPRB', apenas_ativos=True, ano=None):
+def total_membros(tenant_code=None, apenas_ativos=True, ano=None):
     """Retorna o total de membros."""
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -65,8 +67,9 @@ def total_membros(tenant_code='GPRB', apenas_ativos=True, ano=None):
         conn.close()
 
 
-def total_lojas_ativas(tenant_code='GPRB'):
+def total_lojas_ativas(tenant_code=None):
     """Retorna o total de lojas ativas no banco GPRB."""
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -81,8 +84,9 @@ def total_lojas_ativas(tenant_code='GPRB'):
         conn.close()
 
 
-def total_lojas_cadastradas(tenant_code='GPRB'):
+def total_lojas_cadastradas(tenant_code=None):
     """Retorna o total de lojas cadastradas (todas) no banco GPRB."""
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -97,11 +101,70 @@ def total_lojas_cadastradas(tenant_code='GPRB'):
         conn.close()
 
 
-def membros_por_mes(tenant_code='GPRB', meses=36):
+def irmaos_da_loja(loja_id, tenant_code=None):
+    """Irmãos ATIVOS da loja — base da lista de chamada (presença).
+
+    Devolve [{'id', 'nome', 'email', 'cpf', 'celular'}] ordenados por nome.
+    `loja_id` é o UUID GPRB da loja; valor fora do formato UUID (ou modo
+    degradado sem banco GPRB) devolve [] em vez de erro.
+    """
+    from uuid import UUID
+
+    try:
+        loja_uuid = str(UUID(str(loja_id or '').strip()))
+    except (ValueError, AttributeError):
+        return []
+    tenant_code = resolve_tenant_code(tenant_code)
+    conn = connect()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            'SELECT m.id, m."nomeCompleto", m.email, m.cpf, m.celular '
+            'FROM member m JOIN tenant t ON t.id = m."tenantId" '
+            'WHERE t.code = %s AND m."lojaId" = %s AND m.situacao = %s '
+            'ORDER BY m."nomeCompleto" ASC',
+            (tenant_code, loja_uuid, 'ATIVO'),
+        )
+        return [
+            {
+                'id': str(r[0]), 'nome': r[1] or '',
+                'email': r[2] or '', 'cpf': r[3] or '', 'celular': r[4] or '',
+            }
+            for r in cur.fetchall()
+        ]
+    finally:
+        conn.close()
+
+
+def emails_membros_da_loja(loja_id, tenant_code=None):
+    """E-mails dos membros ATIVOS vinculados à Loja, pelo ORM (loja.membros).
+
+    Usa o mesmo relacionamento do resto do sistema, então minimiza divergência
+    (inclui quem foi agregado à loja). Sem loja válida (ex.: id legado UUID),
+    devolve lista vazia.
+    """
+    loja_id = str(loja_id or '').strip()
+    if not loja_id.isdigit():
+        return []
+    from contatos.models import Loja, Membro
+    loja = Loja.objects.filter(pk=int(loja_id)).first()
+    if loja is None:
+        return []
+    return list(
+        Membro.objects
+        .filter(lojas__pk=loja.pk, tenant_id=loja.tenant_id, situacao='ATIVO')
+        .exclude(email='')
+        .order_by('nome', 'id')
+        .values_list('id', 'nome', 'email')
+    )
+
+
+def membros_por_mes(tenant_code=None, meses=36):
     """Retorna a quantidade de membros admitidos por mes.
 
     Usa COALESCE(dataAdmissao, apresentacao_mx, createdAt) como data de admissao.
     """
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -135,7 +198,7 @@ def membros_por_mes(tenant_code='GPRB', meses=36):
     return labels, valores
 
 
-def novos_membros_ano(tenant_code='GPRB', ano=None):
+def novos_membros_ano(tenant_code=None, ano=None):
     """Retorna o total de membros novos no ano corrente (cadastrados no sistema)."""
     if ano is None:
         ano = date.today().year
@@ -150,10 +213,11 @@ def anuidade_ano_referencia():
     return hoje.year
 
 
-def anualidade_resumo(tenant_code='GPRB', ano=None):
+def anualidade_resumo(tenant_code=None, ano=None):
     """Retorna resumo da anualidade: pagantes, pendentes, total, percentual."""
     if ano is None:
         ano = anuidade_ano_referencia()
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -181,13 +245,14 @@ def anualidade_resumo(tenant_code='GPRB', ano=None):
     }
 
 
-def membros_por_rito(tenant_code='GPRB'):
+def membros_por_rito(tenant_code=None):
     """Retorna a contagem de membros ativos agrupados por rito.
 
     Exclui registros com rito NULL/vazio.
     Retorna lista de dicts:
         [{'name': 'REAA', 'total': 14}, ...]
     """
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -208,13 +273,14 @@ def membros_por_rito(tenant_code='GPRB'):
         conn.close()
 
 
-def membros_por_idade_faixa(tenant_code='GPRB'):
+def membros_por_idade_faixa(tenant_code=None):
     """Retorna a contagem de membros ativos por faixa etária (10 anos, a partir de 20).
 
     Exclui membros sem dataNascimento.
     Retorna lista de dicts:
         [{'label': '20-29', 'total': 12}, {'label': '30-39', 'total': 25}, ...]
     """
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -244,13 +310,14 @@ def membros_por_idade_faixa(tenant_code='GPRB'):
         conn.close()
 
 
-def membros_por_potencia(tenant_code='GPRB'):
+def membros_por_potencia(tenant_code=None):
     """Retorna a contagem de membros ativos agrupados por potência do simbolismo.
 
     Inclui 'Não declarado' para registros com potencia_simbolismo NULL/vazio.
     Retorna lista de dicts:
         [{'name': 'Potência X', 'total': 10}, ...]
     """
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -269,7 +336,7 @@ def membros_por_potencia(tenant_code='GPRB'):
         conn.close()
 
 
-def membros_por_tempo_maconaria(tenant_code='GPRB'):
+def membros_por_tempo_maconaria(tenant_code=None):
     """Retorna a contagem de membros ativos por tempo de iniciação na maçonaria.
 
     Faixas: até 10 anos, até 20 anos, até 30 anos, mais de 40 anos.
@@ -277,6 +344,7 @@ def membros_por_tempo_maconaria(tenant_code='GPRB'):
     Retorna lista de dicts:
         [{'label': 'Até 10 anos', 'total': 5}, ...]
     """
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -308,7 +376,7 @@ def membros_por_tempo_maconaria(tenant_code='GPRB'):
         conn.close()
 
 
-def agendamento_lojas(tenant_code='GPRB'):
+def agendamento_lojas(tenant_code=None):
     """Retorna agendamento de sessões por loja no ano corrente.
 
     Retorna lista de dicts:
@@ -316,6 +384,7 @@ def agendamento_lojas(tenant_code='GPRB'):
     cor: 'vermelho' (0 sessões ou <4), 'amarelo' (tem mas <4 realizadas), 'verde' (>=4 realizadas)
     """
     ano_atual = date.today().year
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()
@@ -352,7 +421,7 @@ def agendamento_lojas(tenant_code='GPRB'):
         conn.close()
 
 
-def proximas_sessoes(tenant_code='GPRB', limite=6):
+def proximas_sessoes(tenant_code=None, limite=6):
     """Retorna as proximas sessoes agendadas nas lojas (dataSessao >= hoje).
 
     Le da agenda de sessoes da aplicacao (tabela meeting) e retorna lista de
@@ -363,6 +432,7 @@ def proximas_sessoes(tenant_code='GPRB', limite=6):
     MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
              'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
     hoje = date.today()
+    tenant_code = resolve_tenant_code(tenant_code)
     conn = connect()
     try:
         cur = conn.cursor()

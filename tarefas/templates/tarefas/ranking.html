@@ -11,61 +11,68 @@
   </div>
   <div class="flex items-center gap-3">
     <a href="{% url 'tarefas:exportar_calendario_ics' %}" title="Exportar agenda como .ics" class="flex items-center gap-2 rounded-xl border border-[#5b8def]/50 bg-[#5b8def]/15 px-5 py-2.5 text-[13px] font-semibold text-[#7aa8f5] transition hover:bg-[#5b8def]/25">
-      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Exportar Calendário
     </a>
-    {% if loja_id_usuario %}
-    <button onclick="abrirModalCriar()" class="flex items-center gap-2 rounded-xl border border-[#4ade80]/50 bg-[#4ade80]/15 px-5 py-2.5 text-[13px] font-semibold text-[#4ade80] transition hover:bg-[#4ade80]/25">
-      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    {% if pode_criar_evento %}
+    <button type="button" id="btn-novo-evento" onclick="abrirModalCriar()" class="flex items-center gap-2 rounded-xl border border-[#4ade80]/50 bg-[#4ade80]/15 px-5 py-2.5 text-[13px] font-semibold text-[#4ade80] transition hover:bg-[#4ade80]/25">
+      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Novo Evento
     </button>
     {% endif %}
   </div>
 </div>
 
-<div class="mb-5 hazon-card-sm p-4 backdrop-blur-xl">
-  <div class="flex flex-wrap items-center justify-between gap-3">
+<div id="barra-modos" class="mb-5 hazon-card-sm p-4 backdrop-blur-xl">
+  <div id="barra-modos-conteudo" class="flex flex-wrap items-center justify-between gap-3">
     <div class="flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1" role="tablist" aria-label="Modo de exibição">
-      <button id="modo-btn-kanban" onclick="definirModo('kanban')" class="rounded-lg px-4 py-1.5 text-[12.5px] font-semibold text-[#a6bfc7] transition" role="tab" aria-selected="false">Kanban</button>
-      <button id="modo-btn-calendario" onclick="definirModo('calendario')" class="rounded-lg px-4 py-1.5 text-[12.5px] font-semibold text-[#a6bfc7] transition" role="tab" aria-selected="false">Calendário</button>
-      <button id="modo-btn-lista" onclick="definirModo('lista')" class="rounded-lg px-4 py-1.5 text-[12.5px] font-semibold text-[#a6bfc7] transition" role="tab" aria-selected="false">Lista</button>
+      <button type="button" id="modo-btn-kanban" data-modo="kanban" onclick="definirModo('kanban')" class="rounded-lg px-4 py-1.5 text-[12.5px] font-semibold text-[#a6bfc7] transition focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0" role="tab" aria-selected="false" aria-controls="visao-kanban" tabindex="-1">Kanban</button>
+      <button type="button" id="modo-btn-calendario" data-modo="calendario" onclick="definirModo('calendario')" class="rounded-lg px-4 py-1.5 text-[12.5px] font-semibold text-[#a6bfc7] transition focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0" role="tab" aria-selected="false" aria-controls="visao-calendario" tabindex="-1">Calendário</button>
+      <button type="button" id="modo-btn-lista" data-modo="lista" onclick="definirModo('lista')" class="rounded-lg px-4 py-1.5 text-[12.5px] font-semibold text-[#a6bfc7] transition focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0" role="tab" aria-selected="false" aria-controls="visao-lista" tabindex="-1">Lista</button>
     </div>
     <div id="nav-mes" class="flex items-center gap-2">
-      <a href="?ano={{ ano_anterior }}&amp;mes={{ mes_anterior }}" class="hazon-btn-ghost">
-        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      <a href="?ano={{ ano_anterior }}&amp;mes={{ mes_anterior }}" class="hazon-btn-ghost" aria-label="Mês anterior" rel="prev">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
       </a>
       <h2 class="font-mono text-[18px] font-bold text-white">{{ mes_nome }} {{ ano }}</h2>
-      <a href="?ano={{ proximo_ano }}&amp;mes={{ proximo_mes }}" class="hazon-btn-ghost">
-        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <a href="?ano={{ proximo_ano }}&amp;mes={{ proximo_mes }}" class="hazon-btn-ghost" aria-label="Próximo mês" rel="next">
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
       </a>
     </div>
   </div>
 </div>
 
-<div id="visao-calendario" class="hidden">
-  <div class="hazon-card overflow-hidden">
-    <div class="grid grid-cols-7 border-b border-white/10">
-      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Dom</div>
-      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Seg</div>
-      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Ter</div>
-      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Qua</div>
-      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Qui</div>
-      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Sex</div>
-      <div class="p-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Sab</div>
+<div id="visao-calendario" class="hidden" role="tabpanel" aria-labelledby="modo-btn-calendario" tabindex="0">
+  <section class="livro" aria-labelledby="livro-titulo">
+    <header class="livro-cabecalho" id="livro-cabecalho">
+      <div>
+        <h2 id="livro-titulo" class="livro-titulo">Calendário da Vale de {{ VALE_NOME }}</h2>
+        <p class="livro-sub">Sessões, iniciações e trabalhos de grau do mês</p>
+        <p class="livro-resumo" id="livro-resumo" aria-live="polite"></p>
+      </div>
+    </header>
+    <div class="grid grid-cols-7 border-b border-[var(--livro-ouro-fraco)]">
+      <div class="livro-semana">Dom</div>
+      <div class="livro-semana">Seg</div>
+      <div class="livro-semana">Ter</div>
+      <div class="livro-semana">Qua</div>
+      <div class="livro-semana">Qui</div>
+      <div class="livro-semana">Sex</div>
+      <div class="livro-semana">Sáb</div>
     </div>
     <div id="calendario-grid" class="grid grid-cols-7"></div>
-  </div>
+  </section>
 </div>
 
-<div id="visao-lista" class="hidden">
+<div id="visao-lista" class="hidden" role="tabpanel" aria-labelledby="modo-btn-lista" tabindex="0">
   <div class="hazon-card overflow-hidden">
     <table class="w-full border-collapse">
       <thead>
         <tr class="border-b border-white/10 text-left">
-          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Título</th>
-          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Início</th>
-          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Fim</th>
-          <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Ações</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Título</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Início</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" title="Confirmações / ausências / e-mails enviados" scope="col">Presença · RSVP</th>
+          <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Ações</th>
         </tr>
       </thead>
       <tbody id="lista-corpo"></tbody>
@@ -73,31 +80,45 @@
   </div>
 </div>
 
-<div id="visao-kanban" class="hidden">
+<div id="visao-kanban" class="hidden" role="tabpanel" aria-labelledby="modo-btn-kanban" tabindex="0">
   <div class="hazon-card-sm overflow-x-auto p-4">
     <div id="kanban-board" class="flex min-w-max gap-4"></div>
   </div>
 </div>
 
 <!-- Modal Novo/Editar Evento — estilo dos forms de Vale/Loja -->
-<div id="modal-evento" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm">
+<style>
+  /* Dropdown dos selects do modal: fundo escuro com letra branca (Tipo, Vale e Loja iguais) */
+  #evento-tipo, #evento-vale, #evento-loja { color-scheme: dark; }
+  #evento-tipo option, #evento-vale option, #evento-loja option {
+    background-color: #111827;
+    color: #ffffff;
+  }
+  /* O scroll interno do modal não "puxa" a página ao chegar no fim. */
+  #modal-evento, #modal-detalhes, #modal-chamada, #modal-qrcode {
+    overscroll-behavior: contain;
+  }
+</style>
+<div id="modal-evento" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="modal-titulo" tabindex="-1">
   <div class="mx-auto my-8 max-w-2xl">
   <div class="hazon-card-sm p-7 backdrop-blur-xl" style="background: var(--hazon-surface)">
     <div class="mb-6 flex items-center gap-3">
       <span class="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#4ade80]/15">
-        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </span>
       <div>
         <h3 id="modal-titulo" class="font-display text-lg font-semibold text-white">Novo Evento</h3>
         <p class="text-[13px] text-[#a6bfc7]">Preencha os dados abaixo</p>
       </div>
-      <button onclick="fecharModal()" aria-label="Fechar" class="ml-auto text-[#6f8a93] transition hover:text-white">
-        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      <button type="button" onclick="fecharModal()" aria-label="Fechar" class="ml-auto text-[#6f8a93] transition hover:text-white">
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
 
     <form id="form-evento" onsubmit="salvarEvento(event)">
+      {% csrf_token %}
       <input type="hidden" id="evento-id" value="">
+      <div id="evento-erro" role="alert" class="mb-4 hidden rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-[12.5px] text-red-200"></div>
       <div class="grid gap-5">
         <div>
           <label for="evento-titulo" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Título *</label>
@@ -107,37 +128,48 @@
 
         <div class="grid gap-5 sm:grid-cols-2">
           <div>
-            <label for="evento-inicio" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Início *</label>
-            <input type="datetime-local" id="evento-inicio" required
-                   class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition [color-scheme:dark] focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+            <label for="evento-vale" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Vale *</label>
+            {% if vale_fixado %}
+            <input type="hidden" id="evento-vale" value="">
+            <div class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-[#a6bfc7]">
+              <span id="evento-vale-nome">—</span>
+              <span class="ml-1 text-[11px] font-semibold text-[#6f8a93]">— fixado ao seu Vale</span>
+            </div>
+            {% else %}
+            <select id="evento-vale"
+                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition [color-scheme:dark] focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15"></select>
+            {% endif %}
           </div>
           <div>
-            <label for="evento-fim" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Fim *</label>
-            <input type="datetime-local" id="evento-fim" required
-                   class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition [color-scheme:dark] focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+            <label for="evento-loja" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Loja *</label>
+            <select id="evento-loja" required
+                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition [color-scheme:dark] focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15"></select>
           </div>
+        </div>
+        <div>
+          <label for="evento-inicio" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Início *</label>
+          <input type="datetime-local" id="evento-inicio" required
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition [color-scheme:dark] focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
         </div>
 
         <div>
           <label for="evento-tipo" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Tipo</label>
-          <select id="evento-tipo" class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
-            <option value="sessao">Sessão</option>
-            <option value="reuniao">Reunião</option>
-            <option value="trabalho">Trabalho</option>
-            <option value="ritual">Ritual</option>
+          <select id="evento-tipo" required aria-describedby="ajuda-tipo" class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition [color-scheme:dark] focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
+            <option value="">—</option>
           </select>
+          <p id="ajuda-tipo" class="mt-2 text-[11px] text-[#6f8a93]">Todo evento pertence a um grau: a Loja determina os graus possíveis — Perfeição 4º-14º, Capítulo 15º-18º, Kadosh 19º-30º, Consistório 31º-32º, SC33 33º.</p>
         </div>
 
         <div>
           <label for="evento-descricao" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Descrição</label>
-          <textarea id="evento-descricao" rows="3" placeholder="Observações..."
+          <textarea id="evento-descricao" rows="3" placeholder="Observações…"
                     class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15"></textarea>
         </div>
       </div>
 
       <div class="mt-6 flex items-center gap-3">
         <button type="submit" class="flex items-center gap-2 rounded-xl border border-[#5b8def]/50 bg-gradient-to-br from-[#1a5fb4] to-[#1450a0] px-6 py-3 text-[14px] font-bold text-white shadow-lg shadow-[#1a5fb4]/30 transition hover:brightness-110">
-          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Salvar
         </button>
         <button type="button" onclick="fecharModal()" class="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-[14px] font-medium text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">
@@ -149,16 +181,59 @@
   </div>
 </div>
 
-<div id="modal-detalhes" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm">
+<div id="modal-detalhes" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="detalhes-titulo" tabindex="-1">
   <div class="hazon-card-sm mx-4 my-8 w-full max-w-md p-6" style="background: var(--hazon-surface)">
     <div class="mb-4 flex items-center justify-between">
-      <h3 class="hazon-titulo text-[16px]">Detalhes</h3>
-      <button onclick="fecharDetalhes()" aria-label="Fechar" class="text-[#6f8a93] transition hover:text-white">
-        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      <h3 id="detalhes-titulo" class="hazon-titulo text-[16px]">Detalhes</h3>
+      <button type="button" onclick="fecharDetalhes()" aria-label="Fechar" class="text-[#6f8a93] transition hover:text-white">
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
+    <div id="detalhes-erro" role="alert" class="mb-3 hidden rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-[12.5px] text-red-200"></div>
     <div id="detalhes-conteudo" class="space-y-3"></div>
-    <div id="detalhes-acoes" class="mt-4 flex justify-end gap-3"></div>
+    <div id="detalhes-acoes" class="mt-4 flex flex-wrap justify-end gap-3"></div>
+  </div>
+</div>
+
+<div id="modal-chamada" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="chamada-titulo" tabindex="-1">
+  <div class="hazon-card-sm mx-4 my-8 w-full max-w-md p-6" style="background: var(--hazon-surface)">
+    <div class="mb-4 flex items-center justify-between">
+      <div>
+        <h3 id="chamada-titulo" class="hazon-titulo text-[16px]">Lista de Chamada</h3>
+        <p id="chamada-evento" class="text-[11px] text-[#6f8a93]"></p>
+      </div>
+      <button type="button" onclick="fecharChamada()" aria-label="Fechar" class="text-[#6f8a93] transition hover:text-white">
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="chamada-erro" role="alert" class="mb-3 hidden rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-[12.5px] text-red-200"></div>
+    <div id="chamada-lista" class="max-h-[45vh] space-y-2 overflow-y-auto pr-1"></div>
+    <div class="mt-4 flex justify-end gap-3">
+      <button type="button" onclick="salvarChamada()" class="hazon-btn hazon-btn-primary text-[12px]">Salvar presença</button>
+      <button type="button" onclick="fecharChamada()" class="hazon-btn-ghost text-[12px]">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-qrcode" class="fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="qrcode-titulo" tabindex="-1">
+  <div class="hazon-card-sm mx-4 my-8 w-full max-w-sm p-6 text-center" style="background: var(--hazon-surface)">
+    <div class="mb-4 flex items-center justify-between text-left">
+      <div>
+        <h3 id="qrcode-titulo" class="hazon-titulo text-[16px]">QRCode de Presença</h3>
+        <p id="qrcode-evento" class="text-[11px] text-[#6f8a93]"></p>
+      </div>
+      <button type="button" onclick="fecharQRCode()" aria-label="Fechar" class="text-[#6f8a93] transition hover:text-white">
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="qrcode-erro" role="alert" class="mb-3 hidden rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-[12.5px] text-red-200"></div>
+    <div id="qrcode-corpo" class="py-4"></div>
+    <p class="mb-3 break-all font-mono text-[11px] text-[#7aa8f5]"><a id="qrcode-link" href="#" target="_blank" rel="noopener" class="underline"></a></p>
+    <p class="mb-4 text-[11.5px] text-[#6f8a93]">Exiba na porta: o irmão escaneia, entra com o número do cadastro e senha, e a presença é registrada.</p>
+    <div class="flex justify-end gap-3">
+      <button type="button" onclick="window.print()" class="hazon-btn-ghost text-[12px]">Imprimir</button>
+      <button type="button" onclick="fecharQRCode()" class="hazon-btn-ghost text-[12px]">Fechar</button>
+    </div>
   </div>
 </div>
 {% endblock %}
@@ -166,20 +241,211 @@
 {% block js %}
 <script>
 (function () {
-  var eventos = {{ eventos_json|safe }};
+  var eventos = {{ eventos|js }};
+  var valesData = {{ vales_evento|js }};
+  var lojasData = {{ lojas_evento|js }};
+  var tipos_evento_select_js = {{ tipos_evento_select|js }};
+
+  /* Rotas resolvidas pelo Django (o "0" é trocado pelo id do evento). */
+  var URLS = {
+    criar:     '{% url "tarefas:evento_criar" %}',
+    editar:    '{% url "tarefas:evento_editar" 0 %}',
+    excluir:   '{% url "tarefas:evento_excluir" 0 %}',
+    relatorio: '{% url "tarefas:evento_relatorio_presenca" 0 %}',
+    presenca:  '{% url "tarefas:presenca" 0 %}',
+    qrcode:    '{% url "tarefas:qrcode" 0 %}'
+  };
+  function urlEvento(base, id) { return base.replace('/0/', '/' + id + '/'); }
+
+  /* Escapa texto do usuário antes de colocá-lo em HTML. */
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  /* ── Modais ──────────────────────────────────────────────────────
+     O gerenciador acessível vive no template base (window.hazonModal):
+     ele cuida do focus trap, do Escape e da devolução do foco. */
+  function abrirModalEl(id) {
+    var el = document.getElementById(id);
+    if (!el) return null;
+    el.classList.remove('hidden');
+    el.classList.add('flex');
+    if (window.hazonModal && typeof window.hazonModal.abrir === 'function') {
+      window.hazonModal.abrir(el);
+    } else if (el.focus) {
+      el.focus();
+    }
+    return el;
+  }
+
+  function fecharModalEl(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add('hidden');
+    el.classList.remove('flex');
+    if (window.hazonModal && typeof window.hazonModal.fechar === 'function') {
+      window.hazonModal.fechar(el);
+    }
+  }
+
+  /* Mensagens de erro inline (substituem alert()). */
+  function mostrarErro(id, msg) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg || 'Ocorreu um erro. Tente novamente.';
+    el.classList.remove('hidden');
+  }
+
+  function limparErro(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = '';
+    el.classList.add('hidden');
+  }
+
+  /* Escape fecha o modal aberto (tratado antes do listener do template base). */
+  (function () {
+    var MODAIS = ['modal-evento', 'modal-detalhes', 'modal-chamada', 'modal-qrcode'];
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      for (var i = MODAIS.length - 1; i >= 0; i--) {
+        var el = document.getElementById(MODAIS[i]);
+        if (el && !el.classList.contains('hidden')) {
+          e.stopPropagation();
+          fecharModalEl(MODAIS[i]);
+          return;
+        }
+      }
+    }, true);
+  })();
+
+  function textoDoVale(v) { return v.nome + (v.sigla ? ' (' + v.sigla + ')' : ''); }
+
+  function povoarVales() {
+    var sel = document.getElementById('evento-vale');
+    if (!sel || !sel.tagName || sel.tagName.toLowerCase() !== 'select') {
+      var nome = document.getElementById('evento-vale-nome');
+      if (nome && valesData.length) nome.textContent = textoDoVale(valesData[0]);
+      return;
+    }
+    sel.innerHTML = '';
+    valesData.forEach(function (v) {
+      var op = document.createElement('option');
+      op.value = v.id;
+      op.textContent = textoDoVale(v);
+      sel.appendChild(op);
+    });
+  }
+
+    // Faixa de graus por corpo da Loja — o select Tipo segue a Loja escolhida.
+  var FAIXAS_CORPO = {
+    perfeicao:    [4, 14],
+    capitulo:     [15, 18],
+    kadosh:       [19, 30],
+    consistorio:  [31, 32],
+    sc33:         [33, 33]
+  };
+  var rotulosTipo = {};
+  tipos_evento_select_js.forEach(function (par) { rotulosTipo[par[0]] = par[1]; });
+
+  function povoarLojas(preferida) {
+    var selLoja = document.getElementById('evento-loja');
+    if (!selLoja) return;
+    var selVale = document.getElementById('evento-vale');
+    var valeSel = null;
+    if (selVale && selVale.tagName && selVale.tagName.toLowerCase() === 'select' && selVale.value) {
+      valeSel = valesData.find(function (v) { return String(v.id) === String(selVale.value); });
+    } else if (valesData.length) {
+      valeSel = valesData[0];
+    }
+    var tenantId = valeSel ? String(valeSel.tenant_id) : '';
+    var atual = preferida || selLoja.value || '';
+    selLoja.innerHTML = '';
+    lojasData.filter(function (l) { return String(l.tenant_id) === tenantId; }).forEach(function (l) {
+      var op = document.createElement('option');
+      op.value = l.id;
+      op.textContent = l.nome;
+      if (String(l.id) === String(atual)) op.selected = true;
+      selLoja.appendChild(op);
+    });
+    atualizarTipos();
+  }
+
+  function corpoDaLojaSelecionada() {
+    var selLoja = document.getElementById('evento-loja');
+    if (!selLoja) return '';
+    var loja = lojasData.find(function (l) { return String(l.id) === String(selLoja.value); });
+    return loja ? (loja.corpo || '') : '';
+  }
+
+  function atualizarTipos(tipoBase, displayBase) {
+    var tipoSelect = document.getElementById('evento-tipo');
+    if (!tipoSelect) return;
+    var corpo = corpoDaLojaSelecionada();
+    var faixa = FAIXAS_CORPO[corpo];
+    var valor = tipoBase || tipoSelect.value || '';
+    tipoSelect.innerHTML = '';
+    // O select mostra apenas os graus do corpo da Loja: cada evento
+    // fica associado a um grau. "Posse" e "Outros" não são mais opções.
+    if (faixa) {
+      for (var g = faixa[0]; g <= faixa[1]; g++) {
+        var op = document.createElement('option');
+        op.value = 'iniciacao_grau_' + g;
+        op.textContent = rotulosTipo['iniciacao_grau_' + g] || ('Iniciação do grau ' + g);
+        tipoSelect.appendChild(op);
+      }
+    }
+    var existe = tipoSelect.querySelector('option[value="' + valor + '"]');
+    if (!existe) {
+      if (displayBase) {
+        // Evento legado (tipo antigo) em edição: mantém visível e o
+        // servidor aceita enquanto o tipo não for alterado.
+        var legado = document.createElement('option');
+        legado.value = valor;
+        legado.textContent = displayBase || rotulosTipo[valor] || valor;
+        legado.dataset.legacy = 'true';
+        tipoSelect.appendChild(legado);
+        existe = legado;
+      } else {
+        // Novo evento: grau inicial = o primeiro da faixa da Loja.
+        valor = faixa ? ('iniciacao_grau_' + faixa[0]) : '';
+        existe = tipoSelect.querySelector('option[value="' + valor + '"]');
+      }
+    }
+    tipoSelect.value = existe ? valor : '';
+  }
   var ano = {{ ano }};
   var mes = {{ mes }};
+  var mesNome = '{{ mes_nome }}';
   var hojeStr = '{{ hoje|date:"Y-m-d" }}';
   var modoSalvo = null;
   try { modoSalvo = localStorage.getItem('agenda-modo'); } catch (e) {}
-  var modoAtual = ['kanban', 'calendario', 'lista'].indexOf(modoSalvo) > -1 ? modoSalvo : 'calendario';
+  /* O modo de exibicao vive na URL (?modo=) para ser compartilhavel e
+     sobreviver ao recarregamento; o localStorage e apenas o fallback. */
+  var modoUrl = null;
+  try {
+    modoUrl = new URL(window.location.href).searchParams.get('modo');
+  } catch (e) {}
+  var MODOS = ['kanban', 'calendario', 'lista'];
+  var modoInicial = MODOS.indexOf(modoUrl) > -1 ? modoUrl
+                  : (MODOS.indexOf(modoSalvo) > -1 ? modoSalvo : 'calendario');
+  var modoAtual = modoInicial;
   var cores = {
+    iniciacao: { bg: '#5b8def20', border: '#5b8def40', label: '#5b8def' },
+    posse:     { bg: '#4ade8020', border: '#4ade8040', label: '#4ade80' },
+    outros:    { bg: '#94a3b820', border: '#94a3b840', label: '#94a3b8' },
     sessao:   { bg: '#5b8def20', border: '#5b8def40', label: '#5b8def' },
     reuniao:  { bg: '#a78bfa20', border: '#a78bfa40', label: '#a78bfa' },
     trabalho: { bg: '#4ade8020', border: '#4ade8040', label: '#4ade80' },
     ritual:   { bg: '#fbbf2420', border: '#fbbf2440', label: '#fbbf24' }
   };
-  var tipoLabels = { sessao: 'Sessão', reuniao: 'Reunião', trabalho: 'Trabalho', ritual: 'Ritual' };
+
+  function corDoTipo(tipo) {
+    if (tipo && tipo.indexOf('iniciacao_grau_') === 0) return cores.iniciacao;
+    return cores[tipo] || cores.outros;
+  }
 
   function formatDT(iso) {
     var d = new Date(iso);
@@ -194,16 +460,65 @@
   window.definirModo = function(modo) {
     modoAtual = modo;
     try { localStorage.setItem('agenda-modo', modo); } catch (e) {}
-    ['kanban', 'calendario', 'lista'].forEach(function(m) {
-      document.getElementById('visao-' + m).classList.toggle('hidden', m !== modo);
+    try {
+      var url = new URL(window.location.href);
+      url.searchParams.set('modo', modo);
+      window.history.replaceState({}, '', url.toString());
+    } catch (e) {}
+    MODOS.forEach(function(m) {
+      var painel = document.getElementById('visao-' + m);
+      if (painel) {
+        painel.classList.toggle('hidden', m !== modo);
+        painel.hidden = (m !== modo);
+      }
       var btn = document.getElementById('modo-btn-' + m);
-      btn.setAttribute('aria-selected', m === modo ? 'true' : 'false');
-      btn.classList.toggle('bg-[#5b8def]', m === modo);
-      btn.classList.toggle('text-white', m === modo);
-      btn.classList.toggle('text-[#a6bfc7]', m !== modo);
+      if (!btn) return;
+      var ativo = (m === modo);
+      btn.setAttribute('aria-selected', ativo ? 'true' : 'false');
+      btn.setAttribute('tabindex', ativo ? '0' : '-1');
+      btn.classList.toggle('bg-[#5b8def]', ativo);
+      btn.classList.toggle('text-white', ativo);
+      btn.classList.toggle('text-[#a6bfc7]', !ativo);
     });
     document.getElementById('nav-mes').style.display = (modo === 'kanban') ? 'none' : 'flex';
+
+    /* O Calendario e o "livro de sessoes": secao propria, mais escura que o
+       hero, com o titulo da Vale. O botao de incluir nao aparece nele - a
+       sessao e aberta pelo secretario a partir do proprio dia. */
+    var btnIncluir = document.getElementById('btn-novo-evento');
+    if (btnIncluir) btnIncluir.style.display = (modo === 'calendario') ? 'none' : '';
+
+    /* A navegacao de mes muda de casa: no calendario ela faz parte do
+       cabecalho do livro; nos demais modos volta para a barra de modos. */
+    var navMes = document.getElementById('nav-mes');
+    var cabecalhoLivro = document.getElementById('livro-cabecalho');
+    var barraModos = document.getElementById('barra-modos-conteudo');
+    if (navMes && cabecalhoLivro && barraModos) {
+      var destino = (modo === 'calendario') ? cabecalhoLivro : barraModos;
+      if (navMes.parentElement !== destino) destino.appendChild(navMes);
+    }
   };
+
+  /* Navegacao por teclado entre as abas (setas / Home / End). */
+  (function () {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+    if (tabs.length < 2) return;
+    tabs.forEach(function (tab) {
+      tab.addEventListener('keydown', function (e) {
+        var i = tabs.indexOf(tab);
+        var alvo = null;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') alvo = tabs[(i + 1) % tabs.length];
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') alvo = tabs[(i - 1 + tabs.length) % tabs.length];
+        else if (e.key === 'Home') alvo = tabs[0];
+        else if (e.key === 'End') alvo = tabs[tabs.length - 1];
+        if (!alvo) return;
+        e.preventDefault();
+        alvo.focus();
+        var modo = alvo.getAttribute('data-modo');
+        if (modo && typeof window.definirModo === 'function') window.definirModo(modo);
+      });
+    });
+  })();
 
   function renderCalendario() {
     var grid = document.getElementById('calendario-grid');
@@ -211,23 +526,30 @@
     var diasNoMes = new Date(ano, mes, 0).getDate();
     var html = '';
     var dia = 1;
-    for (var linha = 0; linha < 6; linha++) {
+    var totalSessoes = 0;
+    /* Quantas semanas o mes ocupa de verdade - evita a 6a linha vazia. */
+    var semanas = Math.ceil((primeiroDia + diasNoMes) / 7);
+    for (var linha = 0; linha < semanas; linha++) {
       for (var coluna = 0; coluna < 7; coluna++) {
         var idx = linha * 7 + coluna;
         if (idx < primeiroDia || dia > diasNoMes) {
-          html += '<div style="min-height:100px" class="border-b border-r border-white/5 bg-white/[0.02] opacity-30"></div>';
+          html += '<div class="livro-celula livro-celula--vazia" aria-hidden="true"></div>';
         } else {
           var dataStr = ano + '-' + String(mes).padStart(2,'0') + '-' + String(dia).padStart(2,'0');
           var isHoje = (hojeStr === dataStr);
           var eventosDoDia = eventos.filter(function(e) { return e.data_inicio.substring(0,10) === dataStr; });
-          html += '<div style="min-height:100px" class="border-b border-r border-white/5 bg-white/[0.02] p-1.5">';
-          html += '<span class="inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ' + (isHoje ? 'bg-[#5b8def] text-white' : 'text-[#a6bfc7]') + '">' + dia + '</span>';
+          totalSessoes += eventosDoDia.length;
+          html += '<div class="livro-celula">';
+          /* Dia com sessao recebe o selo de ouro; hoje recebe o carmesim. */
+          html += '<span class="livro-numero'
+            + (eventosDoDia.length ? ' livro-numero--sessao' : '')
+            + (isHoje ? ' livro-numero--hoje' : '') + '">' + dia + '</span>';
           eventosDoDia.forEach(function(ev) {
-            var c = cores[ev.tipo] || cores.sessao;
+            var c = corDoTipo(ev.tipo);
             var hora = ev.data_inicio.substring(11,16);
-            html += '<div onclick="verDetalhes(' + ev.id + ')" class="mb-0.5 cursor-pointer truncate rounded px-1.5 py-0.5 text-[10px] font-medium transition hover:brightness-125" style="background:' + c.bg + ';border-left:2px solid ' + c.border + ';color:' + c.label + '">';
-            html += hora + ' ' + ev.titulo;
-            html += '</div>';
+            html += '<button type="button" onclick="verDetalhes(' + ev.id + ')" class="livro-lancamento" style="--livro-pino:' + c.border + '">';
+            html += '<span class="livro-lancamento-hora">' + esc(hora) + '</span>' + esc(ev.titulo);
+            html += '</button>';
           });
           html += '</div>';
           dia++;
@@ -235,6 +557,12 @@
       }
     }
     grid.innerHTML = html;
+    var resumo = document.getElementById('livro-resumo');
+    if (resumo) {
+      resumo.textContent = totalSessoes
+        ? totalSessoes + (totalSessoes > 1 ? ' sessões' : ' sessão') + ' em ' + mesNome.toLowerCase()
+        : 'Nenhuma sessão em ' + mesNome.toLowerCase();
+    }
   }
 
   function renderLista() {
@@ -242,17 +570,29 @@
     var ordenados = eventos.slice().sort(function(a, b) { return a.data_inicio.localeCompare(b.data_inicio); });
     var html = '';
     ordenados.forEach(function(ev) {
-      var c = cores[ev.tipo] || cores.sessao;
+      var c = corDoTipo(ev.tipo);
       html += '<tr class="border-b border-white/5 transition hover:bg-white/5">';
-      html += '<td class="px-5 py-3.5"><div class="flex items-center gap-2"><span class="text-[13.5px] font-medium text-white">' + ev.titulo + '</span>';
-      html += '<span class="rounded-md px-1.5 py-0.5 font-mono text-[10px] font-bold" style="background:' + c.bg + ';color:' + c.label + '">' + (tipoLabels[ev.tipo] || ev.tipo) + '</span></div></td>';
+      html += '<td class="px-5 py-3.5"><div class="flex items-center gap-2"><span class="text-[13.5px] font-medium text-white">' + esc(ev.titulo) + '</span>';
+      html += '<span class="rounded-md px-1.5 py-0.5 font-mono text-[10px] font-bold" style="background:' + c.bg + ';color:' + c.label + '">' + esc(ev.tipo_display || ev.tipo) + '</span></div></td>';
       html += '<td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">' + formatDT(ev.data_inicio) + '</td>';
-      html += '<td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">' + formatDT(ev.data_fim) + '</td>';
-      html += '<td class="px-5 py-3.5 text-right"><button onclick="verDetalhes(' + ev.id + ')" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[12px] text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">Detalhes</button></td>';
+      var vou = ev.conf_vou || 0, falta = ev.conf_nao_vou || 0, envi = ev.emails_enviados || 0;
+      html += '<td class="px-5 py-3.5"><div class="flex items-center gap-1.5">';
+      html += '<span title="Confirmados" class="rounded-md px-1.5 py-0.5 font-mono text-[10.5px] font-bold" style="background:rgba(74,222,128,.12);color:#4ade80">✓ ' + vou + '</span>';
+      html += '<span title="Ausências" class="rounded-md px-1.5 py-0.5 font-mono text-[10.5px] font-bold" style="background:rgba(248,113,113,.12);color:#f87171">✗ ' + falta + '</span>';
+      html += '<span title="E-mails enviados" class="rounded-md px-1.5 py-0.5 font-mono text-[10.5px] font-bold" style="background:rgba(91,141,239,.12);color:#7aa8f5">✉ ' + envi + '</span>';
+      html += '</div></td>';
+      html += '<td class="px-5 py-3.5 text-right"><div class="flex items-center justify-end gap-2">';
+      html += '<button type="button" onclick="verDetalhes(' + ev.id + ')" title="Detalhes" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def]" aria-label="Detalhes"><svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>';
+      if (ev.pode_editar && ev.sessao_passada) {
+        html += '<button type="button" onclick="abrirChamada(' + ev.id + ')" title="Presença" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#4ade80]/15 hover:text-[#4ade80]" aria-label="Presença"><svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button>';
+      }
+      if (ev.pode_editar) {
+        html += '<button type="button" onclick="abrirQRCode(' + ev.id + ')" title="QRCode de presença" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#a78bfa]/15 hover:text-[#a78bfa]" aria-label="QRCode de presença"><svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v.01M14 21v.01M18 18h3v3h-3z"/></svg></button>';
+      }
+      html += '</div></td>';
       html += '</tr>';
-    });
-    if (!ordenados.length) {
-      html = '<tr><td colspan="4" class="px-5 py-10 text-center text-[13px] text-[#6f8a93]">Nenhum evento neste mês.</td></tr>';
+    });      if (!ordenados.length) {
+      html = '<tr><td colspan="5" class="px-5 py-10 text-center text-[13px] text-[#6f8a93]">Nenhum evento neste mês.</td></tr>';
     }
     corpo.innerHTML = html;
   }
@@ -286,14 +626,14 @@
       html += '<span class="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10px] font-bold text-[#a6bfc7]">' + doMes.length + '</span>';
       html += '</div>';
       doMes.forEach(function(ev) {
-        var c = cores[ev.tipo] || cores.sessao;
-        html += '<div onclick="verDetalhes(' + ev.id + ')" class="mx-1 py-2 mb-2 cursor-pointer rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10">';
-        html += '<div class="text-[13px] font-semibold text-white">' + ev.titulo + '</div>';
-        html += '<div class="mt-1 flex items-center gap-2 text-[11px] text-[#a6bfc7]">';
+        var c = corDoTipo(ev.tipo);
+        html += '<button type="button" onclick="verDetalhes(' + ev.id + ')" class="mx-1 mb-2 block w-full cursor-pointer rounded-xl border border-white/10 bg-white/5 p-3 py-2 text-left transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60">';
+        html += '<span class="block text-[13px] font-semibold text-white">' + esc(ev.titulo) + '</span>';
+        html += '<span class="mt-1 flex items-center gap-2 text-[11px] text-[#a6bfc7]">';
         html += '<span class="inline-block h-2 w-2 rounded-full" style="background:' + c.label + '"></span>';
         html += formatDT(ev.data_inicio);
-        html += '</div>';
-        html += '</div>';
+        html += '</span>';
+        html += '</button>';
       });
       if (!doMes.length) {
         html += '<div class="rounded-lg border border-dashed border-white/10 p-4 text-center text-[11px] text-[#6f8a93]">Sem eventos</div>';
@@ -308,45 +648,57 @@
     document.getElementById('evento-id').value = '';
     document.getElementById('evento-titulo').value = '';
     document.getElementById('evento-inicio').value = dataStr ? dataStr + 'T19:00' : '';
-    document.getElementById('evento-fim').value = dataStr ? dataStr + 'T21:00' : '';
-    document.getElementById('evento-tipo').value = 'sessao';
+    document.getElementById('evento-tipo').value = '';
+    povoarLojas('');
+    atualizarTipos('outros');
     document.getElementById('evento-descricao').value = '';
     document.getElementById('modal-titulo').textContent = 'Novo Evento';
-    var m = document.getElementById('modal-evento');
-    m.classList.remove('hidden');
-    m.classList.add('flex');
+    limparErro('evento-erro');
+    abrirModalEl('modal-evento');
+    var tit = document.getElementById('evento-titulo');
+    if (tit) tit.focus();
   };
   window.fecharModal = function() {
-    var m = document.getElementById('modal-evento');
-    m.classList.add('hidden');
-    m.classList.remove('flex');
+    fecharModalEl('modal-evento');
   };
   window.fecharDetalhes = function() {
-    var m = document.getElementById('modal-detalhes');
-    m.classList.add('hidden');
-    m.classList.remove('flex');
+    fecharModalEl('modal-detalhes');
   };
   window.verDetalhes = function(id) {
     var ev = eventos.find(function(e) { return e.id === id; });
     if (!ev) return;
-    var c = cores[ev.tipo] || cores.sessao;
+    var c = corDoTipo(ev.tipo);
     var html = '';
     html += '<div class="rounded-lg px-3 py-2" style="background:' + c.bg + ';border-left:3px solid ' + c.border + '">';
-    html += '<div class="text-[11px] font-bold" style="color:' + c.label + '">' + (tipoLabels[ev.tipo] || ev.tipo) + '</div></div>';
-    html += '<div class="text-[16px] font-bold text-white">' + ev.titulo + '</div>';
+    html += '<div class="text-[11px] font-bold" style="color:' + c.label + '">' + esc(ev.tipo_display || ev.tipo) + '</div></div>';
+    html += '<div class="text-[16px] font-bold text-white">' + esc(ev.titulo) + '</div>';
     html += '<div class="text-[12px] text-[#a6bfc7]">' + formatDT(ev.data_inicio) + ' - ' + formatDT(ev.data_fim) + '</div>';
-    if (ev.descricao) { html += '<div class="text-[12px] text-[#6f8a93]">' + ev.descricao + '</div>'; }
+    html += '<div class="mt-1.5 flex items-center gap-1.5">';
+    html += '<span title="Confirmados" class="rounded-md px-1.5 py-0.5 font-mono text-[10.5px] font-bold" style="background:rgba(74,222,128,.12);color:#4ade80">✓ ' + (ev.conf_vou || 0) + '</span>';
+    html += '<span title="Ausências" class="rounded-md px-1.5 py-0.5 font-mono text-[10.5px] font-bold" style="background:rgba(248,113,113,.12);color:#f87171">✗ ' + (ev.conf_nao_vou || 0) + '</span>';
+    html += '<span title="E-mails enviados" class="rounded-md px-1.5 py-0.5 font-mono text-[10.5px] font-bold" style="background:rgba(91,141,239,.12);color:#7aa8f5">✉ ' + (ev.emails_enviados || 0) + '</span>';
+    html += '</div>';
+    if (ev.descricao) { html += '<div class="text-[12px] text-[#6f8a93]">' + esc(ev.descricao) + '</div>'; }
     document.getElementById('detalhes-conteudo').innerHTML = html;
     var acoes = '';
+    var _btnBase = 'flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 transition ';
     if (ev.pode_editar) {
-      acoes += '<button onclick="editarEvento(' + ev.id + ')" class="hazon-btn-primary text-[12px]">Editar</button>';
-      acoes += '<button onclick="excluirEvento(' + ev.id + ')" class="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-1.5 text-[12px] font-semibold text-red-200 transition hover:bg-red-400/20">Excluir</button>';
+      acoes += '<button type="button" onclick="editarEvento(' + ev.id + ')" title="Editar" aria-label="Editar" class="' + _btnBase + 'text-[#a6bfc7] hover:bg-[#5b8def]/15 hover:text-[#5b8def]">';
+      acoes += '<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>';
+      if (ev.sessao_passada) {
+        acoes += '<button type="button" onclick="abrirChamada(' + ev.id + ')" title="Presença" aria-label="Presença" class="' + _btnBase + 'text-[#a6bfc7] hover:bg-[#4ade80]/15 hover:text-[#4ade80]">';
+        acoes += '<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button>';
+      }
+      acoes += '<a href="' + urlEvento(URLS.relatorio, ev.id) + '" target="_blank" rel="noopener" title="Folha de presença (PDF p/ impressão)" aria-label="Imprimir" class="' + _btnBase + 'cursor-pointer text-[#c9a227] hover:bg-[#c9a227]/15 hover:text-[#e8d28a]">';
+      acoes += '<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></a>';
+      acoes += '<button type="button" onclick="abrirQRCode(' + ev.id + ')" title="QRCode de presença" aria-label="QRCode de presença" class="' + _btnBase + 'text-[#a6bfc7] hover:bg-[#a78bfa]/15 hover:text-[#a78bfa]">';
+      acoes += '<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v.01M14 21v.01M18 18h3v3h-3z"/></svg></button>';
+      acoes += '<button type="button" onclick="excluirEvento(' + ev.id + ')" title="Excluir" aria-label="Excluir" class="' + _btnBase + 'text-[#a6bfc7] hover:bg-red-400/15 hover:text-red-300">';
+      acoes += '<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></button>';
     }
-    acoes += '<button onclick="fecharDetalhes()" class="hazon-btn-ghost text-[12px]">Fechar</button>';
     document.getElementById('detalhes-acoes').innerHTML = acoes;
-    var m = document.getElementById('modal-detalhes');
-    m.classList.remove('hidden');
-    m.classList.add('flex');
+    limparErro('detalhes-erro');
+    abrirModalEl('modal-detalhes');
   };
   window.editarEvento = function(id) {
     var ev = eventos.find(function(e) { return e.id === id; });
@@ -355,50 +707,196 @@
     document.getElementById('evento-id').value = ev.id;
     document.getElementById('evento-titulo').value = ev.titulo;
     document.getElementById('evento-inicio').value = ev.data_inicio;
-    document.getElementById('evento-fim').value = ev.data_fim;
-    document.getElementById('evento-tipo').value = ev.tipo;
+    var lojaDoEvento = lojasData.find(function (l) { return String(l.id) === String(ev.loja_id); });
+    if (lojaDoEvento) {
+      var valeDoEvento = valesData.find(function (v) { return String(v.tenant_id) === String(lojaDoEvento.tenant_id); });
+      var selVale = document.getElementById('evento-vale');
+      if (valeDoEvento && selVale && selVale.tagName && selVale.tagName.toLowerCase() === 'select') selVale.value = String(valeDoEvento.id);
+      povoarLojas(ev.loja_id);
+    }
+    atualizarTipos(ev.tipo, ev.tipo_display);
     document.getElementById('evento-descricao').value = ev.descricao || '';
     document.getElementById('modal-titulo').textContent = 'Editar Evento';
-    var m = document.getElementById('modal-evento');
-    m.classList.remove('hidden');
-    m.classList.add('flex');
+    limparErro('evento-erro');
+    abrirModalEl('modal-evento');
+    var tit = document.getElementById('evento-titulo');
+    if (tit) tit.focus();
   };
   window.excluirEvento = function(id) {
     if (!confirm('Tem certeza que deseja excluir este evento?')) return;
-    fetch('/tarefas/eventos/' + id + '/excluir/', {
+    limparErro('detalhes-erro');
+    fetch(urlEvento(URLS.excluir, id), {
       method: 'POST',
-      headers: { 'X-CSRFToken': getCookie('csrftoken') }
+      headers: { 'X-CSRFToken': csrftoken() }
     }).then(function(r) { return r.json(); }).then(function(d) {
-      if (d.ok) { location.reload(); } else { alert(d.erro || 'Erro ao excluir'); }
+      if (d.ok) { location.reload(); }
+      else { mostrarErro('detalhes-erro', d.erro || 'Erro ao excluir o evento.'); }
+    }).catch(function() {
+      mostrarErro('detalhes-erro', 'Falha de rede ao excluir o evento. Tente novamente.');
     });
   };
   window.salvarEvento = function(e) {
     e.preventDefault();
+    limparErro('evento-erro');
     var id = document.getElementById('evento-id').value;
     var dados = {
       titulo: document.getElementById('evento-titulo').value,
       data_inicio: document.getElementById('evento-inicio').value,
-      data_fim: document.getElementById('evento-fim').value,
+      loja: document.getElementById('evento-loja') ? document.getElementById('evento-loja').value : '',
       tipo: document.getElementById('evento-tipo').value,
       descricao: document.getElementById('evento-descricao').value
     };
-    var url = id ? '/tarefas/eventos/' + id + '/editar/' : '/tarefas/eventos/criar/';
+    var url = id ? urlEvento(URLS.editar, id) : URLS.criar;
     fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken() },
       body: JSON.stringify(dados)
-    }).then(function(r) { return r.json(); }).then(function(d) {
-      if (d.ok) { location.reload(); } else { alert(d.erro || 'Erro ao salvar'); }
+    }).then(function(r) {
+      return r.text().then(function(texto) {
+        var d = null;
+        try { d = JSON.parse(texto); } catch (err) { d = null; }
+        if (!d || !d.ok) {
+          mostrarErro('evento-erro', (d && d.erro) || ('Erro ' + r.status + ' do servidor ao salvar o evento.'));
+          return;
+        }
+        location.reload();
+      });
+    }).catch(function(err) {
+      mostrarErro('evento-erro', 'Falha de rede ao salvar o evento. Tente novamente.');
     });
+  };
+  // ── Lista de chamada (presença) ────────────────────────────────
+  var chamadaEventoId = null;
+  window.abrirChamada = function(id) {
+    chamadaEventoId = id;
+    limparErro('chamada-erro');
+    abrirModalEl('modal-chamada');
+    var lista = document.getElementById('chamada-lista');
+    lista.innerHTML = '<div class="py-6 text-center text-[12px] text-[#6f8a93]">Carregando membros…</div>';
+    fetch(urlEvento(URLS.presenca, id), {
+      headers: { 'X-CSRFToken': csrftoken() }
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      if (d.erro) {
+        lista.innerHTML = '';
+        mostrarErro('chamada-erro', d.erro);
+        return;
+      }
+      if (d.evento) document.getElementById('chamada-evento').textContent = d.evento.titulo;
+      renderChamada(d.membros || []);
+    }).catch(function() {
+      lista.innerHTML = '';
+      mostrarErro('chamada-erro', 'Erro ao carregar a lista de chamada.');
+    });
+  };
+  function renderChamada(membros) {
+    var lista = document.getElementById('chamada-lista');
+    if (!membros.length) {
+      lista.innerHTML = '<div class="py-6 text-center text-[12px] text-[#6f8a93]">Nenhum registro encontrado — nenhum membro vinculado à loja deste evento.</div>';
+      return;
+    }
+    var html = '';
+    membros.forEach(function(m) {
+      var checked = m.presente === true ? 'checked' : '';
+      html += '<label class="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 transition hover:bg-white/10">';
+      html += '<span class="text-[13px] text-white">' + esc(m.nome) + '</span>';
+      html += '<input type="checkbox" data-membro="' + esc(m.id) + '" ' + checked + ' class="chamada-pres h-4 w-4 accent-[#4ade80]">';
+      html += '</label>';
+    });
+    lista.innerHTML = html;
+  }
+  window.salvarChamada = function() {
+    if (!chamadaEventoId) return;
+    limparErro('chamada-erro');
+    var presencas = [];
+    document.querySelectorAll('#chamada-lista .chamada-pres').forEach(function(cb) {
+      presencas.push({
+        membro: cb.getAttribute('data-membro'),
+        presente: cb.checked,
+      });
+    });
+    fetch(urlEvento(URLS.presenca, chamadaEventoId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken() },
+      body: JSON.stringify({ presencas: presencas }),
+    }).then(function(r) {
+      return r.text().then(function(texto) {
+        var d = null;
+        try { d = JSON.parse(texto); } catch (err) { d = null; }
+        if (!d || !d.ok) {
+          mostrarErro('chamada-erro', (d && d.erro) || ('Erro ' + r.status + ' ao registrar a presença.'));
+          return;
+        }
+        fecharChamada();
+        location.reload();
+      });
+    }).catch(function(err) {
+      mostrarErro('chamada-erro', 'Falha de rede ao registrar a presença. Tente novamente.');
+    });
+  };
+  window.fecharChamada = function() {
+    fecharModalEl('modal-chamada');
+  };
+  // ── QRCode de auto-presença ────────────────────────────────────
+  window.abrirQRCode = function(id) {
+    var ev = eventos.find(function(e) { return e.id === id; });
+    if (ev) document.getElementById('qrcode-evento').textContent = ev.titulo;
+    var corpo = document.getElementById('qrcode-corpo');
+    var link = document.getElementById('qrcode-link');
+    corpo.innerHTML = '<div class="py-6 text-center text-[12px] text-[#6f8a93]">Gerando QRCode…</div>';
+    link.textContent = '';
+    link.removeAttribute('href');
+    limparErro('qrcode-erro');
+    abrirModalEl('modal-qrcode');
+    fetch(urlEvento(URLS.qrcode, id), {
+      headers: { 'X-CSRFToken': csrftoken() }
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      if (!d.ok) {
+        corpo.innerHTML = '';
+        mostrarErro('qrcode-erro', d.erro || 'Erro ao gerar o QRCode.');
+        return;
+      }
+      var img = document.createElement('img');
+      img.src = d.qr;
+      img.alt = 'QRCode de presença';
+      img.className = 'mx-auto h-56 w-56 rounded-xl border border-white/10 bg-white p-2';
+      img.width = 224;
+      img.height = 224;
+      corpo.innerHTML = '';
+      corpo.appendChild(img);
+      link.textContent = d.url;
+      link.href = d.url;
+    }).catch(function() {
+      corpo.innerHTML = '';
+      mostrarErro('qrcode-erro', 'Erro ao gerar o QRCode. Tente novamente.');
+    });
+  };
+  window.fecharQRCode = function() {
+    fecharModalEl('modal-qrcode');
   };
   function getCookie(name) {
     var v = document.cookie.match('(^|;)\s*' + name + '\s*=\s*([^;]+)');
     return v ? v.pop() : '';
   }
+  // CSRF_COOKIE_HTTPONLY=True impede o JS de ler o cookie;
+  // o token vem do input hidden do {% csrf_token %} no form.
+  function csrftoken() {
+    var el = document.querySelector('#form-evento input[name="csrfmiddlewaretoken"]');
+    return (el && el.value) || getCookie('csrftoken');
+  }
 
   renderCalendario();
   renderLista();
   renderKanban();
+  povoarVales();
+  povoarLojas();
+  var _selVale = document.getElementById('evento-vale');
+  if (_selVale && _selVale.tagName && _selVale.tagName.toLowerCase() === 'select') {
+    _selVale.addEventListener('change', function () { povoarLojas(); });
+  }
+  var _selLoja = document.getElementById('evento-loja');
+  if (_selLoja) {
+    _selLoja.addEventListener('change', function () { atualizarTipos(); });
+  }
   definirModo(modoAtual);
 })();
 </script>

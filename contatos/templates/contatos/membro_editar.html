@@ -1,11 +1,11 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Alterar {{ membro.nome }}{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Alterar {{ membro.nome }}{% endblock %}
 
 {% block conteudo %}
 <div class="mb-6">
-  <a href="{% url 'contatos:membro_detalhe' membro.id %}" class="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#a6bfc7] transition hover:text-white">
-    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  <a href="{% url 'membros:detalhe' membro.id %}" class="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#a6bfc7] transition hover:text-white">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
     Voltar ao detalhe
   </a>
 </div>
@@ -13,7 +13,7 @@
 <div class="hazon-card-sm p-7 backdrop-blur-xl">
   <div class="mb-6 flex items-center gap-3">
     <span class="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#fbbf24]/15">
-      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
     </span>
     <div>
       <h1 class="font-display text-lg font-semibold text-white">Alterar Membro</h1>
@@ -22,13 +22,13 @@
   </div>
 
   {% if erro %}
-    <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ erro }}</div>
+    <div id="form-erro" class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]" role="alert">{{ erro }}</div>
   {% endif %}
   {% if sucesso %}
-    <div class="mb-4 rounded-xl border border-[#4ade80]/40 bg-[#4ade80]/15 px-4 py-3 text-[13.5px] font-semibold text-[#a7f3d0]">{{ sucesso }}</div>
+    <div class="mb-4 rounded-xl border border-[#4ade80]/40 bg-[#4ade80]/15 px-4 py-3 text-[13.5px] font-semibold text-[#a7f3d0]" role="status">{{ sucesso }}</div>
   {% endif %}
 
-  <form method="post" action="{% url 'contatos:membro_editar' membro.id %}">
+  <form method="post" action="{% url 'membros:editar' membro.id %}" aria-label="Alterar membro" {% if erro %}aria-describedby="form-erro"{% endif %} data-unsaved-guard>
     {% csrf_token %}
 
     {% with input_class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15" select_class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15" %}
@@ -38,26 +38,32 @@
       <!-- Organização -->
       <section class="rounded-xl border border-white/10 bg-white/5 p-5 lg:col-span-2">
         <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           Organização
         </h2>
         <div class="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <label for="loja" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Loja</label>
-            <select id="loja" name="loja" class="{{ select_class }}">
-              <option value="" class="bg-[#0a1e3d]">— Selecione —</option>
-              {% for l in lojas %}
-                <option value="{{ l.id }}" {% if l.id == membro.loja_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ l.nome }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div>
-            <label for="data_iniciacao" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Data de Iniciação</label>
-            <input type="date" id="data_iniciacao" name="data_iniciacao" value="{{ membro.data_iniciacao }}" class="{{ input_class }} [color-scheme:dark]">
+          <div class="sm:col-span-2 lg:col-span-2">
+            <span class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]" id="membro-lojas-rotulo">Lojas vinculadas</span>
+            <fieldset aria-describedby="membro-lojas-ajuda">
+              <legend class="sr-only">Selecione as lojas do membro</legend>
+              <div class="max-h-56 space-y-1.5 overflow-y-auto rounded-xl border border-white/15 bg-white/5 p-3">
+                {% for l in lojas %}
+                  <label class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1 py-1 text-[13px] text-white transition hover:bg-white/5">
+                    <input type="checkbox" name="lojas" value="{{ l.id }}" id="membro-loja-{{ l.id }}"
+                           class="h-4 w-4 rounded border-white/20 bg-white/10 accent-[#5b8def]"
+                           {% if l.id in membro.lojas_ids %}checked{% endif %}>
+                    <span class="min-w-0 truncate">{{ l.nome }}{% if l.prefeitura %} · {{ l.prefeitura }}{% endif %}</span>
+                  </label>
+                {% empty %}
+                  <p class="text-[12.5px] text-[#a6bfc7]">Nenhuma loja disponível neste Vale.</p>
+                {% endfor %}
+              </div>
+            </fieldset>
+            <p class="mt-1.5 text-[11.5px] text-[#a6bfc7]" id="membro-lojas-ajuda">Marque uma ou mais lojas — nenhuma marcada deixa o membro sem loja por enquanto.</p>
           </div>
           <div>
             <label for="potencia" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Potência do Simbolismo</label>
-            <select id="potencia" name="potencia" class="{{ select_class }}">
+            <select id="potencia" autocomplete="off" name="potencia" class="{{ select_class }}">
               <option value="" class="bg-[#0a1e3d]">— Selecione —</option>
               {% for p in sugestoes.potencias %}
                 <option value="{{ p }}" {% if p == membro.potencia %}selected{% endif %} class="bg-[#0a1e3d]">{{ p }}</option>
@@ -66,12 +72,12 @@
           </div>
           <div>
             <label for="cargo" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Cargo</label>
-            <input type="text" id="cargo" name="cargo" value="{{ membro.cargo }}" list="sugestoes-cargos" class="{{ input_class }}">
+            <input type="text" id="cargo" autocomplete="off" name="cargo" value="{{ membro.cargo }}" list="sugestoes-cargos" class="{{ input_class }}">
             <datalist id="sugestoes-cargos">{% for c in sugestoes.cargos %}<option value="{{ c }}">{% endfor %}</datalist>
           </div>
           <div>
             <label for="condicao" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Condição de Mensalidade</label>
-            <input type="text" id="condicao" name="condicao" value="{{ membro.condicao }}" list="sugestoes-condicoes" class="{{ input_class }}">
+            <input type="text" id="condicao" autocomplete="off" name="condicao" value="{{ membro.condicao }}" list="sugestoes-condicoes" class="{{ input_class }}">
             <datalist id="sugestoes-condicoes"><option value="REGULAR"><option value="PENDENTE"><option value="INADIMPLENTE"></datalist>
           </div>
         </div>
@@ -80,32 +86,27 @@
       <!-- Identificação -->
       <section class="rounded-xl border border-white/10 bg-white/5 p-5">
         <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Identificação
         </h2>
         <div class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
           <div class="sm:col-span-2">
             <label for="nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome completo *</label>
-            <input type="text" id="nome" name="nome" value="{{ membro.nome }}" required class="{{ input_class }}">
+            <input type="text" id="nome" autocomplete="name" name="nome" value="{{ membro.nome }}" required class="{{ input_class }}">
+          </div>
+          <div class="sm:col-span-2">
+            <label for="nome_historico" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome histórico (vulto que o motiva)</label>
+            <input type="text" id="nome_historico" autocomplete="off" name="nome_historico" value="{{ membro.nome_historico }}" placeholder="Ex.: Tiradentes, Anne Frank…" class="{{ input_class }}">
           </div>
           <div>
             <label for="cpf" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">CPF</label>
-            <input type="text" id="cpf" name="cpf" value="{{ membro.cpf }}" class="{{ input_class }}">
+            <input type="text" id="cpf" spellcheck="false" inputmode="numeric" name="cpf" value="{{ membro.cpf }}" class="{{ input_class }}">
           </div>
           <div>
             <label for="situacao" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Situação</label>
             <select id="situacao" name="situacao" class="{{ select_class }}">
               <option value="ATIVO" {% if membro.situacao == 'ATIVO' %}selected{% endif %} class="bg-[#0a1e3d]">Ativo</option>
               <option value="INATIVO" {% if membro.situacao == 'INATIVO' %}selected{% endif %} class="bg-[#0a1e3d]">Inativo</option>
-            </select>
-          </div>
-          <div>
-            <label for="classe" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Classe Atual</label>
-            <select id="classe" name="classe" class="{{ select_class }}">
-              <option value="" class="bg-[#0a1e3d]">— Selecione —</option>
-              {% for c in classes %}
-                <option value="{{ c.id }}" {% if c.id == membro.class_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ c.abbr }} - {{ c.name }}</option>
-              {% endfor %}
             </select>
           </div>
           <div>
@@ -119,11 +120,11 @@
           </div>
           <div>
             <label for="cadastro_maconico" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Cadastro Maçônico</label>
-            <input type="text" id="cadastro_maconico" name="cadastro_maconico" value="{{ membro.cadastro_maconico }}" class="{{ input_class }}">
+            <input type="text" id="cadastro_maconico" autocomplete="off" spellcheck="false" name="cadastro_maconico" value="{{ membro.cadastro_maconico }}" class="{{ input_class }}">
           </div>
           <div>
             <label for="tipo_admissao" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Tipo de Admissão</label>
-            <input type="text" id="tipo_admissao" name="tipo_admissao" value="{{ membro.tipo_admissao }}" list="sugestoes-admissoes" class="{{ input_class }}">
+            <input type="text" id="tipo_admissao" autocomplete="off" name="tipo_admissao" value="{{ membro.tipo_admissao }}" list="sugestoes-admissoes" class="{{ input_class }}">
             <datalist id="sugestoes-admissoes">{% for t in sugestoes.tipos_admissao %}<option value="{{ t }}">{% endfor %}<option value="IMPORTACAO"></datalist>
           </div>
           <div>
@@ -132,7 +133,7 @@
           </div>
           <div class="sm:col-span-2">
             <label for="escolaridade" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Escolaridade</label>
-            <input type="text" id="escolaridade" name="escolaridade" value="{{ membro.escolaridade }}" list="sugestoes-escolaridades" class="{{ input_class }}">
+            <input type="text" id="escolaridade" autocomplete="off" name="escolaridade" value="{{ membro.escolaridade }}" list="sugestoes-escolaridades" class="{{ input_class }}">
             <datalist id="sugestoes-escolaridades">{% for e in sugestoes.escolaridades %}<option value="{{ e }}">{% endfor %}</datalist>
           </div>
         </div>
@@ -141,7 +142,7 @@
       <!-- Datas Cavaleirescas -->
       <section class="rounded-xl border border-white/10 bg-white/5 p-5">
         <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 4.8L20 8l-4 3.9.9 5.6L12 14.9 7.1 17.5 8 11.9 4 8l5.6-1.2z"/></svg>
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l2.4 4.8L20 8l-4 3.9.9 5.6L12 14.9 7.1 17.5 8 11.9 4 8l5.6-1.2z"/></svg>
           Datas Cavaleirescas
         </h2>
         <div class="grid gap-x-6 gap-y-4">
@@ -163,7 +164,7 @@
       <!-- Dados Pessoais -->
       <section class="rounded-xl border border-white/10 bg-white/5 p-5">
         <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Dados Pessoais
         </h2>
         <div class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
@@ -173,24 +174,24 @@
           </div>
           <div>
             <label for="nacionalidade" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nacionalidade</label>
-            <input type="text" id="nacionalidade" name="nacionalidade" value="{{ membro.nacionalidade }}" class="{{ input_class }}">
+            <input type="text" id="nacionalidade" autocomplete="off" name="nacionalidade" value="{{ membro.nacionalidade }}" class="{{ input_class }}">
           </div>
           <div>
             <label for="naturalidade" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Naturalidade</label>
-            <input type="text" id="naturalidade" name="naturalidade" value="{{ membro.naturalidade }}" class="{{ input_class }}">
+            <input type="text" id="naturalidade" autocomplete="off" name="naturalidade" value="{{ membro.naturalidade }}" class="{{ input_class }}">
           </div>
           <div>
             <label for="estado_civil" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Estado Civil</label>
-            <input type="text" id="estado_civil" name="estado_civil" value="{{ membro.estado_civil }}" list="sugestoes-civis" class="{{ input_class }}">
+            <input type="text" id="estado_civil" autocomplete="off" name="estado_civil" value="{{ membro.estado_civil }}" list="sugestoes-civis" class="{{ input_class }}">
             <datalist id="sugestoes-civis">{% for e in sugestoes.estados_civis %}<option value="{{ e }}">{% endfor %}<option value="SOLTEIRO"><option value="CASADO"><option value="DIVORCIADO"><option value="VIUVO"><option value="UNIAO_ESTAVEL"></datalist>
           </div>
           <div>
             <label for="pai" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Pai</label>
-            <input type="text" id="pai" name="pai" value="{{ membro.pai }}" class="{{ input_class }}">
+            <input type="text" id="pai" autocomplete="off" name="pai" value="{{ membro.pai }}" class="{{ input_class }}">
           </div>
           <div>
             <label for="mae" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome da Mãe</label>
-            <input type="text" id="mae" name="mae" value="{{ membro.mae }}" class="{{ input_class }}">
+            <input type="text" id="mae" autocomplete="off" name="mae" value="{{ membro.mae }}" class="{{ input_class }}">
           </div>
         </div>
       </section>
@@ -198,17 +199,17 @@
       <!-- Documentos -->
       <section class="rounded-xl border border-white/10 bg-white/5 p-5">
         <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           Documentos
         </h2>
         <div class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
           <div>
             <label for="identidade" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">RG / Identidade</label>
-            <input type="text" id="identidade" name="identidade" value="{{ membro.identidade }}" class="{{ input_class }}">
+            <input type="text" id="identidade" autocomplete="off" spellcheck="false" name="identidade" value="{{ membro.identidade }}" class="{{ input_class }}">
           </div>
           <div>
             <label for="orgao_emissor" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Órgão Emissor</label>
-            <input type="text" id="orgao_emissor" name="orgao_emissor" value="{{ membro.orgao_emissor }}" class="{{ input_class }}">
+            <input type="text" id="orgao_emissor" autocomplete="off" name="orgao_emissor" value="{{ membro.orgao_emissor }}" class="{{ input_class }}">
           </div>
           <div>
             <label for="data_emissao" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Data de Emissão</label>
@@ -216,7 +217,7 @@
           </div>
           <div>
             <label for="cpf_doc" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">CPF</label>
-            <input type="text" id="cpf_doc" name="cpf" value="{{ membro.cpf }}" class="{{ input_class }}">
+            <input type="text" id="cpf_doc" spellcheck="false" inputmode="numeric" name="cpf" value="{{ membro.cpf }}" class="{{ input_class }}">
           </div>
         </div>
       </section>
@@ -224,21 +225,21 @@
       <!-- Contato -->
       <section class="rounded-xl border border-white/10 bg-white/5 p-5">
         <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/></svg>
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/></svg>
           Contato
         </h2>
         <div class="grid gap-x-6 gap-y-4">
           <div>
             <label for="email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail</label>
-            <input type="email" id="email" name="email" value="{{ membro.email }}" class="{{ input_class }}">
+            <input type="email" id="email" autocomplete="email" spellcheck="false" name="email" value="{{ membro.email }}" class="{{ input_class }}">
           </div>
           <div>
             <label for="celular" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Celular</label>
-            <input type="tel" id="celular" name="celular" value="{{ membro.celular }}" class="{{ input_class }}">
+            <input type="tel" id="celular" autocomplete="tel" name="celular" value="{{ membro.celular }}" class="{{ input_class }}">
           </div>
           <div>
             <label for="telefone_urgencia" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone de Urgência</label>
-            <input type="tel" id="telefone_urgencia" name="telefone_urgencia" value="{{ membro.telefone_urgencia }}" class="{{ input_class }}">
+            <input type="tel" id="telefone_urgencia" autocomplete="tel" name="telefone_urgencia" value="{{ membro.telefone_urgencia }}" class="{{ input_class }}">
           </div>
         </div>
       </section>
@@ -246,17 +247,17 @@
       <!-- Endereço -->
       <section class="rounded-xl border border-white/10 bg-white/5 p-5">
         <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
           Endereço
         </h2>
         <div class="grid gap-x-6 gap-y-4 sm:grid-cols-2">
           <div class="sm:col-span-2">
             <label for="endereco" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Logradouro</label>
-            <input type="text" id="endereco" name="endereco" value="{{ membro.endereco }}" class="{{ input_class }}">
+            <input type="text" id="endereco" autocomplete="street-address" name="endereco" value="{{ membro.endereco }}" class="{{ input_class }}">
           </div>
           <div>
             <label for="numero" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Número</label>
-            <input type="text" id="numero" name="numero" value="{{ membro.numero }}" class="{{ input_class }}">
+            <input type="text" id="numero" autocomplete="off" name="numero" value="{{ membro.numero }}" class="{{ input_class }}">
           </div>
           <div>
             <label for="complemento" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Complemento</label>
@@ -264,19 +265,19 @@
           </div>
           <div>
             <label for="bairro" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Bairro</label>
-            <input type="text" id="bairro" name="bairro" value="{{ membro.bairro }}" class="{{ input_class }}">
+            <input type="text" id="bairro" autocomplete="address-level3" name="bairro" value="{{ membro.bairro }}" class="{{ input_class }}">
           </div>
           <div>
             <label for="cidade" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Cidade</label>
-            <input type="text" id="cidade" name="cidade" value="{{ membro.cidade }}" class="{{ input_class }}">
+            <input type="text" id="cidade" autocomplete="address-level2" name="cidade" value="{{ membro.cidade }}" class="{{ input_class }}">
           </div>
           <div>
             <label for="uf" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">UF</label>
-            <input type="text" id="uf" name="uf" value="{{ membro.uf }}" maxlength="2" placeholder="PR" class="{{ input_class }} uppercase">
+            <input type="text" id="uf" autocomplete="address-level1" name="uf" value="{{ membro.uf }}" maxlength="2" placeholder="PR" class="{{ input_class }} uppercase">
           </div>
           <div>
             <label for="cep" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">CEP</label>
-            <input type="text" id="cep" name="cep" value="{{ membro.cep }}" class="{{ input_class }}">
+            <input type="text" id="cep" autocomplete="postal-code" inputmode="numeric" name="cep" value="{{ membro.cep }}" class="{{ input_class }}">
           </div>
         </div>
       </section>
@@ -284,21 +285,53 @@
       <!-- Informações Ritualísticas -->
       <section class="rounded-xl border border-white/10 bg-white/5 p-5 lg:col-span-2">
         <h2 class="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5b8def]">
-          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           Informações Ritualísticas
         </h2>
         <div class="grid gap-x-6 gap-y-4 sm:grid-cols-3">
           <div>
-            <label for="data_passagem" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Data de Passagem</label>
-            <input type="date" id="data_passagem" name="data_passagem" value="{{ membro.data_passagem }}" class="{{ input_class }} [color-scheme:dark]">
-          </div>
-          <div>
-            <label for="data_elevacao" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Data de Elevação</label>
-            <input type="date" id="data_elevacao" name="data_elevacao" value="{{ membro.data_elevacao }}" class="{{ input_class }} [color-scheme:dark]">
-          </div>
-          <div>
             <label for="data_instalacao" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Data de Instalação</label>
             <input type="date" id="data_instalacao" name="data_instalacao" value="{{ membro.data_instalacao }}" class="{{ input_class }} [color-scheme:dark]">
+          </div>
+          <div class="sm:col-span-2">
+            <h3 class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Histórico de graus e datas</h3>
+            {{ graus_formset.management_form }}
+            <div id="grau-formset-rows" class="space-y-3" data-max-forms="30">
+              {% for form in graus_formset %}
+              <div class="grid items-end gap-3 rounded-xl border border-white/10 bg-black/10 p-3 sm:grid-cols-[1fr_1fr_auto]">
+                {{ form.id }}
+                <div>
+                  <label for="{{ form.grau.id_for_label }}" class="mb-1.5 block text-[11px] font-semibold text-[#a6bfc7]">Grau</label>
+                  {{ form.grau }}
+                  {% for error in form.grau.errors %}<p class="mt-1 text-xs text-red-300" role="alert">{{ error }}</p>{% endfor %}
+                </div>
+                <div>
+                  <label for="{{ form.data.id_for_label }}" class="mb-1.5 block text-[11px] font-semibold text-[#a6bfc7]">Data de obtenção</label>
+                  {{ form.data }}
+                  {% for error in form.data.errors %}<p class="mt-1 text-xs text-red-300" role="alert">{{ error }}</p>{% endfor %}
+                </div>
+                {% if form.instance.pk %}
+                <label for="{{ form.DELETE.id_for_label }}" class="flex items-center gap-2 pb-3 text-xs text-[#fca5a5]">{{ form.DELETE }} Remover</label>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% for error in graus_formset.non_form_errors %}<p class="mt-2 text-xs text-red-300" role="alert">{{ error }}</p>{% endfor %}
+            <template id="grau-empty-form">
+              <div class="grid items-end gap-3 rounded-xl border border-white/10 bg-black/10 p-3 sm:grid-cols-[1fr_1fr_auto]">
+                {{ graus_formset.empty_form.id }}
+                <div>
+                  <label for="{{ graus_formset.empty_form.grau.id_for_label }}" class="mb-1.5 block text-[11px] font-semibold text-[#a6bfc7]">Grau</label>
+                  {{ graus_formset.empty_form.grau }}
+                </div>
+                <div>
+                  <label for="{{ graus_formset.empty_form.data.id_for_label }}" class="mb-1.5 block text-[11px] font-semibold text-[#a6bfc7]">Data de obtenção</label>
+                  {{ graus_formset.empty_form.data }}
+                </div>
+              </div>
+            </template>
+            <button type="button" id="adicionar-grau" class="mt-3 rounded-lg border border-[#5b8def]/40 bg-[#5b8def]/10 px-3 py-2 text-xs font-semibold text-[#9fc0ff] hover:bg-[#5b8def]/20">Adicionar grau</button>
+            <p class="mt-1.5 text-[11.5px] text-[#a6bfc7]">Informe a data real de obtenção. Cada grau pode ser registrado uma vez.</p>
           </div>
         </div>
       </section>
@@ -308,13 +341,32 @@
 
     <div class="mt-7 flex items-center gap-3">
       <button type="submit" class="flex items-center gap-2 rounded-xl border border-[#5b8def]/50 bg-gradient-to-br from-[#1a5fb4] to-[#1450a0] px-6 py-3 text-[14px] font-bold text-white shadow-lg shadow-[#1a5fb4]/30 transition hover:brightness-110">
-        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Salvar
       </button>
-      <a href="{% url 'contatos:membro_detalhe' membro.id %}" class="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-[14px] font-medium text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">
+      <a href="{% url 'membros:detalhe' membro.id %}" class="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-[14px] font-medium text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">
         Cancelar
       </a>
     </div>
   </form>
 </div>
+<script>
+  (function () {
+    const addButton = document.getElementById('adicionar-grau');
+    const rows = document.getElementById('grau-formset-rows');
+    const totalForms = document.getElementById('id_graus-TOTAL_FORMS');
+    const emptyForm = document.getElementById('grau-empty-form');
+    if (!addButton || !rows || !totalForms || !emptyForm) return;
+
+    addButton.addEventListener('click', function () {
+      const index = Number(totalForms.value);
+      if (index >= Number(rows.dataset.maxForms)) return;
+      rows.insertAdjacentHTML(
+        'beforeend',
+        emptyForm.innerHTML.replaceAll('__prefix__', String(index)),
+      );
+      totalForms.value = String(index + 1);
+    });
+  })();
+</script>
 {% endblock %}

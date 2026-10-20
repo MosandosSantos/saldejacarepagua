@@ -1,0 +1,185 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Folha de Presença — {{ loja_nome }}</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; background: #ece9e4; }
+  .folha {
+    width: 210mm; height: 297mm; margin: 8mm auto; padding: 10mm 12mm 8mm 12mm;
+    background: #ffffff; box-shadow: 0 2px 12px rgba(0,0,0,.25);
+    display: flex; flex-direction: column; page-break-after: always; position: relative;
+    overflow: hidden;
+  }
+  @media print {
+    body { background: #ffffff; }
+    .folha { margin: 0; box-shadow: none; page-break-after: always; }
+    .sem-print { display: none !important; }
+    .folha, .folha * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  .topo-voltar { max-width: 210mm; margin: 10px auto 0 auto; text-align: right; }
+  .topo-voltar a { font: bold 12px Arial; color: #4a0e1f; }
+  .topo-voltar button { margin-left: 14px; padding: 6px 14px; border: 1px solid #4a0e1f; background: #4a0e1f; color: #fff; font: bold 12px Arial; border-radius: 4px; cursor: pointer; }
+
+  .cabecalho { text-align: center; border-bottom: 3px double #4a0e1f; padding-bottom: 5mm; }
+  .selo  { font-size: 10px; letter-spacing: 4px; color: #c9a227; text-transform: uppercase; font-weight: bold; }
+  .titulo{ font-family: Georgia, serif; font-size: 22px; font-weight: normal; color: #4a0e1f; margin-top: 2mm; letter-spacing: 2px;}
+  .vale  { font-size: 12px; color: #5a5a5a; margin-top: 1.5mm; letter-spacing: 1px; }
+  .qrc   { position: absolute; top: 8mm; right: 8mm; text-align: center; }
+  .qrc img { width: 24mm; height: 24mm; }
+  .qrc p { font-size: 8.5px; color: #4a0e1f; font-weight: bold; max-width: 30mm; }
+
+  .pagination { position: absolute; bottom: 6mm; right: 12mm; left: 12mm; display: flex; justify-content: space-between; font-size: 9.5px; color: #5a5a5a; }
+  .pagination b { color: #4a0e1f; }
+  .dados { margin-top: 4mm; display: flex; gap: 6mm; justify-content: center; flex-wrap: wrap; }
+  .dado  { border: 1px solid #4a0e1f; border-radius: 4px; padding: 2mm 4mm; min-width: 40mm; }
+  .dado b{ display: block; font-size: 9px; letter-spacing: 2px; color: #c9a227; text-transform: uppercase; }
+  .dado span { font-size: 13px; color: #1f1216; font-weight: bold; }
+  .obs   { margin-top: 3mm; font-size: 12px; color: #1f1216; text-align: left; }
+  .obs b { color: #4a0e1f; text-transform: uppercase; font-size: 10px; letter-spacing: 2px; }
+
+  h2.folha-titulo {
+    font-family: Georgia, serif; font-size: 16px; color: #ffffff; background: #4a0e1f;
+    text-align: center; padding: 2.4mm 0; margin: 4mm 0 3.5mm 0; letter-spacing: 3px;
+    border-radius: 3px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #4a0e1f; color: #ffffff; font-size: 10.5px; text-transform: uppercase; letter-spacing: 1px; padding: 2.4mm 2mm; border: 1px solid #4a0e1f; }
+  td { border: 1px solid #8a7a7e; padding: 3.2mm 2.5mm; font-size: 11.5px; color: #1f1216; }
+  td.n { text-align: center; font-weight: bold; color: #4a0e1f; font-family: Georgia, serif; width: 10mm; }
+  td.rubrica { width: 32mm; }
+  td.grau { width: 16mm; text-align: center; }
+  /* Nomes longos quebram dentro da coluna de largura fixa. */
+  td.nome, td.nome-historico { overflow-wrap: anywhere; word-break: break-word; hyphens: auto; }
+
+  .assinaturas { margin-top: auto; padding-top: 10mm; }
+  .ass-grid { display: flex; justify-content: space-between; gap: 8mm; }
+  .assinatura { text-align: center; flex: 1; }
+  .linha { border-top: 1px solid #1f1216; margin-top: 12mm; }
+  .assinatura p { font-size: 10.5px; color: #1f1216; margin-top: 1.5mm; font-weight: bold; }
+  .assinatura small { display: block; font-size: 9px; color: #5a5a5a; font-weight: normal; }
+</style>
+</head>
+<body>
+
+<div class="topo-voltar sem-print">
+  <a href="{% url 'agendas' %}" onclick="if (window.opener) { window.opener.focus(); return false; }">← Voltar</a>
+  <button type="button" id="btn-imprimir" onclick="window.print()">🖨️ Imprimir folhas</button>
+</div>
+
+<!-- ================= FOLHA 1 — MEMBROS (cabeçalho + tabela + assinaturas na mesma página) ================= -->
+<div class="folha" style="position:relative;">
+  {% if qr_data %}
+  <div class="qrc">
+    <img src="{{ qr_data }}" alt="QRCode de check-in" width="91" height="91">
+    <p>Marque sua presença apontando a cena do celular aqui</p>
+  </div>
+  <div class="cabecalho" style="padding-right:30mm;">
+  {% else %}
+  <div class="cabecalho">
+  {% endif %}
+    <div class="selo">Ordo Ab Chao ◆ Sal do REAA</div>
+    <h1 class="titulo">{{ loja_nome }}</h1>
+    <div class="vale">{{ vale_nome }}</div>
+    <div class="dados">
+      <div class="dado"><b>Tipo de Sessão</b><span>{{ tipo_display }}</span></div>
+      <div class="dado"><b>Data</b><span>{{ data_display }}</span></div>
+    </div>
+    {% if evento.descricao %}
+    <div class="obs"><b>Observações:</b> {{ evento.descricao|linebreaksbr }}</div>
+    {% endif %}
+  </div>
+
+  <h2 class="folha-titulo">Membros</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:10mm;" scope="col">N#</th>
+        <th scope="col">Nome</th>
+        <th style="width:40mm;" scope="col">Nome Histórico</th>
+        <th style="width:25mm;" scope="col">Telefone</th>
+        <th style="width:14mm;" scope="col">Grau</th>
+        <th style="width:30mm;" scope="col">Rubrica</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in linhas %}
+      <tr>
+        <td class="n">{{ l.n }}</td>
+        <td class="nome">{{ l.nome }}</td>
+        <td class="nome-historico">{{ l.nome_historico }}</td>
+        <td>{{ l.telefone }}</td>
+        <td class="grau">{{ l.grau }}</td>
+        <td class="rubrica"></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" style="text-align:center; color:#8a7a7e;">Sem membros cadastrados na loja.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="assinaturas">
+    <div class="ass-grid">
+      <div class="assinatura"><div class="linha"></div><p>Orador</p><small>Assinatura</small></div>
+      <div class="assinatura"><div class="linha"></div><p>Presidente</p><small>Assinatura</small></div>
+      <div class="assinatura"><div class="linha"></div><p>Delegado</p><small>Assinatura</small></div>
+    </div>
+  </div>
+  <div class="pagination"><span><b>FOLHA</b></span><span>Folha 1 de 2 — Membros</span></div>
+</div>
+
+<!-- ================= FOLHA 2 — OFICIAIS E VISITANTES (matriz em branco) ================= -->
+<div class="folha">
+  <div class="cabecalho">
+    <div class="selo">Ordo Ab Chao ◆ Sal do REAA</div>
+    <h2 class="titulo">{{ loja_nome }}</h2>
+    <div class="vale">{{ vale_nome }}</div>
+    <div class="dados">
+      <div class="dado"><b>Tipo de Sessão</b><span>{{ tipo_display }}</span></div>
+      <div class="dado"><b>Data</b><span>{{ data_display }}</span></div>
+    </div>
+    <div class="obs"><b>Observações:</b> _______________________________________________________________________</div>
+  </div>
+
+  <h2 class="folha-titulo">Oficiais e Visitantes</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:10mm;" scope="col">N#</th>
+        <th scope="col">Nome</th>
+        <th style="width:40mm;" scope="col">Nome Histórico</th>
+        <th style="width:25mm;" scope="col">Telefone</th>
+        <th style="width:14mm;" scope="col">Grau</th>
+        <th style="width:30mm;" scope="col">Rubrica</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for _ in linhas_vazias %}
+      <tr>
+        <td class="n">{{ forloop.counter }}</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td></td>
+        <td class="rubrica"></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="assinaturas">
+    <div class="ass-grid">
+      <div class="assinatura"><div class="linha"></div><p>Orador</p><small>Assinatura</small></div>
+      <div class="assinatura"><div class="linha"></div><p>Presidente</p><small>Assinatura</small></div>
+      <div class="assinatura"><div class="linha"></div><p>Delegado</p><small>Assinatura</small></div>
+    </div>
+  </div>
+  <div class="pagination"><span><b>FOLHA</b></span><span>Folha 2 de 2 — Oficiais e Visitantes</span></div>
+</div>
+
+</body>
+</html>

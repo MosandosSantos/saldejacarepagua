@@ -18,7 +18,7 @@ def contato_existente(tenant_aurora):
         tenant=tenant_aurora,
     )
     Negocio.objects.create(
-        contato=contato, titulo=contato.nome, stage='orcamento',
+        contato=contato, titulo=contato.nome, stage='comunicacao',
         valor=14500.00, tenant=tenant_aurora,
     )
     return contato
@@ -43,8 +43,8 @@ def test_lista_contatos_vazio(client, headers_operacional):
 def test_cria_contato(client, headers_operacional):
     resp = client.post('/api/v1/contatos', headers=headers_operacional, json={
         'nome': 'Ana Souza',
-        'seg': 'estetica',
-        'stage': 'interessado',
+        'seg': 'beleza',
+        'stage': 'suplica',
         'valor': 1500.5,
         'procedimento': 'Harmonização facial',
         'origem': 'Instagram',
@@ -55,7 +55,7 @@ def test_cria_contato(client, headers_operacional):
     dados = resp.json()
     assert dados['id'] > 0
     assert dados['nome'] == 'Ana Souza'
-    assert dados['stage'] == 'interessado'
+    assert dados['stage'] == 'suplica'
     assert dados['valor'] == 1500.5
     assert dados['procedimento'] == 'Harmonização facial'
     assert dados['empresa'] == '—'
@@ -66,7 +66,7 @@ def test_cria_contato(client, headers_operacional):
 @pytest.mark.django_db(transaction=True)
 def test_cria_contato_sem_nome_rejeitado(client, headers_operacional):
     resp = client.post('/api/v1/contatos', headers=headers_operacional,
-                       json={'seg': 'estetica', 'stage': 'interessado'})
+                       json={'seg': 'beleza', 'stage': 'suplica'})
 
     assert resp.status_code == 422
 
@@ -74,7 +74,7 @@ def test_cria_contato_sem_nome_rejeitado(client, headers_operacional):
 @pytest.mark.django_db(transaction=True)
 def test_cria_contato_com_valor_negativo_rejeitado(client, headers_operacional):
     resp = client.post('/api/v1/contatos', headers=headers_operacional, json={
-        'nome': 'X', 'seg': 'estetica', 'stage': 'interessado', 'valor': -5,
+        'nome': 'X', 'seg': 'beleza', 'stage': 'suplica', 'valor': -5,
     })
 
     assert resp.status_code == 422
@@ -101,7 +101,7 @@ def test_atualiza_contato(client, contato_existente, headers_operacional):
     resp = client.put(f'/api/v1/contatos/{contato_existente.id}', headers=headers_operacional, json={
         'nome': 'Mariana Fontes Atualizada',
         'seg': 'derma',
-        'stage': 'fechado',
+        'stage': 'diploma',
         'valor': 18000.00,
         'procedimento': 'Laser CO2 + Toxina',
     })
@@ -109,7 +109,7 @@ def test_atualiza_contato(client, contato_existente, headers_operacional):
     assert resp.status_code == 200
     dados = resp.json()
     assert dados['nome'] == 'Mariana Fontes Atualizada'
-    assert dados['stage'] == 'fechado'
+    assert dados['stage'] == 'diploma'
     assert dados['valor'] == 18000.0
     assert dados['email'] == '—'
 
@@ -117,7 +117,7 @@ def test_atualiza_contato(client, contato_existente, headers_operacional):
 @pytest.mark.django_db(transaction=True)
 def test_atualiza_contato_inexistente(client, headers_operacional):
     resp = client.put('/api/v1/contatos/99999', headers=headers_operacional, json={
-        'nome': 'X', 'seg': 'estetica', 'stage': 'interessado',
+        'nome': 'X', 'seg': 'beleza', 'stage': 'suplica',
     })
 
     assert resp.status_code == 404
@@ -126,16 +126,16 @@ def test_atualiza_contato_inexistente(client, headers_operacional):
 @pytest.mark.django_db(transaction=True)
 def test_move_etapa_do_contato(client, contato_existente, headers_operacional):
     resp = client.patch(f'/api/v1/contatos/{contato_existente.id}/stage',
-                        headers=headers_operacional, json={'stage': 'avaliacao_feita'})
+                        headers=headers_operacional, json={'stage': 'iniciacao'})
 
     assert resp.status_code == 200
-    assert resp.json()['stage'] == 'avaliacao_feita'
+    assert resp.json()['stage'] == 'iniciacao'
 
 
 @pytest.mark.django_db(transaction=True)
 def test_move_etapa_contato_inexistente(client, headers_operacional):
     resp = client.patch('/api/v1/contatos/99999/stage', headers=headers_operacional,
-                        json={'stage': 'fechado'})
+                        json={'stage': 'diploma'})
 
     assert resp.status_code == 404
 
@@ -166,7 +166,7 @@ def test_exclui_contato_inexistente(client, headers_operacional):
 @pytest.mark.django_db(transaction=True)
 def test_fluxo_completo_crud(client, headers_operacional):
     criar = client.post('/api/v1/contatos', headers=headers_operacional, json={
-        'nome': 'Fluxo Completo', 'seg': 'fisio', 'stage': 'interessado', 'valor': 800,
+        'nome': 'Fluxo Completo', 'seg': 'fisio', 'stage': 'suplica', 'valor': 800,
     })
     contato_id = criar.json()['id']
 
@@ -174,8 +174,8 @@ def test_fluxo_completo_crud(client, headers_operacional):
     assert any(item['id'] == contato_id for item in lista.json())
 
     mover = client.patch(f'/api/v1/contatos/{contato_id}/stage', headers=headers_operacional,
-                         json={'stage': 'fechado'})
-    assert mover.json()['stage'] == 'fechado'
+                         json={'stage': 'diploma'})
+    assert mover.json()['stage'] == 'diploma'
 
     excluir = client.delete(f'/api/v1/contatos/{contato_id}', headers=headers_operacional)
     assert excluir.status_code == 204
@@ -196,11 +196,11 @@ def test_tenant_nao_ve_contato_de_outro_tenant(client, contato_existente, header
     assert obter.status_code == 404
 
     atualizar = client.put(f'/api/v1/contatos/{contato_existente.id}', headers=headers_operacional_beta,
-                           json={'nome': 'X', 'seg': 'estetica', 'stage': 'interessado'})
+                           json={'nome': 'X', 'seg': 'beleza', 'stage': 'suplica'})
     assert atualizar.status_code == 404
 
     mover = client.patch(f'/api/v1/contatos/{contato_existente.id}/stage', headers=headers_operacional_beta,
-                         json={'stage': 'fechado'})
+                         json={'stage': 'diploma'})
     assert mover.status_code == 404
 
     excluir = client.delete(f'/api/v1/contatos/{contato_existente.id}', headers=headers_operacional_beta)
@@ -219,7 +219,7 @@ def test_admin_saas_ve_todos_os_tenants(client, contato_existente, headers_admin
 @pytest.mark.django_db(transaction=True)
 def test_contato_criado_fica_no_tenant_do_usuario(client, headers_operacional, headers_operacional_beta):
     criado = client.post('/api/v1/contatos', headers=headers_operacional, json={
-        'nome': 'Só da Aurora', 'seg': 'odonto', 'stage': 'interessado',
+        'nome': 'Só da Aurora', 'seg': 'odonto', 'stage': 'suplica',
     })
     assert criado.status_code == 201
     contato_id = criado.json()['id']

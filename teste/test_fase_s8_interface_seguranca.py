@@ -168,7 +168,7 @@ def test_sessoes_expiradas_sao_filtradas(admin_company):
     from django.contrib.sessions.backends.db import SessionStore
     from django.contrib.sessions.models import Session
 
-    from acesso.views import _sessoes_do_usuario
+    from acesso.views.helpers import sessoes_do_usuario as _sessoes_do_usuario
 
     Session.objects.all().delete()  # limpa sessões residuais de outros testes
 

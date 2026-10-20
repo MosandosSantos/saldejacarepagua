@@ -7,6 +7,8 @@ Cada metodo representa uma query isolada e testavel.
 import logging
 from datetime import date
 
+from core.gprb.connection import resolve_tenant_code
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,8 +52,9 @@ class GprbRepository:
         finally:
             conn.close()
 
-    def dashboard_kpis(self, tenant_code='GPRB', ano=None):
+    def dashboard_kpis(self, tenant_code=None, ano=None):
         """KPIs unificados do dashboard (1 query com CTE)."""
+        tenant_code = resolve_tenant_code(tenant_code)
         if ano is None:
             ano = date.today().year
         return self._fetch_one(
@@ -84,8 +87,9 @@ class GprbRepository:
             (ano, tenant_code, tenant_code),
         )
 
-    def membros_por_situacao(self, tenant_code='GPRB', apenas_ativos=True, ano=None):
+    def membros_por_situacao(self, tenant_code=None, apenas_ativos=True, ano=None):
         """Contagem de membros por situacao (classes nao se aplicam ao projeto)."""
+        tenant_code = resolve_tenant_code(tenant_code)
         conditions = ["t.code = %s"]
         params = [tenant_code]
         if apenas_ativos:
@@ -106,8 +110,9 @@ class GprbRepository:
         )
         return self._fetch_all(sql, params)  # nosec B608 - apenas estrutura interna; valores parametrizados
 
-    def membros_por_rito(self, tenant_code='GPRB'):
+    def membros_por_rito(self, tenant_code=None):
         """Contagem de membros ativos por rito."""
+        tenant_code = resolve_tenant_code(tenant_code)
         return self._fetch_all(
             "SELECT m.rito, COUNT(*) as total "
             "FROM member m "
@@ -118,8 +123,9 @@ class GprbRepository:
             (tenant_code,),
         )
 
-    def membros_por_idade_faixa(self, tenant_code='GPRB'):
+    def membros_por_idade_faixa(self, tenant_code=None):
         """Contagem de membros ativos por faixa etaria."""
+        tenant_code = resolve_tenant_code(tenant_code)
         rows = self._fetch_all(
             'SELECT m."dataNascimento" '
             'FROM member m '
@@ -142,8 +148,9 @@ class GprbRepository:
             faixas[chave] = faixas.get(chave, 0) + 1
         return [{'label': k, 'total': v} for k, v in sorted(faixas.items())]
 
-    def membros_por_potencia(self, tenant_code='GPRB'):
+    def membros_por_potencia(self, tenant_code=None):
         """Contagem de membros ativos por potencia (coluna potencia_simbolismo)."""
+        tenant_code = resolve_tenant_code(tenant_code)
         return self._fetch_all(
             "SELECT CASE WHEN m.\"potencia_simbolismo\" IS NULL OR m.\"potencia_simbolismo\" = '' "
             "THEN 'Nao declarado' ELSE m.\"potencia_simbolismo\" END as name, "
@@ -155,7 +162,7 @@ class GprbRepository:
             (tenant_code,),
         )
 
-    def membros_por_potencia_vinculo(self, tenant_code='GPRB', prefeitura_id=None):
+    def membros_por_potencia_vinculo(self, tenant_code=None, prefeitura_id=None):
         """Contagem de membros ativos por Potencia (prefeitura) via vinculacao.
 
         Percorre member_loja -> loja -> prefeitura: N:N, um membro pode estar
@@ -164,6 +171,7 @@ class GprbRepository:
         Potencias sem membros vinculados ficam fora do resultado.
         `prefeitura_id` restringe a uma Potencia (para o card Anuidade).
         """
+        tenant_code = resolve_tenant_code(tenant_code)
         where = "WHERE t.code = %s AND m.situacao = 'ATIVO' AND p.id IS NOT NULL"
         params = [tenant_code]
         if prefeitura_id:
@@ -181,13 +189,14 @@ class GprbRepository:
             params,
         )
 
-    def membros_ativos_por_loja(self, tenant_code='GPRB', prefeitura_id=None):
+    def membros_ativos_por_loja(self, tenant_code=None, prefeitura_id=None):
         """Contagem de vinculacoes ativas por loja (COUNT DISTINCT memberId).
 
         Total simples por loja: membro ligado a N lojas soma 1 em cada —
         o somatorio pode exceder o numero de membros. `prefeitura_id`
         restringe as lojas de uma Potencia (card Anuidade).
         """
+        tenant_code = resolve_tenant_code(tenant_code)
         where = "WHERE t.code = %s AND m.situacao = 'ATIVO'"
         params = [tenant_code]
         if prefeitura_id:
@@ -208,7 +217,7 @@ class GprbRepository:
             params,
         )
 
-    def anuidade_card(self, ano, tenant_code='GPRB', prefeitura_id=None, loja_id=None):
+    def anuidade_card(self, ano, tenant_code=None, prefeitura_id=None, loja_id=None):
         """Dados do card Anuidade — pagantes/pendentes + total simples por loja.
 
         Pagamentos contam VINCULOS (membro em 2 lojas com anuidade paga soma
@@ -217,6 +226,7 @@ class GprbRepository:
         ativos vinculados (por loja) — inclusive os sem cobranca registrada.
         `lojas` volta completo no escopo (para repopular o select de lojas).
         """
+        tenant_code = resolve_tenant_code(tenant_code)
         where = "WHERE t.code = %s AND pp.type = 'ANNUAL' AND pp.year = %s "
         where += "AND m.situacao = 'ATIVO'"
         params = [tenant_code, ano]
@@ -257,8 +267,9 @@ class GprbRepository:
             'potencias': potencias,
         }
 
-    def membros_por_tempo_maconaria(self, tenant_code='GPRB'):
+    def membros_por_tempo_maconaria(self, tenant_code=None):
         """Contagem de membros ativos por tempo de masonaria."""
+        tenant_code = resolve_tenant_code(tenant_code)
         rows = self._fetch_all(
             'SELECT m."dataAdmissao", m."apresentacao_mx", m."createdAt" '
             'FROM member m '
@@ -285,8 +296,9 @@ class GprbRepository:
                 faixas['10+ anos'] = faixas.get('10+ anos', 0) + 1
         return [{'label': k, 'total': v} for k, v in sorted(faixas.items())]
 
-    def membros_por_mes(self, tenant_code='GPRB', meses=36):
+    def membros_por_mes(self, tenant_code=None, meses=36):
         """Membros admitidos por mes (ultimos N meses)."""
+        tenant_code = resolve_tenant_code(tenant_code)
         conn = self._connect()
         try:
             cur = conn.cursor()
@@ -319,8 +331,9 @@ class GprbRepository:
             valores.append(dados.get(chave, 0))
         return labels, valores
 
-    def ranking_lojas(self, tenant_code='GPRB'):
+    def ranking_lojas(self, tenant_code=None):
         """Ranking de lojas por numero de membros."""
+        tenant_code = resolve_tenant_code(tenant_code)
         rows = self._fetch_all(
             "SELECT COALESCE(l.\"nomeFantasia\", l.\"lojaMX\", 'Loja ' || l.numero::text) as name, "
             "COUNT(m.id) as total "
@@ -336,8 +349,9 @@ class GprbRepository:
             for i, r in enumerate(rows)
         ]
 
-    def proximas_sessoes(self, tenant_code='GPRB'):
+    def proximas_sessoes(self, tenant_code=None):
         """Proximas sessoes das lojas (tabela meeting)."""
+        tenant_code = resolve_tenant_code(tenant_code)
         rows = self._fetch_all(
             "SELECT m.\"dataSessao\", m.tipo, "
             "COALESCE(l.\"nomeFantasia\", l.\"lojaMX\", 'Loja ' || l.numero::text) as loja "
@@ -360,8 +374,9 @@ class GprbRepository:
             for r in rows
         ]
 
-    def agendamento_lojas(self, tenant_code='GPRB'):
+    def agendamento_lojas(self, tenant_code=None):
         """Sessoes realizadas vs agendadas por loja (tabela meeting)."""
+        tenant_code = resolve_tenant_code(tenant_code)
         rows = self._fetch_all(
             "SELECT COALESCE(l.\"nomeFantasia\", l.\"lojaMX\", 'Loja ' || l.numero::text) as loja, "
             "COUNT(*) FILTER (WHERE m.\"dataSessao\" < CURRENT_DATE) as realizadas, "

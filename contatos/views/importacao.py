@@ -9,6 +9,7 @@ from acesso.decorators import (
     nicho_da_sessao,
     web_login_required,
     web_requer_edicao,
+    web_requer_tenant_context,
 )
 from contatos.importador import (
     CAMPOS_IMPORTAVEIS,
@@ -29,6 +30,7 @@ def _coluna_post(request, campo):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def importar(request):
     """Importacao de contatos via CSV — fluxo em 3 etapas: upload -> mapeamento -> relatorio."""

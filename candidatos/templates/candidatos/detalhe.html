@@ -6,7 +6,7 @@
 <div class="container mx-auto px-4 py-10 max-w-3xl">
   <a href="{% url 'recepcao:kanban' %}" class="text-sm text-[#5b8def] hover:underline">← Voltar ao Funil</a>
 
-  <h1 class="mt-6 text-2xl font-semibold text-white">{{ candidato.nome_completo }}</h1>
+  <h1 class="mt-6 break-words text-2xl font-semibold text-white">{{ candidato.nome_completo }}</h1>
 
   <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6">
     <div class="grid gap-4 sm:grid-cols-2">
@@ -57,7 +57,7 @@
 
       <div>
         <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">Data de inscrição</span>
-        <div class="mt-1 text-sm text-white">{{ candidato.created_at|date:"d/m/Y H:i" }}</div>
+        <div class="mt-1 text-sm text-white">{{ candidato.created_at|datahorabr }}</div>
       </div>
 
       <div>
@@ -67,7 +67,7 @@
       {% if candidato.data_aprovacao %}
       <div>
         <span class="text-[11px] font-semibold uppercase tracking-wider text-[#a6bfc7]">Data de aprovação</span>
-        <div class="mt-1 text-sm text-white">{{ candidato.data_aprovacao|date:"d/m/Y H:i" }}</div>
+        <div class="mt-1 text-sm text-white">{{ candidato.data_aprovacao|datahorabr }}</div>
       </div>
       {% endif %}
       <div>
@@ -84,10 +84,14 @@
             <div class="flex items-center gap-2 text-[11px] text-[#bcd3da]">
               <span class="font-semibold text-white">{{ obs.autor_nome }}</span>
               <span class="font-medium text-[#5b8def]">({{ obs.autor_papel }})</span>
-              <span class="text-[#a6bfc7]">{{ obs.created_at|date:"d/m/Y H:i" }}</span>
+              <span class="text-[#a6bfc7]">{{ obs.created_at|datahorabr }}</span>
             </div>
-            <p class="mt-1 text-sm text-white">{{ obs.texto|linebreaksbr }}</p>
+            <p class="mt-1 break-words text-sm text-white">{{ obs.texto|linebreaksbr }}</p>
           </div>
+        {% empty %}
+          <p class="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-[#a6bfc7]">
+            Nenhuma observação registrada ainda.
+          </p>
         {% endfor %}
       </div>
     </div>

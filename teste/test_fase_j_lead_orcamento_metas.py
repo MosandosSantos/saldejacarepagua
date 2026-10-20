@@ -6,7 +6,7 @@ from decimal import Decimal
 import pytest
 from django.test import Client
 
-from acesso.models import MetaVendedor
+from acesso.models import MetaVendedor, token_captura_do_tenant
 from contatos.models import Contato, Negocio, criar_negocio
 from contatos.scoring import atualizar_score, calcular_score
 
@@ -26,7 +26,7 @@ def _sessao_web(client, usuario):
 def _dados_form(tel, **kw):
     dados = {
         'nome': 'Novo', 'empresa': 'Empresa X', 'tel': tel, 'email': 'novo@x.com',
-        'seg': 'estetica', 'stage': 'interessado', 'valor': '0',
+        'seg': 'beleza', 'stage': 'suplica', 'valor': '0',
         'origem': 'Instagram', 'pagamento': 'Particular',
         'procedimento': 'Laser', 'ultima_consulta': '2026-01-01',
     }
@@ -37,7 +37,7 @@ def _dados_form(tel, **kw):
 def _contato(tenant, **kw):
     seg = kw.pop('seg', '')
     nome = kw.pop('nome', 'Ana')
-    stage = kw.pop('stage', 'interessado')
+    stage = kw.pop('stage', 'suplica')
     valor = kw.pop('valor', 0)
     c = Contato.objects.create(nome=nome, seg=seg, tenant=tenant, **kw)
     criar_negocio(c, stage=stage, valor=valor, tenant_id=tenant.id)
@@ -71,7 +71,7 @@ def test_score_sem_dados_e_frio(tenant_aurora):
 @pytest.mark.django_db
 def test_score_negocio_fechado_e_quente(tenant_aurora):
     c = _contato(tenant_aurora, origem='Indicação', seg='odonto',
-                 email='ana@x.com', tel='(11) 99999-0000', stage='fechado')
+                 email='ana@x.com', tel='(11) 99999-0000', stage='diploma')
     r = calcular_score(c)
     assert r['total'] >= 40
     assert r['nivel'] == 'quente'
@@ -98,7 +98,7 @@ def test_contato_novo_web_recebe_score(tenant_aurora, usuario_operacional):
 
 @pytest.mark.django_db
 def test_nota_aumenta_score(tenant_aurora, usuario_operacional):
-    c = _contato(tenant_aurora, origem='Instagram', seg='estetica', email='a@x.com')
+    c = _contato(tenant_aurora, origem='Instagram', seg='beleza', email='a@x.com')
     antes = c.lead_score
     cliente = Client()
     _sessao_web(cliente, usuario_operacional)
@@ -113,7 +113,7 @@ def test_mover_etapa_atualiza_score_e_kanban(tenant_aurora, usuario_operacional)
     cliente = Client()
     _sessao_web(cliente, usuario_operacional)
     r = cliente.post(
-        f'/recepcao/{c.negocio.id}/mover/', {'stage': 'orcamento'},
+        f'/recepcao/{c.negocio.id}/mover/', {'stage': 'comunicacao'},
         HTTP_X_REQUESTED_WITH='XMLHttpRequest',
     )
     assert r.status_code == 200
@@ -128,7 +128,7 @@ def test_mover_etapa_atualiza_score_e_kanban(tenant_aurora, usuario_operacional)
 def test_lista_ordena_por_score(tenant_aurora, usuario_operacional):
     frio = _contato(tenant_aurora, nome='Frio', seg='', origem='Outro')
     quente = _contato(tenant_aurora, nome='Quente', origem='Indicação', seg='odonto',
-                      email='q@x.com', tel='(11) 90000-2222', stage='fechado')
+                      email='q@x.com', tel='(11) 90000-2222', stage='diploma')
     atualizar_score(frio)
     atualizar_score(quente)
     assert quente.lead_score > frio.lead_score
@@ -141,7 +141,7 @@ def test_lista_ordena_por_score(tenant_aurora, usuario_operacional):
 @pytest.mark.django_db(transaction=True)
 def test_api_cria_contato_atualiza_score(client, headers_operacional):
     resp = client.post('/api/v1/contatos', headers=headers_operacional, json={
-        'nome': 'Ana API', 'seg': 'odonto', 'stage': 'orcamento',
+        'nome': 'Ana API', 'seg': 'odonto', 'stage': 'comunicacao',
         'valor': 2500, 'origem': 'Indicação',
     })
     assert resp.status_code == 201
@@ -162,7 +162,6 @@ def test_importador_grava_score(tenant_aurora):
 
 @pytest.mark.django_db
 def test_captura_lead_grava_score(tenant_aurora):
-    from acesso.models import token_captura_do_tenant
 
     token = token_captura_do_tenant(tenant_aurora)
     r = Client().post(f'/captura/{token}/', {'nome': 'Lead Site', 'tel': '(11) 98888-1234'})
@@ -271,7 +270,7 @@ def test_negocio_form_grava_responsavel(tenant_aurora, usuario_operacional, admi
     _sessao_web(c, admin_company)
     contato = Contato.objects.create(nome='Ana Deal', seg='', tenant=tenant_aurora)
     r = c.post(f'/contatos/{contato.id}/negocios/novo/', {
-        'titulo': 'Deal com vendedor', 'stage': 'interessado', 'valor': '800',
+        'titulo': 'Deal com vendedor', 'stage': 'suplica', 'valor': '800',
         'responsavel': str(usuario_operacional.id),
     })
     assert r.status_code == 302
@@ -285,7 +284,7 @@ def test_dashboard_mostra_atingimento_da_meta(tenant_aurora, usuario_operacional
     MetaVendedor.objects.create(usuario=usuario_operacional, mes=mes, valor=500)
     c = _contato(tenant_aurora, nome='Cliente Fechou', origem='Site', valor=600)
     negocio = c.negocio  # uma única instância (a property refaz a query a cada acesso)
-    negocio.stage = 'fechado'
+    negocio.stage = 'diploma'
     negocio.responsavel = usuario_operacional
     negocio.save()
 

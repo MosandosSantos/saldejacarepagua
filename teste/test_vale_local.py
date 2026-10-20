@@ -184,7 +184,7 @@ def test_vale_preserves_blank_local_contacts():
     tenant = Tenant.objects.create(
         nome='Vale sem contatos', slug=f'vale-{uuid4().hex}',
     )
-    vale = Vale.objects.create(tenant=tenant, nome='Vale sem contatos')
+    vale = Vale.objects.create(tenant=tenant, nome='Vale sem contatos', sigla='VSC')
 
     assert vale.secretario_nome == ''
     assert vale.secretario_email == ''

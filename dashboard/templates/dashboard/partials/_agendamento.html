@@ -1,7 +1,7 @@
 {% load seguranca %}
 <div class="hazon-card-sm p-5 backdrop-blur-xl">
   <div class="mb-4">
-    <h3 class="text-[14px] font-semibold text-white">Agendamento</h3>
+    <h2 class="text-[14px] font-semibold text-white">Agendamento</h2>
     <p class="text-[11px] text-[#6f8a93]">sessões realizadas &middot; agendadas</p>
   </div>
 
@@ -9,9 +9,9 @@
     <table class="w-full border-collapse text-[12px]">
       <thead>
         <tr class="border-b border-white/10 text-left">
-          <th class="pb-2 pr-2 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Loja</th>
-          <th class="pb-2 pr-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Realizadas</th>
-          <th class="pb-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]">Agendadas</th>
+          <th class="pb-2 pr-2 text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]" scope="col">Loja</th>
+          <th class="pb-2 pr-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]" scope="col">Realizadas</th>
+          <th class="pb-2 text-center text-[10px] font-bold uppercase tracking-wider text-[#6f8a93]" scope="col">Agendadas</th>
         </tr>
       </thead>
       <tbody id="agend-table-body">
@@ -28,9 +28,25 @@
   if (!dados || !dados.length) return;
 
   var perPage = 8;
-  var page = 1;
   var totalPages = Math.ceil(dados.length / perPage);
   var cores = { 'vermelho': '#ef4444', 'amarelo': '#fbbf24', 'verde': '#4ade80' };
+  var PARAM = 'agend_pagina';
+
+  // O estado da paginacao vive na URL (query param) — sobrevive a recarregar/compartilhar.
+  function paginaAtualNaUrl() {
+    var v = parseInt(new URLSearchParams(window.location.search).get(PARAM) || '1', 10);
+    if (isNaN(v) || v < 1) return 1;
+    if (v > totalPages) return totalPages;
+    return v;
+  }
+  function gravarPaginaNaUrl(p) {
+    var url = new URL(window.location.href);
+    if (p > 1) url.searchParams.set(PARAM, String(p));
+    else url.searchParams.delete(PARAM);
+    window.history.replaceState({}, '', url.toString());
+  }
+
+  var page = paginaAtualNaUrl();
 
   function render() {
     var tbody = document.getElementById('agend-table-body');
@@ -59,7 +75,9 @@
     if (totalPages <= 1) { pag.innerHTML = ''; return; }
     var phtml = '';
     for (var i = 1; i <= totalPages; i++) {
-      phtml += '<button data-page="' + i + '" class="agend-page h-7 min-w-[28px] rounded-lg px-2 text-[11px] font-bold transition ';
+      phtml += '<button type="button" data-page="' + i + '" aria-label="Página ' + i + '"';
+      if (i === page) phtml += ' aria-current="page"';
+      phtml += ' class="agend-page h-7 min-w-[28px] rounded-lg px-2 text-[11px] font-bold transition ';
       if (i === page) {
         phtml += 'bg-[#5b8def]/20 text-[#5b8def] border border-[#5b8def]/30';
       } else {
@@ -71,7 +89,8 @@
 
     pag.querySelectorAll('.agend-page').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        page = parseInt(this.getAttribute('data-page'));
+        page = parseInt(this.getAttribute('data-page'), 10);
+        gravarPaginaNaUrl(page);
         render();
       });
     });

@@ -7,7 +7,7 @@ import pytest
 from django.test import Client
 
 from acesso.models import ROLE_ADM, ROLE_DELEGADO, Tenant, Usuario
-from contatos.models import Vale
+from contatos.models import Loja, Membro, Vale
 
 
 def _client_for_tenant(tenant, role=ROLE_DELEGADO):
@@ -146,8 +146,51 @@ def test_consult_lists_complete_contact_details_without_gprb_counts():
         assert value in html
     assert 'Total de lojas' not in html
     assert 'Total de membros' not in html
-    assert 'Expandir lojas' not in html
+    assert '<details' not in html
     assert 'lojas-json' not in html
+
+
+@pytest.mark.django_db(transaction=True)
+def test_vale_list_expands_local_stores_and_each_store_has_member_control():
+    tenant = Tenant.objects.create(
+        nome='Tenant drill-down', slug=f'vale-drill-down-{uuid4().hex}',
+    )
+    vale = Vale.objects.create(
+        tenant=tenant,
+        nome='Vale hierárquico',
+        sigla=f'VH{uuid4().hex[:4]}',
+    )
+    loja = Loja.objects.create(tenant=tenant, nome='Loja expansível')
+    membro = Membro.objects.create(
+        tenant=tenant,
+        nome='Membro carregado sob demanda',
+    )
+    membro.lojas.add(loja)
+
+    outro_tenant = Tenant.objects.create(
+        nome='Outro tenant drill-down',
+        slug=f'vale-drill-down-outro-{uuid4().hex}',
+    )
+    Vale.objects.create(
+        tenant=outro_tenant,
+        nome='Vale de outro tenant',
+        sigla=f'VO{uuid4().hex[:4]}',
+    )
+    Loja.objects.create(tenant=outro_tenant, nome='Loja de outro tenant')
+
+    response = _client_for_tenant(tenant).get('/vales/')
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert 'aria-label="Expandir lojas de Vale hierárquico"' in html
+    assert f'data-vale-id="{vale.pk}"' in html
+    assert 'Loja expansível' in html
+    assert 'aria-label="Expandir membros de Loja expansível"' in html
+    assert f'data-loja-id="{loja.pk}"' in html
+    assert 'Membro carregado sob demanda' not in html
+    assert 'Vale de outro tenant' not in html
+    assert 'Loja de outro tenant' not in html
+    assert '<details' not in html
 
 
 @pytest.mark.django_db(transaction=True)

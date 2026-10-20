@@ -59,7 +59,7 @@ def test_excluir_campo_apaga_valores(tenant_aurora):
 # --- Fluxo web ---
 
 BASE_POST = {
-    'nome': 'Ana', 'seg': 'estetica', 'stage': 'interessado',
+    'nome': 'Ana', 'seg': 'beleza', 'stage': 'suplica',
     'empresa': 'Clínica Aurora', 'tel': '(11) 98888-7777', 'email': 'ana@aurora.com',
     'valor': '1000', 'procedimento': 'Laser', 'ultima_consulta': '2026-01-15',
 }

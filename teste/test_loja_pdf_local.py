@@ -10,7 +10,6 @@ from django.test import Client
 from acesso.models import ROLE_ADM, ROLE_DELEGADO, Tenant, Usuario
 from contatos.models import Loja, LojaPdf, Vale
 
-
 pytestmark = pytest.mark.django_db(transaction=True)
 
 PDF_BYTES = b'%PDF-1.4\nlocal values\n%%EOF'
@@ -99,22 +98,34 @@ def test_upload_replace_and_remove_pdf_for_local_loja(media_root):
     assert not (media_root / pdf.arquivo.name).exists()
 
 
+def _pdf_pequeno():
+    return b'%PDF-1.4\n'
+
+
+def _pdf_assinatura_invalida():
+    return b'not a pdf'
+
+
+def _pdf_grande():
+    return b'%PDF-' + b'x' * (10 * 1024 * 1024 + 1)
+
+
 @pytest.mark.parametrize(
-    ('name', 'content', 'expected_error'),
+    ('factory', 'name', 'expected_error'),
     [
-        ('valores.txt', b'%PDF-1.4\n', 'invalido'),
-        ('fake.pdf', b'not a pdf', 'invalido'),
-        ('grande.pdf', b'%PDF-' + b'x' * (10 * 1024 * 1024 + 1), 'tamanho'),
+        pytest.param(_pdf_pequeno, 'valores.txt', 'invalido', id='extensao-invalida'),
+        pytest.param(_pdf_assinatura_invalida, 'fake.pdf', 'invalido', id='assinatura-invalida'),
+        pytest.param(_pdf_grande, 'grande.pdf', 'tamanho', id='maior-que-10mb'),
     ],
 )
-def test_upload_rejects_invalid_or_oversized_pdf(media_root, name, content, expected_error):
+def test_upload_rejects_invalid_or_oversized_pdf(media_root, factory, name, expected_error):
     tenant = _tenant_vale('PDB')
     loja = Loja.objects.create(tenant=tenant, nome='Loja PDF inválido')
     client = _client(tenant)
 
     response = client.post(
         f'/contatos/loja/{loja.pk}/pdf/',
-        {'pdf': _pdf_upload(name, content)},
+        {'pdf': _pdf_upload(name, factory())},
     )
 
     assert response.status_code == 302

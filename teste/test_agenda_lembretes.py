@@ -4,13 +4,12 @@ from zoneinfo import ZoneInfo
 
 import pytest
 from django.core import mail
-from django.test import override_settings
+from django.test import Client, override_settings
 
 TZ_SIGLA = 'America/Sao_Paulo'
 
 
 def _tz():
-    from zoneinfo import ZoneInfo
 
     return ZoneInfo(TZ_SIGLA)
 
@@ -155,7 +154,6 @@ def test_aviso_imediato_nao_envia_sem_destinatarios(lembrete):
 
     # limpa e-mails dos membros da loja: nenhum destinatário
     Filiacao.objects.filter(loja=lembrete['loja']).update()
-    from contatos.models import Membro
     Membro.objects.filter(filiacoes__loja=lembrete['loja']).update(email='')
 
     resultado = emails.enviar_aviso_inclusao(
@@ -171,7 +169,6 @@ def test_aviso_imediato_nao_envia_sem_destinatarios(lembrete):
 @pytest.mark.django_db
 def test_novo_evento_dispara_aviso_imediato(tenant_aurora, lembrete):
     """Criação via POST /agenda/novo/ dispara o aviso imediato para a loja."""
-    from django.test import Client
     from contatos.models import Loja
     from django.contrib.auth.hashers import make_password
     from acesso.models import Usuario

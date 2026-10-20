@@ -1,0 +1,7 @@
+# Acesso ao gprbr-db pelo host: a 5432 é disputada por um Postgres nativo
+# (projeto esfera), então o CRM passa a atender em 5434 apenas para conexões
+# locais. Dentro da rede Docker os serviços seguem em db:5432.
+services:
+  db:
+    ports:
+      - "127.0.0.1:5434:5432"

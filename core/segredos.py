@@ -10,10 +10,13 @@ por operacao, entao o mesmo segredo nunca gera o mesmo token duas vezes.
 """
 import base64
 import os
+from binascii import Error as BinasciiError
 
+from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from django.conf import settings
 
 PREFIXO = 'v1'
 NONCE_BYTES = 12
@@ -31,8 +34,6 @@ def _chave() -> bytes:
     dedicados que isolam esta chave de outros usos do SECRET_KEY (sessao, JWT).
     Em producao, defina CRYPTO_KEY no .env para separar totalmente.
     """
-    from django.conf import settings
-
     base = getattr(settings, 'CRYPTO_KEY', '') or settings.SECRET_KEY
     return HKDF(
         algorithm=hashes.SHA256(),
@@ -58,13 +59,13 @@ def desencriptar(token: str) -> str:
         raise ValueError('segredo invalido: prefixo ausente ou formato incorreto')
     try:
         dados = base64.urlsafe_b64decode(token[len(PREFIXO) + 1:].encode('ascii'))
-    except Exception:
+    except (ValueError, BinasciiError):
         raise ValueError('segredo invalido: base64 corrompido')
     if len(dados) < NONCE_BYTES:
         raise ValueError('segredo invalido: payload curto demais')
     nonce, cifra = dados[:NONCE_BYTES], dados[NONCE_BYTES:]
     try:
         texto = AESGCM(_chave()).decrypt(nonce, cifra, None)
-    except Exception:
+    except (InvalidTag, ValueError):
         raise ValueError('segredo invalido: chave incorreta ou conteudo adulterado')
     return texto.decode('utf-8')

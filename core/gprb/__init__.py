@@ -23,6 +23,8 @@ from core.gprb.members import (  # noqa: F401
     agendamento_lojas,
     anuidade_ano_referencia,
     anualidade_resumo,
+    emails_membros_da_loja,
+    irmaos_da_loja,
     membros_por_situacao,
     membros_por_idade_faixa,
     membros_por_mes,

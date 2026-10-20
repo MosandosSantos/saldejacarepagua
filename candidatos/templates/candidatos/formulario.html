@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ficha de Súplica — SAL do RER</title>
+<title>Ficha de Súplica — REAA</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -14,14 +14,14 @@
     min-height: 100vh;
   }
   .cabecalho {
-    background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 55%, #dc2626 100%);
+    background: #0a0a0a;
     padding: 48px 24px 40px;
     text-align: center;
   }
   .cabecalho img {
     width: 88px; height: 88px;
     border-radius: 50%;
-    border: 3px solid rgba(255,255,255,.85);
+    border: 3px solid #c9a227;
     background: #fff;
     padding: 5px;
   }
@@ -33,10 +33,13 @@
     margin-top: 4px;
     color: rgba(255,255,255,.8); font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
   }
+  .cabecalho .lema {
+    margin-top: 10px;
+    color: #c9a227; font-size: 12px; font-style: italic; letter-spacing: 4px;
+  }
   .faixa {
-    height: 4px;
-    background: repeating-linear-gradient(90deg, #fff 0, #fff 12px, transparent 12px, transparent 20px);
-    background-color: #991b1b;
+    height: 3px;
+    background-color: #c9a227;
   }
   .container { max-width: 760px; margin: 0 auto; padding: 36px 16px 60px; }
 
@@ -44,9 +47,9 @@
     background: #fff; border-radius: 10px; padding: 28px 30px; margin-bottom: 24px;
     box-shadow: 0 1px 6px rgba(0,0,0,.06);
   }
-  .boas-vindas h2 { font-size: 20px; font-weight: 400; color: #7f1d1d; margin-bottom: 10px; }
+  .boas-vindas h2 { font-size: 20px; font-weight: 400; color: #8a6d1b; margin-bottom: 10px; }
   .boas-vindas p { font-size: 14.5px; line-height: 1.7; color: #374151; }
-  .boas-vindas .primeiro-nome { color: #991b1b; font-weight: bold; }
+  .boas-vindas .primeiro-nome { color: #8a6d1b; font-weight: bold; }
 
   form section {
     background: #fff; border-radius: 10px; padding: 28px 30px; margin-bottom: 18px;
@@ -55,8 +58,8 @@
   .sec-titulo {
     display: flex; align-items: center; gap: 10px;
     font-size: 12px; letter-spacing: 3px; text-transform: uppercase;
-    color: #991b1b; margin-bottom: 20px; padding-bottom: 12px;
-    border-bottom: 1px solid #f0e4e4;
+    color: #8a6d1b; margin-bottom: 20px; padding-bottom: 12px;
+    border-bottom: 1px solid #ece0c3;
   }
   .sec-titulo::before { content: "✦"; font-size: 13px; }
 
@@ -81,30 +84,40 @@
     transition: border-color .15s, box-shadow .15s;
   }
   .campo input:focus, .campo select:focus {
-    border-color: #b91c1c;
-    box-shadow: 0 0 0 3px rgba(153,27,27,.1);
+    border-color: #8a6d1b;
+    box-shadow: 0 0 0 3px rgba(201,162,39,.15);
   }
 
   /* Upload de foto */
   .foto-area {
     display: flex; align-items: center; gap: 18px;
-    padding: 14px; background: #fdf5f5; border: 1px dashed #d4a0a0;
+    padding: 14px; background: #faf7ee; border: 1px dashed #d9c58a;
     border-radius: 8px;
+  }
+  /* Visualmente oculto, porem ainda focavel pelo teclado (WCAG 2.4.7) */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+  /* Quando o input de arquivo (oculto) recebe foco, destaca o botao */
+  .foto-info:focus-within .foto-btn {
+    outline: 2px solid #8a6d1b; outline-offset: 2px;
   }
   .foto-preview {
     width: 84px; height: 84px; border-radius: 50%;
-    border: 2px solid #d4a0a0; object-fit: cover; background: #f4e4e4;
+    border: 2px solid #d9c58a; object-fit: cover; background: #faf7ee;
     display: flex; align-items: center; justify-content: center;
-    color: #b91c1c; font-size: 10px; text-align: center;
+    color: #8a6d1b; font-size: 10px; text-align: center;
   }
   .foto-info p { font-size: 12px; color: #6b7280; line-height: 1.5; }
   .foto-btn {
     display: inline-block; margin-top: 6px;
-    background: #991b1b; color: #fff; padding: 8px 16px;
+    background: #0a0a0a; color: #c9a227; padding: 8px 16px;
     border-radius: 6px; font-size: 12px; cursor: pointer;
     font-family: Georgia, serif; letter-spacing: .5px;
   }
-  .foto-btn:hover { background: #7f1d1d; }
+  .foto-btn:hover { background: #2a2a2a; }
 
   /* Erros */
   .erros-box {
@@ -117,8 +130,8 @@
   /* Botão enviar */
   .acoes { text-align: center; padding: 8px 0 0; }
   .btn-enviar {
-    background: linear-gradient(135deg, #7f1d1d, #b91c1c);
-    color: #fff; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #0a0a0a, #2a2a2a);
+    color: #c9a227; border: 1px solid #c9a227; cursor: pointer;
     padding: 17px 54px; border-radius: 8px;
     font-family: Georgia, serif; font-size: 15px; letter-spacing: 1.5px;
     transition: filter .15s, transform .1s;
@@ -134,15 +147,16 @@
     text-align: center; padding: 30px 16px 40px;
     color: #9ca3af; font-size: 11px; line-height: 1.7;
   }
-  .rodape b { color: #991b1b; letter-spacing: 2px; }
+  .rodape b { color: #8a6d1b; letter-spacing: 2px; }
 </style>
 </head>
 <body>
 
 <div class="cabecalho">
-  <img src="{% static 'img/gprbr.png' %}" alt="Símbolo do Priorado">
-  <h1>GRANDE PRIORADO RETIFICADO</h1>
-  <p>do Brasil — SAL do RER</p>
+  <img src="{% static 'img/logo.png' %}" alt="AMORIO" width="88" height="88" translate="no">
+  <h1 translate="no">SUPREMO CONSELHO DO GRAU 33</h1>
+  <p>Rito Escocês Antigo e Aceito · República Federativa do Brasil</p>
+  <p class="lema" translate="no">Ordo ab Chao · 33°</p>
 </div>
 <div class="faixa"></div>
 
@@ -154,7 +168,7 @@
       Recebemos com alegria a sua indicação. A partir de agora, você fará parte de um
       processo de admissão conduzido com o cuidado e a solenidade que a Ordem exige.
       Preencha a ficha abaixo com atenção — estes dados seguirão para análise das
-      autoridades do Priorado.
+      autoridades do Supremo Conselho.
     </p>
   </div>
 
@@ -167,7 +181,7 @@
   </div>
   {% endif %}
 
-  <form method="post" enctype="multipart/form-data" novalidate>
+  <form method="post" enctype="multipart/form-data" novalidate data-unsaved-guard>
     {% csrf_token %}
     <input type="hidden" name="token" value="{{ token }}">
 
@@ -176,21 +190,21 @@
       <div class="sec-titulo">I · Dados Pessoais</div>
       <div class="grid">
         <div class="campo campo-full">
-          <label>Nome Completo <span class="obr">*</span></label>
-          <input type="text" name="nome_completo" required value="{{ candidato.nome_completo }}">
+          <label for="nome_completo">Nome Completo <span class="obr">*</span></label>
+          <input type="text" id="nome_completo" name="nome_completo" required value="{{ candidato.nome_completo }}">
         </div>
         <div class="campo">
-          <label>CPF <span class="obr">*</span></label>
-          <input type="text" name="cpf" required maxlength="14" placeholder="000.000.000-00" value="{{ candidato.cpf }}">
+          <label for="cpf">CPF <span class="obr">*</span></label>
+          <input type="text" id="cpf" name="cpf" required maxlength="14" placeholder="000.000.000-00" value="{{ candidato.cpf }}">
         </div>
         <div class="campo">
-          <label>Data de Nascimento</label>
-          <input type="date" name="data_nascimento" value="{{ candidato.data_nascimento|date:'Y-m-d' }}">
+          <label for="data_nascimento">Data de Nascimento</label>
+          <input type="date" id="data_nascimento" name="data_nascimento" value="{{ candidato.data_nascimento|date:'Y-m-d' }}">
         </div>
         <div class="campo">
-          <label>Estado Civil</label>
-          <select name="estado_civil">
-            <option value="">Selecione...</option>
+          <label for="estado_civil">Estado Civil</label>
+          <select id="estado_civil" name="estado_civil">
+            <option value="">Selecione…</option>
             <option value="SOLTEIRO" {% if candidato.estado_civil == 'SOLTEIRO' %}selected{% endif %}>Solteiro(a)</option>
             <option value="CASADO" {% if candidato.estado_civil == 'CASADO' %}selected{% endif %}>Casado(a)</option>
             <option value="DIVORCIADO" {% if candidato.estado_civil == 'DIVORCIADO' %}selected{% endif %}>Divorciado(a)</option>
@@ -199,32 +213,32 @@
           </select>
         </div>
         <div class="campo">
-          <label>Nacionalidade</label>
-          <input type="text" name="nacionalidade" value="{{ candidato.nacionalidade|default:'Brasileira' }}">
+          <label for="nacionalidade">Nacionalidade</label>
+          <input type="text" id="nacionalidade" name="nacionalidade" value="{{ candidato.nacionalidade|default:'Brasileira' }}">
         </div>
         <div class="campo">
-          <label>Naturalidade (cidade)</label>
-          <input type="text" name="natural_cidade" value="{{ candidato.natural_cidade }}">
+          <label for="natural_cidade">Naturalidade (cidade)</label>
+          <input type="text" id="natural_cidade" name="natural_cidade" value="{{ candidato.natural_cidade }}">
         </div>
         <div class="campo">
-          <label>Nome do Pai</label>
-          <input type="text" name="pai" value="{{ candidato.pai }}">
+          <label for="pai">Nome do Pai</label>
+          <input type="text" id="pai" name="pai" value="{{ candidato.pai }}">
         </div>
         <div class="campo">
-          <label>Nome da Mãe</label>
-          <input type="text" name="mae" value="{{ candidato.mae }}">
+          <label for="mae">Nome da Mãe</label>
+          <input type="text" id="mae" name="mae" value="{{ candidato.mae }}">
         </div>
         <div class="campo">
-          <label>E-mail</label>
-          <input type="email" name="email" value="{{ candidato.email }}">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" value="{{ candidato.email }}">
         </div>
         <div class="campo">
-          <label>Celular</label>
-          <input type="text" name="celular" maxlength="15" placeholder="(00) 00000-0000" value="{{ candidato.celular }}">
+          <label for="celular">Celular</label>
+          <input type="text" id="celular" name="celular" maxlength="15" placeholder="(00) 00000-0000" value="{{ candidato.celular }}">
         </div>
         <div class="campo">
-          <label>Telefone de Urgência</label>
-          <input type="text" name="telefone_urgencia" maxlength="15" value="{{ candidato.telefone_urgencia }}">
+          <label for="telefone_urgencia">Telefone de Urgência</label>
+          <input type="text" id="telefone_urgencia" name="telefone_urgencia" maxlength="15" value="{{ candidato.telefone_urgencia }}">
         </div>
       </div>
     </section>
@@ -234,16 +248,16 @@
       <div class="sec-titulo">II · Documentos</div>
       <div class="grid">
         <div class="campo">
-          <label>Nº da Identidade</label>
-          <input type="text" name="identidade_numero" value="{{ candidato.identidade_numero }}">
+          <label for="identidade_numero">Nº da Identidade</label>
+          <input type="text" id="identidade_numero" name="identidade_numero" value="{{ candidato.identidade_numero }}">
         </div>
         <div class="campo">
-          <label>Órgão Emissor</label>
-          <input type="text" name="orgao_emissor" value="{{ candidato.orgao_emissor }}" placeholder="Ex.: IFP">
+          <label for="orgao_emissor">Órgão Emissor</label>
+          <input type="text" id="orgao_emissor" name="orgao_emissor" value="{{ candidato.orgao_emissor }}" placeholder="Ex.: IFP">
         </div>
         <div class="campo">
-          <label>Data de Emissão</label>
-          <input type="date" name="data_emissao" value="{{ candidato.data_emissao|date:'Y-m-d' }}">
+          <label for="data_emissao">Data de Emissão</label>
+          <input type="date" id="data_emissao" name="data_emissao" value="{{ candidato.data_emissao|date:'Y-m-d' }}">
         </div>
       </div>
     </section>
@@ -253,32 +267,32 @@
       <div class="sec-titulo">III · Endereço</div>
       <div class="grid">
         <div class="campo" style="grid-column: span 2 / 4;">
-          <label>Logradouro</label>
-          <input type="text" name="endereco_logradouro" value="{{ candidato.endereco_logradouro }}">
+          <label for="endereco_logradouro">Logradouro</label>
+          <input type="text" id="endereco_logradouro" name="endereco_logradouro" value="{{ candidato.endereco_logradouro }}">
         </div>
         <div class="campo">
-          <label>Número</label>
-          <input type="text" name="endereco_numero" value="{{ candidato.endereco_numero }}">
+          <label for="endereco_numero">Número</label>
+          <input type="text" id="endereco_numero" name="endereco_numero" value="{{ candidato.endereco_numero }}">
         </div>
         <div class="campo">
-          <label>Complemento</label>
-          <input type="text" name="endereco_complemento" value="{{ candidato.endereco_complemento }}">
+          <label for="endereco_complemento">Complemento</label>
+          <input type="text" id="endereco_complemento" name="endereco_complemento" value="{{ candidato.endereco_complemento }}">
         </div>
         <div class="campo">
-          <label>Bairro</label>
-          <input type="text" name="endereco_bairro" value="{{ candidato.endereco_bairro }}">
+          <label for="endereco_bairro">Bairro</label>
+          <input type="text" id="endereco_bairro" name="endereco_bairro" value="{{ candidato.endereco_bairro }}">
         </div>
         <div class="campo">
-          <label>CEP</label>
-          <input type="text" name="endereco_cep" maxlength="9" placeholder="00000-000" value="{{ candidato.endereco_cep }}">
+          <label for="endereco_cep">CEP</label>
+          <input type="text" id="endereco_cep" name="endereco_cep" maxlength="9" placeholder="00000-000" value="{{ candidato.endereco_cep }}">
         </div>
         <div class="campo">
-          <label>Cidade</label>
-          <input type="text" name="endereco_cidade" value="{{ candidato.endereco_cidade }}">
+          <label for="endereco_cidade">Cidade</label>
+          <input type="text" id="endereco_cidade" name="endereco_cidade" value="{{ candidato.endereco_cidade }}">
         </div>
         <div class="campo">
-          <label>UF</label>
-          <input type="text" name="endereco_uf" maxlength="2" placeholder="RJ" value="{{ candidato.endereco_uf }}" style="text-transform:uppercase;">
+          <label for="endereco_uf">UF</label>
+          <input type="text" id="endereco_uf" name="endereco_uf" maxlength="2" placeholder="RJ" value="{{ candidato.endereco_uf }}" style="text-transform:uppercase;">
         </div>
       </div>
     </section>
@@ -288,29 +302,29 @@
       <div class="sec-titulo">IV · Loja Simbólica</div>
       <div class="grid">
         <div class="campo">
-          <label>Nome da Loja</label>
-          <input type="text" name="loja_simbolo" value="{{ candidato.loja_simbolo }}">
+          <label for="loja_simbolo">Nome da Loja</label>
+          <input type="text" id="loja_simbolo" name="loja_simbolo" value="{{ candidato.loja_simbolo }}">
         </div>
         <div class="campo">
-          <label>Número da Loja</label>
-          <input type="text" name="numero_loja_simbolo" value="{{ candidato.numero_loja_simbolo }}">
+          <label for="numero_loja_simbolo">Número da Loja</label>
+          <input type="text" id="numero_loja_simbolo" name="numero_loja_simbolo" value="{{ candidato.numero_loja_simbolo }}">
         </div>
         <div class="campo">
-          <label>Data de Exaltação</label>
-          <input type="date" name="data_exaltacao" value="{{ candidato.data_exaltacao|date:'Y-m-d' }}">
+          <label for="data_exaltacao">Data de Exaltação</label>
+          <input type="date" id="data_exaltacao" name="data_exaltacao" value="{{ candidato.data_exaltacao|date:'Y-m-d' }}">
         </div>
         <div class="campo">
-          <label>Potência do Simbolismo</label>
-          <select name="potencia_simbolo">
-            <option value="">Potência...</option>
+          <label for="potencia_simbolo">Potência do Simbolismo</label>
+          <select id="potencia_simbolo" name="potencia_simbolo">
+            <option value="">Potência…</option>
             <option value="COMAB" {% if candidato.potencia_simbolo == 'COMAB' %}selected{% endif %}>COMAB</option>
             <option value="CSMMD" {% if candidato.potencia_simbolo == 'CSMMD' %}selected{% endif %}>CSMMD</option>
             <option value="GOB" {% if candidato.potencia_simbolo == 'GOB' %}selected{% endif %}>GOB</option>
           </select>
         </div>
         <div class="campo campo-full">
-          <label>Rito da Loja Simbólica</label>
-          <input type="text" name="rito_loja_simbolo" value="{{ candidato.rito_loja_simbolo }}" placeholder="Ex.: REAA, RER...">
+          <label for="rito_loja_simbolo">Rito da Loja Simbólica</label>
+          <input type="text" id="rito_loja_simbolo" name="rito_loja_simbolo" value="{{ candidato.rito_loja_simbolo }}" placeholder="Ex.: REAA, RER…">
         </div>
       </div>
     </section>
@@ -320,19 +334,19 @@
       <div class="sec-titulo">V · Fotografia e Documentos</div>
 
       <div class="foto-area" style="margin-bottom:16px;">
-        <img id="foto-preview" class="foto-preview" src="" alt="" style="display:none;">
+        <img id="foto-preview" class="foto-preview" alt="Pré-visualização da fotografia enviada" width="84" height="84" style="display:none;">
         <div id="foto-placeholder" class="foto-preview">SEM<br>FOTO</div>
         <div class="foto-info">
           <p><b>Fotografia oficial</b> — rosto visível, fundo neutro (obrigatória)</p>
           <label class="foto-btn" for="id-foto">Enviar fotografia</label>
-          <input type="file" id="id-foto" name="foto" accept="image/*" style="display:none;" required>
+          <input type="file" id="id-foto" name="foto" accept="image/*" class="sr-only" required>
         </div>
       </div>
 
       <div class="grid">
         <div class="campo">
-          <label>Recibo de Quitação (recepção ao grau)</label>
-          <input type="file" name="quitacao" accept="image/*,application/pdf">
+          <label for="id-quitacao">Recibo de Quitação (recepção ao grau)</label>
+          <input type="file" id="id-quitacao" name="quitacao" accept="image/*,application/pdf">
         </div>
       </div>
     </section>
@@ -345,12 +359,12 @@
       </p>
       <div class="grid">
         <div class="campo">
-          <label>Senha <span class="obr">*</span></label>
-          <input type="password" name="senha" required minlength="8" placeholder="Mínimo 8 caracteres">
+          <label for="senha">Senha <span class="obr">*</span></label>
+          <input type="password" id="senha" name="senha" required minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
         </div>
         <div class="campo">
-          <label>Confirmar Senha <span class="obr">*</span></label>
-          <input type="password" name="confirmar_senha" required minlength="8">
+          <label for="confirmar_senha">Confirmar Senha <span class="obr">*</span></label>
+          <input type="password" id="confirmar_senha" name="confirmar_senha" required minlength="8" autocomplete="new-password">
         </div>
       </div>
     </section>
@@ -358,7 +372,7 @@
     <div class="acoes">
       <button type="submit" class="btn-enviar">✦ &nbsp;ENVIAR SÚPLICA&nbsp; ✦</button>
       <p class="nota-rodape">
-        Ao enviar, sua ficha seguirá para análise das autoridades do Priorado.<br>
+        Ao enviar, sua ficha seguirá para análise das autoridades do Supremo Conselho.<br>
         Após o envio, os dados não poderão mais ser editados.
       </p>
     </div>
@@ -367,8 +381,8 @@
 </div>
 
 <div class="rodape">
-  <b>GRANDE PRIORADO RETIFICADO DO BRASIL</b><br>
-  SAL do RER · Ficha de Súplica
+  <b>SUPREMO CONSELHO DO GRAU 33 · REAA</b><br>
+  República Federativa do Brasil · Ficha de Súplica
 </div>
 
 <script>

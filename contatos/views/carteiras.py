@@ -6,6 +6,7 @@ from acesso.decorators import (
     e_admin_do_tenant,
     nicho_da_sessao,
     web_login_required,
+    web_requer_tenant_context,
 )
 from contatos.models import Carteira
 from contatos.views.helpers import _decorar, _tenant_id
@@ -22,6 +23,7 @@ def _carteiras_scope(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 def carteiras(request):
     """Lista as carteiras do tenant e cria novas (apenas admin cria)."""
     erros = []
@@ -65,6 +67,7 @@ def carteiras(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 def carteira_detalhe(request, pk):
     """Detalhe da carteira — lista os contatos associados, com filtro por etapa."""
     nicho = nicho_da_sessao(request)

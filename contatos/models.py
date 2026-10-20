@@ -364,11 +364,15 @@ class LojaPdf(models.Model):
     """PDF de valores (tabela de emolumentos) de uma loja — ex.: diploma, avental,
     anuidade e iniciação.
 
-    Um único arquivo por loja (substituir apaga o anterior). `loja_id` referencia
-    a loja do banco GPRB — não é FK do Django porque essa entidade vive fora.
+    Um único arquivo por loja local (substituir apaga o anterior).
     """
 
-    loja_id = models.CharField(max_length=64, unique=True, db_index=True)
+    loja = models.OneToOneField(
+        'contatos.Loja',
+        on_delete=models.CASCADE,
+        db_column='loja_id',
+        related_name='pdf',
+    )
     arquivo = models.FileField(upload_to='lojas/valores/%Y/%m/')
     atualizado_em = models.DateTimeField(auto_now=True)
 
@@ -383,14 +387,14 @@ class LojaPdf(models.Model):
 class Vale(models.Model):
     """Tenant-scoped local Vale directory and its Secretaria/Tesouraria contacts."""
 
-    tenant = models.ForeignKey(
+    tenant = models.OneToOneField(
         'acesso.Tenant',
         on_delete=models.CASCADE,
         db_column='tenant_id',
         related_name='vales',
     )
     nome = models.CharField(max_length=160)
-    sigla = models.CharField(max_length=10, blank=True, default='')
+    sigla = models.CharField(max_length=10, unique=True)
     prefeito = models.CharField(max_length=160, blank=True, default='')
     telefone = models.CharField(max_length=40, blank=True, default='')
     email = models.CharField(max_length=254, blank=True, default='')
@@ -415,6 +419,408 @@ class Vale(models.Model):
 
     def __str__(self):
         return self.nome
+
+
+class Loja(models.Model):
+    """Loja local pertencente ao tenant de um Vale."""
+
+    CORPO_CHOICES = (
+        ('perfeicao', 'Perfeição'),
+        ('capitulo', 'Capítulo'),
+        ('kadosh', 'Kadosh'),
+        ('consistorio', 'Consistório'),
+        ('sc33', 'SC33'),
+    )
+
+    tenant = models.ForeignKey(
+        'acesso.Tenant',
+        on_delete=models.CASCADE,
+        db_column='tenant_id',
+        related_name='lojas',
+    )
+    nome = models.CharField(max_length=200)
+    numero = models.CharField(max_length=20, blank=True, default='')
+    corpo = models.CharField(
+        max_length=20,
+        choices=CORPO_CHOICES,
+        default='perfeicao',
+    )
+    telefone = models.CharField(max_length=40, blank=True, default='')
+    email = models.CharField(max_length=254, blank=True, default='')
+    presidente_nome = models.CharField(max_length=200, blank=True, default='')
+    deputado_mestre = models.ForeignKey(
+        'contatos.Membro',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lojas_presididas',
+    )
+    secretario = models.ForeignKey(
+        'contatos.Membro',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lojas_secretariadas',
+    )
+    tesoureiro = models.ForeignKey(
+        'contatos.Membro',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lojas_tesoureiradas',
+    )
+    cidade = models.CharField(max_length=120, blank=True, default='')
+    uf = models.CharField(max_length=2, blank=True, default='')
+    endereco = models.CharField(max_length=255, blank=True, default='')
+    secretario_nome = models.CharField(max_length=160, blank=True, default='')
+    secretario_email = models.CharField(max_length=254, blank=True, default='')
+    secretario_telefone = models.CharField(max_length=40, blank=True, default='')
+    tesoureiro_nome = models.CharField(max_length=160, blank=True, default='')
+    tesoureiro_email = models.CharField(max_length=254, blank=True, default='')
+    tesoureiro_telefone = models.CharField(max_length=40, blank=True, default='')
+    mensalidade = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+    )
+    situacao = models.CharField(
+        max_length=10,
+        choices=[('ATIVA', 'Ativa'), ('INATIVA', 'Inativa')],
+        default='ATIVA',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'lojas'
+        ordering = ['nome', 'id']
+
+    def __str__(self):
+        return self.nome
+
+
+class Grau(models.Model):
+    """Catálogo de graus maçônicos (4 a 33) — chave estrangeira p/ histórico.
+
+    Evita hardcode nos modelos e permite nome/sigla por grau — espelhando o
+    MemberDegree do esquema legado, que usava int solto sem nomes.
+    """
+    numero = models.PositiveSmallIntegerField(unique=True)
+    nome = models.CharField(max_length=120, blank=True, default='')
+    sigla = models.CharField(max_length=10, blank=True, default='')
+
+    class Meta:
+        db_table = 'graus'
+        ordering = ['numero']
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(numero__gte=4, numero__lte=33),
+                name='grau_numero_4_33',
+            ),
+        ]
+
+    def __str__(self):
+        return self.nome or f'Grau {self.numero}'
+
+
+class Rito(models.Model):
+    """Rito maçônico praticado (YR, REE, RER, AASR...) — escopado por tenant."""
+
+    tenant = models.ForeignKey(
+        'acesso.Tenant',
+        on_delete=models.CASCADE,
+        db_column='tenant_id',
+        related_name='ritos',
+    )
+    nome = models.CharField(max_length=120)
+    sigla = models.CharField(max_length=20, blank=True, default='')
+    descricao = models.CharField(max_length=255, blank=True, default='')
+
+    class Meta:
+        db_table = 'ritos'
+        ordering = ['nome']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['tenant', 'nome'],
+                name='rito_tenant_nome_unico',
+            ),
+        ]
+
+    def __str__(self):
+        return self.sigla or self.nome
+
+
+class Membro(models.Model):
+    """Registro local de uma pessoa vinculada ao tenant de um Vale."""
+
+    POTENCIA_CHOICES = (
+        ('COMAB', 'COMAB'),
+        ('CSMB', 'CSMB'),
+        ('GOB', 'GOB'),
+    )
+
+    tenant = models.ForeignKey(
+        'acesso.Tenant',
+        on_delete=models.CASCADE,
+        db_column='tenant_id',
+        related_name='membros',
+    )
+    nome = models.CharField(max_length=200)
+    nome_historico = models.CharField(
+        max_length=120,
+        blank=True,
+        default='',
+        help_text=(
+            'Nome simbólico do membro: vulto histórico que o motiva '
+            '(ex.: "Dom Pedro I", "Anne Frank"). Serve como avatar pessoal.'
+        ),
+    )
+    cpf = models.CharField(max_length=14, blank=True, default='')
+    numero_filiado = models.CharField(max_length=30, blank=True, default='')
+    foto = models.ImageField(upload_to='membros/', null=True, blank=True)
+    situacao = models.CharField(
+        max_length=10,
+        choices=[('ATIVO', 'Ativo'), ('INATIVO', 'Inativo')],
+        default='ATIVO',
+    )
+    rito = models.CharField(max_length=100, blank=True, default='')
+    cadastro_maconico = models.CharField(max_length=40, blank=True, default='')
+    cadastro_numero = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        unique=True,
+        help_text='Número de cadastro maçônico (1 a 9999999, único no sistema).',
+    )
+    tipo_admissao = models.CharField(max_length=100, blank=True, default='')
+    data_admissao = models.DateField(null=True, blank=True)
+    escolaridade = models.CharField(max_length=120, blank=True, default='')
+    potencia = models.CharField(
+        max_length=120,
+        choices=POTENCIA_CHOICES,
+        blank=True,
+        default='',
+    )
+    cargo = models.CharField(max_length=120, blank=True, default='')
+    condicao = models.CharField(max_length=80, blank=True, default='')
+    data_nascimento = models.DateField(null=True, blank=True)
+    nacionalidade = models.CharField(max_length=80, blank=True, default='')
+    naturalidade = models.CharField(max_length=120, blank=True, default='')
+    estado_civil = models.CharField(max_length=40, blank=True, default='')
+    pai = models.CharField(max_length=200, blank=True, default='')
+    mae = models.CharField(max_length=200, blank=True, default='')
+    identidade = models.CharField(max_length=40, blank=True, default='')
+    orgao_emissor = models.CharField(max_length=40, blank=True, default='')
+    data_emissao = models.DateField(null=True, blank=True)
+    email = models.CharField(max_length=254, blank=True, default='')
+    celular = models.CharField(max_length=40, blank=True, default='')
+    telefone_urgencia = models.CharField(max_length=40, blank=True, default='')
+    endereco = models.CharField(max_length=200, blank=True, default='')
+    numero = models.CharField(max_length=20, blank=True, default='')
+    complemento = models.CharField(max_length=100, blank=True, default='')
+    bairro = models.CharField(max_length=100, blank=True, default='')
+    cidade = models.CharField(max_length=120, blank=True, default='')
+    uf = models.CharField(max_length=2, blank=True, default='')
+    cep = models.CharField(max_length=12, blank=True, default='')
+    apresentacao_mx = models.DateField(null=True, blank=True)
+    apresentacao_ec = models.DateField(null=True, blank=True)
+    armadura_cbcs = models.DateField(null=True, blank=True)
+    data_instalacao = models.DateField(null=True, blank=True)
+    loja_iniciacao_nome = models.CharField(max_length=200, blank=True, default='')
+    loja_iniciacao_numero = models.CharField(max_length=30, blank=True, default='')
+    loja_passagem_nome = models.CharField(max_length=200, blank=True, default='')
+    loja_passagem_numero = models.CharField(max_length=30, blank=True, default='')
+    loja_elevacao_nome = models.CharField(max_length=200, blank=True, default='')
+    loja_elevacao_numero = models.CharField(max_length=30, blank=True, default='')
+    loja_instalacao_nome = models.CharField(max_length=200, blank=True, default='')
+    loja_instalacao_numero = models.CharField(max_length=30, blank=True, default='')
+    lojas = models.ManyToManyField('contatos.Loja', blank=True, related_name='membros')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'membros'
+        ordering = ['nome', 'id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['tenant', 'cpf'],
+                condition=models.Q(cpf__gt=''),
+                name='membro_tenant_cpf_unico',
+            ),
+        ]
+
+    def __str__(self):
+        return self.nome
+
+
+class GrauMembro(models.Model):
+    """Histórico do(s) grau(s) conquistado(s) por um membro (MemberDegree)."""
+
+    tenant = models.ForeignKey(
+        'acesso.Tenant',
+        on_delete=models.CASCADE,
+        db_column='tenant_id',
+        related_name='graus_membros',
+    )
+    membro = models.ForeignKey(
+        'contatos.Membro',
+        on_delete=models.CASCADE,
+        db_column='membro_id',
+        related_name='graus',
+    )
+    grau = models.ForeignKey(
+        'contatos.Grau',
+        on_delete=models.PROTECT,
+        db_column='grau_id',
+        related_name='membros_graus',
+    )
+    data = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'graus_membros'
+        ordering = ['membro', 'grau__numero']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['membro', 'grau'],
+                name='grau_membro_unico',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.membro.nome} — grau {self.grau.numero}'
+
+
+class LojaCargo(models.Model):
+    """Catálogo de cargos de uma Loja (VM, 1V, 2V, SC, ...)."""
+
+    tenant = models.ForeignKey(
+        'acesso.Tenant',
+        on_delete=models.CASCADE,
+        db_column='tenant_id',
+        related_name='lojas_cargos',
+    )
+    loja = models.ForeignKey(
+        'contatos.Loja',
+        on_delete=models.CASCADE,
+        db_column='loja_id',
+        related_name='cargos',
+    )
+    nome = models.CharField(max_length=120)
+    abreviatura = models.CharField(max_length=20)
+    grau_minimo = models.ForeignKey(
+        'contatos.Grau',
+        on_delete=models.PROTECT,
+        db_column='grau_minimo_id',
+        related_name='cargos_com_grau_minimo',
+        null=True,
+        blank=True,
+    )
+    ordem = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        db_table = 'lojas_cargos'
+        ordering = ['ordem', 'nome']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['loja', 'abreviatura'],
+                name='cargo_loja_abreviatura_unica',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.abreviatura} — {self.loja.nome}'
+
+
+class Filiacao(models.Model):
+    """Vinculo entre membro e loja, com cargo atual (MemberLoja)."""
+
+    tenant = models.ForeignKey(
+        'acesso.Tenant',
+        on_delete=models.CASCADE,
+        db_column='tenant_id',
+        related_name='filiacoes',
+    )
+    membro = models.ForeignKey(
+        'contatos.Membro',
+        on_delete=models.CASCADE,
+        db_column='membro_id',
+        related_name='filiacoes',
+    )
+    loja = models.ForeignKey(
+        'contatos.Loja',
+        on_delete=models.CASCADE,
+        db_column='loja_id',
+        related_name='filiacoes',
+    )
+    cargo_atual = models.ForeignKey(
+        'contatos.LojaCargo',
+        on_delete=models.SET_NULL,
+        db_column='cargo_atual_id',
+        related_name='ocupado_por',
+        null=True,
+        blank=True,
+    )
+    data_inicio = models.DateField(null=True, blank=True)
+    diploma = models.BooleanField(default=False)
+    cargo = models.CharField(max_length=120, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'filiacoes'
+        ordering = ['loja', 'membro']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['membro', 'loja'],
+                name='filiacao_membro_loja_unica',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.membro.nome} @ {self.loja.nome}'
+
+
+class HistoricoCargo(models.Model):
+    """Histórico de cargos ocupados pelo membro na loja (MemberCargoHistory)."""
+
+    tenant = models.ForeignKey(
+        'acesso.Tenant',
+        on_delete=models.CASCADE,
+        db_column='tenant_id',
+        related_name='historicos_cargos',
+    )
+    filiacao = models.ForeignKey(
+        'contatos.Filiacao',
+        on_delete=models.CASCADE,
+        db_column='filiacao_id',
+        related_name='cargos_historicos',
+    )
+    membro = models.ForeignKey(
+        'contatos.Membro',
+        on_delete=models.CASCADE,
+        db_column='membro_id',
+        related_name='cargos_historicos',
+    )
+    loja = models.ForeignKey(
+        'contatos.Loja',
+        on_delete=models.CASCADE,
+        db_column='loja_id',
+        related_name='cargos_historicos',
+    )
+    cargo = models.ForeignKey(
+        'contatos.LojaCargo',
+        on_delete=models.PROTECT,
+        db_column='cargo_id',
+        related_name='historicos',
+    )
+    data_assuncao = models.DateField()
+    data_passagem = models.DateField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'historicos_cargos'
+        ordering = ['data_assuncao']
+
+    def __str__(self):
+        return f'{self.membro.nome} — {self.cargo.abreviatura} ({self.data_assuncao})'
+
 
 
 def negocio_principal(contato):

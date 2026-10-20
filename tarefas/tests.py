@@ -6,6 +6,7 @@ rejeição de hora inválida e hora opcional.
 
 from datetime import date, time, timedelta
 
+from django.contrib.auth.hashers import make_password
 from django.test import TestCase
 
 from acesso.models import Tenant, Usuario
@@ -25,8 +26,6 @@ class HoraTarefaTest(TestCase):
     """Testes web do campo hora (criar/editar pela lista e pela ficha)."""
 
     def setUp(self):
-        from django.contrib.auth.hashers import make_password
-
         self.tenant, _ = Tenant.objects.get_or_create(
             slug='clinica-aurora',
             defaults={'nome': 'Clínica Aurora'}

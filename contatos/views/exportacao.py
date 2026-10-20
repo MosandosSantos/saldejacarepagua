@@ -3,30 +3,13 @@
 import csv
 from datetime import date
 
-from django.http import HttpResponse
-
 from acesso.decorators import filtro_tenant, nicho_da_sessao, web_login_required
 from contatos.models import Contato, Negocio
 from contatos.views.helpers import _tenant_id
 from core.dominio import SEG_FALLBACK, SEGS
+from core.utils import csv_seguro as _csv_seguro
+from core.utils import resposta_csv as _resposta_csv
 from recepcao.models import etapa_map_do_tenant
-
-
-def _resposta_csv(nome_arquivo):
-    """Resposta CSV com BOM (Excel abre acentos corretamente)."""
-    resposta = HttpResponse(content_type='text/csv; charset=utf-8')
-    resposta['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
-    resposta.write('\ufeff')
-    return resposta
-
-
-def _csv_seguro(valor):
-    """Previne injeção de fórmula no Excel (CSV injection): célula iniciando com
-    `=`, `+`, `-` ou `@` vira texto com apóstrofo inicial."""
-    texto = str(valor or '')
-    if texto.startswith(('=', '+', '-', '@')):
-        return "'" + texto
-    return texto
 
 
 @web_login_required

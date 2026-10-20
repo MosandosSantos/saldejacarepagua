@@ -1,11 +1,11 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}SAL DA BRITÂNEA CRM — Alterar Vale {{ prefeitura.nome }}{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Alterar Vale {{ prefeitura.nome }}{% endblock %}
 
 {% block conteudo %}
 <div class="mb-6">
-  <a href="{% url 'contatos:prefeituras' %}" class="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#a6bfc7] transition hover:text-white">
-    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  <a href="{% url 'vales' %}" class="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#a6bfc7] transition hover:text-white">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
     Voltar
   </a>
 </div>
@@ -14,7 +14,7 @@
   <div class="hazon-card-sm p-7 backdrop-blur-xl">
     <div class="mb-6 flex items-center gap-3">
       <span class="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#fbbf24]/15">
-        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </span>
       <div class="flex items-center gap-2">
         <div>
@@ -28,30 +28,30 @@
     </div>
 
     {% if erro %}
-      <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ erro }}</div>
+      <div id="form-erro" class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]" role="alert">{{ erro }}</div>
     {% endif %}
     {% if sucesso %}
-      <div class="mb-4 rounded-xl border border-[#4ade80]/40 bg-[#4ade80]/15 px-4 py-3 text-[13.5px] font-semibold text-[#a7f3d0]">{{ sucesso }}</div>
+      <div class="mb-4 rounded-xl border border-[#4ade80]/40 bg-[#4ade80]/15 px-4 py-3 text-[13.5px] font-semibold text-[#a7f3d0]" role="status">{{ sucesso }}</div>
     {% endif %}
 
-    <form method="post" action="{% url 'contatos:prefeitura_editar' prefeitura.id %}">
+    <form method="post" action="{% url 'contatos:prefeitura_editar' prefeitura.id %}" aria-label="Editar Vale" {% if erro %}aria-describedby="form-erro"{% endif %} data-unsaved-guard>
       {% csrf_token %}
       <div class="grid gap-5">
         <div>
           <label for="nome" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome *</label>
-          <input type="text" id="nome" name="nome" value="{{ prefeitura.nome }}" required
+          <input type="text" id="nome" autocomplete="organization" name="nome" value="{{ prefeitura.nome }}" required
                  class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
         </div>
 
         <div class="grid gap-5 sm:grid-cols-2">
           <div>
-            <label for="sigla" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Sigla</label>
-            <input type="text" id="sigla" name="sigla" value="{{ prefeitura.sigla }}" maxlength="10" placeholder="Ex: PCO"
+            <label for="sigla" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Sigla *</label>
+            <input type="text" id="sigla" autocomplete="off" spellcheck="false" name="sigla" value="{{ prefeitura.sigla }}" maxlength="10" placeholder="Ex: PCO" required
                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           </div>
           <div>
             <label for="prefeito" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Delegado</label>
-            <input type="text" id="prefeito" name="prefeito" value="{{ prefeitura.prefeito }}"
+            <input type="text" id="prefeito" name="prefeito" value="{{ prefeitura.prefeito }}" autocomplete="name"
                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           </div>
         </div>
@@ -59,12 +59,12 @@
         <div class="grid gap-5 sm:grid-cols-2">
           <div>
             <label for="telefone" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone</label>
-            <input type="tel" id="telefone" name="telefone" value="{{ prefeitura.telefone }}" placeholder="(21) 99999-9999"
+            <input type="tel" id="telefone" autocomplete="tel" name="telefone" value="{{ prefeitura.telefone }}" placeholder="(21) 99999-9999"
                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           </div>
           <div>
             <label for="email" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Delegado</label>
-            <input type="email" id="email" name="email" value="{{ prefeitura.email }}" placeholder="graomestre@potencia.com"
+            <input type="email" id="email" autocomplete="email" spellcheck="false" name="email" value="{{ prefeitura.email }}" placeholder="graomestre@potencia.com"
                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           </div>
         </div>
@@ -74,17 +74,17 @@
           <div class="grid gap-5 sm:grid-cols-2">
             <div>
               <label for="secretario_nome" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Secretário</label>
-              <input type="text" id="secretario_nome" name="secretario_nome" value="{{ prefeitura.secretario_nome }}" placeholder="Nome do secretário"
+              <input type="text" id="secretario_nome" autocomplete="name" name="secretario_nome" value="{{ prefeitura.secretario_nome }}" placeholder="Nome do secretário"
                      class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
             </div>
             <div>
               <label for="secretario_email" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Secretário</label>
-              <input type="email" id="secretario_email" name="secretario_email" value="{{ prefeitura.secretario_email }}" placeholder="secretaria@potencia.com"
+              <input type="email" id="secretario_email" autocomplete="email" spellcheck="false" name="secretario_email" value="{{ prefeitura.secretario_email }}" placeholder="secretaria@potencia.com"
                      class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
             </div>
             <div>
               <label for="secretario_telefone" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone do Secretário</label>
-              <input type="tel" id="secretario_telefone" name="secretario_telefone" value="{{ prefeitura.secretario_telefone }}" placeholder="(21) 99999-9999"
+              <input type="tel" id="secretario_telefone" autocomplete="tel" name="secretario_telefone" value="{{ prefeitura.secretario_telefone }}" placeholder="(21) 99999-9999"
                      class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
             </div>
           </div>
@@ -95,17 +95,17 @@
           <div class="grid gap-5 sm:grid-cols-2">
             <div>
               <label for="tesoureiro_nome" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Tesoureiro</label>
-              <input type="text" id="tesoureiro_nome" name="tesoureiro_nome" value="{{ prefeitura.tesoureiro_nome }}" placeholder="Nome do tesoureiro"
+              <input type="text" id="tesoureiro_nome" autocomplete="name" name="tesoureiro_nome" value="{{ prefeitura.tesoureiro_nome }}" placeholder="Nome do tesoureiro"
                      class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
             </div>
             <div>
               <label for="tesoureiro_email" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Tesoureiro</label>
-              <input type="email" id="tesoureiro_email" name="tesoureiro_email" value="{{ prefeitura.tesoureiro_email }}" placeholder="tesouraria@potencia.com"
+              <input type="email" id="tesoureiro_email" autocomplete="email" spellcheck="false" name="tesoureiro_email" value="{{ prefeitura.tesoureiro_email }}" placeholder="tesouraria@potencia.com"
                      class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
             </div>
             <div>
               <label for="tesoureiro_telefone" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Telefone do Tesoureiro</label>
-              <input type="tel" id="tesoureiro_telefone" name="tesoureiro_telefone" value="{{ prefeitura.tesoureiro_telefone }}" placeholder="(21) 99999-9999"
+              <input type="tel" id="tesoureiro_telefone" autocomplete="tel" name="tesoureiro_telefone" value="{{ prefeitura.tesoureiro_telefone }}" placeholder="(21) 99999-9999"
                      class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
             </div>
           </div>
@@ -116,7 +116,7 @@
           <div class="grid gap-5 sm:grid-cols-2">
             <div>
               <label for="valor_anuidade" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Valor da Mensalidade (R$)</label>
-              <input type="text" id="valor_anuidade" name="valor_anuidade" value="{{ prefeitura.valor_fmt }}" placeholder="Ex: 1.500,00" inputmode="decimal"
+              <input type="text" id="valor_anuidade" autocomplete="off" inputmode="decimal" name="valor_anuidade" value="{{ prefeitura.valor_fmt }}" placeholder="Ex: 1.500,00" inputmode="decimal"
                      class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#4ade80]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#4ade80]/15">
             </div>
             <div>
@@ -129,17 +129,17 @@
 
         <div class="col-span-full">
           <label for="pix" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">PIX do Vale</label>
-          <input type="text" id="pix" name="pix" value="{{ prefeitura.pix }}" placeholder="Chave PIX para pagamento da mensalidade"
+          <input type="text" id="pix" autocomplete="off" spellcheck="false" name="pix" value="{{ prefeitura.pix }}" placeholder="Chave PIX para pagamento da mensalidade"
                  class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#4ade80]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#4ade80]/15">
         </div>
       </div>
 
       <div class="mt-6 flex items-center gap-3">
         <button type="submit" class="flex items-center gap-2 rounded-xl border border-[#5b8def]/50 bg-gradient-to-br from-[#1a5fb4] to-[#1450a0] px-6 py-3 text-[14px] font-bold text-white shadow-lg shadow-[#1a5fb4]/30 transition hover:brightness-110">
-          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           Salvar
         </button>
-        <a href="{% url 'contatos:prefeituras' %}" class="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-[14px] font-medium text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">
+        <a href="{% url 'vales' %}" class="rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-[14px] font-medium text-[#a6bfc7] transition hover:bg-white/10 hover:text-white">
           Cancelar
         </a>
       </div>

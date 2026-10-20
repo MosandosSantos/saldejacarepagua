@@ -6,48 +6,337 @@
 {% block cabecalho %}{% endblock %}
 
 {% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --vinho: #730A40;
+    --gelo: #ECEEEE;
+    --texto: #F4EEF1;
+    --fonte-titulo: "Anton", "Bebas Neue", Impact, "Arial Narrow", sans-serif;
+    --fonte-texto: "Poppins", "Helvetica Neue", Arial, sans-serif;
+  }
   html, body { height: 100%; }
-  body { overflow-x: hidden; overflow-y: auto; }
+  body { overflow-x: hidden; overflow-y: auto; background: var(--vinho); }
+  /* Fundo azul do layout base não pode aparecer atrás do hero: tudo em vinho */
+  body.bg-\[\#0a1e3d\], #bg-fundo { background: var(--vinho) !important; }
 
-  .login-bg { position: fixed; inset: 0; z-index: 0; }
-  .login-bg-gradient {
+  /* ===== HERO (slide Vale de Jacarepaguá) ===== */
+  .hero {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%;
+    height: 100vh;
+    height: 100svh;
+    background: var(--vinho);
+    overflow: hidden;
+  }
+  /* Luz e sombra: foco de luz rosado atrás do brasão e vinheta escura nas laterais */
+  .hero::before {
+    content: "";
     position: absolute; inset: 0;
+    pointer-events: none;
     background:
-      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(26,95,180,0.35) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 85% 90%, rgba(10,30,61,0.55) 0%, transparent 55%),
-      linear-gradient(150deg,#0f2a52 0%,#0c2245 55%,#0a1e3d 100%);
+      radial-gradient(ellipse 45% 55% at 74% 46%, rgba(244,114,182,.30), transparent 70%),
+      radial-gradient(ellipse 60% 80% at 50% 50%, transparent 55%, rgba(20,0,10,.55) 100%),
+      linear-gradient(90deg, rgba(20,0,10,.35), transparent 40%);
   }
-  .login-bg-photo {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    filter: saturate(0.85) brightness(0.9);
-    animation: loginFade 1.2s ease both;
+  /* Palco 16:9 que cabe inteiro na altura da tela: nada exige scroll no hero */
+  .hero__inner {
+    position: relative;
+    container-type: inline-size;
+    width: min(100%, calc(100vh * 16 / 9));
+    width: min(100%, calc(100svh * 16 / 9));
+    aspect-ratio: 16 / 9;
   }
-  .login-bg-scrim {
-    position: absolute; inset: 0;
-    background: linear-gradient(115deg, rgba(7,32,38,0.82) 0%, rgba(7,32,38,0.45) 45%, rgba(7,32,38,0.72) 100%);
+  .hero__title {
+    position: absolute;
+    left: 3.9cqw; top: 14%;
+    font-family: var(--fonte-titulo);
+    font-weight: 400;
+    font-size: 8.2cqw;
+    line-height: 1.28;
+    color: var(--gelo);
+    text-transform: uppercase;
+    letter-spacing: 0;
+    white-space: nowrap;
   }
-  @keyframes loginFade { from { opacity: 0 } to { opacity: 1 } }
+  .hero__text {
+    position: absolute;
+    left: 3.9cqw; top: 69%;
+    width: 43.3cqw;
+    font-family: var(--fonte-texto);
+    font-weight: 300;
+    font-size: 1.88cqw;
+    line-height: 1.33;
+    letter-spacing: .03em;
+    color: var(--texto);
+    text-align: justify;
+  }
+  /* Contador do Vale: lojas e membros ativos vindos do banco */
+  .hero__contagem {
+    position: absolute;
+    left: 3.9cqw; top: 53%;
+    display: flex; gap: 2.2cqw;
+    font-family: var(--fonte-texto);
+  }
+  .hero__contagem-item {
+    min-width: 9.5cqw;
+    padding: 1.1cqw 1.6cqw;
+    border: 1px solid rgba(255,255,255,.35);
+    border-radius: 1.2cqw;
+    background: rgba(45,8,22,.45);
+    backdrop-filter: blur(8px);
+  }
+  .hero__contagem-num {
+    display: block;
+    font-family: var(--fonte-titulo);
+    font-size: 3.4cqw;
+    line-height: 1;
+    color: var(--gelo);
+  }
+  .hero__contagem-rotulo {
+    display: block;
+    margin-top: .5cqw;
+    font-size: .95cqw;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--texto);
+    opacity: .85;
+  }
+  .hero__brasao {
+    position: absolute;
+    left: 57.2cqw; top: 7.5%;
+    width: 38.3cqw; height: auto;
+    filter: drop-shadow(0 .6cqw 1.2cqw rgba(0,0,0,.18));
+  }
+  /* Pontilhados decorativos (5 colunas x 6 linhas) */
+  .dots {
+    position: absolute;
+    width: 2.5cqw; height: 3cqw;
+    background-image: radial-gradient(circle, #fff 0 .14cqw, transparent .16cqw);
+    background-size: .625cqw .6cqw;
+    opacity: .9;
+  }
+  .dots--top    { left: 56.7cqw; top: 10%; }
+  .dots--bottom { left: 93.6cqw; top: 85.2%; }
 
-  .login-wrap { position: relative; z-index: 1; width: 100%; max-width: 420px; }
+  /* 4ª sessão: Supremo Conselho */
+  /* Página de login: conteúdo de ponta a ponta, sem moldura do layout base */
+  main#conteudo-principal { max-width: none !important; padding: 0 !important; }
+  .sessao-supremo { background: #46072A; color: var(--texto); }
+  .sessao-supremo__inner { display: flex; flex-wrap: wrap; align-items: center; gap: 48px; max-width: 1100px; margin: 0 auto; padding: 80px 24px; }
+  .sessao-supremo__media, .sessao-supremo__info { flex: 1 1 380px; }
+  .sessao-supremo__img { width: 100%; height: auto; filter: drop-shadow(0 18px 30px rgba(0,0,0,.45)); }
+  .sessao-supremo__info h2 { font-family: var(--fonte-titulo); font-size: 2.2rem; line-height: 1.15; color: var(--gelo); text-transform: uppercase; margin: 14px 0; }
+  .sessao-supremo__info p { font-family: var(--fonte-texto); font-size: 15px; color: rgba(244,238,241,.75); }
+  .sessao-supremo__info ul { list-style: none; padding: 0; margin-top: 24px; display: grid; gap: 14px; font-family: var(--fonte-texto); font-size: 15px; color: rgba(244,238,241,.85); }
+  .sessao-supremo__info a { color: var(--gelo); text-decoration: underline; text-decoration-color: rgba(255,255,255,.35); text-underline-offset: 4px; }
+  .sessao-supremo__info a:hover { text-decoration-color: var(--gelo); }
+  .login-wrap { position: relative; z-index: 3; width: 100%; max-width: 1260px; margin: auto; padding: 90px 16px 60px; }
+  .login-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 48px; padding: 0 24px; background: #5E0A35; }
+  @media (min-width: 900px) { .login-row { flex-wrap: nowrap; } .login-row > .login-wrap { padding: 90px 16px 60px; } }
+  .login-row > .login-wrap { flex: 0 1 560px; width: 560px; max-width: 100%; min-width: 0; margin: 0; }
+  .galeria-medalhas { flex: 0 0 420px; width: 420px; max-width: 100%; }
+  .galeria-medalhas img { width: 100%; height: auto; border-radius: 18px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); }
+  /* Entrada coreografada: o cartão desfoca e sobe; a galeria se revela por máscara, logo depois.
+     Anima o wrapper e a galeria, não o cartão (que usa transform no arraste). Sem JS; conteúdo visível sem animação. */
+  @keyframes loginEntra {
+    from { opacity: 0; transform: translateY(28px) scale(.98); filter: blur(12px); }
+    to   { opacity: 1; transform: none; filter: none; }
+  }
+  @keyframes galeriaRevela {
+    from { clip-path: inset(0 0 100% 0 round 18px); opacity: 0; }
+    to   { clip-path: inset(0 0 0 0 round 18px); opacity: 1; }
+  }
+  .login-row > .login-wrap { animation: loginEntra .9s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .galeria-medalhas { animation: galeriaRevela 1.1s cubic-bezier(0.16, 1, 0.3, 1) .25s both; }
+  @media (prefers-reduced-motion: reduce) {
+    .login-row > .login-wrap, .galeria-medalhas { animation: none; }
+  }
   .login-card {
     position: relative;
+    width: 100%;
     cursor: grab;
     touch-action: none;
     will-change: transform;
     border-radius: 24px;
     padding: 44px 40px 36px;
-    background: rgba(255,255,255,0.13);
-    border: 1px solid rgba(255,255,255,0.45);
+    background: rgba(45,8,22,0.42);
+    border: 1px solid rgba(255,255,255,0.4);
     backdrop-filter: blur(22px) saturate(160%);
     -webkit-backdrop-filter: blur(22px) saturate(160%);
-    box-shadow: 0 30px 60px -20px rgba(5,20,26,0.55), inset 0 1px 0 rgba(255,255,255,0.35);
+    box-shadow: 0 30px 60px -20px rgba(40,0,10,0.65), inset 0 1px 0 rgba(255,255,255,0.3);
     color: #f4fafb;
   }
   .login-card.dragging { cursor: grabbing; user-select: none; }
   .login-card input, .login-card button, .login-card label, .login-card a, .login-card .footer { cursor: auto; }
+
+  /* ---- Menu ponta a ponta, centralizado, translúcido ---- */
+  .floating-menu {
+    position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+    z-index: 40;
+    display: flex; align-items: center; justify-content: center; gap: 2px;
+    width: calc(100% - 28px);
+    max-width: none;
+    padding: 6px;
+    border-radius: 9999px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.35);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    box-shadow: 0 12px 32px -12px rgba(40,0,10,0.55);
+  }
+  .floating-menu a {
+    flex: 1 1 auto;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 9px 10px;
+    border-radius: 9999px;
+    font-family: var(--fonte-texto);
+    font-size: 13.5px; font-weight: 600;
+    color: rgba(255,255,255,0.92);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .15s ease, color .15s ease;
+  }
+  .floating-menu a:hover, .floating-menu a:focus-visible {
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    outline: none;
+  }
+  .floating-menu svg { width: 15px; height: 15px; flex: none; }
+  .fm-toggle { display: none; }
+  .fm-fechar-mobile { display: none; }
+
+  /* ===== 2ª sessão: Calendário (fundo mais escuro) ===== */
+  .sessao-calendario {
+    position: relative; z-index: 2;
+    background: #8C1A4F;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .fm-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 9999px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.22);
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3em;
+    color: rgba(255,255,255,0.9);
+  }
+  .cal-cabecalho { display: flex; justify-content: center; margin-bottom: 14px; }
+  .cal-mes-ano {
+    font-size: 15px; font-weight: 700; letter-spacing: 0.06em;
+    color: #e9c85a; text-transform: uppercase;
+  }
+  .cal-grade {
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px; overflow: hidden;
+    background: rgba(255,255,255,0.03);
+  }
+  .cal-dow {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    background: rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .cal-dow span {
+    padding: 10px 6px; text-align: center;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.55);
+  }
+  .cal-semana {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+  }
+  .cal-semana + .cal-semana { border-top: 1px solid rgba(255,255,255,0.08); }
+  .cal-dia {
+    min-height: 92px;
+    padding: 6px;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .cal-dia:nth-child(7) { border-right: none; }
+  .cal-num {
+    font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.75);
+    width: 24px; height: 24px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 9999px;
+    font-variant-numeric: tabular-nums;
+  }
+  .cal-dia.hoje .cal-num { background: #c9a227; color: #2b0716; font-weight: 800; }
+  .cal-dia.outro { opacity: 0.35; }
+  .cal-evt {
+    display: block;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(91,141,239,0.18);
+    border: 1px solid rgba(91,141,239,0.35);
+    color: #cfe0ff;
+    font-size: 10.5px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .cal-evt-hora { font-variant-numeric: tabular-nums; color: #7aa8f5; }
+  .cal-vazio {
+    margin-top: 16px; text-align: center;
+    font-size: 13.5px; color: rgba(255,255,255,0.55);
+  }
+  @media (max-width: 640px) {
+    .cal-dia { min-height: 56px; padding: 4px; }
+    .cal-evt { display: none; } /* no mobile, o ponto de agenda: */
+    .cal-dia.tem-evt { position: relative; }
+    .cal-dia.tem-evt::after {
+      content: ''; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+      width: 5px; height: 5px; border-radius: 9999px; background: #5b8def;
+    }
+  }
+
+  /* Mobile: hero empilha */
+  @media (max-width: 760px) {
+    .hero { height: auto; aspect-ratio: auto; min-height: 100svh; container-type: normal; padding: 8vw 6vw 10vw; display: flex; flex-direction: column; gap: 8vw; }
+    .hero__inner { position: static; display: contents; }
+    .hero__title, .hero__text, .hero__brasao, .hero__contagem, .dots { position: static; }
+    .hero__contagem { order: 1; justify-content: center; gap: 4vw; }
+    .hero__contagem-item { min-width: 34vw; padding: 3vw 4vw; }
+    .hero__contagem-num { font-size: 9vw; }
+    .hero__contagem-rotulo { font-size: 2.8vw; }
+    .hero__title { font-size: 13vw; white-space: normal; }
+    .hero__text { width: 100%; font-size: 4.4vw; order: 3; }
+    .hero__brasao { width: 80vw; margin: 0 auto; order: 2; }
+    .dots { display: none; }
+  }
+
+  /* Abaixo de 900px a sessão de login empilha: o cartão fica estático e com respiro lateral */
+  @media (max-width: 899px) {
+    .login-wrap { position: static; padding: 8vw 6vw 10vw; }
+  }
+
+  /* Mobile: menu ponta a ponta vira painel suspenso (sem botão Fechar) */
+  @media (max-width: 760px) {
+    .floating-menu {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 4px;
+      border-radius: 18px;
+      display: none;
+    }
+    .floating-menu.aberto { display: flex; }
+    .floating-menu a { padding: 13px 16px; font-size: 14.5px; justify-content: flex-start; }
+    .fm-toggle {
+      display: inline-flex; align-items: center; gap: 8px;
+      position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 41;
+      width: calc(100% - 20px);
+      justify-content: center;
+      padding: 11px 16px;
+      border-radius: 9999px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.35);
+      backdrop-filter: blur(16px) saturate(150%);
+      -webkit-backdrop-filter: blur(16px) saturate(150%);
+      color: rgba(255,255,255,0.95);
+      font-family: var(--fonte-texto);
+      font-size: 13px; font-weight: 700;
+      letter-spacing: .08em;
+      cursor: pointer;
+    }
+  }
 </style>
 {% if turnstile_configured %}
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -55,71 +344,130 @@
 {% endblock %}
 
 {% block conteudo %}
-<div class="login-bg" aria-hidden="true">
-  <div class="login-bg-gradient"></div>
-  <img class="login-bg-photo" src="{% static 'img/bg-login.png' %}" alt="" onerror="this.remove()">
-  <div class="login-bg-scrim"></div>
-</div>
+<!-- Menu ponta a ponta (mobile: painel suspenso) -->
+<button type="button" id="fmToggle" class="fm-toggle" aria-controls="menuFlutuante" aria-expanded="false">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+  Menu
+</button>
+<nav id="menuFlutuante" class="floating-menu" aria-label="Navegação principal">
+  <a href="#sessao-login" data-fm="login">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+    Login
+  </a>
+  <a href="/agendas/?modo=calendario" data-fm="calendario">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Calendário
+  </a>
+  <a href="#sessao-galeria" data-fm="galeria">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    Galeria
+  </a>
+  <a href="#sessao-supremo" data-fm="supremo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+    Supremo
+  </a>
+  <a href="#sessao-supremo" data-fm="contato">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    Contato
+  </a>
+</nav>
 
-<div class="flex min-h-[calc(100vh-4rem)] items-center justify-center" style="position:relative;z-index:1">
-  <div class="login-wrap">
+<!-- HERO: slide Vale de Jacarepaguá -->
+<section class="hero" aria-label="Vale de Jacarepaguá">
+  <div class="hero__inner">
+    <span class="dots dots--top" aria-hidden="true"></span>
+    <span class="dots dots--bottom" aria-hidden="true"></span>
+
+    <h1 class="hero__title">Vale de<br>Jacarepaguá</h1>
+
+    <p class="hero__text">
+      Jurisdicionada a 1ª Inspetoria Litúrgica do Estado do Rio de Janeiro do
+      Supremo Conselho do Grau 33º. Rito Escocês Antigo e Aceito da Maçonaria
+      para a República Federativa do Brasil.
+    </p>
+
+    <div class="hero__contagem" aria-label="Contagem do Vale">
+      <div class="hero__contagem-item">
+        <span class="hero__contagem-num" data-valor="{{ contagem.lojas }}">{{ contagem.lojas }}</span>
+        <span class="hero__contagem-rotulo">Lojas ativas</span>
+      </div>
+      <div class="hero__contagem-item">
+        <span class="hero__contagem-num" data-valor="{{ contagem.membros }}">{{ contagem.membros }}</span>
+        <span class="hero__contagem-rotulo">Membros ativos</span>
+      </div>
+    </div>
+
+    <img class="hero__brasao" src="{% static 'img/brasao_3d.png' %}"
+         alt="Brasão do Grau 33º: águia bicéfala com coroa, espada e lema Deus Meumque Jus">
+  </div>
+</section>
+<script>
+(function () {
+  var nums = document.querySelectorAll('.hero__contagem-num[data-valor]');
+  if (!nums.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var duracao = 3200;
+  nums.forEach(function (el) {
+    var alvo = parseInt(el.getAttribute('data-valor'), 10) || 0;
+    if (!alvo) return;
+    var inicio = null;
+    el.textContent = '0';
+    function passo(t) {
+      if (inicio === null) inicio = t;
+      var p = Math.min((t - inicio) / duracao, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(alvo * eased).toLocaleString('pt-BR');
+      if (p < 1) requestAnimationFrame(passo);
+    }
+    requestAnimationFrame(passo);
+  });
+})();
+</script>
+<div class="login-row">
+<div id="sessao-login" class="login-wrap">
     <section class="login-card" id="loginCard" title="Arraste para posicionar · duplo-clique para centralizar">
       <div class="mb-7 flex items-center gap-3">
-        <img src="{% static 'img/logow.webp' %}" alt="{{ APP_BRAND_NAME }}" class="h-11 w-11 rounded-[13px] object-cover shadow-lg shadow-[#1a5fb4]/70">
-        <span class="font-display text-[1.35rem] font-semibold tracking-tight"><span class="text-[#ef4444]">{{ APP_BRAND_NAME }}</span></span>
+        <img src="{% static 'img/logo.png' %}" alt="SAL DO REAA" class="h-11 w-11 rounded-[13px] object-contain shadow-lg shadow-[#4a0e1f]/70">
+        <span class="font-display text-[1.35rem] font-semibold tracking-tight"><span class="text-[#ef4444]">SAL DO REAA</span></span>
       </div>
 
-      <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.3em] text-white/90">
+      <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.3em] text-white/90">
         <span class="h-1.5 w-1.5 rounded-full bg-[#4ade80] shadow-[0_0_8px_#4ade80]"></span>
         Acesso restrito
       </div>
 
       <h1 class="font-display mb-2.5 text-[2.1rem] font-medium leading-[1.12] tracking-tight text-white">Bem-vindo(a) de volta</h1>
-      {% if eh_saldorer %}
-        <p class="mb-7 text-[15px] leading-relaxed text-white/70">Digite o seu celular e senha para acessar.</p>
-      {% else %}
-        <p class="mb-7 text-[15px] leading-relaxed text-white/70">Digite o seu celular e senha para acessar.</p>
-      {% endif %}
 
       {% for message in messages %}
-        <div role="status" aria-live="polite" class="mb-4 rounded-xl border border-[#4ade80]/30 bg-[#4ade80]/10 px-4 py-3 text-[13.5px] font-semibold text-[#b9f6ce]">{{ message }}</div>
+        <div role="status" aria-live="polite" class="mb-4 rounded-xl border border-[#4ade80]/30 bg-[#4ade80]/10 px-4 py-3 text-[13px] font-semibold text-[#b9f6ce]">{{ message }}</div>
       {% endfor %}
       {% if erro %}
-        <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ erro }}</div>
+        <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13px] font-semibold text-[#ffd9d9]">{{ erro }}</div>
       {% endif %}
+
+      
+      
 
       <form method="post" action="{% url 'acesso:login' %}" novalidate>
         {% csrf_token %}
         <div class="mb-[18px]">
-          {% if eh_saldorer %}
-            <label for="identifier" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-white/60">Celular</label>
-            <div class="relative">
-              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(244,250,251,0.5)" stroke-width="2" class="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="18"/>
-              </svg>
-              <input id="identifier" name="identifier" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="21999417097" autocomplete="tel" required
-                     class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-4 text-[15px] text-white outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#5b8def]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#5b8def]/20">
-            </div>
-          {% else %}
-            <label for="email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-white/60">Celular</label>
-            <div class="relative">
-              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(244,250,251,0.5)" stroke-width="2" class="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="18"/>
-              </svg>
-              <input id="email" name="email" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="21999417097" autocomplete="tel" required
-                     class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-4 text-[15px] text-white outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#5b8def]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#5b8def]/20">
-            </div>
-          {% endif %}
+          <label for="identifier" class="mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-white/60">Cadastro</label>
+          <div class="relative">
+            <svg viewBox="0 0 24 24" fill="none" stroke="rgba(244,250,251,0.5)" stroke-width="2" class="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/>
+            </svg>
+            <input id="identifier" name="identifier" type="text" inputmode="numeric" placeholder="1234567" autocomplete="username" required
+                   class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-4 text-[16px] text-white md:text-[15px] outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#5b8def]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#5b8def]/20">
+          </div>
         </div>
 
         <div class="mb-[18px]">
-          <label for="senha" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-white/60">Senha</label>
+          <label for="senha" class="mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-white/60">Senha</label>
           <div class="relative">
             <svg viewBox="0 0 24 24" fill="none" stroke="rgba(244,250,251,0.5)" stroke-width="2" class="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>
             </svg>
             <input id="senha" name="senha" type="password" placeholder="••••••••" autocomplete="current-password" required
-                   class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-12 text-[15px] text-white outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#5b8def]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#5b8def]/20">
+                   class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-12 text-[16px] text-white md:text-[15px] outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#5b8def]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#5b8def]/20">
             <button type="button" id="toggleSenha" class="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 transition hover:text-white/80" aria-label="Mostrar senha">
               <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-[18px] w-[18px]" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               <svg id="eyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-[18px] w-[18px] hidden" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -127,7 +475,8 @@
           </div>
         </div>
 
-        {% if turnstile_configured %}
+        
+          {% if turnstile_configured %}
           <div class="my-5 flex justify-center" aria-label="Verificação de segurança">
             <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark" data-action="login"></div>
           </div>
@@ -136,6 +485,7 @@
             Verificação humana indisponível. Tente novamente mais tarde.
           </p>
         {% endif %}
+        
 
         <button type="submit" {% if not turnstile_configured %}disabled aria-disabled="true"{% endif %}
                 class="mt-1.5 flex w-full items-center justify-center gap-2.5 rounded-2xl border border-red-200/25 bg-[#991b1b] py-4 text-[15px] font-bold tracking-wide text-white shadow-[0_10px_24px_-9px_rgba(40,0,0,0.65)] transition hover:bg-[#7f1d1d] focus:outline-none focus:ring-4 focus:ring-red-200/30 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/15 disabled:text-white/50 disabled:shadow-none">
@@ -145,21 +495,155 @@
           <button type="button" id="forgotPassword" aria-controls="forgotPasswordNotice" aria-expanded="false" class="rounded px-2 py-1 text-[13px] font-medium text-red-100 underline decoration-red-200/50 underline-offset-4 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-red-200/50">
             Esqueci a senha
           </button>
-          <p id="forgotPasswordNotice" class="mt-2 rounded-xl bg-white/10 px-3 py-2 text-[12.5px] leading-relaxed text-white/85" role="status" tabindex="-1" hidden>
+          <p id="forgotPasswordNotice" class="mt-2 rounded-xl bg-white/10 px-3 py-2 text-[13px] leading-relaxed text-white/85" role="status" tabindex="-1" hidden>
             A recuperação de senha ainda não está disponível. Entre em contato com o administrador da sua unidade.
           </p>
         </div>
       </form>
 
-      <p class="footer mt-6 text-center text-[12.5px] leading-relaxed text-white/50">
+      <p class="footer mt-6 text-center text-[13px] leading-relaxed text-white/50">
       </p>
     </section>
-  </div>
 </div>
+
+<section id="sessao-galeria" class="galeria-medalhas" aria-label="Medalhas do Grau 33">
+  <img class="galeria-medalhas__img galeria-medalhas__img--hidden" src="/static/img/medalhas_grau33.png" alt="Medalhas e comenda do Supremo Conselho Grau 33" loading="lazy">
+</section>
+<style>
+  .galeria-medalhas__img--hidden {
+    opacity: 0 !important;
+    transform: translateY(10px);
+    will-change: opacity, transform;
+  }
+  .galeria-medalhas__img--visible {
+    opacity: 1 !important;
+    transform: translateY(0);
+    transition: opacity 1.6s ease-out, transform 1.6s ease-out;
+    transition-delay: 0.4s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .galeria-medalhas__img--hidden,
+    .galeria-medalhas__img--visible {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var img = document.querySelector('.galeria-medalhas__img');
+    if (img) {
+      requestAnimationFrame(function () {
+        img.classList.remove('galeria-medalhas__img--hidden');
+        img.classList.add('galeria-medalhas__img--visible');
+      });
+    }
+  });
+</script>
+</div>
+
+<!-- ===== 2ª sessão: Calendário do Vale (fundo mais escuro) ===== -->
+<section id="sessao-calendario" class="sessao-calendario" aria-labelledby="titulo-calendario">
+  <div class="mx-auto w-full max-w-[960px] px-6 py-20">
+    <div class="mb-8 text-center">
+      <span class="fm-badge">Calendário</span>
+      <h2 id="titulo-calendario" class="font-display mt-3 text-[1.8rem] font-semibold tracking-tight text-white">Agenda de sessões do Vale</h2>
+      <p class="mt-2 text-[14.5px] text-white/60">Próximas sessões e reuniões agendadas.</p>
+    </div>
+
+    <div class="cal-cabecalho">
+      <span class="cal-mes-ano">{{ agenda.mes_nome }} {{ agenda.ano }}</span>
+    </div>
+    <div class="cal-grade" role="grid" aria-label="Calendário do mês">
+      <div class="cal-dow" role="row">
+        <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span>
+        <span>Qui</span><span>Sex</span><span>Sáb</span>
+      </div>
+      {% for semana in agenda.semanas %}
+        <div class="cal-semana" role="row">
+          {% for dia in semana %}
+            <div class="cal-dia{% if dia.hoje %} hoje{% endif %}{% if dia.outro_mes %} outro{% endif %}" role="gridcell">
+              <span class="cal-num">{{ dia.dia }}</span>
+              {% for ev in dia.eventos %}
+                <span class="cal-evt" title="{{ ev.tipo_display }} — {{ ev.titulo }} {{ ev.hora }}">
+                  <span class="cal-evt-hora">{{ ev.hora }}</span> {{ ev.titulo }}
+                </span>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+    {% if not agenda.tem_eventos %}
+      <p class="cal-vazio">Nenhuma sessão agendada neste mês.</p>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ===== 4ª sessão: Supremo Conselho ===== -->
+<section id="sessao-supremo" class="sessao-supremo" aria-labelledby="titulo-supremo">
+  <div class="sessao-supremo__inner">
+    <div class="sessao-supremo__media">
+      <img class="sessao-supremo__img" src="{% static 'img/templo_maconico.png' %}" alt="Templo Maçônico com o brasão do Grau 33" loading="lazy">
+    </div>
+    <div class="sessao-supremo__info">
+      <span class="fm-badge">Supremo</span>
+      <h2 id="titulo-supremo">Supremo Conselho do Brasil do Grau 33</h2>
+      <p>Rito Escocês Antigo e Aceito para a República Federativa do Brasil.</p>
+      <ul>
+        <li>Telefone: <a href="tel:+552133698000">(21) 3369-8000</a></li>
+        <li>E-mail: <a href="mailto:secretaria@sc33.org.br">secretaria@sc33.org.br</a></li>
+        <li>Endereço: Rua Barão, 1317 · Jacarepaguá · Rio de Janeiro – RJ · CEP 21321-624</li>
+        <li>Atendimento: segunda a sexta, das 9h às 18h</li>
+      </ul>
+    </div>
+  </div>
+</section>
 {% endblock %}
 
 {% block js %}
 <script>
+(function () {
+  var menu = document.getElementById('menuFlutuante');
+  var toggle = document.getElementById('fmToggle');
+  if (!menu || !toggle) return;
+
+  function fechar() {
+    menu.classList.remove('aberto');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+  toggle.addEventListener('click', function () {
+    var aberto = menu.classList.toggle('aberto');
+    toggle.setAttribute('aria-expanded', String(aberto));
+  });
+
+  // Fechar por clique fora ou por Esc (sem botão Fechar dedicado).
+  document.addEventListener('click', function (e) {
+    if (!abertoEmMobile() || menu.contains(e.target) || toggle.contains(e.target)) return;
+    fechar();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') fechar();
+  });
+  function abertoEmMobile() {
+    return window.matchMedia('(max-width: 760px)').matches && menu.classList.contains('aberto');
+  }
+
+  // Item 'Login' rola até o card; Calendário navega (padrão original).
+  menu.querySelectorAll('a[data-fm]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      fechar();
+      if (a.dataset.fm === 'login') {
+        var alvo = document.getElementById('sessao-login') || document.getElementById('loginCard');
+        if (alvo) alvo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      // Calendário navega para a agenda completa do sistema (padrão original)
+      if (a.dataset.fm === 'calendario') return;
+    });
+  });
+})();
+
 (function () {
   var card = document.getElementById('loginCard');
   if (!card) return;

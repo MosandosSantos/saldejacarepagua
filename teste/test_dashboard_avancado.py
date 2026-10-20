@@ -27,7 +27,7 @@ def _cliente_web(usuario):
     return c
 
 
-def _contato_com_negocio(nome, tenant, stage='interessado', valor=100, **kwargs):
+def _contato_com_negocio(nome, tenant, stage='suplica', valor=100, **kwargs):
     contato = Contato.objects.create(nome=nome, seg='', tenant=tenant, **kwargs)
     criar_negocio(contato, stage=stage, valor=valor, tenant_id=tenant.id)
     return contato
@@ -37,7 +37,7 @@ def _contato_com_negocio(nome, tenant, stage='interessado', valor=100, **kwargs)
 
 @pytest.mark.django_db
 def test_dashboard_renderiza_blocos_avancados(tenant_aurora, usuario_operacional):
-    _contato_com_negocio('Ana', tenant_aurora, stage='orcamento', valor=1000)
+    _contato_com_negocio('Ana', tenant_aurora, stage='comunicacao', valor=1000)
     c = _cliente_web(usuario_operacional)
     html = c.get('/dashboard/').content.decode('utf-8')
     for trecho in ['Receita projetada', 'Meta do mês', 'Tempo médio de fechamento',
@@ -51,9 +51,9 @@ def test_dashboard_renderiza_blocos_avancados(tenant_aurora, usuario_operacional
 def test_receita_projetada_ponderada(tenant_aurora, usuario_operacional):
     from dashboard.views import _brl_curto
 
-    _contato_com_negocio('A', tenant_aurora, stage='orcamento', valor=1000)   # 0.65
-    _contato_com_negocio('B', tenant_aurora, stage='interessado', valor=2000)  # 0.10
-    _contato_com_negocio('C', tenant_aurora, stage='fechado', valor=500)      # 1.00
+    _contato_com_negocio('A', tenant_aurora, stage='comunicacao', valor=1000)   # 0.65
+    _contato_com_negocio('B', tenant_aurora, stage='suplica', valor=2000)  # 0.10
+    _contato_com_negocio('C', tenant_aurora, stage='diploma', valor=500)      # 1.00
     _contato_com_negocio('D', tenant_aurora, stage='perdido', valor=9999)     # 0.00 (fora)
     c = _cliente_web(usuario_operacional)
     r = c.get('/dashboard/dados/')
@@ -69,7 +69,7 @@ def test_receita_projetada_ponderada(tenant_aurora, usuario_operacional):
 def test_meta_do_mes_progresso(tenant_aurora, admin_company):
     tenant_aurora.meta_mensal = Decimal(10000)
     tenant_aurora.save(update_fields=['meta_mensal'])
-    _contato_com_negocio('Ana', tenant_aurora, stage='fechado', valor=2500)
+    _contato_com_negocio('Ana', tenant_aurora, stage='diploma', valor=2500)
     c = _cliente_web(admin_company)
     dados = c.get('/dashboard/dados/').json()
     assert dados['meta_pct'] == 25
@@ -78,7 +78,7 @@ def test_meta_do_mes_progresso(tenant_aurora, admin_company):
 
 @pytest.mark.django_db
 def test_meta_sem_valor_nao_quebra(tenant_aurora, usuario_operacional):
-    _contato_com_negocio('Ana', tenant_aurora, stage='fechado', valor=500)
+    _contato_com_negocio('Ana', tenant_aurora, stage='diploma', valor=500)
     c = _cliente_web(usuario_operacional)
     dados = c.get('/dashboard/dados/').json()
     assert dados['meta_pct'] is None
@@ -107,8 +107,8 @@ def test_operacional_nao_altera_meta(tenant_aurora, usuario_operacional):
 
 @pytest.mark.django_db
 def test_fechados_do_mes_ignora_meses_anteriores(tenant_aurora, usuario_operacional):
-    _contato_com_negocio('Nova', tenant_aurora, stage='fechado', valor=500)
-    antigo = _contato_com_negocio('Antiga', tenant_aurora, stage='fechado', valor=500)
+    _contato_com_negocio('Nova', tenant_aurora, stage='diploma', valor=500)
+    antigo = _contato_com_negocio('Antiga', tenant_aurora, stage='diploma', valor=500)
     # backdate do fechado antigo para o mês passado (update ignora auto_now)
     Negocio.objects.filter(pk=antigo.negocio.id).update(
         updated_at=timezone.now() - timedelta(days=45)
@@ -123,9 +123,9 @@ def test_fechados_do_mes_ignora_meses_anteriores(tenant_aurora, usuario_operacio
 
 @pytest.mark.django_db
 def test_melhores_negocios_ordenados(tenant_aurora, usuario_operacional):
-    _contato_com_negocio('Pequeno', tenant_aurora, stage='interessado', valor=100)
-    _contato_com_negocio('Grande', tenant_aurora, stage='orcamento', valor=9000)
-    _contato_com_negocio('Medio', tenant_aurora, stage='avaliacao_feita', valor=3000)
+    _contato_com_negocio('Pequeno', tenant_aurora, stage='suplica', valor=100)
+    _contato_com_negocio('Grande', tenant_aurora, stage='comunicacao', valor=9000)
+    _contato_com_negocio('Medio', tenant_aurora, stage='iniciacao', valor=3000)
     c = _cliente_web(usuario_operacional)
     html = c.get('/dashboard/').content.decode('utf-8')
     pos_grande = html.find('Grande')
@@ -138,9 +138,9 @@ def test_melhores_negocios_ordenados(tenant_aurora, usuario_operacional):
 
 @pytest.mark.django_db
 def test_atividade_do_time_conta_movs_e_notas(tenant_aurora, usuario_operacional):
-    negocio = _contato_com_negocio('Ana', tenant_aurora, stage='interessado', valor=100).negocio
-    registrar_movimentacao(negocio, 'interessado', 'orcamento', usuario_operacional.id)
-    registrar_movimentacao(negocio, 'orcamento', 'fechado', usuario_operacional.id)
+    negocio = _contato_com_negocio('Ana', tenant_aurora, stage='suplica', valor=100).negocio
+    registrar_movimentacao(negocio, 'suplica', 'comunicacao', usuario_operacional.id)
+    registrar_movimentacao(negocio, 'comunicacao', 'diploma', usuario_operacional.id)
     contato = negocio.contato
     Nota.objects.create(contato=contato, texto='x', autor=usuario_operacional)
     c = _cliente_web(usuario_operacional)
@@ -153,10 +153,10 @@ def test_atividade_do_time_conta_movs_e_notas(tenant_aurora, usuario_operacional
 
 @pytest.mark.django_db
 def test_atividade_isolada_por_tenant(tenant_aurora, tenant_beta, usuario_operacional, usuario_operacional_beta):
-    negocio_beta = _contato_com_negocio('Beta', tenant_beta, stage='interessado').negocio
-    registrar_movimentacao(negocio_beta, 'interessado', 'fechado', usuario_operacional_beta.id)
-    negocio = _contato_com_negocio('Aurora', tenant_aurora, stage='interessado').negocio
-    registrar_movimentacao(negocio, 'interessado', 'fechado', usuario_operacional.id)
+    negocio_beta = _contato_com_negocio('Beta', tenant_beta, stage='suplica').negocio
+    registrar_movimentacao(negocio_beta, 'suplica', 'diploma', usuario_operacional_beta.id)
+    negocio = _contato_com_negocio('Aurora', tenant_aurora, stage='suplica').negocio
+    registrar_movimentacao(negocio, 'suplica', 'diploma', usuario_operacional.id)
     c = _cliente_web(usuario_operacional)
     html = c.get('/dashboard/').content.decode('utf-8')
     assert usuario_operacional.nome in html
@@ -167,7 +167,7 @@ def test_atividade_isolada_por_tenant(tenant_aurora, tenant_beta, usuario_operac
 
 @pytest.mark.django_db
 def test_endpoint_dados_json(tenant_aurora, usuario_operacional):
-    _contato_com_negocio('Ana', tenant_aurora, stage='orcamento', valor=1000)
+    _contato_com_negocio('Ana', tenant_aurora, stage='comunicacao', valor=1000)
     c = _cliente_web(usuario_operacional)
     r = c.get('/dashboard/dados/')
     assert r.status_code == 200
@@ -181,7 +181,7 @@ def test_endpoint_dados_json(tenant_aurora, usuario_operacional):
 
 @pytest.mark.django_db
 def test_dados_isolado_por_tenant(tenant_aurora, tenant_beta, usuario_operacional, usuario_operacional_beta):
-    _contato_com_negocio('Beta', tenant_beta, stage='fechado', valor=9999)
+    _contato_com_negocio('Beta', tenant_beta, stage='diploma', valor=9999)
     c = _cliente_web(usuario_operacional)
     dados = c.get('/dashboard/dados/').json()
     assert dados['ativos'] == 0

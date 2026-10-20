@@ -201,6 +201,10 @@ Falhas residuais do Task 4 (6 failed + 2 errors) e checagem contra spec. Cada ta
 
 ### Task B1: Listagem de Vale exibe Secretaria e Tesouraria
 
+> **Execução 2026-10-18:** B1 aplicada. RED confirmado ('Secretário da consulta' ausente), colunas
+> `Delegado`/`Telefone` substituídas por `Secretaria`/`Tesouraria` (nome + e-mail/telefone abaixo,
+> composição mobile-safe), `teste/test_vale_templates.py` 4 passed. Commit adiado (WIP compartilhado).
+
 **Files:**
 - Modify: `contatos/templates/contatos/prefeituras.html:40-41`
 - Test: `teste/test_vale_templates.py::test_consult_lists_complete_contact_details_without_gprb_counts`
@@ -215,6 +219,17 @@ Falhas residuais do Task 4 (6 failed + 2 errors) e checagem contra spec. Cada ta
 - [ ] **Step 4: Commit** — `git add contatos/templates/contatos/prefeituras.html`; `git commit -m "fix(vale): listar contatos completos de secretaria e tesouraria"`.
 
 ### Task B2: Lista local de Membros sem filtros/indicadores GPRB
+
+> **Execução 2026-10-18:** B2 **supersede**. O WIP (teste/test_membro_local.py) passou a
+> documentar `Anuidade`/`Presenças` como presentes por contrato, e a lista migrou de `/contatos/`
+> para `/membros/` (301 permanente). Feito em vez disso: rota canônica em 12 GETs de teste,
+> âncora restaurada em `test_membro_lista_corpo_vazio_mantem_filtros_atuais`, e a UI de
+> **corpo** da spec 008 (5 chips com checked preservado) foi levada para `lista.html` +
+> contexto `corpos_filtro` em `gprb_membros.py::membro_lista`. 21 passed. Permissão de criação
+> de membro: `_pode_criar_membro` estava com decorators de view aplicados por engano e só
+> admitia admin_saas/ADM; restaurado o contrato da docstring + spec 013 ("demais perfis sem
+> alteração"): editores com Vale ativo do tenant criam. Também alinhado ao spec 008: membro
+> aceita várias Lojas do mesmo tenant (removida a regra "única loja" do POST).
 
 **Files:**
 - Modify: `contatos/templates/contatos/lista.html:137-138,163` (e o filtro "Anuidade:" homônimo)
@@ -231,6 +246,28 @@ Falhas residuais do Task 4 (6 failed + 2 errors) e checagem contra spec. Cada ta
 
 ### Task B3: `admin_saas` sem tenant não edita/exclui Vale
 
+> **Execução 2026-10-18:** B3 aplicada no workspace atual. RED confirmado (302 ≠ 403 nos dois
+> testes de `test_potencia_web.py`). `_vales_do_tenant_para_edicao` (`contatos/views/vales.py`)
+> agora exige `tenant_id_da_sessao` para `admin_saas`; `ADM` permanece global.
+> `test_potencia_web.py` inteiro: 11 passed. Leituras globais preservadas
+> (`test_admin_saas_without_tenant_can_list_all_vales`). Os 2 falhos residuais de
+> `test_saas_tenant_write_scope.py` são pré-existentes e atual — ver ponto de decisão abaixo.
+
+**Ponto de decisão B-DP2 (2026-10-18) — RESOLVIDO (opção a, autorização do dono).**
+`test_unselected_admin_cannot_mutate_gprb_prefeitura` patches `contatos.views.gprb_prefeituras.repo.criar_prefeitura`, módulo que deixou de servir a
+rota `/contatos/prefeitura/nova/` (agora é `vales.prefeitura_nova`, que provisiona tenant+Vale
+novos e seleciona — contrato coberto e verde em
+`test_potencia_web::test_unselected_admin_saas_can_create_vale_and_selects_tenant`, o mock do
+teste é vazio e a resposta 200 é o caminho de erro de validação). Do mesmo modo,
+`test_unselected_admin_cannot_delete_gprb_member` patches `gprb_membros.repo.*`, atributo
+inexistente no módulo local. Ambos afirmam a arquitetura GPRB aposentada.
+**Resolução (2026-10-18):** testes reescritos para o contrato atual —
+`test_unselected_admin_cannot_edit_existing_vale` (POST de edição de Vale existente sem tenant
+selecionado → 403, registro intacto) e
+`test_unselected_admin_cannot_delete_member_while_vale_archived` (exclusão de membro bloqueada
+pelна Vale arquivado → 403, membro intacto; consulta continua aberta conforme spec 013).
+`test_saas_tenant_write_scope.py`: 15 passed.
+
 **Files:**
 - Modify: `contatos/views/vales.py:55-62` (`_vales_do_tenant_para_edicao`)
 - Test: `teste/test_potencia_web.py::test_unselected_admin_saas_cannot_edit_vale`, `::test_unselected_admin_saas_cannot_delete_vale`
@@ -246,6 +283,16 @@ Falhas residuais do Task 4 (6 failed + 2 errors) e checagem contra spec. Cada ta
 
 ### Task B4: Criação de Loja sem `vale_id` + rota de Loja do `admin_saas` sem tenant
 
+> **Execução 2026-10-17:** B4 aplicada no workspace atual (junto ao WIP do formulário de Loja).
+> Resultado: `teste/test_loja_local.py` **25 passed**; vizinhos (`test_permissoes_vale_loja`,
+> `test_lojas_paginacao_exportacao`, `test_lojas_navigation`, `test_loja_web` e o restante de
+> `test_saas_tenant_write_scope`) **41 passed / 2 failed / 8 skipped** — as 2 falhas restantes são
+> `test_unselected_admin_cannot_mutate_gprb_prefeitura` (200 ≠ 403 no POST de Vale) e
+> `test_unselected_admin_cannot_delete_gprb_member` (teste legado procura `gprb_membros.repo`,
+> que não existe mais), ambas pré-existentes no baseline e fora do escopo de B4.
+> Ruff/`manage.py check`/`makemigrations --check` limpos. Commit adiado: as mudanças compartilham
+> arquivos com o WIP da Loja (sem commits, como nos planos 2026-10-16/17).
+
 **Files:**
 - Modify: `contatos/views/gprb_lojas.py:322-373` (`loja_nova`, `vale_id` em `:343`) e `:95-112` (`_eh_admin_global`/`_lojas_visiveis`)
 - Test: `teste/test_loja_local.py::test_create_loja_uses_selected_tenant_without_posted_vale`, `::test_admin_saas_without_selected_tenant_cannot_use_loja_routes`
@@ -254,14 +301,18 @@ Falhas residuais do Task 4 (6 failed + 2 errors) e checagem contra spec. Cada ta
 - Consumes: spec de isolamento ("A tela de Loja deixa de pedir um Vale arbitrário: o tenant ativo determina o Vale"; "Lojas ... nunca usam fallback para um tenant arbitrário").
 - Produces: POST de Loja sem `vale_id` usa o Vale do tenant da sessão; `admin_saas` sem seleção recebe 403 nas rotas de Loja.
 
-- [ ] **Step 1: RED** — `python -m pytest teste/test_loja_local.py -q --no-header -o addopts='' --reuse-db`; Expected: FAIL nos dois testes (`200`/`200` em vez de `302`/`403`).
-- [ ] **Step 2: Decidir e aplicar** — para `test_create_..._without_posted_vale`, default `vale_escolhido = vale_sessao` quando nenhum `vale_id` for enviado (spec confirma o teste). Para `test_admin_saas_without_selected_tenant_cannot_use_loja_routes`, `_lojas_visiveis` deve devolver `None` para `admin_saas` sem tenant selecionado (403), mantendo `ADM` global.
-- [ ] **Step 3: GREEN** — `teste/test_loja_local.py` inteiro; preservar `test_loja_form_displays_current_vale_and_has_no_vale_selector`, `test_other_tenant_cannot_read_or_edit_loja`, `test_loja_delete_is_blocked_while_members_are_linked`.
-- [ ] **Step 4: Commit** — `git commit -m "fix(loja): tenant selecionado define o vale e bloqueia admin sem contexto"`.
+- [x] **Step 1: RED** — `python -m pytest teste/test_loja_local.py -q --no-header -o addopts='' --reuse-db`; confirmado: `200`/`200` em vez de `302`/`403`.
+- [x] **Step 2: Decidir e aplicar** — para `test_create_..._without_posted_vale`, default `vale_escolhido = vale_sessao` quando nenhum `vale_id` for enviado (spec confirma o teste). Para `test_admin_saas_without_selected_tenant_cannot_use_loja_routes`, `_lojas_visiveis` deve devolver `None` para `admin_saas` sem tenant selecionado (403), mantendo `ADM` global.
+- [x] **Step 3: GREEN** — `teste/test_loja_local.py` inteiro: 25 passed; preservados `test_loja_form_displays_current_vale_and_has_no_vale_selector` (leitura global), `test_other_tenant_cannot_read_or_edit_loja` e `test_loja_delete_is_blocked_while_members_are_linked`, além de `test_unselected_admin_can_open_store_form_and_create_for_selected_vale` e `test_unselected_admin_requires_active_vale_for_store_create`.
+- [ ] **Step 4: Commit** — adiado; as mudanças estão no workspace sem commit para revisão do usuário (mesmo padrão dos planos 2026-10-16/17).
 
 > **Ponto de decisão B-DP1 (spec de isolamento × WIP).** O WIP adiciona um seletor de Vale (`vales`/`vale_id`) para `admin_saas` em `loja_nova`. A spec manda o tenant ativo determinar o Vale (1 tenant = 1 Vale). Se o dono do plano quiser manter o seletor para `admin_saas` (ex.: operar em tenant "Todos"), isso **contradiz** a spec e exige nova decisão/atualização de spec antes de alterar o teste `test_loja_form_displays_current_vale_and_has_no_vale_selector`.
 
 ### Task B5: Verificar `test_vale_archive.py` e o restante do WIP
+
+> **Execução 2026-10-18:** B5+C1 rodados juntos: `teste/test_vale_archive.py` +
+> `teste/test_loja_pdf_local.py` → 10 passed, sem contratos divergentes. Também re-verificado o
+> gate B/D3 ampliado: 104 passed com apenas os 2 legados do B-DP2.
 
 **Files:**
 - Test: `teste/test_vale_archive.py` (WIP, 113 linhas, sem falha conhecida)
@@ -275,6 +326,10 @@ Falhas residuais do Task 4 (6 failed + 2 errors) e checagem contra spec. Cada ta
 ## Fase C — Teste de PDF grande executável no Windows
 
 ### Task C1: Eliminar o node id de 10 MB preservando a cobertura de tamanho
+
+> **Execução 2026-10-18:** C1 aplicada exatamente como especificado (fábricas + `pytest.param(id=...)`)
+> e módulo inteiro `teste/test_loja_pdf_local.py` verde incluindo `maior-que-10mb` no Windows
+> (Sem `ValueError` de 32767). Ruff limpo.
 
 **Files:**
 - Modify: `teste/test_loja_pdf_local.py:102-122`
@@ -364,6 +419,12 @@ def test_upload_rejects_invalid_or_oversized_pdf(media_root, factory, name, expe
 
 ## Fora deste plano
 
+- **Residuais observados em 2026-10-18:** `teste/test_evento_vale_loja.py` — 5 falhas: o produto
+  (`tarefas/views.py`) passou a exigir `tipo='iniciacao_grau_*'` para todo evento e os testes
+  POSTam eventos sem `tipo` (400 `Todo evento deve estar associado a um grau da Loja.`).
+  Atualizar os payloads do teste ou relaxar a validação — decisão contra o spec
+  `2026-10-12-agenda-eventos-presenca-lembretes`. `makemigrations --check` ainda reporta
+  `Alter field id on emaileventofila` (drift do WIP de agenda).
 - Execução das Tasks 2–6 do plano de aposentadoria de papéis (`2026-10-08-retire-tenant-roles-and-saas-admin.md`) — A-DP1 apenas decide se elas entram como pré-requisito.
 - Correção de produto dos `test_role_retirement*` (migração 0019 / refresh de sessão) — encaminhar ao projeto de aposentadoria; este plano só os cataloga.
 - Alinhamento de credenciais `gprb` do Docker (`::1`) × Postgres nativo (`127.0.0.1`) — registrado no spec.

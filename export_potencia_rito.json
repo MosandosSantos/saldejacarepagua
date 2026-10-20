@@ -1,0 +1,58 @@
+{
+  "potencia": [
+    {
+      "id": "d7cbd75b-ad34-4cb1-95f2-914967a6df20",
+      "nome": "COMAB"
+    },
+    {
+      "id": "670af0a5-d7a4-4e0d-b0ad-40faa800d75a",
+      "nome": "COMAB"
+    },
+    {
+      "id": "8dc7c4c2-00ea-4a35-a737-e68a03c2bf44",
+      "nome": "CSMB"
+    },
+    {
+      "id": "7360267a-275d-49b8-9589-238fe4012a2d",
+      "nome": "CSMB"
+    },
+    {
+      "id": "7d90156b-d002-46f3-a122-32c084681ae5",
+      "nome": "GOB"
+    },
+    {
+      "id": "3e097dd5-9ed5-4e01-82b7-4e34620acbd6",
+      "nome": "GOB"
+    }
+  ],
+  "rito": [
+    {
+      "sigla": "ADON",
+      "nome": "Adonhiramita"
+    },
+    {
+      "sigla": "BRAS",
+      "nome": "Brasileiro"
+    },
+    {
+      "sigla": "EMUL",
+      "nome": "Emula\u00e7\u00e3o"
+    },
+    {
+      "sigla": "REAA",
+      "nome": "Rito Escoc\u00eas Antigo e Aceito"
+    },
+    {
+      "sigla": "RER",
+      "nome": "Rito Escoc\u00eas Retificado"
+    },
+    {
+      "sigla": "SHOR",
+      "nome": "Schroeder"
+    },
+    {
+      "sigla": "YORK",
+      "nome": "York"
+    }
+  ]
+}

@@ -20,7 +20,7 @@ def _cliente_web(usuario, tenant_id=None):
     return c
 
 
-def _contato_com_negocio(nome, tenant, stage='interessado', valor=100):
+def _contato_com_negocio(nome, tenant, stage='suplica', valor=100):
     contato = Contato.objects.create(nome=nome, seg='', tenant=tenant)
     criar_negocio(contato, stage=stage, valor=valor, tenant_id=tenant.id)
     return contato
@@ -50,7 +50,7 @@ def test_viewer_nao_acessa_novo_contato(tenant_aurora, usuario_viewer):
 def _dados_edicao(nome):
     return {
         'nome': nome, 'empresa': 'Empresa X', 'tel': '(11) 99999-0000', 'email': 'x@x.com',
-        'seg': 'estetica', 'stage': 'fechado', 'valor': '0',
+        'seg': 'beleza', 'stage': 'diploma', 'valor': '0',
         'origem': 'Google', 'pagamento': 'Particular',
         'procedimento': 'Laser', 'ultima_consulta': '2026-01-01',
     }
@@ -73,14 +73,14 @@ def test_viewer_nao_move_no_funil(tenant_aurora, usuario_viewer):
     negocio = contato.negocio
     c = _cliente_web(usuario_viewer)
     # AJAX (drag & drop) → 403
-    r = c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'fechado'},
+    r = c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'diploma'},
                HTTP_X_REQUESTED_WITH='XMLHttpRequest')
     assert r.status_code == 403
     # menu fallback → redirect
-    r = c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'fechado'})
+    r = c.post(f'/recepcao/{negocio.id}/mover/', {'stage': 'diploma'})
     assert r.status_code == 302
     negocio.refresh_from_db()
-    assert negocio.stage == 'interessado'  # não moveu
+    assert negocio.stage == 'suplica'  # não moveu
 
 
 @pytest.mark.django_db
@@ -88,7 +88,7 @@ def test_viewer_nao_cria_negocio(tenant_aurora, usuario_viewer):
     contato = _contato_com_negocio('Ana', tenant_aurora)
     c = _cliente_web(usuario_viewer)
     r = c.post(f'/contatos/{contato.id}/negocios/novo/', {
-        'titulo': 'Deal X', 'stage': 'orcamento', 'valor': '100',
+        'titulo': 'Deal X', 'stage': 'comunicacao', 'valor': '100',
     })
     assert r.status_code == 302
     assert contato.negocios.count() == 1  # nada criado
@@ -165,7 +165,7 @@ def test_admin_saas_continua_editando_na_web(tenant_aurora, admin_saas):
     assert r.status_code == 302
     contato.refresh_from_db()
     assert contato.nome == 'Nome Novo'
-    assert contato.negocio.stage == 'fechado'
+    assert contato.negocio.stage == 'diploma'
 
 
 # --- Configurações: o viewer gerencia só a própria conta ---
@@ -199,16 +199,16 @@ def test_api_viewer_le_mas_nao_escreve(client, tenant_aurora, usuario_viewer, he
     contato = _contato_com_negocio('Ana', tenant_aurora)
     assert client.get('/api/v1/contatos', headers=headers_viewer).status_code == 200
     assert client.post('/api/v1/contatos', headers=headers_viewer, json={
-        'nome': 'X', 'seg': 'estetica', 'stage': 'interessado',
+        'nome': 'X', 'seg': 'beleza', 'stage': 'suplica',
     }).status_code == 403
     assert client.put(f'/api/v1/contatos/{contato.id}', headers=headers_viewer, json={
-        'nome': 'X', 'seg': 'estetica', 'stage': 'interessado',
+        'nome': 'X', 'seg': 'beleza', 'stage': 'suplica',
     }).status_code == 403
     assert client.patch(f'/api/v1/contatos/{contato.id}/stage', headers=headers_viewer,
-                        json={'stage': 'fechado'}).status_code == 403
+                        json={'stage': 'diploma'}).status_code == 403
     assert client.delete(f'/api/v1/contatos/{contato.id}', headers=headers_viewer).status_code == 403
     contato.refresh_from_db()
-    assert contato.negocio.stage == 'interessado'
+    assert contato.negocio.stage == 'suplica'
 
 
 @pytest.mark.django_db(transaction=True)

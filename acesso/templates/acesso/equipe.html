@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}SAL DA BRITÂNEA CRM — Usuários{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Usuários{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7 flex flex-wrap items-end justify-between gap-4">
@@ -9,13 +9,13 @@
     <p class="hazon-sub mt-2">Gerencie os usuários do sistema.</p>
   </div>
   <a href="{% url 'equipe_novo' %}" class="flex items-center gap-2 rounded-xl border border-[#4ade80]/50 bg-[#4ade80]/15 px-5 py-2.5 text-[13px] font-semibold text-[#4ade80] transition hover:bg-[#4ade80]/25">
-    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     Novo usuário
   </a>
 </div>
 
 {% for e in erros %}
-  <div class="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ e }}</div>
+  <div role="alert" class="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ e }}</div>
 {% endfor %}
 {% if sucesso %}
   <div class="mb-4 rounded-xl border border-[#4ade80]/30 bg-[#4ade80]/10 px-4 py-3 text-[13px] text-[#4ade80]">{{ sucesso }}</div>
@@ -29,29 +29,29 @@
 <form method="get" action="{% url 'equipe' %}"
       class="hazon-card mb-6 flex flex-wrap items-center gap-2.5 p-4 backdrop-blur-xl">
   <div class="relative">
-    <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="#a6bfc7" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nome ou email..."
+    <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="#a6bfc7" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nome ou email…" aria-label="Buscar por nome ou email" autocomplete="off"
            class="hazon-search w-72">
   </div>
 
-  <select name="loja" aria-label="Loja" onchange="this.form.submit()"
-          class="h-9 min-w-[140px] max-w-[240px] rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60">
+  <select name="loja" aria-label="Loja" onchange="this.form.submit()" autocomplete="off"
+          class="h-9 min-w-[140px] max-w-[240px] rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
     <option value="">Todas as lojas</option>
     {% for lj in opcoes_lojas %}
       <option value="{{ lj.id }}" {% if loja == lj.id %}selected{% endif %}>{{ lj.nome }}{% if lj.numero is not None %} {{ lj.numero }}{% endif %}</option>
     {% endfor %}
   </select>
 
-  <select name="perfil" aria-label="Perfil" onchange="this.form.submit()"
-          class="h-9 min-w-[150px] max-w-[240px] rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60">
+  <select name="perfil" aria-label="Perfil" onchange="this.form.submit()" autocomplete="off"
+          class="h-9 min-w-[150px] max-w-[240px] rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
     <option value="">Todos os perfis</option>
     {% for p in opcoes_perfis %}
       <option value="{{ p.key }}" {% if perfil == p.key %}selected{% endif %}>{{ p.label }}</option>
     {% endfor %}
   </select>
 
-  <select name="status" aria-label="Status" onchange="this.form.submit()"
-          class="h-9 min-w-[120px] rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60">
+  <select name="status" aria-label="Status" onchange="this.form.submit()" autocomplete="off"
+          class="h-9 min-w-[120px] rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
     <option value="">Todos</option>
     <option value="ACTIVE" {% if status == 'ACTIVE' %}selected{% endif %}>Ativo</option>
     <option value="INACTIVE" {% if status == 'INACTIVE' %}selected{% endif %}>Inativo</option>
@@ -61,7 +61,7 @@
   {% if filtros_ativos %}
   <a href="{% url 'equipe' %}" title="Limpar filtros"
      class="flex h-9 items-center gap-1.5 rounded-lg border border-[#ef4444]/25 bg-[#ef4444]/10 px-3 text-[12px] font-semibold text-[#ef4444] transition hover:bg-[#ef4444]/20">
-    <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     Limpar filtros
   </a>
   {% endif %}
@@ -71,13 +71,13 @@
   <table class="w-full min-w-[960px] border-collapse">
     <thead>
       <tr class="border-b border-white/10 text-left">
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Nome</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Email</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Loja</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Perfil</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Último acesso</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Status</th>
-        <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Ações</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Nome</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Email</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Loja</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Perfil</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Último acesso</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Status</th>
+        <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Ações</th>
       </tr>
     </thead>
     <tbody>
@@ -103,7 +103,7 @@
             <span class="block truncate text-[12.5px] text-[#bcd3da]" title="{{ u.papel_label }}">{{ u.papel_label|truncatechars:22 }}</span>
           </td>
           <td class="whitespace-nowrap px-5 py-3.5 text-[12.5px] text-[#bcd3da]">
-            {% if u.ultimo_acesso %}{{ u.ultimo_acesso|date:"d/m/Y" }}{% else %}—{% endif %}
+            {% if u.ultimo_acesso %}{{ u.ultimo_acesso|databr }}{% else %}—{% endif %}
           </td>
           <td class="px-5 py-3.5">
             {% if u.pendente %}
@@ -122,16 +122,16 @@
                   <input type="hidden" name="reenviar_id" value="{{ u.id }}">
                   <button type="submit" title="Reenviar link de ativação"
                           class="flex h-8 w-8 items-center justify-center rounded-lg border border-[#fbbf24]/40 bg-[#fbbf24]/10 text-[#fbbf24] transition hover:bg-[#fbbf24]/25"
-                          data-confirm="Reenviar o link de ativação para {{ u.email }}? O link anterior deixará de valer (novo prazo de 72h).">
-                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                          data-confirm="Reenviar o link de ativação para {{ u.email }}? O link anterior deixará de valer (novo prazo de 72h)." aria-label="Reenviar link de ativação">
+                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                   </button>
                 </form>
               {% endif %}
-              <a href="{% url 'equipe_editar' u.id %}" title="Alterar" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#fbbf24]/15 hover:text-[#fbbf24]">
-                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              <a href="{% url 'equipe_editar' u.id %}" title="Alterar" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#fbbf24]/15 hover:text-[#fbbf24]" aria-label="Alterar">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </a>
-              <a href="{% url 'equipe_excluir' u.id %}" title="Excluir" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#ef4444]/15 hover:text-[#ef4444]">
-                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <a href="{% url 'equipe_excluir' u.id %}" title="Excluir" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#ef4444]/15 hover:text-[#ef4444]" aria-label="Excluir">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               </a>
             </div>
           </td>

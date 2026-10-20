@@ -70,7 +70,7 @@
   <div class="conv-wrap">
     <section class="conv-card">
       <div class="mb-6 flex items-center gap-3">
-        <img src="{% static 'img/logow.webp' %}" alt="{{ APP_BRAND_NAME }}" class="h-11 w-11 rounded-[13px] object-cover shadow-lg shadow-[#1a5fb4]/70">
+        <img src="{% static 'img/logo.png' %}" alt="{{ APP_BRAND_NAME }}" class="h-11 w-11 rounded-[13px] object-contain shadow-lg shadow-[#4a0e1f]/70" width="44" height="44">
         <span class="font-display text-[1.35rem] font-semibold tracking-tight"><span class="text-[#ef4444]">{{ APP_BRAND_NAME }}</span></span>
       </div>
 
@@ -88,10 +88,10 @@
         </p>
 
         {% for e in erros %}
-          <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ e }}</div>
+          <div role="alert" class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]">{{ e }}</div>
         {% endfor %}
 
-        <form method="post" novalidate>
+        <form method="post" novalidate data-unsaved-guard>
           {% csrf_token %}
           <div class="mb-[18px]">
             <label for="senha" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-white/60">Senha</label>

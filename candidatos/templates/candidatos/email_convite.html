@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Convite — Candidatura SAL do RER</title>
+<title>Convite — Candidatura {{ app_brand_name }}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f7f7f7;font-family:Georgia,'Times New Roman',serif;">
 
@@ -12,33 +12,35 @@
     <td align="center">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
 
-        <!-- Faixa superior vermelha com símbolo -->
+        <!-- Faixa superior preta com símbolo -->
         <tr>
-          <td style="background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 55%,#dc2626 100%);background-color:#991b1b;padding:40px 24px;text-align:center;">
-            <img src="{{ logo_url }}" alt="Grande Priorado do Brasil" width="96" height="96"
-                 style="display:inline-block;border-radius:50%;border:3px solid rgba(255,255,255,0.85);background:#ffffff;padding:6px;">
-            <h1 style="margin:20px 0 6px;color:#ffffff;font-size:22px;font-weight:400;letter-spacing:2px;">GRANDE PRIORADO RETIFICADO</h1>
-            <p style="margin:0;color:rgba(255,255,255,0.85);font-size:12px;letter-spacing:4px;text-transform:uppercase;">do Brasil — SAL do RER</p>
+          <td style="background-color:#0a0a0a;padding:40px 24px;text-align:center;">
+            <img src="{{ logo_url }}" alt="{{ app_brand_name }}" width="96" height="96" translate="no"
+                 style="display:inline-block;border-radius:50%;border:3px solid #c9a227;background:#ffffff;padding:6px;">
+            <h1 translate="no" style="margin:20px 0 6px;color:#ffffff;font-size:21px;font-weight:400;letter-spacing:2px;">SUPREMO CONSELHO DO GRAU 33</h1>
+            <p style="margin:0 0 4px;color:#c9a227;font-size:11px;letter-spacing:3px;text-transform:uppercase;">Rito Escocês Antigo e Aceito</p>
+            <p style="margin:0;color:rgba(255,255,255,0.75);font-size:11px;letter-spacing:2px;text-transform:uppercase;">da Maçonaria para a República Federativa do Brasil</p>
+            <p translate="no" style="margin:12px 0 0;color:#c9a227;font-size:12px;font-style:italic;letter-spacing:4px;">Ordo ab Chao · 33°</p>
           </td>
         </tr>
 
-        <!-- Divisor ornamentado -->
+        <!-- Divisor dourado -->
         <tr>
-          <td style="background-color:#991b1b;padding:0;">
-            <div style="height:4px;background:repeating-linear-gradient(90deg,#ffffff 0,#ffffff 12px,transparent 12px,transparent 20px);"></div>
+          <td style="background-color:#0a0a0a;padding:0;">
+            <div style="height:3px;background-color:#c9a227;"></div>
           </td>
         </tr>
 
         <!-- Corpo -->
         <tr>
           <td style="padding:44px 40px 12px;">
-            <p style="margin:0 0 18px;color:#991b1b;font-size:13px;letter-spacing:3px;text-transform:uppercase;">Convite à Candidatura</p>
+            <p style="margin:0 0 18px;color:#8a6d1b;font-size:13px;letter-spacing:3px;text-transform:uppercase;">Convite à Candidatura</p>
 
-            <h2 style="margin:0 0 20px;color:#1a1a1a;font-size:24px;font-weight:400;">Prezado(a) {{ nome }},</h2>
+            <h2 style="margin:0 0 20px;color:#1a1a1a;font-size:24px;font-weight:400;">Prezado Senhor {{ nome }},</h2>
 
             <p style="margin:0 0 16px;color:#374151;font-size:15px;line-height:1.7;">
               É com grande honra e satisfação que comunicamos o recebimento de sua indicação
-              para integrar os quadros do <b>Grande Priorado Retificado do Brasil</b>.
+              para integrar os quadros do <b translate="no">AMORIO</b>.
               Este momento marca o início de uma jornada de aperfeiçoamento e fraternidade.
             </p>
 
@@ -52,8 +54,8 @@
               <tr>
                 <td align="center">
                   <a href="{{ link }}"
-                     style="display:inline-block;background-color:#991b1b;color:#ffffff;text-decoration:none;padding:16px 44px;border-radius:6px;font-size:15px;letter-spacing:1px;font-family:Georgia,serif;border:1px solid #7f1d1d;">
-                    ✦ &nbsp;PREENCHER MINHA FICHA&nbsp; ✦
+                     style="display:inline-block;background-color:#0a0a0a;color:#c9a227;text-decoration:none;padding:16px 44px;border-radius:6px;font-size:15px;letter-spacing:1px;font-family:Georgia,serif;border:1px solid #c9a227;">
+                     ✦ &nbsp;PREENCHER MINHA FICHA&nbsp; ✦
                   </a>
                 </td>
               </tr>
@@ -68,16 +70,21 @@
               Na ficha, você registrará seus dados pessoais, fará o envio de sua fotografia
               e definirá a senha para seus futuros acessos ao portal.
             </p>
+
+            <p style="margin:24px 0 0;color:#374151;font-size:15px;line-height:1.7;">
+              Fraternalmente,<br>
+              <b>Supremo Conselho do Grau 33 do Rito Escocês Antigo e Aceito<br>
+              da Maçonaria para a República Federativa do Brasil</b>
+            </p>
           </td>
         </tr>
 
-        <!-- Citação -->
+        <!-- Lema -->
         <tr>
           <td style="padding:28px 40px 36px;">
-            <div style="border-left:3px solid #dc2626;padding:14px 20px;background-color:#fdf5f5;border-radius:0 8px 8px 0;">
-              <p style="margin:0;color:#7f1d1d;font-size:14px;font-style:italic;line-height:1.7;">
-                "A maçonaria é uma instituição essencialmente filosófica, filantrópica e
-                progressiva, que trabalha pelo aperfeiçoamento moral da humanidade."
+            <div style="border-left:3px solid #c9a227;padding:14px 20px;background-color:#faf7ee;border-radius:0 8px 8px 0;">
+              <p style="margin:0;color:#8a6d1b;font-size:14px;font-style:italic;line-height:1.7;">
+                <span translate="no">“Ordo ab Chao”</span> — A Ordem nasce do Caos.
               </p>
             </div>
           </td>
@@ -85,10 +92,10 @@
 
         <!-- Rodapé -->
         <tr>
-          <td style="background-color:#1a1a1a;padding:26px 40px;text-align:center;">
-            <p style="margin:0 0 6px;color:#dc2626;font-size:11px;letter-spacing:3px;text-transform:uppercase;">Grande Priorado Retificado do Brasil</p>
+          <td style="background-color:#0a0a0a;padding:26px 40px;text-align:center;">
+            <p style="margin:0 0 6px;color:#c9a227;font-size:11px;letter-spacing:3px;text-transform:uppercase;">Supremo Conselho do Grau 33 · REAA</p>
             <p style="margin:0;color:rgba(255,255,255,0.45);font-size:11px;line-height:1.6;">
-              SAL do RER · GPRB<br>
+              Jacarepaguá — Rio de Janeiro — Brasil<br>
               Mensagem enviada automaticamente — não responda a este e-mail.
             </p>
           </td>

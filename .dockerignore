@@ -25,6 +25,8 @@ venv/
 .env
 .venv/
 env/
+node_modules/
+**/node_modules/
 .env.local
 .env.*.local
 
@@ -59,7 +61,7 @@ Thumbs.db
 # Docker (não copiar para dentro do container)
 docker-compose*.yml
 Dockerfile*
-entrypoint.sh
+!entrypoint.sh
 nginx.conf
 *.md
 !README.md
@@ -69,7 +71,7 @@ AUTHORS
 # Tests
 test/
 tests/
-teste/
+!teste/
 .coverage
 htmlcov/
 .pytest_cache/

@@ -6,12 +6,17 @@ Otimizado para performance:
   - Imports no topo do modulo
 """
 
-from django.db.models import Count, Sum, Q
+import logging
+
+from django.db.models import Count, Q, Sum
 
 from acesso.decorators import filtro_tenant, nicho_da_sessao
 from contatos.models import Negocio
 from recepcao.models import etapas_do_tenant
-from recepcao.views.helpers import tenant_id_da_sessao_ou_padrao, _brl_curto
+from recepcao.views.helpers import _brl_curto, cards_candidatos, tenant_id_da_sessao_ou_padrao
+from django.db import Error as DBError
+
+logger = logging.getLogger(__name__)
 
 
 def dados_board(request, qtd_cand=0):
@@ -33,12 +38,12 @@ def dados_board(request, qtd_cand=0):
 def _contar_candidatos(request, tid):
     """Candidatos visíveis ao papel da sessão, contados por coluna."""
     from candidatos.oficialato import pode_ver_candidato
-    from recepcao.views.helpers import cards_candidatos
 
     papel = (request.session.get('usuario') or {}).get('role', '')
     try:
         cards = cards_candidatos(tid)
-    except Exception:
+    except DBError:
+        logger.exception('Falha ao montar cards de candidatos (tenant %s)', tid)
         return {}
     contagem = {}
     for card in cards:

@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}SAL DA BRITÂNEA CRM — Lojas{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Lojas{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7 flex items-end justify-between">
@@ -8,35 +8,117 @@
     <h1 class="hazon-titulo">Lojas</h1>
     <p class="hazon-sub mt-2">Lista de lojas cadastradas.</p>
   </div>
-  <a href="{% url 'contatos:loja_nova' %}" class="flex items-center gap-2 rounded-xl border border-[#4ade80]/50 bg-[#4ade80]/15 px-5 py-2.5 text-[13px] font-semibold text-[#4ade80] transition hover:bg-[#4ade80]/25">
-    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  {% if pode_criar_loja %}<a href="{% url 'contatos:loja_nova' %}" class="flex items-center gap-2 rounded-xl border border-[#4ade80]/50 bg-[#4ade80]/15 px-5 py-2.5 text-[13px] font-semibold text-[#4ade80] transition hover:bg-[#4ade80]/25">
+    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     Incluir Loja
-  </a>
+  </a>{% endif %}
 </div>
 
-<div class="mb-6 flex flex-wrap items-center gap-4">
-  <form method="get" action="{% url 'contatos:lojas' %}" class="relative">
-    <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="#a6bfc7" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" name="q" value="{{ q }}" placeholder="Buscar lojas..."
-           class="hazon-search w-72">
-  </form>
-  <span class="text-[13px] text-[#a6bfc7]"><b class="font-mono text-white">{{ total }}</b> loja(s)</span>
-</div>
+<form method="get" action="{% url 'lojas' %}" data-loja-filters class="hazon-card mb-6 p-5 backdrop-blur-xl">
+
+  <!-- Linha 1 — busca + selects de escopo + relatório -->
+  <div class="flex flex-wrap items-end gap-x-4 gap-y-3">
+    <div class="min-w-[220px] grow">
+      <label for="loja-q" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Buscar</label>
+      <div class="relative">
+        <svg viewBox="0 0 24 24" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" fill="none" stroke="#a6bfc7" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="loja-q" type="text" name="q" value="{{ q }}" placeholder="Nome, número, cidade…" autocomplete="off" class="hazon-search w-full">
+      </div>
+    </div>
+
+    <div>
+      <label for="filtro-vale" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Vale</label>
+      <select id="filtro-vale" name="vale" onchange="this.form.submit()" class="h-9 max-w-[200px] rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
+        <option value="">Todos</option>
+        {% for v in opcoes_vales %}<option value="{{ v.id }}" {% if vale_filtro == v.id %}selected{% endif %}>{{ v.nome }}</option>{% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label for="filtro-uf" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">UF</label>
+      <select id="filtro-uf" name="uf" onchange="this.form.submit()" class="h-9 rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
+        <option value="">Todas</option>
+        {% for u in opcoes_ufs %}<option value="{{ u }}" {% if uf_filtro == u %}selected{% endif %}>{{ u }}</option>{% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label for="filtro-cidade" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Cidade</label>
+      <select id="filtro-cidade" name="cidade" onchange="this.form.submit()" class="h-9 max-w-[200px] rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
+        <option value="">Todas</option>
+        {% for c in opcoes_cidades %}<option value="{{ c }}" {% if cidade_filtro == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+      </select>
+    </div>
+
+    <div class="ml-auto">
+      <details class="group relative">
+      <summary class="hazon-btn hazon-btn-ghost min-h-10 cursor-pointer list-none justify-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hazon-accent/70 [&::-webkit-details-marker]:hidden">
+        <svg aria-hidden="true" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h7l4 4V20H6V3.5h1Z"/><path d="M14 3.5V8h4M9 12h6M9 15h6"/></svg>
+        <span>Relatório</span>
+        <svg aria-hidden="true" viewBox="0 0 20 20" class="h-3.5 w-3.5 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 7.5 5 5 5-5"/></svg>
+      </summary>
+      <div class="absolute left-0 top-full z-30 mt-2 flex w-48 flex-col rounded-xl border border-white/15 bg-hazon-abyss p-1.5 shadow-soft sm:left-auto sm:right-0">
+        <button type="submit" formmethod="get" formaction="{% url 'lojas_exportar' formato='pdf' %}" class="flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-semibold text-hazon-muted transition-colors hover:bg-white/10 hover:text-hazon-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hazon-accent/70">
+          <svg aria-hidden="true" viewBox="0 0 20 20" class="h-4 w-4 shrink-0 text-hazon-accent" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5h7l3 3V17.5H5z"/><path d="M12 2.5v3h3M7 9h6M7 11.5h6M7 14h4"/></svg>
+          <span>PDF</span>
+        </button>
+        <button type="submit" formmethod="get" formaction="{% url 'lojas_exportar' formato='xlsx' %}" class="flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-semibold text-hazon-muted transition-colors hover:bg-white/10 hover:text-hazon-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hazon-accent/70">
+          <svg aria-hidden="true" viewBox="0 0 20 20" class="h-4 w-4 shrink-0 text-hazon-accent" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5h7l3 3V17.5H5z"/><path d="M12 2.5v3h3M7.5 9.5l5 5M12.5 9.5l-5 5"/></svg>
+          <span>Excel (.xlsx)</span>
+        </button>
+      </div>
+      </details>
+    </div>
+  </div>
+
+  <!-- Linha 2 — graus (mesma para os chips de /membros/) -->
+  <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-white/[0.07] pt-4">
+    <fieldset class="border-0 p-0">
+      <legend class="sr-only">Graus</legend>
+      <div class="flex flex-wrap gap-2">
+        {% for corpo in corpos_filtro %}
+        <label class="cursor-pointer">
+          <input type="checkbox" name="corpo" value="{{ corpo.valor }}" {% if corpo.selecionado %}checked{% endif %}
+                 class="peer sr-only">
+          <span class="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-2 text-xs text-[#bcd3da] transition-colors hover:border-[#5b8def]/40 hover:bg-white/10 peer-checked:border-[#4ade80]/60 peer-checked:bg-[#4ade80]/15 peer-checked:text-[#4ade80]">
+            <span class="h-2 w-2 shrink-0 rounded-full bg-white/25"></span>
+            <span class="font-semibold">{{ corpo.rotulo }}</span>
+            <span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[10px] text-[#a6bfc7]">{{ corpo.faixa }}</span>
+          </span>
+        </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <span class="ml-auto whitespace-nowrap text-[13px] text-[#a6bfc7]" aria-live="polite"><b class="font-mono text-white">{{ total }}</b> loja{{ total|pluralize }}</span>
+  </div>
+</form>
+
+<script>
+  (function () {
+    const form = document.querySelector('form[data-loja-filters]');
+    if (!form) return;
+    form.querySelectorAll('input[name="corpo"]').forEach(function (checkbox) {
+      checkbox.addEventListener('change', function () {
+        form.requestSubmit();
+      });
+    });
+  })();
+</script>
 
 <div class="overflow-x-auto hazon-card">
-  <table class="w-full min-w-[1100px] border-collapse">
+  <table class="w-full min-w-[900px] border-collapse">
     <thead>
       <tr class="border-b border-white/10 text-left">
-        <th class="w-10 px-3 py-4"></th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Nome</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Potência</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Presidente</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Secretário</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Cidade/UF</th>
-        <th class="px-5 py-4 text-center text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Membros</th>
-        <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Mensalidade</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Situacao</th>
-        <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Acoes</th>
+        <th class="w-10 px-3 py-4" scope="col"></th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Nome</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Corpo</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Vale</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Presidente</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Celular do presidente</th>
+        <th class="px-5 py-4 text-center text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Membros</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Situação</th>
+        <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Ações</th>
       </tr>
     </thead>
     <tbody>
@@ -45,19 +127,20 @@
       <tr class="border-b border-white/5 transition hover:bg-white/5 loja-row" data-loja-id="{{ l.id }}">
         <td class="px-3 py-3.5 text-center">
           <button type="button" class="btn-expand-loja inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def]"
-                  data-loja-id="{{ l.id }}" data-loaded="false" title="Expandir membros">
-            <svg class="expand-icon h-3.5 w-3.5 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  data-loja-id="{{ l.id }}" data-loja-name="{{ l.nome }}" data-loaded="false"
+                  aria-expanded="false" aria-controls="membros-loja-{{ l.id }}"
+                  aria-label="Expandir membros de {{ l.nome }}" title="Expandir membros">
+            <svg class="expand-icon h-3.5 w-3.5 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </td>
         <td class="px-5 py-3.5">
-          <span class="text-[13.5px] font-medium text-white">{{ l.nome }}</span>
+          <span class="block truncate text-[13.5px] font-medium text-white">{{ l.nome }}</span>
         </td>
-        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ l.prefeitura }}</td>
-        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ l.deputado_mestre }}</td>
-        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ l.secretario }}</td>
-        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ l.cidade }}{% if l.uf %}/{{ l.uf }}{% endif %}</td>
-        <td class="px-5 py-3.5 text-center font-mono text-[14px] font-bold text-white">{{ l.total_membros }}</td>
-        <td class="px-5 py-3.5 text-right font-mono text-[13px] {% if l.mensalidade %}text-[#4ade80]{% else %}text-[#6f8a93]{% endif %}">{% if l.mensalidade %}R$ {{ l.mensalidade }}{% else %}—{% endif %}</td>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]"><span class="block truncate">{{ l.corpo }}</span></td>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]"><span class="block truncate">{{ l.prefeitura }}</span></td>
+        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]"><span class="block truncate">{{ l.deputado_mestre }}</span></td>
+        <td class="px-5 py-3.5 font-mono text-[13px] text-[#bcd3da]">{{ l.presidente_celular|default:"—" }}</td>
+        <td class="px-5 py-3.5 text-center font-mono text-[14px] font-bold tabular-nums text-white">{{ l.total_membros }}</td>
         <td class="px-5 py-3.5">
           {% if l.situacao == 'ATIVA' %}
             <span class="inline-flex items-center gap-1.5 rounded-full border border-[#4ade80]/25 bg-[#4ade80]/10 px-2.5 py-1 text-[11px] font-semibold text-[#4ade80]">
@@ -71,120 +154,41 @@
         </td>
         <td class="px-5 py-3.5">
           <div class="flex items-center justify-end gap-2">
-            <a href="{% url 'contatos:loja_detalhe' l.id %}" title="Consultar" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def]">
-              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <a href="{% url 'contatos:loja_detalhe' l.id %}" title="Consultar" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def]" aria-label="Consultar">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </a>
-            <a href="{% url 'contatos:loja_editar' l.id %}" title="Alterar" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#fbbf24]/15 hover:text-[#fbbf24]">
-              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </a>
-            <a href="{% url 'contatos:loja_excluir' l.id %}" title="Excluir" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#ef4444]/15 hover:text-[#ef4444]">
-              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            </a>
+            {% if web_usuario.role == 'admin_saas' or web_usuario.role == 'ADM' or web_usuario.role == 'delegado' or web_usuario.role == 'presidente_corpo' %}<a href="{% url 'contatos:loja_editar' l.id %}" title="Alterar" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#fbbf24]/15 hover:text-[#fbbf24]" aria-label="Alterar">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </a>{% endif %}
+            {% if web_usuario.role == 'admin_saas' or web_usuario.role == 'ADM' %}<a href="{% url 'contatos:loja_excluir' l.id %}" title="Excluir" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#ef4444]/15 hover:text-[#ef4444]" aria-label="Excluir">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </a>{% endif %}
           </div>
         </td>
       </tr>
       <!-- Drill-down container for membros -->
-      <tr class="drill-membros-loja" data-loja-id="{{ l.id }}" style="display:none;">
-        <td colspan="10" class="px-0 py-0">
+      <tr id="membros-loja-{{ l.id }}" class="drill-membros-loja" data-loja-id="{{ l.id }}" style="display:none;">
+        <td colspan="9" class="px-0 py-0">
           <div class="bg-white/[0.02] px-12 py-3">
-            <div class="membros-container-loja" data-loja-id="{{ l.id }}">
-              <p class="py-4 text-center text-[12px] text-[#6f8a93]">Carregando membros...</p>
+            <div class="membros-container-loja" data-loja-id="{{ l.id }}" aria-live="polite" aria-busy="false">
+              <p class="py-4 text-center text-[12px] text-[#6f8a93]">Carregando membros…</p>
             </div>
           </div>
         </td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="10" class="px-5 py-12 text-center text-[14px] text-[#a6bfc7]">Nenhuma loja encontrada.</td>
+        <td colspan="9" class="px-5 py-12 text-center text-[14px] text-[#a6bfc7]">Nenhuma loja encontrada.</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
 
+{% include 'contatos/partials/_paginacao.html' %}
+
 {% endblock %}
 
 {% block js %}
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-
-
-  document.querySelectorAll('.btn-expand-loja').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var lojaId = this.getAttribute('data-loja-id');
-      var drillRow = document.querySelector('.drill-membros-loja[data-loja-id="' + lojaId + '"]');
-      var container = document.querySelector('.membros-container-loja[data-loja-id="' + lojaId + '"]');
-      var icon = this.querySelector('.expand-icon');
-      var isOpen = drillRow.style.display !== 'none';
-
-      if (isOpen) {
-        drillRow.style.display = 'none';
-        icon.style.transform = 'rotate(0deg)';
-        return;
-      }
-
-      drillRow.style.display = '';
-      icon.style.transform = 'rotate(45deg)';
-
-      if (btn.getAttribute('data-loaded') === 'true') return;
-      btn.setAttribute('data-loaded', 'true');
-
-      fetch('/contatos/loja/' + lojaId + '/membros-json/', {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          var membros = data.membros || [];
-          if (!membros.length) {
-            container.innerHTML = '<p class="py-4 text-center text-[12px] text-[#6f8a93]">Nenhum membro nesta loja.</p>';
-            return;
-          }
-
-          // Calcular totais
-          var totais = { ativos: 0, inativos: 0 };
-          membros.forEach(function (m) {
-            if (m.situacao === 'ATIVO') {
-              totais.ativos++;
-            } else {
-              totais.inativos++;
-            }
-          });
-
-          var html = '<table class="w-full border-collapse">';
-
-          // Header
-          html += '<thead><tr class="border-b border-white/10 text-left">';
-          html += '<th class="px-4 py-2.5 text-[12px] font-bold uppercase tracking-wider text-[#a6bfc7]">Nome</th>';
-          html += '<th class="px-4 py-2.5 text-center text-[12px] font-bold uppercase tracking-wider text-[#a6bfc7]">Situacao</th>';
-          html += '</tr></thead><tbody>';
-
-          // Membros rows
-          membros.forEach(function (m) {
-            var corSituacao = m.situacao === 'ATIVO' ? '#4ade80' : '#ef4444';
-            html += '<tr class="border-b border-white/[0.03] hover:bg-white/[0.03]">';
-            html += '<td class="px-4 py-2 text-[12px] text-[#bcd3da]">' + m.nome + '</td>';
-            html += '<td class="px-4 py-2 text-center"><span class="inline-block rounded-full px-2 py-0.5 text-[10px] font-bold" style="background:' + corSituacao + '20;color:' + corSituacao + '">' + m.situacao + '</span></td>';
-            html += '</tr>';
-          });
-
-          // Totals row
-          html += '<tr class="border-t-2 border-white/10 bg-white/[0.03] font-bold">';
-          html += '<td class="px-4 py-2.5 text-[11px] text-[#a6bfc7]" colspan="1">TOTAL</td>';
-          html += '<td class="px-4 py-2.5 text-center text-[11px]">';
-          html += '<span style="color:#4ade80">' + totais.ativos + ' ativos</span> &middot; ';
-          html += '<span style="color:#ef4444">' + totais.inativos + ' inativos</span>';
-          html += '</td>';
-          html += '<td class="px-4 py-2.5 text-center text-[11px]">';
-          html += '<span style="color:#4ade80">' + totais.ativos + ' ativos</span> &middot; ';
-          html += '<span style="color:#ef4444">' + totais.inativos + ' inativos</span>';
-          html += '</td>';
-          html += '</tr>';
-
-          html += '</tbody></table>';
-          container.innerHTML = html;
-        });
-    });
-  });
-});
-</script>
+{% include 'contatos/partials/_loja_membros_expandir_js.html' %}
 {% endblock %}

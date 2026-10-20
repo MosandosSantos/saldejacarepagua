@@ -3,19 +3,19 @@
 
 {% block conteudo %}
 <h1 class="mb-1 text-xl font-bold text-white">Registrar presença</h1>
-<p class="mb-4 text-sm text-[#a6bfc7]">{{ evento.titulo }} · {{ evento.data_hora|date:"d/m/Y H:i" }}</p>
+<p class="mb-4 text-sm text-[#a6bfc7]">{{ evento.titulo }} · {{ evento.data_hora|datahorabr }}</p>
 
 {% if erro %}
-<div class="mb-4 rounded-lg border border-[#f59e0b]/40 bg-[#f59e0b]/10 px-4 py-2 text-sm text-[#fbbf24]">{{ erro }}</div>
+<div role="alert" class="mb-4 rounded-lg border border-[#f59e0b]/40 bg-[#f59e0b]/10 px-4 py-2 text-sm text-[#fbbf24]">{{ erro }}</div>
 {% endif %}
 
-<form method="post" action="./salvar/" class="max-w-2xl space-y-2">
+<form method="post" action="./salvar/" class="max-w-2xl space-y-2" data-unsaved-guard>
   {% csrf_token %}
   {% for l in linhas %}
   <div class="rounded-xl border border-white/10 bg-white/5 p-3">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <span class="font-semibold text-white">{{ l.membro.nome }}</span>
-      <div class="flex gap-3 text-sm">
+      <div class="flex gap-3 text-sm" role="radiogroup" aria-label="Presença de {{ l.membro.nome }}">
         {% for estado, rotulo in estados_do_form %}
         <label class="flex items-center gap-1 text-[#a6bfc7]">
           <input type="radio" name="presenca_{{ l.membro.id }}" value="{{ estado }}"
@@ -25,7 +25,8 @@
         {% endfor %}
       </div>
     </div>
-    <input name="justificativa_{{ l.membro.id }}" maxlength="255" placeholder="Justificativa (quando Justificado)"
+    <label for="justificativa_{{ l.membro.id }}" class="sr-only">Justificativa de {{ l.membro.nome }} (quando Justificado)</label>
+    <input id="justificativa_{{ l.membro.id }}" name="justificativa_{{ l.membro.id }}" maxlength="255" autocomplete="off" placeholder="Justificativa (quando Justificado)"
            value="{{ l.presenca.justificativa|default:'' }}"
            class="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white" />
   </div>

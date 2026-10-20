@@ -2,15 +2,16 @@
 
 from datetime import date
 
-from core.gprb.connection import connect
+from core.gprb.connection import connect, resolve_tenant_code
 
 
-def dashboard_kpis(tenant_code='GPRB', ano=None):
+def dashboard_kpis(tenant_code=None, ano=None):
     """Retorna todos os KPIs do dashboard em uma unica query ao banco GPRB.
 
     Substitui as ~5 queries separadas (total_membros x2, total_lojas_ativas,
     total_lojas_cadastradas, novos_membros_ano) por uma unica CTE.
     """
+    tenant_code = resolve_tenant_code(tenant_code)
     if ano is None:
         ano = date.today().year
     conn = connect()

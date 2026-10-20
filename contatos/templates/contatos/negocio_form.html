@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — {{ titulo_form }}{% endblock %}
+{% block titulo %}SAL DO REAA CRM — {{ titulo_form }}{% endblock %}
 
 {% block conteudo %}
 <div class="mx-auto max-w-2xl">
@@ -15,17 +15,20 @@
     </p>
   </div>
 
-  {% for e in erros %}
-    <div class="mb-3 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ e }}</div>
-  {% endfor %}
+  {% if erros %}
+    <div id="form-erro" class="mb-3 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200" role="alert">
+      {% for e in erros %}<p>{{ e }}</p>{% endfor %}
+    </div>
+  {% endif %}
 
-  <form method="post" class="hazon-card-lg space-y-4 p-6 hazon-form"
-        action="{% if negocio %}{% url 'contatos:negocio_editar' contato.id negocio.id %}{% else %}{% url 'contatos:negocio_novo' contato.id %}{% endif %}">
+  <form method="post" aria-label="{% if negocio %}Editar negócio{% else %}Criar negócio{% endif %}" class="hazon-card-lg space-y-4 p-6 hazon-form"
+        action="{% if negocio %}{% url 'contatos:negocio_editar' contato.id negocio.id %}{% else %}{% url 'contatos:negocio_novo' contato.id %}{% endif %}" data-unsaved-guard>
     {% csrf_token %}
 
     <div>
       <label for="titulo" class="hazon-label">Título do negócio</label>
-      <input type="text" id="titulo" name="titulo" maxlength="160"
+      <input type="text" id="titulo" name="titulo" maxlength="160" autocomplete="off"
+             {% if erros %}aria-describedby="form-erro"{% endif %}
              placeholder="ex.: Laser CO2 — pacote completo"
              value="{{ titulo_inicial }}" required>
     </div>
@@ -33,7 +36,7 @@
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
         <label for="stage" class="hazon-label">Etapa do funil</label>
-        <select id="stage" name="stage">
+        <select id="stage" name="stage" {% if erros %}aria-describedby="form-erro"{% endif %}>
           {% for s in stages %}
             <option value="{{ s.key }}" {% if negocio.stage == s.key %}selected{% endif %}>{{ s.name }}</option>
           {% endfor %}
@@ -41,7 +44,8 @@
       </div>
       <div>
         <label for="valor" class="hazon-label">Valor (R$)</label>
-        <input type="text" id="valor" name="valor" inputmode="decimal" placeholder="0,00" value="{{ valor }}">
+        <input type="text" id="valor" name="valor" inputmode="decimal" autocomplete="off" placeholder="0,00" value="{{ valor }}"
+               {% if erros %}aria-describedby="form-erro"{% endif %}>
       </div>
     </div>
 
@@ -55,7 +59,7 @@
       </select>
     </div>
 
-    <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+    <label for="principal" class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
       <input type="checkbox" name="principal" value="on" id="principal"
              class="h-4 w-4 accent-[#5b8def]"
              {% if principal_marcado %}checked{% endif %}>
@@ -82,11 +86,26 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!valor) return;
   function soDigitos(v) { return (v || '').replace(/\D/g, ''); }
   valor.addEventListener('input', function () {
-    var d = soDigitos(valor.value).slice(0, 10);
+    // Preserva a posicao do cursor: a reformatacao muda o comprimento do texto.
+    var antes = valor.value;
+    var pos = valor.selectionStart;
+    var digitosAntes = soDigitos(antes.slice(0, pos)).length;
+    var d = soDigitos(antes).slice(0, 10);
     var inteiro = d.slice(0, -2) || '0';
     var centavos = d.slice(-2).padStart(2, '0');
     var comPontos = inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    valor.value = comPontos + ',' + centavos;
+    var novo = comPontos + ',' + centavos;
+    valor.value = novo;
+    // Reposiciona o cursor depois do mesmo numero de digitos de antes.
+    var contados = 0;
+    var novaPos = 0;
+    for (var i = 0; i < novo.length; i++) {
+      if (/\d/.test(novo[i])) contados++;
+      if (contados >= digitosAntes) { novaPos = i + 1; break; }
+      novaPos = i + 1;
+    }
+    if (digitosAntes === 0) novaPos = 0;
+    try { valor.setSelectionRange(novaPos, novaPos); } catch (e) { /* ignora */ }
   });
 });
 </script>

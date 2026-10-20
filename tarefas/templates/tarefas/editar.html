@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Editar tarefa{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Editar tarefa{% endblock %}
 
 {% block conteudo %}
 <div class="mx-auto max-w-2xl space-y-5">
@@ -10,26 +10,26 @@
   </div>
 
   {% for e in erros %}
-    <div class="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ e }}</div>
+    <div role="alert" class="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ e }}</div>
   {% endfor %}
 
-  <form method="post" class="space-y-5 hazon-card-lg p-8">
+  <form method="post" class="space-y-5 hazon-card-lg p-8" data-unsaved-guard>
     {% csrf_token %}
     <div>
       <label for="titulo" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Título *</label>
-      <input type="text" id="titulo" name="titulo" value="{{ tarefa.titulo }}" required
-             class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#5b8def]/40">
+      <input type="text" id="titulo" name="titulo" value="{{ tarefa.titulo }}" required autocomplete="off"
+             class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#5b8def]/40 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
     </div>
     <div>
       <label for="descricao" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Descrição</label>
-      <textarea id="descricao" name="descricao" rows="3" placeholder="Detalhes do follow-up (opcional)"
-                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition placeholder:text-[#a6bfc7] focus:border-[#5b8def]/40">{{ tarefa.descricao }}</textarea>
+      <textarea id="descricao" name="descricao" rows="3" placeholder="Detalhes do follow-up (opcional)" autocomplete="off"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition placeholder:text-[#a6bfc7] focus:border-[#5b8def]/40 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">{{ tarefa.descricao }}</textarea>
     </div>
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
       <div>
         <label for="contato_id" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Contato</label>
-        <select id="contato_id" name="contato_id"
-                class="w-full rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40">
+        <select id="contato_id" name="contato_id" autocomplete="off"
+                class="w-full rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
           <option value="">— sem contato —</option>
           {% for c in contatos %}
             <option value="{{ c.id }}" {% if c.id == tarefa.contato_id %}selected{% endif %}>{{ c.nome }}</option>
@@ -38,8 +38,8 @@
       </div>
       <div>
         <label for="responsavel_id" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Responsável</label>
-        <select id="responsavel_id" name="responsavel_id"
-                class="w-full rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40">
+        <select id="responsavel_id" name="responsavel_id" autocomplete="off"
+                class="w-full rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
           <option value="">— sem responsável —</option>
           {% for m in membros %}
             <option value="{{ m.id }}" {% if m.id == tarefa.responsavel_id %}selected{% endif %}>{{ m.nome }}</option>
@@ -48,8 +48,8 @@
       </div>
       <div>
         <label for="prioridade" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Prioridade</label>
-        <select id="prioridade" name="prioridade"
-                class="w-full rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40">
+        <select id="prioridade" name="prioridade" autocomplete="off"
+                class="w-full rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
           <option value="baixa" {% if tarefa.prioridade == 'baixa' %}selected{% endif %}>Baixa</option>
           <option value="media" {% if tarefa.prioridade == 'media' %}selected{% endif %}>Média</option>
           <option value="alta" {% if tarefa.prioridade == 'alta' %}selected{% endif %}>Alta</option>
@@ -58,12 +58,12 @@
       <div>
         <label for="vencimento" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Vencimento</label>
         <input type="date" id="vencimento" name="vencimento" value="{{ tarefa.vencimento|date:'Y-m-d'|default:'' }}"
-               class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#5b8def]/40">
+               class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#5b8def]/40 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
       </div>
       <div>
         <label for="hora" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Hora</label>
         <input type="time" id="hora" name="hora" value="{{ tarefa.hora_label }}"
-               class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#5b8def]/40">
+               class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[13.5px] text-white outline-none transition focus:border-[#5b8def]/40 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
       </div>
     </div>
     <div class="flex items-center gap-3">

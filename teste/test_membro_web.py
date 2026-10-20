@@ -90,7 +90,7 @@ def _post_edicao(loja_ids, **extras):
         'identidade': '1234567', 'orgao_emissor': 'SSP-PR',
         'endereco': 'Rua Nova', 'numero': '100', 'complemento': 'Ap 5',
         'bairro': 'Centro', 'cidade': 'Curitiba', 'uf': 'PR', 'cep': '80000-000',
-        'potencia': 'Potencia Simbolica', 'cargo': 'Veneravel',
+        'potencia': 'CSMB', 'cargo': 'Veneravel',
         'condicao': 'Regular',
         'data_admissao': '1990-05-10',
         'data_nascimento': '',

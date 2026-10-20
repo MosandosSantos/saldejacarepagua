@@ -11,6 +11,7 @@ from acesso.decorators import (
     nicho_da_sessao,
     web_login_required,
     web_requer_edicao,
+    web_requer_tenant_context,
 )
 from acesso.models import Tenant
 from automacoes.engine import disparar
@@ -50,6 +51,7 @@ def _fechar_se_necessario(contato, stage):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def negocio_novo(request, pk):
     """Cria um novo negócio (deal) para o contato — não vira o principal."""
@@ -97,6 +99,7 @@ def negocio_novo(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_edicao
 def negocio_editar(request, pk, negocio_id):
     """Edita um negócio do contato (título, etapa, valor e principal)."""
@@ -149,6 +152,7 @@ def negocio_editar(request, pk, negocio_id):
 
 
 @web_login_required
+@web_requer_tenant_context
 def negocio_tornar_principal(request, pk, negocio_id):
     """Marca um negócio como principal do contato (apenas admin)."""
     if not e_admin_do_tenant(request):
@@ -161,6 +165,7 @@ def negocio_tornar_principal(request, pk, negocio_id):
 
 
 @web_login_required
+@web_requer_tenant_context
 def negocio_excluir(request, pk, negocio_id):
     """Excluir negócio do contato — apenas admin."""
     if not e_admin_do_tenant(request):

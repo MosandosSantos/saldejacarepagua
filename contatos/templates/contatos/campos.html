@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Campos personalizados{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Campos personalizados{% endblock %}
 
 {% block conteudo %}
 <div class="mx-auto max-w-4xl space-y-6">
@@ -13,29 +13,33 @@
   </div>
 
   {% for e in erros %}
-    <div class="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ e }}</div>
+    <div id="form-erro" class="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200" role="alert">{{ e }}</div>
   {% endfor %}
 
   <!-- Novo campo -->
   <div class="hazon-card-sm p-6 backdrop-blur-xl">
     <h2 class="mb-4 text-[15px] font-semibold text-white">Novo campo</h2>
-    <form method="post" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6 hazon-form">
+    <form method="post" aria-label="Criar novo campo personalizado" {% if erros %}aria-describedby="form-erro"{% endif %} class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6 hazon-form" data-unsaved-guard>
       {% csrf_token %}
       <div class="lg:col-span-2">
         <label for="id_nome" class="hazon-label">Nome do campo</label>
         {{ form.nome }}
+        {% if form.nome.errors %}<p class="mt-1 text-[11.5px] text-red-300" role="alert">{{ form.nome.errors|striptags }}</p>{% endif %}
       </div>
       <div class="lg:col-span-1">
         <label for="id_tipo" class="hazon-label">Tipo</label>
         {{ form.tipo }}
+        {% if form.tipo.errors %}<p class="mt-1 text-[11.5px] text-red-300" role="alert">{{ form.tipo.errors|striptags }}</p>{% endif %}
       </div>
       <div class="lg:col-span-2">
         <label for="id_opcoes" class="hazon-label">Opções (tipo Lista)</label>
         {{ form.opcoes }}
+        {% if form.opcoes.errors %}<p class="mt-1 text-[11.5px] text-red-300" role="alert">{{ form.opcoes.errors|striptags }}</p>{% endif %}
       </div>
       <div class="lg:col-span-1">
         <label for="id_ordem" class="hazon-label">Ordem</label>
         {{ form.ordem }}
+        {% if form.ordem.errors %}<p class="mt-1 text-[11.5px] text-red-300" role="alert">{{ form.ordem.errors|striptags }}</p>{% endif %}
       </div>
       <div class="flex items-end gap-4 lg:col-span-6">
         <label for="id_obrigatorio" class="flex items-center gap-2 pb-[7px] text-[13px] text-[#bcd3da]">
@@ -53,20 +57,20 @@
     <table class="w-full border-collapse">
       <thead>
         <tr class="border-b border-white/10 text-left">
-          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Campo</th>
-          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Tipo</th>
-          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Obrigatório</th>
-          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Contatos usando</th>
-          <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Ações</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Campo</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Tipo</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Obrigatório</th>
+          <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Contatos usando</th>
+          <th class="px-5 py-4 text-right text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Ações</th>
         </tr>
       </thead>
       <tbody>
         {% for c in campos %}
           <tr class="border-b border-white/5 transition hover:bg-white/5">
-            <td class="px-5 py-3.5 text-[13px] font-semibold text-white">{{ c.nome }}</td>
+            <td class="px-5 py-3.5 text-[13px] font-semibold text-white"><span class="block truncate">{{ c.nome }}</span></td>
             <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ c.tipo }}</td>
             <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ c.obrigatorio|yesno:"Sim,Não" }}</td>
-            <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]">{{ c.qtd_uso }}</td>
+            <td class="px-5 py-3.5 text-[13px] tabular-nums text-[#bcd3da]">{{ c.qtd_uso }}</td>
             <td class="px-5 py-3.5 text-right">
               <a href="{% url 'contatos:editar_campo' c.id %}" class="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[12px] font-semibold text-[#bcd3da] transition hover:bg-white/10 hover:text-white">Editar</a>
               <a href="{% url 'contatos:excluir_campo' c.id %}" class="ml-1 rounded-lg border border-red-400/20 px-3 py-1.5 text-[12px] font-semibold text-red-300/80 transition hover:bg-red-500/10 hover:text-red-300">Excluir</a>

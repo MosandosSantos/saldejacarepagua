@@ -3,7 +3,7 @@ import pytest
 from django.test import Client
 
 from acesso.models import Usuario
-from contatos.models import Contato
+from contatos.models import Contato, Nota, Tag
 
 
 def _cliente_web(usuario):
@@ -27,9 +27,22 @@ def test_operacional_nao_acessa_equipe(usuario_operacional):
 
 
 @pytest.mark.django_db
-def test_admin_saas_sem_tenant_nao_acessa_equipe(admin_saas):
+def test_admin_saas_sem_tenant_ve_todos_os_usuarios(admin_saas, tenant_aurora, usuario_operacional):
+    """Admin da plataforma sem tenant selecionado consulta a lista (vê tudo)."""
     r = _cliente_web(admin_saas).get('/equipe/')
-    assert r.status_code == 302
+    assert r.status_code == 200
+    assert usuario_operacional.nome in r.content.decode()
+
+
+@pytest.mark.django_db
+def test_admin_saas_sem_tenant_bloqueado_em_escritas(admin_saas):
+    """Sem tenant selecionado, escritas da equipe são bloqueadas (403)."""
+    r = _cliente_web(admin_saas).post('/equipe/novo/', {
+        'nome': 'Novo Usuario', 'email': 'novo@saas.com',
+        'celular': '(11) 99999-0001', 'papel': 'operacional',
+    })
+    assert r.status_code == 403
+    assert Usuario.objects.filter(email='novo@saas.com').count() == 0
 
 
 @pytest.mark.django_db
@@ -131,7 +144,6 @@ def test_email_invalido_rejeitado(admin_company):
 
 @pytest.mark.django_db
 def test_operacional_nao_exclui_nota(tenant_aurora, usuario_operacional, admin_company):
-    from contatos.models import Nota
     contato = Contato.objects.create(nome='Ana', seg='', tenant=tenant_aurora)
     nota = Nota.objects.create(contato=contato, texto='x', autor=admin_company)
     c = _cliente_web(usuario_operacional)
@@ -141,7 +153,6 @@ def test_operacional_nao_exclui_nota(tenant_aurora, usuario_operacional, admin_c
 
 @pytest.mark.django_db
 def test_operacional_nao_remove_tag(tenant_aurora, usuario_operacional):
-    from contatos.models import Tag
     contato = Contato.objects.create(nome='Ana', seg='', tenant=tenant_aurora)
     tag = Tag.objects.create(nome='VIP', tenant=tenant_aurora)
     contato.tags.add(tag)

@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}GPRBRCRM — Importar contatos{% endblock %}
+{% block titulo %}SAL DO REAA CRM — Importar contatos{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7 flex flex-wrap items-end justify-between gap-4">
@@ -12,32 +12,32 @@
 </div>
 
 {% for a in avisos %}
-  <div class="mb-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-[13px] text-amber-200">{{ a }}</div>
+  <div class="mb-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-[13px] text-amber-200" role="status">{{ a }}</div>
 {% endfor %}
 
 {% if etapa == 'upload' %}
   <div class="mx-auto max-w-2xl">
     <div class="hazon-card-sm p-8 backdrop-blur-xl">
-      <form method="post" enctype="multipart/form-data" class="space-y-6">
+      <form method="post" enctype="multipart/form-data" aria-label="Enviar arquivo CSV para importar" {% if erro_upload %}aria-describedby="form-erro"{% endif %} class="space-y-6" data-unsaved-guard>
         {% csrf_token %}
         <input type="hidden" name="etapa" value="upload">
         <label for="arquivo" class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-white/15 bg-white/5 px-6 py-12 text-center transition hover:border-[#5b8def]/50 hover:bg-white/10">
-          <svg viewBox="0 0 24 24" class="h-10 w-10" fill="none" stroke="#5b8def" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <svg viewBox="0 0 24 24" class="h-10 w-10" fill="none" stroke="#5b8def" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <span class="text-[15px] font-semibold text-white">Clique para escolher o arquivo</span>
-          <span class="text-[12.5px] text-[#a6bfc7]" id="nome_arquivo">CSV de até 5 MB — aceita separador ; ou , e codificação UTF-8 / Latin-1</span>
+          <span class="text-[12.5px] text-[#a6bfc7]" id="nome_arquivo" aria-live="polite">Nenhum arquivo selecionado. CSV de até 5 MB — aceita separador ; ou , e codificação UTF-8 / Latin-1</span>
         </label>
         <input id="arquivo" name="arquivo" type="file" accept=".csv,text/csv" class="sr-only">
         {% if erro_upload %}
-          <p class="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ erro_upload }}</p>
+          <p id="form-erro" class="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200" role="alert">{{ erro_upload }}</p>
         {% endif %}
-        <label class="flex items-center gap-2.5 text-[13px] text-[#bcd3da]">
-          <input type="checkbox" name="tem_cabecalho" checked class="h-4 w-4 rounded border-white/20 bg-white/10 accent-[#5b8def]">
+        <label for="tem-cabecalho" class="flex items-center gap-2.5 text-[13px] text-[#bcd3da]">
+          <input type="checkbox" id="tem-cabecalho" name="tem_cabecalho" checked class="h-4 w-4 rounded border-white/20 bg-white/10 accent-[#5b8def]">
           A primeira linha do arquivo é o cabeçalho
         </label>
         {% if carteiras %}
         <div class="rounded-xl border border-white/10 bg-white/5 p-4">
           <label for="id_carteira" class="mb-1.5 block text-[12px] font-semibold text-[#bcd3da]">Carteira de destino (opcional)</label>
-          <select id="id_carteira" name="carteira_id" class="w-full rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40">
+          <select id="id_carteira" name="carteira_id" class="w-full rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
             <option value="">— sem carteira —</option>
             {% for c in carteiras %}
               <option value="{{ c.id }}">{{ c.nome }}</option>
@@ -62,7 +62,7 @@
 {% endif %}
 
 {% if etapa == 'mapear' %}
-  <form method="post" class="space-y-6">
+  <form method="post" aria-label="Mapear colunas e confirmar importação" class="space-y-6" data-unsaved-guard>
     {% csrf_token %}
     <input type="hidden" name="etapa" value="importar">
 
@@ -75,14 +75,14 @@
         <button type="submit" class="hazon-btn hazon-btn-primary px-6 py-2.5 text-[13px] font-semibold text-white transition hover:brightness-110">Importar {{ total_linhas }} contatos</button>
       </div>
       {% if erro_mapeamento %}
-        <p class="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200">{{ erro_mapeamento }}</p>
+        <p class="mb-4 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-[13px] text-red-200" role="alert">{{ erro_mapeamento }}</p>
       {% endif %}
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {% for campo in campos_mapeamento %}
         <div>
-          <label class="hazon-label">{{ campo.rotulo }}</label>
-          <select name="col_{{ campo.campo }}" class="w-full rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40">
+          <label for="col-{{ campo.campo }}" class="hazon-label">{{ campo.rotulo }}</label>
+          <select name="col_{{ campo.campo }}" id="col-{{ campo.campo }}" class="w-full rounded-xl border border-white/10 bg-[#0a1e3d] px-3 py-2.5 text-[13px] text-[#bcd3da] outline-none transition focus:border-[#5b8def]/40 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
             <option value="">— não importar —</option>
             {% for cab in cabecalhos %}
               <option value="{{ forloop.counter0 }}" {% if campo.sugerido == forloop.counter0 %}selected{% endif %}>{{ cab }}</option>
@@ -106,13 +106,17 @@
           <table class="w-full border-collapse text-[12px]">
             <thead>
               <tr class="border-b border-white/10 text-left">
-                {% for cab in cabecalhos %}<th class="px-2.5 py-2 font-bold text-[#a6bfc7]">{{ cab }}</th>{% endfor %}
+                {% for cab in cabecalhos %}<th class="px-2.5 py-2 font-bold text-[#a6bfc7]" scope="col">{{ cab }}</th>{% endfor %}
               </tr>
             </thead>
             <tbody>
               {% for linha in linhas_preview %}
               <tr class="border-b border-white/5">
-                {% for cel in linha %}<td class="px-2.5 py-2 text-[#bcd3da]">{{ cel|default:"—" }}</td>{% endfor %}
+                {% for cel in linha %}<td class="max-w-[220px] truncate px-2.5 py-2 text-[#bcd3da]" title="{{ cel|default:'' }}">{{ cel|default:"—" }}</td>{% endfor %}
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="{{ cabecalhos|length|default:1 }}" class="px-2.5 py-6 text-center text-[#a6bfc7]">Nenhuma linha para pré-visualizar.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -122,12 +126,12 @@
 
       <div class="hazon-card-sm p-6 backdrop-blur-xl">
         <h3 class="mb-4 text-[13px] font-semibold text-white">Duplicados</h3>
-        <label class="mb-2 flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3.5 text-[13px] text-[#bcd3da]">
-          <input type="radio" name="pular_duplicadas" value="sim" checked class="mt-0.5 accent-[#5b8def]">
+        <label for="pular-duplicadas-sim" class="mb-2 flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3.5 text-[13px] text-[#bcd3da]">
+          <input type="radio" id="pular-duplicadas-sim" name="pular_duplicadas" value="sim" checked class="mt-0.5 accent-[#5b8def]">
           <span><b class="text-white">Pular duplicados</b> — contatos com o mesmo telefone ou e-mail já existentes (ou repetidos no arquivo) não são gravados.</span>
         </label>
-        <label class="flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3.5 text-[13px] text-[#bcd3da]">
-          <input type="radio" name="pular_duplicadas" value="nao" class="mt-0.5 accent-[#5b8def]">
+        <label for="pular-duplicadas-nao" class="flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3.5 text-[13px] text-[#bcd3da]">
+          <input type="radio" id="pular-duplicadas-nao" name="pular_duplicadas" value="nao" class="mt-0.5 accent-[#5b8def]">
           <span><b class="text-white">Importar mesmo assim</b> — grava todos, inclusive quem já existe.</span>
         </label>
       </div>
@@ -139,15 +143,15 @@
   <div class="mx-auto max-w-3xl">
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <div class="hazon-card-sm p-6 text-center backdrop-blur-xl">
-        <div class="text-[34px] font-bold text-[#4ade80]">{{ relatorio.importados }}</div>
+        <div class="text-[34px] font-bold tabular-nums text-[#4ade80]">{{ relatorio.importados }}</div>
         <div class="mt-1 text-[12px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Importados</div>
       </div>
       <div class="hazon-card-sm p-6 text-center backdrop-blur-xl">
-        <div class="text-[34px] font-bold text-amber-300">{{ relatorio.duplicados }}</div>
+        <div class="text-[34px] font-bold tabular-nums text-amber-300">{{ relatorio.duplicados }}</div>
         <div class="mt-1 text-[12px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Duplicados pulados</div>
       </div>
       <div class="hazon-card-sm p-6 text-center backdrop-blur-xl">
-        <div class="text-[34px] font-bold text-red-300">{{ relatorio.erros }}</div>
+        <div class="text-[34px] font-bold tabular-nums text-red-300">{{ relatorio.erros }}</div>
         <div class="mt-1 text-[12px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Com erro</div>
       </div>
     </div>
@@ -157,13 +161,15 @@
         <h3 class="mb-3 text-[13px] font-semibold text-red-200">Linhas ignoradas</h3>
         <ul class="space-y-1 text-[12.5px] text-[#bcd3da]">
           {% for n, motivo in relatorio.detalhes_erros|slice:":10" %}
-            <li><span class="font-mono text-red-200">linha {{ n }}</span> — {{ motivo }}</li>
+            <li><span class="font-mono tabular-nums text-red-200">linha {{ n }}</span> — {{ motivo }}</li>
           {% endfor %}
           {% if relatorio.detalhes_erros|length > 10 %}
             <li class="text-[#a6bfc7]">… e mais {{ relatorio.detalhes_erros|length|add:"-10" }} linhas.</li>
           {% endif %}
         </ul>
       </div>
+    {% elif not relatorio.importados %}
+      <p class="mt-6 rounded-2xl border border-white/10 bg-white/5 px-5 py-8 text-center text-[13px] text-[#a6bfc7]">Nenhum contato foi importado — confira o mapeamento das colunas e tente novamente.</p>
     {% endif %}
 
     <div class="mt-8 flex justify-center gap-3">
@@ -179,6 +185,7 @@
   document.getElementById('arquivo') && document.getElementById('arquivo').addEventListener('change', function () {
     var el = document.getElementById('nome_arquivo');
     if (el && this.files.length) el.textContent = '📄 ' + this.files[0].name;
+    else if (el) el.textContent = 'Nenhum arquivo selecionado.';
   });
 </script>
 {% endblock %}

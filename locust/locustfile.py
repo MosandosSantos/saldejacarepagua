@@ -9,8 +9,11 @@ class CrmUser(HttpUser):
     def on_start(self):
         username = os.getenv('LOCUST_USERNAME', '').strip()
         password = os.getenv('LOCUST_PASSWORD', '')
+        turnstile_token = os.getenv('LOCUST_TURNSTILE_TOKEN', '').strip()
         if not username or not password:
             raise RuntimeError('Configure LOCUST_USERNAME and LOCUST_PASSWORD before starting users.')
+        if not turnstile_token:
+            raise RuntimeError('Configure LOCUST_TURNSTILE_TOKEN before starting users.')
 
         self.client.get('/login/')
         csrf_token = self.client.cookies.get('csrftoken')
@@ -20,9 +23,10 @@ class CrmUser(HttpUser):
         with self.client.post(
             '/login/',
             data={
-                'email': username,
-                'senha': password,
-                'csrfmiddlewaretoken': csrf_token,
+                    'email': username,
+                    'senha': password,
+                    'cf-turnstile-response': turnstile_token,
+                    'csrfmiddlewaretoken': csrf_token,
             },
             allow_redirects=False,
             catch_response=True,
@@ -50,7 +54,7 @@ class CrmUser(HttpUser):
 
     @task(3)
     def reception(self):
-        self._get_page('/recepcao/')
+        self._get_page('/iniciacao/')
 
     @task(2)
     def tasks_page(self):

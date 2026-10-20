@@ -1,8 +1,8 @@
 """Regras de negocio de usuarios e tenants (RBAC).
 
-Papéis: admin_saas (plataforma, nao tem tenant) | admin_company e operacional (pertencem a um tenant).
+Papéis: admin_saas (plataforma, sem tenant) | viewer (tenant obrigatorio).
 Regras:
-- admin_company e operacional exigem tenant_id;
+- viewer exige tenant_id;
 - admin_saas nao pode ter tenant_id;
 - email de usuario e unico.
 """
@@ -26,7 +26,7 @@ class UsuarioService:
 
     def criar(self, payload) -> object:
         if payload.role in ROLES_DE_TENANT and payload.tenant_id is None:
-            raise RegraViolada('os papéis de tenant (admin_company, operacional, viewer) exigem tenant_id')
+            raise RegraViolada('o papel viewer exige tenant_id')
 
         if payload.role == ROLE_ADMIN_SAAS and payload.tenant_id is not None:
             raise RegraViolada('admin_saas nao possui tenant')

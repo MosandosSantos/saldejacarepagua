@@ -5,18 +5,18 @@
 <h1 class="mb-4 text-xl font-bold text-white">{{ evento|yesno:'Editar evento,Novo evento' }}</h1>
 
 {% if erro %}
-<div class="mb-4 rounded-lg border border-[#f59e0b]/40 bg-[#f59e0b]/10 px-4 py-2 text-sm text-[#fbbf24]">{{ erro }}</div>
+<div role="alert" class="mb-4 rounded-lg border border-[#f59e0b]/40 bg-[#f59e0b]/10 px-4 py-2 text-sm text-[#fbbf24]">{{ erro }}</div>
 {% endif %}
 
 {% if evento and evento.data_hora < now_global %}
 <div class="mb-4 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-[#a6bfc7]">Evento passado — registro retroativo.</div>
 {% endif %}
 
-<form method="post" class="max-w-xl space-y-3">
+<form method="post" class="max-w-xl space-y-3" data-unsaved-guard>
   {% csrf_token %}
   <div>
-    <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-[#a6bfc7]">Loja</label>
-    <select name="loja" required class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white">
+    <label for="loja" class="mb-1 block text-xs font-bold uppercase tracking-wide text-[#a6bfc7]">Loja</label>
+    <select id="loja" name="loja" required class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white">
       <option value="">Escolha…</option>
       {% for l in lojas %}
       <option value="{{ l.id }}" {% if evento and evento.loja_id == l.id %}selected{% endif %}>{{ l.nome }}</option>
@@ -24,8 +24,8 @@
     </select>
   </div>
   <div>
-    <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-[#a6bfc7]">Tipo</label>
-    <select name="tipo" required class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white">
+    <label for="tipo" class="mb-1 block text-xs font-bold uppercase tracking-wide text-[#a6bfc7]">Tipo</label>
+    <select id="tipo" name="tipo" required class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white">
       <option value="">Escolha…</option>
       {% for t in tipos %}
       <option value="{{ t.id }}" {% if evento and evento.tipo_id == t.id %}selected{% endif %}>{{ t.nome }}</option>
@@ -33,24 +33,24 @@
     </select>
   </div>
   <div>
-    <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-[#a6bfc7]">Título</label>
-    <input name="titulo" required maxlength="200" value="{{ evento.titulo|default:'' }}"
+    <label for="titulo" class="mb-1 block text-xs font-bold uppercase tracking-wide text-[#a6bfc7]">Título</label>
+    <input id="titulo" name="titulo" required maxlength="200" value="{{ evento.titulo|default:'' }}" autocomplete="off"
            class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white" />
   </div>
   <div>
-    <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-[#a6bfc7]">Data e hora</label>
-    <input name="data_hora" required type="datetime-local"
+    <label for="data_hora" class="mb-1 block text-xs font-bold uppercase tracking-wide text-[#a6bfc7]">Data e hora</label>
+    <input id="data_hora" name="data_hora" required type="datetime-local" autocomplete="off"
            value="{{ evento.data_hora|date:'Y-m-d\TH:i' }}"
            class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white" />
   </div>
   <div>
-    <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-[#a6bfc7]">Local</label>
-    <input name="local" maxlength="255" value="{{ evento.local|default:'' }}"
+    <label for="local" class="mb-1 block text-xs font-bold uppercase tracking-wide text-[#a6bfc7]">Local</label>
+    <input id="local" name="local" maxlength="255" value="{{ evento.local|default:'' }}" autocomplete="off"
            class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white" />
   </div>
   <div>
-    <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-[#a6bfc7]">Descrição</label>
-    <textarea name="descricao" rows="3"
+    <label for="descricao" class="mb-1 block text-xs font-bold uppercase tracking-wide text-[#a6bfc7]">Descrição</label>
+    <textarea id="descricao" name="descricao" rows="3" autocomplete="off"
               class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white">{{ evento.descricao|default:'' }}</textarea>
   </div>
   <button type="submit" class="rounded-lg bg-[#3b82f6] px-4 py-2 text-sm font-semibold text-white hover:bg-[#2563eb]">Salvar</button>

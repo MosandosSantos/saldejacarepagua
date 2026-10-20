@@ -1,0 +1,163 @@
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.btn-expand-loja').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var lojaId = this.getAttribute('data-loja-id');
+      var drillRow = document.querySelector('.drill-membros-loja[data-loja-id="' + lojaId + '"]');
+      var container = document.querySelector('.membros-container-loja[data-loja-id="' + lojaId + '"]');
+      var icon = this.querySelector('.expand-icon');
+      var isOpen = this.getAttribute('aria-expanded') === 'true';
+      var nomeLoja = this.getAttribute('data-loja-name') || 'esta loja';
+
+      drillRow.style.display = isOpen ? 'none' : '';
+      this.setAttribute('aria-expanded', String(!isOpen));
+      this.setAttribute('aria-label', (isOpen ? 'Expandir membros de ' : 'Recolher membros de ') + nomeLoja);
+      this.title = isOpen ? 'Expandir membros' : 'Recolher membros';
+      icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(45deg)';
+
+      if (isOpen || this.getAttribute('data-loaded') === 'true' || this.getAttribute('data-loading') === 'true') return;
+
+      this.setAttribute('data-loading', 'true');
+      container.setAttribute('aria-busy', 'true');
+      container.replaceChildren();
+      var carregando = document.createElement('p');
+      carregando.className = 'py-4 text-center text-[12px] text-[#6f8a93]';
+      carregando.textContent = 'Carregando membros…';
+      container.appendChild(carregando);
+
+      fetch('/contatos/loja/' + lojaId + '/membros-json/', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('Falha ao carregar membros');
+          return r.json();
+        })
+        .then(function (data) {
+          var membros = data.membros || [];
+          btn.setAttribute('data-loaded', 'true');
+          container.replaceChildren();
+          if (!membros.length) {
+            var vazio = document.createElement('p');
+            vazio.className = 'py-4 text-center text-[12px] text-[#6f8a93]';
+            vazio.textContent = 'Nenhum membro nesta loja.';
+            container.appendChild(vazio);
+            return;
+          }
+
+          var totais = { ativos: 0, inativos: 0 };
+          membros.forEach(function (m) {
+            if (m.situacao === 'ATIVO') {
+              totais.ativos++;
+            } else {
+              totais.inativos++;
+            }
+          });
+
+          var tabela = document.createElement('table');
+          tabela.className = 'w-full border-collapse';
+          var cabecalho = document.createElement('thead');
+          var linhaCabecalho = document.createElement('tr');
+          linhaCabecalho.className = 'border-b border-white/10 text-left';
+          [['Nome', 'text-left'], ['Cadastro', 'text-center'], ['Grau', 'text-center'], ['Situação', 'text-center'], ['Presença', 'text-center']].forEach(function (item) {
+            var th = document.createElement('th');
+            th.scope = 'col';
+            th.className = 'px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7] ' + item[1];
+            th.textContent = item[0];
+            linhaCabecalho.appendChild(th);
+          });
+          cabecalho.appendChild(linhaCabecalho);
+          tabela.appendChild(cabecalho);
+
+          var corpo = document.createElement('tbody');
+          membros.forEach(function (m) {
+            var linha = document.createElement('tr');
+            linha.className = 'border-b border-white/[0.03] hover:bg-white/[0.03]';
+            var nome = document.createElement('td');
+            nome.className = 'max-w-[220px] truncate px-4 py-2 text-[12px] text-[#bcd3da]';
+            nome.textContent = m.nome || '—';
+            var situacao = document.createElement('td');
+            situacao.className = 'px-4 py-2 text-center';
+            var etiqueta = document.createElement('span');
+            etiqueta.className = m.situacao === 'ATIVO'
+              ? 'inline-block rounded-full bg-[#4ade80]/15 px-2 py-0.5 text-[10px] font-bold text-[#4ade80]'
+              : 'inline-block rounded-full bg-[#ef4444]/15 px-2 py-0.5 text-[10px] font-bold text-[#ef4444]';
+            etiqueta.textContent = m.situacao || '—';
+            situacao.appendChild(etiqueta);
+
+            var cadastro = document.createElement('td');
+            cadastro.className = 'px-4 py-2 text-center font-mono text-[12px] text-[#bcd3da]' + (m.cadastro ? '' : ' opacity-60');
+            cadastro.textContent = m.cadastro || '—';
+
+            var grau = document.createElement('td');
+            grau.className = 'px-4 py-2 text-center';
+            if (m.grau != null && m.grau !== '') {
+              var grauChip = document.createElement('span');
+              grauChip.className = 'inline-flex min-w-[2.25rem] items-center justify-center rounded-lg border border-[#5b8def]/30 bg-[#5b8def]/10 px-2 py-0.5 font-mono text-[11px] font-bold text-[#5b8def]';
+              grauChip.textContent = m.grau + '\u00B0';
+              grau.appendChild(grauChip);
+            } else {
+              grau.textContent = '—';
+            }
+
+            var presenca = document.createElement('td');
+            presenca.className = 'px-4 py-2 text-center';
+            var percentual = document.createElement('span');
+            if (m.presenca == null) {
+              percentual.className = 'inline-flex min-w-[3.5rem] items-center justify-center px-2 py-1 font-mono text-[12.5px] font-bold text-[#a6bfc7]';
+              percentual.textContent = '—';
+            } else {
+              percentual.className = m.presenca_abaixo_50
+                ? 'inline-flex min-w-[3.5rem] items-center justify-center rounded-lg border border-[#ef4444]/30 bg-[#ef4444]/10 px-2 py-1 font-mono text-[12.5px] font-bold text-red-400'
+                : 'inline-flex min-w-[3.5rem] items-center justify-center rounded-lg border border-[#4ade80]/30 bg-[#4ade80]/10 px-2 py-1 font-mono text-[12.5px] font-bold text-[#4ade80]';
+              percentual.textContent = m.presenca + '%';
+            }
+            presenca.appendChild(percentual);
+            linha.appendChild(nome);
+            linha.appendChild(cadastro);
+            linha.appendChild(grau);
+            linha.appendChild(situacao);
+            linha.appendChild(presenca);
+            corpo.appendChild(linha);
+          });
+
+          var total = document.createElement('tr');
+          total.className = 'border-t-2 border-white/10 bg-white/[0.03] font-bold';
+          var totalLabel = document.createElement('td');
+          totalLabel.className = 'px-4 py-2.5 text-[11px] text-[#a6bfc7]';
+          totalLabel.textContent = 'TOTAL';
+          var totalCadastro = document.createElement('td');
+          totalCadastro.className = 'px-4 py-2.5';
+          var totalGrau = document.createElement('td');
+          totalGrau.className = 'px-4 py-2.5';
+          var totalStatus = document.createElement('td');
+          totalStatus.className = 'px-4 py-2.5 text-center text-[11px]';
+          var resumo = document.createElement('span');
+          resumo.className = 'text-[#4ade80]';
+          resumo.textContent = totais.ativos + ' ativos';
+          var separador = document.createTextNode(' · ');
+          var resumoInativos = document.createElement('span');
+          resumoInativos.className = 'text-[#ef4444]';
+          resumoInativos.textContent = totais.inativos + ' inativos';
+          totalStatus.append(resumo, separador, resumoInativos);
+          var totalPresenca = document.createElement('td');
+          totalPresenca.className = 'px-4 py-2.5';
+          total.append(totalLabel, totalCadastro, totalGrau, totalStatus, totalPresenca);
+          corpo.appendChild(total);
+          tabela.appendChild(corpo);
+          container.appendChild(tabela);
+        })
+        .catch(function () {
+          container.replaceChildren();
+          var falha = document.createElement('p');
+          falha.className = 'py-4 text-center text-[12px] text-[#fca5a5]';
+          falha.textContent = 'Não foi possível carregar os membros. Reabra para tentar novamente.';
+          container.appendChild(falha);
+        })
+        .finally(function () {
+          btn.removeAttribute('data-loading');
+          container.setAttribute('aria-busy', 'false');
+        });
+    });
+  });
+});
+</script>

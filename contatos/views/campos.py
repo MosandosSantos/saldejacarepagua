@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from acesso.decorators import (
     web_login_required,
     web_requer_admin,
+    web_requer_tenant_context,
 )
 from contatos.forms import CampoForm
 from contatos.importador import normalizar_data
@@ -118,6 +119,7 @@ def _valores_para_ficha(contato):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_admin
 def campos_personalizados(request):
     """Lista os campos do tenant e cria novos (nome unico por tenant) — apenas admin."""
@@ -156,6 +158,7 @@ def campos_personalizados(request):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_admin
 def editar_campo(request, pk):
     tid = _tenant_id(request)
@@ -180,6 +183,7 @@ def editar_campo(request, pk):
 
 
 @web_login_required
+@web_requer_tenant_context
 @web_requer_admin
 def excluir_campo(request, pk):
     tid = _tenant_id(request)

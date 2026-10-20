@@ -73,7 +73,7 @@ def _validar_carteira(carteira_id, tenant_id: int | None) -> int | None:
 class ContatoService:
     """Orquestra as operacoes de contato, sem conhecer HTTP nem o ORM diretamente.
 
-    `tenant_id` vem do token do usuario (escopo): operacional/admin_company so
+    `tenant_id` vem do usuario autenticado: usuarios vinculados a um tenant so
     enxergam os dados do proprio tenant; admin_saas (None) enxerga tudo.
     """
 

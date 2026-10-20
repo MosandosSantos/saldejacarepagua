@@ -240,6 +240,18 @@ def test_tema_padrao_escuro(usuario_operacional):
 
 
 @pytest.mark.django_db
+def test_botao_de_tema_exibe_bandeira_do_brasil(usuario_operacional):
+    c = _cliente_web(usuario_operacional)
+    html = c.get('/config/').content.decode()
+    inicio_formulario = html.index('action="/config/tema/"')
+    inicio = html.rfind('<form', 0, inicio_formulario)
+    fim = html.index('</form>', inicio_formulario)
+    formulario_tema = html[inicio:fim]
+
+    assert 'src="/static/img/bandeira-br.svg"' in formulario_tema
+
+
+@pytest.mark.django_db
 def test_tema_claro_nao_vaza_para_pagina_publica(tenant_aurora, admin_company):
     # admin em tema claro clica no próprio link de convite (mesma sessão)
     c = _cliente_web(admin_company)

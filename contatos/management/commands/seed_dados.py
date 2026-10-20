@@ -10,6 +10,7 @@ Uso:
     python manage.py seed_dados --total 100 --tenant clinica-aurora --reset
 """
 import random
+import secrets
 from datetime import date, time, timedelta
 from decimal import Decimal
 
@@ -257,7 +258,6 @@ class Command(BaseCommand):
 
     # ------------------------------------------------------------------ apoio
     def _garantir_usuarios(self, tenant):
-        import secrets as _secrets
         padrao = [
             ('Dona Aurora', 'dona@aurora.com', 'admin_company', tenant),
             ('Ana Souza', 'ana@aurora.com', 'operacional', tenant),
@@ -269,7 +269,7 @@ class Command(BaseCommand):
                 defaults={'nome': nome, 'role': role, 'tenant': ten},
             )
             if created:
-                senha = _secrets.token_urlsafe(12)
+                senha = secrets.token_urlsafe(12)
                 u = Usuario.objects.get(email=email)
                 u.senha = make_password(senha)
                 u.save(update_fields=['senha'])
