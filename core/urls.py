@@ -6,7 +6,6 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
-from django.shortcuts import redirect
 from django.urls import include, path
 
 
@@ -32,19 +31,24 @@ def healthz(request):
     http_status = 200 if status['status'] == 'ok' else 503
     return JsonResponse(status, status=http_status)
 
+from django.db import Error as DBError
+from django.db import connection
+
 from acesso import views as acesso_views
 from contatos import views as contatos_views
 from core import views as core_views
 from gestao import views as gestao_views
 from tarefas import views as tarefas_views
-from django.db import Error as DBError, connection
 
 urlpatterns = [
+    path('robots.txt', core_views.robots_txt, name='robots_txt'),
+    path('sitemap.xml', core_views.sitemap_xml, name='sitemap_xml'),
+    path('manifest.webmanifest', core_views.manifest_webmanifest, name='manifest'),
     path('premium/<str:recurso>/', core_views.versao_educativa, name='versao_educativa'),
     path('premium/whatsapp/', lambda r: core_views.versao_educativa(r, 'whatsapp'), name='premium_whatsapp'),
     path('premium/carteiras/', lambda r: core_views.versao_educativa(r, 'carteiras'), name='premium_carteiras'),
     path('premium/campanhas/', lambda r: core_views.versao_educativa(r, 'campanhas'), name='premium_campanhas'),
-    path('', lambda request: redirect('dashboard:index')),
+    path('', acesso_views.login_web, name='home'),
     path('healthz/', healthz, name='healthz'),
     path('login/', include('acesso.urls')),
     path('equipe/', acesso_views.equipe, name='equipe'),

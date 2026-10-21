@@ -1,8 +1,10 @@
 """Context processors da camada web: injetam a navegacao e o usuario da sessao em todos os templates."""
 
+import json
 import os
 
 from django.conf import settings
+from django.templatetags.static import static
 from django.urls import reverse
 
 from acesso.models import (
@@ -120,6 +122,102 @@ def _css_versao():
         return '1'
 
 
+def _seo_context(request):
+    """Monta URLs absolutas, canonical e dados estruturados (schema.org).
+
+    O dominio vem de SEO_SITE_URL quando configurado; caso contrario usa o
+    host da requisicao (respeitando SECURE_PROXY_SSL_HEADER atras do proxy).
+    """
+    base = (settings.SEO_SITE_URL or '').rstrip('/')
+    if not base and request is not None:
+        base = request.build_absolute_uri('/').rstrip('/')
+
+    caminho = request.path if request is not None else '/'
+    # A home é canônica em "/" — /login/ renderiza a mesma página.
+    if caminho == '/login/':
+        caminho = '/'
+    canonical = f'{base}{caminho}' if base else ''
+    logo_url = f'{base}{static("img/logo.png")}'
+    og_image = f'{base}{static("img/og-image.png")}'
+
+    dados = {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {
+                '@type': 'WebSite',
+                '@id': f'{base}/#website',
+                'url': f'{base}/',
+                'name': settings.SEO_SITE_NAME,
+                'alternateName': [settings.SEO_SITE_SHORT_NAME, settings.APP_BRAND_NAME],
+                'description': settings.SEO_SITE_DESCRIPTION,
+                'inLanguage': 'pt-BR',
+                'publisher': {'@id': f'{base}/#organization'},
+            },
+            {
+                '@type': 'Organization',
+                '@id': f'{base}/#organization',
+                'name': settings.SEO_ORGANIZATION_NAME,
+                'alternateName': settings.APP_BRAND_NAME,
+                'url': f'{base}/',
+                'logo': {
+                    '@type': 'ImageObject',
+                    'url': logo_url,
+                    'width': 512,
+                    'height': 512,
+                    'caption': settings.SEO_SITE_NAME,
+                },
+                'image': og_image,
+                'email': settings.SEO_CONTACT_EMAIL,
+                'telephone': settings.SEO_CONTACT_PHONE,
+                'address': {
+                    '@type': 'PostalAddress',
+                    'streetAddress': 'Rua Barão, 1317',
+                    'addressLocality': 'Rio de Janeiro',
+                    'addressRegion': 'RJ',
+                    'postalCode': '21321-624',
+                    'addressCountry': 'BR',
+                },
+            },
+            {
+                '@type': 'WebPage',
+                '@id': f'{canonical}#webpage',
+                'url': canonical,
+                'name': f'{settings.SEO_SITE_NAME} — Vale de {settings.VALE_NOME}',
+                'description': settings.SEO_SITE_DESCRIPTION,
+                'isPartOf': {'@id': f'{base}/#website'},
+                'about': {'@id': f'{base}/#organization'},
+                'primaryImageOfPage': {'@type': 'ImageObject', 'url': og_image},
+                'inLanguage': 'pt-BR',
+            },
+            {
+                '@type': 'SoftwareApplication',
+                '@id': f'{base}/#app',
+                'name': settings.SEO_SITE_NAME,
+                'applicationCategory': 'BusinessApplication',
+                'operatingSystem': 'Web',
+                'description': settings.SEO_SITE_DESCRIPTION,
+                'url': f'{base}/',
+                'publisher': {'@id': f'{base}/#organization'},
+                'inLanguage': 'pt-BR',
+            },
+        ],
+    }
+    jsonld = json.dumps(dados, ensure_ascii=False, indent=2).replace('</', '<\\/')
+
+    return {
+        'SEO_SITE_NAME': settings.SEO_SITE_NAME,
+        'SEO_SITE_SHORT_NAME': settings.SEO_SITE_SHORT_NAME,
+        'SEO_SITE_TAGLINE': settings.SEO_SITE_TAGLINE,
+        'SEO_SITE_DESCRIPTION': settings.SEO_SITE_DESCRIPTION,
+        'SEO_SITE_KEYWORDS': settings.SEO_SITE_KEYWORDS,
+        'SEO_CANONICAL': canonical,
+        'SEO_OG_IMAGE': og_image,
+        'SEO_LOGO_URL': logo_url,
+        'SEO_THEME_COLOR': settings.SEO_THEME_COLOR,
+        'SEO_JSONLD': jsonld,
+    }
+
+
 def web_sessao(request):
     """Disponibiliza NAV_ITENS, web_usuario, web_logado e o resumo de tarefas pendentes."""
     usuario = request.session.get('usuario', {})
@@ -137,6 +235,7 @@ def web_sessao(request):
     url_name = resolver.url_name if resolver else ''
     app_atual = resolver.app_name if resolver else ''
     contexto = {
+        **_seo_context(request),
         'APP_BRAND_NAME': settings.APP_BRAND_NAME,
         'VALE_NOME': settings.VALE_NOME,
         'css_versao': _css_versao(),

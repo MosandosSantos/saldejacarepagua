@@ -1,7 +1,13 @@
 {% extends 'base/basic.html' %}
 {% load static %}
 
-{% block titulo %}{{ APP_BRAND_NAME }} CRM — Entrar{% endblock %}
+{% block titulo %}Sistema de Administração de Lojas Maçônicas | Vale de Jacarepaguá{% endblock %}
+{% block seo_descricao %}Sistema de administração de lojas maçônicas do Vale de Jacarepaguá: membros, lojas, agenda de sessões, comunicações e relatórios. REAA Grau 33º.{% endblock %}
+{% block seo_keywords %}sistema de administração de lojas maçônicas, gestão de lojas maçônicas, CRM maçônico, sistema para loja maçônica, Vale de Jacarepaguá, REAA, Grau 33, agenda de sessões maçônicas{% endblock %}
+{% block seo_og_titulo %}Sistema de Administração de Lojas Maçônicas — Vale de Jacarepaguá{% endblock %}
+{% block seo_og_descricao %}Sistema de administração de lojas maçônicas do Vale de Jacarepaguá: membros, lojas, agenda de sessões, comunicações e relatórios. REAA Grau 33º.{% endblock %}
+{% block seo_twitter_titulo %}Sistema de Administração de Lojas Maçônicas — Vale de Jacarepaguá{% endblock %}
+{% block seo_twitter_descricao %}Sistema de administração de lojas maçônicas do Vale de Jacarepaguá: membros, lojas, agenda de sessões, comunicações e relatórios. REAA Grau 33º.{% endblock %}
 
 {% block cabecalho %}{% endblock %}
 
@@ -62,6 +68,28 @@
     letter-spacing: 0;
     white-space: nowrap;
   }
+  /* Entrada das letras: cada uma sobe de dentro da própria linha, em cascata */
+  .hero__title-linha {
+    display: block;
+    overflow: hidden;
+    /* respiro para o acento do "á" e para os descendentes do "g" e do "p" */
+    padding: .02em .06em .07em;
+    margin: -.02em -.06em -.07em;
+  }
+  .hero__letra {
+    display: inline-block;
+    transform: translate3d(0, 118%, 0);
+    animation: letraSobe 1.05s cubic-bezier(.19, 1, .22, 1) forwards;
+    animation-delay: calc(180ms + var(--i) * 75ms);
+  }
+  .hero__letra[data-espaco] { min-width: .22em; }
+  @keyframes letraSobe {
+    from { transform: translate3d(0, 118%, 0); }
+    to   { transform: translate3d(0, 0, 0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero__letra { animation: none; transform: none; }
+  }
   .hero__text {
     position: absolute;
     left: 3.9cqw; top: 69%;
@@ -111,6 +139,20 @@
     left: 57.2cqw; top: 7.5%;
     width: 38.3cqw; height: auto;
     filter: drop-shadow(0 .6cqw 1.2cqw rgba(0,0,0,.18));
+    opacity: 0;
+    animation: eagleFade 10s linear 2s forwards;
+    will-change: opacity;
+  }
+  @keyframes eagleFade {
+    0% { opacity: 0; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero__brasao {
+      animation: none;
+      opacity: 1;
+    }
   }
   /* Pontilhados decorativos (5 colunas x 6 linhas) */
   .dots {
@@ -126,10 +168,22 @@
   /* 4ª sessão: Supremo Conselho */
   /* Página de login: conteúdo de ponta a ponta, sem moldura do layout base */
   main#conteudo-principal { max-width: none !important; padding: 0 !important; }
-  .sessao-supremo { background: #46072A; color: var(--texto); }
+  .sessao-supremo { background: #46072A; color: var(--texto); overflow: hidden; }
   .sessao-supremo__inner { display: flex; flex-wrap: wrap; align-items: center; gap: 48px; max-width: 1100px; margin: 0 auto; padding: 80px 24px; }
   .sessao-supremo__media, .sessao-supremo__info { flex: 1 1 380px; }
-  .sessao-supremo__img { width: 100%; height: auto; filter: drop-shadow(0 18px 30px rgba(0,0,0,.45)); }
+  .sessao-supremo__media { overflow: hidden; }
+  .sessao-supremo__img {
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 18px 30px rgba(0,0,0,.45));
+    transform: scale(0.7);
+    transform-origin: center center;
+    transition: transform 0.1s linear;
+    will-change: transform;
+  }
+  .sessao-supremo__img--scale {
+    transform: scale(var(--supremo-scale, 1));
+  }
   .sessao-supremo__info h2 { font-family: var(--fonte-titulo); font-size: 2.2rem; line-height: 1.15; color: var(--gelo); text-transform: uppercase; margin: 14px 0; }
   .sessao-supremo__info p { font-family: var(--fonte-texto); font-size: 15px; color: rgba(244,238,241,.75); }
   .sessao-supremo__info ul { list-style: none; padding: 0; margin-top: 24px; display: grid; gap: 14px; font-family: var(--fonte-texto); font-size: 15px; color: rgba(244,238,241,.85); }
@@ -344,6 +398,7 @@
 {% endblock %}
 
 {% block conteudo %}
+<h1 class="sr-only">Sistema de Administração de Lojas Maçônicas — Vale de Jacarepaguá, REAA Grau 33º</h1>
 <!-- Menu ponta a ponta (mobile: painel suspenso) -->
 <button type="button" id="fmToggle" class="fm-toggle" aria-controls="menuFlutuante" aria-expanded="false">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
@@ -378,7 +433,9 @@
     <span class="dots dots--top" aria-hidden="true"></span>
     <span class="dots dots--bottom" aria-hidden="true"></span>
 
-    <h1 class="hero__title">Vale de<br>Jacarepaguá</h1>
+    <div class="hero__title" role="img" aria-label="Vale de Jacarepaguá">
+      <span class="hero__title-linha" aria-hidden="true"><span class="hero__letra" style="--i:0">V</span><span class="hero__letra" style="--i:1">a</span><span class="hero__letra" style="--i:2">l</span><span class="hero__letra" style="--i:3">e</span><span class="hero__letra" data-espaco style="--i:4">&nbsp;</span><span class="hero__letra" style="--i:5">d</span><span class="hero__letra" style="--i:6">e</span></span><span class="hero__title-linha" aria-hidden="true"><span class="hero__letra" style="--i:7">J</span><span class="hero__letra" style="--i:8">a</span><span class="hero__letra" style="--i:9">c</span><span class="hero__letra" style="--i:10">a</span><span class="hero__letra" style="--i:11">r</span><span class="hero__letra" style="--i:12">e</span><span class="hero__letra" style="--i:13">p</span><span class="hero__letra" style="--i:14">a</span><span class="hero__letra" style="--i:15">g</span><span class="hero__letra" style="--i:16">u</span><span class="hero__letra" style="--i:17">á</span></span>
+    </div>
 
     <p class="hero__text">
       Jurisdicionada a 1ª Inspetoria Litúrgica do Estado do Rio de Janeiro do
@@ -397,8 +454,9 @@
       </div>
     </div>
 
-    <img class="hero__brasao" src="{% static 'img/brasao_3d.png' %}"
-         alt="Brasão do Grau 33º: águia bicéfala com coroa, espada e lema Deus Meumque Jus">
+    <img class="hero__brasao" src="{% static 'img/brasao_3d.webp' %}"
+         alt="Brasão do Grau 33º: águia bicéfala com coroa, espada e lema Deus Meumque Jus"
+         width="1131" height="1391" fetchpriority="high" decoding="async">
   </div>
 </section>
 <script>
@@ -426,7 +484,7 @@
 <div id="sessao-login" class="login-wrap">
     <section class="login-card" id="loginCard" title="Arraste para posicionar · duplo-clique para centralizar">
       <div class="mb-7 flex items-center gap-3">
-        <img src="{% static 'img/logo.png' %}" alt="SAL DO REAA" class="h-11 w-11 rounded-[13px] object-contain shadow-lg shadow-[#4a0e1f]/70">
+        <img src="{% static 'img/logo.png' %}" alt="Águia bicéfala — Sistema de Administração de Lojas Maçônicas" class="h-11 w-11 rounded-[13px] object-contain shadow-lg shadow-[#4a0e1f]/70">
         <span class="font-display text-[1.35rem] font-semibold tracking-tight"><span class="text-[#ef4444]">SAL DO REAA</span></span>
       </div>
 
@@ -435,7 +493,7 @@
         Acesso restrito
       </div>
 
-      <h1 class="font-display mb-2.5 text-[2.1rem] font-medium leading-[1.12] tracking-tight text-white">Bem-vindo(a) de volta</h1>
+      <h2 class="font-display mb-2.5 text-[2.1rem] font-medium leading-[1.12] tracking-tight text-white">Bem-vindo(a) de volta</h2>
 
       {% for message in messages %}
         <div role="status" aria-live="polite" class="mb-4 rounded-xl border border-[#4ade80]/30 bg-[#4ade80]/10 px-4 py-3 text-[13px] font-semibold text-[#b9f6ce]">{{ message }}</div>
@@ -507,7 +565,7 @@
 </div>
 
 <section id="sessao-galeria" class="galeria-medalhas" aria-label="Medalhas do Grau 33">
-  <img class="galeria-medalhas__img galeria-medalhas__img--hidden" src="/static/img/medalhas_grau33.png" alt="Medalhas e comenda do Supremo Conselho Grau 33" loading="lazy">
+  <img class="galeria-medalhas__img galeria-medalhas__img--hidden" src="{% static 'img/medalhas_grau33.webp' %}" alt="Medalhas e comenda do Supremo Conselho Grau 33" width="1254" height="1254" loading="lazy" decoding="async">
 </section>
 <style>
   .galeria-medalhas__img--hidden {
@@ -585,7 +643,7 @@
 <section id="sessao-supremo" class="sessao-supremo" aria-labelledby="titulo-supremo">
   <div class="sessao-supremo__inner">
     <div class="sessao-supremo__media">
-      <img class="sessao-supremo__img" src="{% static 'img/templo_maconico.png' %}" alt="Templo Maçônico com o brasão do Grau 33" loading="lazy">
+      <img class="sessao-supremo__img" src="{% static 'img/templo_maconico.webp' %}" alt="Templo Maçônico com o brasão do Grau 33" width="1536" height="1024" loading="lazy" decoding="async">
     </div>
     <div class="sessao-supremo__info">
       <span class="fm-badge">Supremo</span>
@@ -722,6 +780,48 @@
     eyeOpen.classList.toggle('hidden', !isPassword);
     eyeClosed.classList.toggle('hidden', isPassword);
   });
+})();
+
+// Animação da imagem da sessão Supremo Conselho no scroll
+(function () {
+  var secaoSupremo = document.getElementById('sessao-supremo');
+  var imgSupremo = document.querySelector('.sessao-supremo__img');
+  if (!secaoSupremo || !imgSupremo) return;
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    imgSupremo.style.transform = 'scale(1)';
+    return;
+  }
+
+  function atualizarEscala() {
+    var rect = secaoSupremo.getBoundingClientRect();
+    var alturaJanela = window.innerHeight || document.documentElement.clientHeight;
+    
+    // Quando a seção começa a entrar na viewport
+    if (rect.bottom < 0 || rect.top > alturaJanela) {
+      // Fora da viewport - mantém em escala reduzida ou normaliza conforme posição
+      if (rect.bottom < 0) {
+        imgSupremo.style.transform = 'scale(0.7)';
+      } else if (rect.top > alturaJanela) {
+        imgSupremo.style.transform = 'scale(0.7)';
+      }
+      return;
+    }
+    
+    // Calcula o progresso: 0 quando começa a entrar, 1 quando está centralizada/visível
+    var inicio = alturaJanela;
+    var fim = 0;
+    var progresso = (inicio - rect.top) / (inicio - fim);
+    progresso = Math.max(0, Math.min(1, progresso));
+    
+    // Escala de 0.7 até 1.0
+    var escala = 0.7 + (progresso * 0.3);
+    imgSupremo.style.transform = 'scale(' + escala + ')';
+  }
+
+  window.addEventListener('scroll', atualizarEscala, { passive: true });
+  window.addEventListener('resize', atualizarEscala);
+  atualizarEscala();
 })();
 </script>
 {% endblock %}

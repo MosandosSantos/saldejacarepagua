@@ -1,6 +1,6 @@
 """Configuracao central do projeto Django (core)."""
-from email.utils import formataddr, parseaddr
 import os
+from email.utils import formataddr, parseaddr
 from pathlib import Path
 
 import dj_database_url
@@ -13,9 +13,32 @@ load_dotenv(BASE_DIR / '.env')
 
 APP_BRAND_NAME = 'SAL DO REAA'
 
-# Nome da Vale (subordinada) que aparece nos titulos de secao — ex.:
+# Nome da Vale (subordinada) que aparece nos titulos de secao - ex.:
 # "Calendario da Vale de Jacarepagua". Configuravel por env (VALE_NOME).
 VALE_NOME = os.getenv('VALE_NOME', 'Jacarepaguá')
+
+# --- Identidade publica / SEO -------------------------------------------
+# Nome que aparece no titulo da aba, nos resultados de busca e nas
+# previas de compartilhamento (Open Graph / Twitter Cards).
+SEO_SITE_NAME = 'Sistema de Administração de Lojas Maçônicas'
+SEO_SITE_SHORT_NAME = 'Lojas Maçônicas'
+SEO_SITE_TAGLINE = 'Gestão de lojas, membros e sessões — REAA Grau 33º'
+SEO_SITE_DESCRIPTION = (
+    'Sistema de administração de lojas maçônicas: gestão de membros, lojas, '
+    'agenda de sessões, comunicações e relatórios. Rito Escocês Antigo e Aceito — Grau 33º.'
+)
+SEO_SITE_KEYWORDS = (
+    'sistema de administração de lojas maçônicas, gestão de lojas maçônicas, '
+    'CRM maçônico, software para loja maçônica, sistema maçônico, gestão de membros, '
+    'agenda de sessões maçônicas, REAA, Grau 33, Vale de Jacarepaguá'
+)
+# Dominio canonico (ex.: https://crm.sc33.org.br). Sem barra no final.
+# Quando vazio, o dominio da requisicao e usado como fallback.
+SEO_SITE_URL = os.getenv('SEO_SITE_URL', '').strip().rstrip('/')
+SEO_ORGANIZATION_NAME = 'Vale de Jacarepaguá — REAA Grau 33º'
+SEO_CONTACT_EMAIL = 'secretaria@sc33.org.br'
+SEO_CONTACT_PHONE = '+552133698000'
+SEO_THEME_COLOR = '#0a1e3d'
 
 
 def format_from_email(configured_from_email):
