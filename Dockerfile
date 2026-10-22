@@ -82,7 +82,7 @@ RUN sed -i 's/\r$//' entrypoint.sh \
        DJANGO_SECRET_KEY=static-build-placeholder-not-production \
        DATABASE_URL=postgresql://static:static@127.0.0.1:5432/static \
        python manage.py collectstatic --noinput \
-    && chown -R appuser:appuser /app/staticfiles \
+    && chown -R appuser:appuser /app/staticfiles /app/logs \
     && find . -name "*.py" -exec chmod 644 {} \; \
     && find . -type d -exec chmod 755 {} \;
 

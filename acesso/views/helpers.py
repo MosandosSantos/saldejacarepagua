@@ -40,7 +40,7 @@ from django.core.signing import BadSignature
 logger = logging.getLogger(__name__)
 
 _HASH_DUMMY = make_password('usuario-inexistente-dummy')
-_SALDORER_HOSTS = ('saldorer.cloud', 'www.saldorer.cloud')
+_SALDORER_HOSTS = ('saldoreaa.cloud', 'www.saldoreaa.cloud')
 
 _GPRB_ROLE_MAP = {
     'SYS_ADMIN': ROLE_ADMIN_SAAS,
