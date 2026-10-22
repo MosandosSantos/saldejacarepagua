@@ -5,8 +5,11 @@
 .PHONY: help build up down restart logs shell migrate createsuperuser test health test-local coverage quality-gate coverage-html
 
 # Variáveis
+COMPOSE := docker compose
 COMPOSE_FILE := docker-compose.yml
 ENV_FILE := .env
+DB_NAME ?= saldabritanea
+DB_USER ?= gprbr
 
 # ============================================
 # Comandos principais
@@ -22,72 +25,72 @@ help:  ## ⚠️  Mostra este help
 	@echo ""
 
 build:  ## 🏗️  Constrói as imagens Docker
-	docker-compose -f $(COMPOSE_FILE) build --no-cache
+	$(COMPOSE) -f $(COMPOSE_FILE) build --no-cache
 
 up:  ## 🚀  Inicia todos os serviços (DB + Redis + App)
-	docker-compose -f $(COMPOSE_FILE) up -d
+	$(COMPOSE) -f $(COMPOSE_FILE) up -d
 
 up-prod:  ## 🚀  Inicia em modo produção (com Nginx)
-	docker-compose -f $(COMPOSE_FILE) --profile production up -d
+	$(COMPOSE) -f $(COMPOSE_FILE) --profile production up -d
 
 down:  ## 🛑  Para todos os serviços
-	docker-compose -f $(COMPOSE_FILE) down
+	$(COMPOSE) -f $(COMPOSE_FILE) down
 
 down-volumes:  ## 🛑  Para serviços e remove volumes (⚠️ apaga dados!)
-	docker-compose -f $(COMPOSE_FILE) down -v
+	$(COMPOSE) -f $(COMPOSE_FILE) down -v
 
 restart:  ## 🔄  Reinicia todos os serviços
-	docker-compose -f $(COMPOSE_FILE) restart
+	$(COMPOSE) -f $(COMPOSE_FILE) restart
 
 logs:  ## 📝  Mostra logs de todos os serviços
-	docker-compose -f $(COMPOSE_FILE) logs -f
+	$(COMPOSE) -f $(COMPOSE_FILE) logs -f
 
 logs-app:  ## 📝  Mostra logs da aplicação
-	docker-compose -f $(COMPOSE_FILE) logs -f app
+	$(COMPOSE) -f $(COMPOSE_FILE) logs -f app
 
 logs-db:  ## 📝  Mostra logs do banco de dados
-	docker-compose -f $(COMPOSE_FILE) logs -f db
+	$(COMPOSE) -f $(COMPOSE_FILE) logs -f db
 
 logs-redis:  ## 📝  Mostra logs do Redis
-	docker-compose -f $(COMPOSE_FILE) logs -f redis
+	$(COMPOSE) -f $(COMPOSE_FILE) logs -f redis
 
 # ============================================
 # Comandos administrativos
 # ============================================
 
 shell:  ## 🐚  Abre shell na aplicação
-	docker-compose -f $(COMPOSE_FILE) exec app bash
+	$(COMPOSE) -f $(COMPOSE_FILE) exec app bash
 
 shell-root:  ## 🐚  Abre shell como root na aplicação
-	docker-compose -f $(COMPOSE_FILE) exec -u root app bash
+	$(COMPOSE) -f $(COMPOSE_FILE) exec -u root app bash
 
 migrate:  ## 📦  Roda migrations do Django
-	docker-compose -f $(COMPOSE_FILE) exec app python manage.py migrate
+	$(COMPOSE) -f $(COMPOSE_FILE) exec app python manage.py migrate
 
 makemigrations:  ## 📦  Cria migrations do Django
-	docker-compose -f $(COMPOSE_FILE) exec app python manage.py makemigrations
+	$(COMPOSE) -f $(COMPOSE_FILE) exec app python manage.py makemigrations
 
 collectstatic:  ## 📦  Coleta static files
-	docker-compose -f $(COMPOSE_FILE) exec app python manage.py collectstatic --noinput
+	$(COMPOSE) -f $(COMPOSE_FILE) exec app python manage.py collectstatic --noinput
 
 createsuperuser:  ## 👤  Cria superusuário
-	docker-compose -f $(COMPOSE_FILE) exec app python manage.py createsuperuser
+	$(COMPOSE) -f $(COMPOSE_FILE) exec app python manage.py createsuperuser
 
 dbshell:  ## 🗄️  Abre shell do PostgreSQL
-	docker-compose -f $(COMPOSE_FILE) exec db psql -U gprbr -d gprbr
+	$(COMPOSE) -f $(COMPOSE_FILE) exec db psql -U $(DB_USER) -d $(DB_NAME)
 
 redis-cli:  ## 🔴  Abre CLI do Redis
-	docker-compose -f $(COMPOSE_FILE) exec redis redis-cli
+	$(COMPOSE) -f $(COMPOSE_FILE) exec redis redis-cli
 
 # ============================================
 # Testes
 # ============================================
 
 test:  ## 🧪  Roda testes Django
-	docker-compose -f $(COMPOSE_FILE) exec app python -m django test --settings=core.settings
+	$(COMPOSE) -f $(COMPOSE_FILE) exec app python -m django test --settings=core.settings
 
 lint:  ## 🔍  Roda linting (se configurado)
-	docker-compose -f $(COMPOSE_FILE) exec app python -m flake8 .
+	$(COMPOSE) -f $(COMPOSE_FILE) exec app python -m flake8 .
 
 # ============================================
 # Qualidade (local, sem Docker)
@@ -116,11 +119,11 @@ health:  ## ❤️  Verifica saúde de todos os serviços
 	@echo "Verificando serviços..."
 	@echo ""
 	@echo "📦 Aplicação:"
-	docker-compose -f $(COMPOSE_FILE) exec app python -c "import urllib.request; print('  ✅ OK' if urllib.request.urlopen('http://localhost:8000/health/').status == 200 else '  ❌ Fail')"
+	$(COMPOSE) -f $(COMPOSE_FILE) exec app python -c "import urllib.request; print('  ✅ OK' if urllib.request.urlopen('http://localhost:8111/healthz/').status == 200 else '  ❌ Fail')"
 	@echo "🗄️  PostgreSQL:"
-	docker-compose -f $(COMPOSE_FILE) exec db pg_isready -U gprbr && echo "  ✅ OK" || echo "  ❌ Fail"
+	$(COMPOSE) -f $(COMPOSE_FILE) exec db pg_isready -U $(DB_USER) -d $(DB_NAME) && echo "  ✅ OK" || echo "  ❌ Fail"
 	@echo "🔴  Redis:"
-	docker-compose -f $(COMPOSE_FILE) exec redis redis-cli ping | grep -q PONG && echo "  ✅ OK" || echo "  ❌ Fail"
+	$(COMPOSE) -f $(COMPOSE_FILE) exec redis redis-cli ping | grep -q PONG && echo "  ✅ OK" || echo "  ❌ Fail"
 
 # ============================================
 # Utilitários
@@ -133,15 +136,15 @@ clean-all:  ## 🧹  Remove tudo (containers, images, volumes, networks) ⚠️!
 	docker system prune -a --volumes -f
 
 backup-db:  ## 💾  Backup do banco de dados
-	docker-compose -f $(COMPOSE_FILE) exec db pg_dump -U gprbr gprbr > backup_$$(date +%Y%m%d_%H%M%S).sql
+	$(COMPOSE) -f $(COMPOSE_FILE) exec db pg_dump -U $(DB_USER) $(DB_NAME) > backup_$$(date +%Y%m%d_%H%M%S).sql
 
 restore-db:  ## 🔄  Restaura backup do banco de dados (usar: make restore-db FILE=backup.sql)
-	docker-compose -f $(COMPOSE_FILE) exec -T db psql -U gprbr gprbr < $(FILE)
+	$(COMPOSE) -f $(COMPOSE_FILE) exec -T db psql -U $(DB_USER) $(DB_NAME) < $(FILE)
 
 push:  ## 📤  Parte para produção (exemplo)
 	@echo "📤 Preparando para produção..."
 	@echo "  1. Build: make build"
 	@echo "  2. Testar: make test"
 	@echo "  3. Parar serviço atual"
-	@echo "  4. docker-compose pull && docker-compose up -d"
+	@echo "  4. docker compose pull && docker compose up -d"
 	@echo "  5. Verificar logs: make logs-app"

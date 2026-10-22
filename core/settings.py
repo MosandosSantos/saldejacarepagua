@@ -287,8 +287,15 @@ DEFAULT_PORT = os.getenv('DJANGO_PORT', '8111')
 
 # Autenticacao JWT (camada REST/FastAPI)
 JWT_SECRET = os.getenv('JWT_SECRET', 'jwt-dev-secret-nao-usar-em-producao')  # nosec B105 - guarded by DEBUG check below
-if not DEBUG and JWT_SECRET == 'jwt-dev-secret-nao-usar-em-producao':
-    raise ImproperlyConfigured('JWT_SECRET e obrigatoria em producao (DEBUG=0).')
+if not DEBUG and (
+    JWT_SECRET == 'jwt-dev-secret-nao-usar-em-producao'
+    or _secret_fraca(JWT_SECRET)
+):
+    raise ImproperlyConfigured(
+        'JWT_SECRET e obrigatoria e nao pode ser placeholder em producao '
+        '(DEBUG=0). Gere com: python -c "import secrets; '
+        'print(secrets.token_urlsafe(48))"'
+    )
 TOKEN_TTL_DIAS = int(os.getenv('TOKEN_TTL_DIAS', '7'))
 
 # ---------------------------------------------------------------------------
@@ -297,6 +304,11 @@ TOKEN_TTL_DIAS = int(os.getenv('TOKEN_TTL_DIAS', '7'))
 # Chave mestre para criptografia de segredos (AES-256-GCM, ver core/segredos.py).
 # Por padrao deriva do SECRET_KEY; em producao defina CRYPTO_KEY no .env.
 CRYPTO_KEY = os.getenv('CRYPTO_KEY', '')
+if not DEBUG and CRYPTO_KEY and _secret_fraca(CRYPTO_KEY):
+    raise ImproperlyConfigured(
+        'CRYPTO_KEY esta com valor placeholder em producao (DEBUG=0). '
+        'Gere com: python -c "import secrets; print(secrets.token_urlsafe(48))"'
+    )
 
 # Headers de seguranca (aplicados pelo SecurityMiddleware do Django)
 SECURE_CONTENT_TYPE_NOSNIFF = True

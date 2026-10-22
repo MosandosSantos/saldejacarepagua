@@ -270,7 +270,7 @@ docker exec gprbr-app python /tmp/smoke_routes.py
 
 ## Deploy (VPS Contabo — Docker)
 
-O repositório mantém `Dockerfile`, `docker-compose.yml` e `nginx.conf` para deploy em VPS Contabo (Django + FastAPI no mesmo processo; `entrypoint.sh` roda `migrate`; healthcheck `/healthz/`). Em produção, sem `DJANGO_DEBUG=1`: cookies Secure, HSTS, segredos obrigatórios e fail-closed.
+O repositório mantém `Dockerfile`, `docker-compose.yml`, `nginx.conf` e `.env.production.example` para deploy em VPS Contabo (Django + FastAPI no mesmo processo; `entrypoint.sh` roda `migrate`; healthcheck `/healthz/`). Em produção, sem `DJANGO_DEBUG=1`: cookies Secure, HSTS, segredos obrigatórios (incluindo `JWT_SECRET` e `CRYPTO_KEY`) e fail-closed. Postgres e Redis ficam publicados apenas em `127.0.0.1`.
 
 ## Estrutura do projeto
 

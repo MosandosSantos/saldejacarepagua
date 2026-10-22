@@ -35,7 +35,7 @@ python -m venv .venv
 
 ## Deploy em VPS (Contabo)
 
-O repositório já vem com `Dockerfile`, `docker-compose.yml`, `entrypoint.sh`, `nginx.conf` e `.env.example`.
+O repositório já vem com `Dockerfile`, `docker-compose.yml`, `entrypoint.sh`, `nginx.conf` e `.env.production.example`.
 
 1. **Pré-requisitos**: Docker + Docker Compose na VPS e o domínio `saldoreaa.cloud` apontando para o IP do servidor.
 2. **Clone e configure**:
@@ -43,35 +43,63 @@ O repositório já vem com `Dockerfile`, `docker-compose.yml`, `entrypoint.sh`, 
    ```bash
    git clone git@github.com:MosandosSantos/saldejacarepagua.git
    cd saldejacarepagua
-   cp .env.example .env
-   # edite o .env com os segredos e o domínio reais
+   cp .env.production.example .env
+   # edite TODOS os valores marcados com TROQUE
    ```
 
-3. **Variáveis de ambiente** — obrigatórias em produção, sem elas o app **aborta o boot** (fail-fast, por segurança):
-   - `DJANGO_SECRET_KEY` — gere com `python -c "import secrets; print(secrets.token_urlsafe(48))"`
-   - `JWT_SECRET` — outro segredo aleatório
-   - `CRYPTO_KEY` (recomendado)
-   - `DATABASE_URL` — `postgresql://usuario:senha@db:5432/banco`
-   - `DJANGO_ALLOWED_HOSTS=saldoreaa.cloud,www.saldoreaa.cloud`
+3. **Gere os segredos** — o script faz isso e pede a senha do Postgres:
+
+   ```bash
+   ./scripts/init-secrets.sh
+   ```
+
+   Ou gere manualmente (um comando para cada):
+
+   ```bash
+   python3 -c "import secrets; print(secrets.token_urlsafe(64))"  # DJANGO_SECRET_KEY
+   python3 -c "import secrets; print(secrets.token_urlsafe(48))"  # JWT_SECRET
+   python3 -c "import secrets; print(secrets.token_urlsafe(48))"  # CRYPTO_KEY
+   ```
+
+4. **Variáveis obrigatórias** — sem elas o app **aborta o boot** (fail-fast, por segurança):
+   - `DJANGO_SECRET_KEY`, `JWT_SECRET` e `CRYPTO_KEY` — segredos gerados acima
+   - `DB_PASSWORD` — senha longa, de preferência só com letras/números
+   - `DJANGO_ALLOWED_HOSTS=saldoreaa.cloud,www.saldoreaa.cloud,localhost,127.0.0.1`
    - `CSRF_TRUSTED_ORIGINS=https://saldoreaa.cloud,https://www.saldoreaa.cloud`
    - `SEO_SITE_URL=https://saldoreaa.cloud`
-4. **Subir os containers**:
+   - `CLOUDFLARE_TURNSTILE_SITE_KEY` e `CLOUDFLARE_TURNSTILE_SECRET_KEY` — chaves reais
+   - O Compose monta a `DATABASE_URL` a partir de `DB_NAME`, `DB_USER` e `DB_PASSWORD`.
+
+5. **Subir os containers**:
 
    ```bash
    docker compose up -d --build
+   docker compose logs -f app
    ```
 
    O `entrypoint.sh` aguarda Postgres/Redis, roda `migrate` e inicia o
    `uvicorn core.asgi` — **Django (painel web) e FastAPI (`/api/v1`, Swagger em `/docs`)**
    no mesmo processo/porta (`8111`).
-5. **HTTPS**: coloque Nginx/Caddy na frente do container (porta `8111`) e emita o
-   certificado com Certbot/Let's Encrypt. O healthcheck usa `/healthz/`.
-6. **Carga de demonstração** (opcional): `docker compose exec app python manage.py seed_dados`.
+
+   > Em uma VPS nova, o volume do Postgres é criado com a senha do `.env`. Se o
+   > volume `postgres_data` já existir, mudar `DB_PASSWORD` no `.env` não altera
+   > a senha do banco; mantenha a senha atual ou altere no Postgres antes.
+
+6. **HTTPS**: coloque Nginx/Caddy no host na frente de `http://127.0.0.1:8111` e
+   emita o certificado com Certbot/Let's Encrypt. O healthcheck usa `/healthz/`.
+   Só mantenha `DJANGO_HSTS_SECONDS=31536000` depois de validar o HTTPS.
+   Há um exemplo pronto em `deploy/nginx-saldoreaa.conf.example` (ajuste o caminho do `media`).
+   > Se preferir o perfil `nginx` do Compose (`docker compose --profile production up -d`),
+   > não suba outro Nginx no host: os dois disputam as portas 80/443.
+
+7. **Firewall**: libere apenas `22`, `80` e `443`. Postgres e Redis já são
+   publicados somente em `127.0.0.1` pelo Compose; não os exponha na internet.
+
+8. **Carga de demonstração** (opcional): `docker compose exec app python manage.py seed_dados`.
 
 > Sem `DJANGO_DEBUG=1` o app roda em modo produção: cookies Secure, HSTS,
-> segredos obrigatórios e fail-closed. O redirect http→https é opcional
-> (`DJANGO_SSL_REDIRECT=1`) — com Nginx/Caddy o redirecionamento pode ser
-> feito no próprio proxy.
+> segredos obrigatórios e fail-closed. O redirect http→https fica no proxy
+> (`DJANGO_SSL_REDIRECT=0`); use `1` apenas se não houver proxy.
 
 ## Usuários de seed
 

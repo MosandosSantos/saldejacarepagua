@@ -1,48 +1,92 @@
 #!/bin/bash
 # ============================================
-# GPRBR CRM - Script de Inicialização
+# GPRBR CRM - Inicialização de secrets (VPS/Docker)
 # ============================================
 # Uso: ./scripts/init-secrets.sh
+# - Cria .env a partir de .env.production.example se ainda não existir.
+# - Gera DJANGO_SECRET_KEY, JWT_SECRET e CRYPTO_KEY quando estiverem
+#   com placeholder/vazios.
+# - Pede a senha do Postgres quando ainda for a padrão.
+# - Nunca sobrescreve valores já configurados.
 
-set -e
+set -euo pipefail
+cd "$(dirname "$0")/.."
 
-echo "🚀 Inicializando GPRBR CRM com Docker..."
-echo "============================================"
+PYTHON=python3
+command -v python3 >/dev/null 2>&1 || PYTHON=python
 
-# Verificar se .env existe
-if [ ! -f ".env" ]; then
-    echo "📝 Criando arquivo .env a partir do exemplo..."
-    cp .env.example .env
-    echo "✅ Arquivo .env criado"
-else
-    echo "✅ Arquivo .env já existe"
+if [ ! -f .env ]; then
+    cp .env.production.example .env
+    echo "✅ .env criado a partir de .env.production.example"
 fi
 
-# Gerar Django secret key se não estiver configurado
-if grep -q "^DJANGO_SECRET_KEY=change-this-in-production" .env 2>/dev/null; then
-    echo "🔐 Gerando Django SECRET_KEY..."
-    SECRET_KEY=$(python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())" 2>/dev/null || echo "django-insecure-$(openssl rand -hex 32)")
-    sed -i "s/^DJANGO_SECRET_KEY=.*/DJANGO_SECRET_KEY=$SECRET_KEY/" .env
-    echo "✅ SECRET_KEY atualizada"
-fi
+set_env() {
+    "$PYTHON" - "$1" "$2" <<'PY'
+import pathlib
+import sys
 
-# Pedir senha do banco se estiver padrão
-if grep -q "^DB_PASSWORD=securepassword123" .env 2>/dev/null; then
-    read -p "🔑 Definir senha do banco (padrão: securepassword123): " DB_PASS
-    if [ -n "$DB_PASS" ]; then
-        sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=$DB_PASS/" .env
-        sed -i "s/^DATABASE_URL=.*@db:.*/DATABASE_URL=postgresql:\/\/gprbr:$DB_PASS@db:5432\/gprbr/" .env
-        echo "✅ Senha do banco atualizada"
-    fi
-fi
+key, value = sys.argv[1], sys.argv[2]
+path = pathlib.Path('.env')
+lines = path.read_text(encoding='utf-8').splitlines()
+out, found = [], False
+for line in lines:
+    if line.startswith(key + '='):
+        out.append(f'{key}={value}')
+        found = True
+    else:
+        out.append(line)
+if not found:
+    out.append(f'{key}={value}')
+path.write_text('\n'.join(out) + '\n', encoding='utf-8')
+PY
+}
+
+get_env() {
+    grep -E "^$1=" .env | head -n1 | cut -d= -f2- || true
+}
+
+generate_if_placeholder() {
+    key="$1"
+    length="$2"
+    current="$(get_env "$key")"
+    case "$current" in
+        TROQUE*|change-this*|"")
+            set_env "$key" "$("$PYTHON" -c "import secrets; print(secrets.token_urlsafe($length))")"
+            echo "✅ $key gerado"
+            ;;
+        *)
+            echo "ℹ️  $key já configurado (mantido)"
+            ;;
+    esac
+}
+
+generate_if_placeholder DJANGO_SECRET_KEY 64
+generate_if_placeholder JWT_SECRET 48
+generate_if_placeholder CRYPTO_KEY 48
+
+DB_PASS="$(get_env DB_PASSWORD)"
+case "$DB_PASS" in
+    TROQUE*|securepassword123|"")
+        read -rsp "Senha do Postgres (16+ caracteres, apenas letras/números): " NOVA_SENHA
+        echo
+        NOVA_SENHA="${NOVA_SENHA%$'\r'}"
+        if ! [[ "$NOVA_SENHA" =~ ^[A-Za-z0-9]{16,}$ ]]; then
+            echo "❌ Senha inválida. Use 16+ caracteres, apenas letras e números."
+            exit 1
+        fi
+        set_env DB_PASSWORD "$NOVA_SENHA"
+        echo "✅ DB_PASSWORD definida"
+        ;;
+    *)
+        echo "ℹ️  DB_PASSWORD já configurada (mantida)"
+        ;;
+esac
 
 echo ""
-echo "============================================"
-echo "✅ Configuração concluída!"
+echo "✅ Secrets prontos."
+echo "Agora edite no .env:"
+echo "  - CLOUDFLARE_TURNSTILE_SITE_KEY e CLOUDFLARE_TURNSTILE_SECRET_KEY"
+echo "  - EMAIL_* (se for usar convites/lembretes)"
+echo "  - GPRB_TENANT_ID / GPRB_TENANT_NAME (se aplicável)"
 echo ""
-echo "Próximos passos:"
-echo "  1. Editar .env se necessário"
-echo "  2. Rodar: make build"
-echo "  3. Rodar: make up"
-echo "  4. Acessar: http://localhost:8000"
-echo ""
+echo "Depois rode: docker compose up -d --build"

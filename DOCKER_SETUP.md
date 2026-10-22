@@ -47,7 +47,7 @@ make health
 
 ### 4. Acessar aplicação
 ```
-http://localhost:8000
+http://localhost:8111
 ```
 
 ---
@@ -56,9 +56,9 @@ http://localhost:8000
 
 | Serviço | Porta | Descrição |
 |---------|-------|-----------|
-| **app** | 8000 | Django + FastAPI |
-| **db** | 5432 | PostgreSQL 15 |
-| **redis** | 6379 | Cache e sessões |
+| **app** | 8111 (loopback) | Django + FastAPI |
+| **db** | 5432 (loopback) | PostgreSQL 15 |
+| **redis** | 6379 (loopback) | Cache e sessões |
 | **nginx** | 80/443 | Reverse Proxy (opcional) |
 
 ---
@@ -141,29 +141,29 @@ EMAIL_HOST_PASSWORD=sua-senha-app
 
 ## 🌐 Nginx (opcional - modo produção)
 
-Para usar Nginx como reverse proxy:
+Use o perfil do Compose apenas se **não** houver Nginx/Caddy no host
+(os dois disputam as portas 80/443).
 
 ```bash
-# Subir com Nginx
-make up-prod
+# Subir com o Nginx do Compose
+docker compose --profile production up -d
 
-# Acessar
-http://localhost (porta 80)
-https://localhost (porta 443 - precisa de certificado)
+# Acessar (HTTP; configure TLS antes de usar em produção)
+http://localhost
 ```
 
 ### Configurar HTTPS
 
-```bash
-# Gerar certificado auto-assinado (para teste)
-mkdir -p certs
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout certs/privkey.pem \
-  -out certs/fullchain.pem \
-  -subj "/CN=localhost"
+O `nginx.conf` do repositório já aponta para o app na porta `8111`
+(`/healthz/` e `/static/` via WhiteNoise). Para TLS, o caminho recomendado
+na VPS é usar Nginx/Caddy no host na frente de `http://127.0.0.1:8111`
+e emitir o certificado com Certbot/Let's Encrypt. Se for usar TLS dentro do
+container, descomente o `server` 443 do `nginx.conf` e monte os certificados
+em `./certs`.
 
-# Reiniciar Nginx
-docker-compose restart nginx
+```bash
+# Reiniciar apenas o Nginx do Compose
+docker compose restart nginx
 ```
 
 ---
@@ -272,32 +272,44 @@ curl -fsSL https://get.docker.com | sh
 # Adicionar usuário ao grupo docker
 sudo usermod -aG docker $USER
 
-# Instalar Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+# O plugin Docker Compose já vem com o Docker moderno; confirme:
+docker compose version
 ```
 
 ### 2. Configurar `.env` para produção
 ```bash
-# Editar .env
-nano .env
+# Em uma VPS nova (não sobrescreva um .env existente)
+cp .env.production.example .env
 
-# Ajustar:
+# Gera os segredos e pede a senha do Postgres
+./scripts/init-secrets.sh
+
+# Edite o restante (Turnstile, e-mail, tenant)
+nano .env
+```
+
+Variáveis que precisam estar corretas:
+```bash
 DJANGO_DEBUG=False
-ALLOWED_HOSTS=seu-dominio.com.br
-SECURE_SSL_REDIRECT=True
+DJANGO_SECRET_KEY=...
+JWT_SECRET=...
+CRYPTO_KEY=...
+DJANGO_ALLOWED_HOSTS=saldoreaa.cloud,www.saldoreaa.cloud,localhost,127.0.0.1
+CSRF_TRUSTED_ORIGINS=https://saldoreaa.cloud,https://www.saldoreaa.cloud
+SEO_SITE_URL=https://saldoreaa.cloud
+DJANGO_SSL_REDIRECT=0   # o Nginx/Caddy faz o redirect
 ```
 
 ### 3. Subir
 ```bash
-# Build
-make build
+# Build + containers
+docker compose up -d --build
 
-# Subir em modo produção
-make up-prod
+# Acompanhar o boot/migrations
+docker compose logs -f app
 
 # Criar superusuário
-make createsuperuser
+docker compose exec app python manage.py createsuperuser
 ```
 
 ### 4. Configurar Nginx com HTTPS
@@ -305,8 +317,9 @@ make createsuperuser
 # Instalar Certbot
 sudo apt-get install certbot python3-certbot-nginx
 
-# Obter certificado
-sudo certbot --nginx -d seu-dominio.com.br
+# Obter certificado (Nginx/Caddy do host na frente de 127.0.0.1:8111)
+sudo certbot --nginx -d saldoreaa.cloud
+# Se o DNS de www também apontar para a VPS, adicione: -d www.saldoreaa.cloud
 
 # Configurar renovacao automatica
 sudo crontab -e
@@ -353,18 +366,19 @@ Adicionar serviço no docker-compose:
 # Pré-deploy
 [ ] .env configurado com chaves seguras
 [ ] DJANGO_DEBUG=False
-[ ] ALLOWED_HOSTS configurado
+[ ] DJANGO_ALLOWED_HOSTS e CSRF_TRUSTED_ORIGINS configurados
+[ ] JWT_SECRET e CRYPTO_KEY definidos
+[ ] SEO_SITE_URL correto
 [ ] Senhas fortes nos bancos
 
 # Deploy
-[ ] make build
-[ ] make up-prod
-[ ] make migrate
-[ ] make createsuperuser
-[ ] make health (tudo OK)
+[ ] docker compose up -d --build
+[ ] docker compose logs -f app (sem erros)
+[ ] docker compose exec app python manage.py createsuperuser
+[ ] /healthz/ respondendo
 
 # Pós-deploy
-[ ] Acessar http://seu-dominio.com.br
+[ ] Acessar https://saldoreaa.cloud
 [ ] Fazer login com superusuário
 [ ] Verificar envio de emails
 [ ] Configurar backup automático
