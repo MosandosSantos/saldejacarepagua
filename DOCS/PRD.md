@@ -54,7 +54,7 @@ loja ──< meeting ──< attendance ──< member
 
 ### 3.2 Núcleo Django (motor comercial herdado)
 
-`usuarios`,`tenants`,`contatos`+`tags`,`negocios`+`etapas_funil`,`tarefas`,`automacoes`(+`_execucoes`/`_passos`),`campanhas`,`emails_enviados`+`modelos_email`,`chamadas`+`filas`+`scripts`,`carteiras`+`metas_vendedores`,`movimentacoes`,`notas`,`eventos`,`convites`,`campos_personalizados`(+`valores_…`),`gestao_*` (congresso: campanha, capitulo, congressista, inscricao, pagamento, tipo_inscricao),`candidato`+`candidato_observacao`,`django_*` (auth/sessão/migrations).
+`usuarios`,`tenants`,`contatos`+`tags`,`negocios`+`etapas_funil`,`tarefas`,`automacoes`(+`_execucoes`/`_passos`),`campanhas`,`emails_enviados`+`modelos_email`,`chamadas`+`filas`+`scripts`,`carteiras`+`metas_vendedores`,`movimentacoes`,`notas`,`eventos`,`convites`,`campos_personalizados`(+`valores_…`),`candidato`+`candidato_observacao`,`django_*` (auth/sessão/migrations).
 
 ### 3.3 Excluídos do modelo (decisão de produto)
 
@@ -145,7 +145,6 @@ Branding: bandeira do Reino Unido (`static/img/bandeira-uk.svg`) no login, heade
 
 ### 5.7 Filiação e congresso
 - (**`/candidato/`**) Candidatos com observações e rastreio; impacto: aprovar cria `member`.
-- (**`/gestao/`**) Inscrições de congresso (GEOD-CEOD): congressistas, tipos de inscrição, pagamentos, comunicação/WhatsApp.
 
 ### 5.8 Motor marketing-vendas (reaproveitado)
 - (**`/automacoes/`**, **`/campanhas/`**, **`/emails/`**, **`/discador/`**, **`/relatorios/`**): automações com passos/execuções, campanhas, e-mails com modelos, filas/scripts, relatórios. Estado funcional deve ser confirmado por verificação individual quando tocados.
@@ -173,8 +172,7 @@ Branding: bandeira do Reino Unido (`static/img/bandeira-uk.svg`) no login, heade
 1. **Financeiro real** — anuidade/mensalidade sobre `payment`/`payment_period`/`payment_status`; substituir o placeholder.
 2. **Importar dados históricos** — migrar `prefeitura`, `loja`, `member`, `member_loja`, `payment` do `saldogprb` (backup já garantido).
 3. **Fluxo candidato → membro** — aprovação com criação de membro e vínculo inicial de loja.
-4. **Financeiro de congresso** — conciliar `gestao_pagamento` com pagamentos reais.
-5. **Auditoria mínima** — log leve de mudanças nos cadastros (sem voltar às tabelas legadas).
+4. **Auditoria mínima** - log leve de mudanças nos cadastros (sem voltar às tabelas legadas).
 6. **Testes automatizados** da camada GPRB (repositories) com banco de teste dedicado.
 
 ## 9. Decisões arquieteturais relevantes (apêndice)

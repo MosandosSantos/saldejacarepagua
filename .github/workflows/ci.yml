@@ -157,7 +157,7 @@ jobs:
           PGPORT: 5432
 
       - name: Security scan (Bandit)
-        run: python -m bandit -r acesso candidatos contatos core dashboard emails funil gestao recepcao repositories tarefas -lll
+        run: python -m bandit -r acesso candidatos contatos core dashboard emails funil recepcao repositories tarefas -lll
 
       - name: Dependency audit (pip-audit)
         run: pip-audit -r requirements.txt

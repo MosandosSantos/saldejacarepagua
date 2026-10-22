@@ -95,7 +95,6 @@ Modelo de variáveis em [`.env.example`](../.env.example). A URL interna do Comp
 | `/funil/` | `funil` | Kanban de negócios com drag & drop |
 | `/tarefas/` | `tarefas` | Follow-ups com vencimento (`/agenda/` redireciona para cá) |
 | `/iniciacao/` | `recepcao` | Fluxo de iniciação (alias legado: `/recepcao/`) |
-| `/gestao/` | `gestao` | Inscrições de congresso (GEOD-CEOD) |
 | `/candidato/` | `candidatos` | Candidatos a membro |
 | `/equipe/`, `/config/` | `acesso` | Equipe do tenant e configurações |
 | `/automacoes/`, `/campanhas/`, `/emails/`, `/discador/`, `/relatorios/` | respectivos | Marketing/vendas |
@@ -257,7 +256,7 @@ Regras com-zero no app (verificado por `py_rules_scan.py`):
 
 Duas ressalvas do report:
 
-- **`except Exception` que RELANÇA** não é violação — o erro não é escondido. Use-o no adaptador de lib de terceiro (ex.: `gestao/whatsapp.py` traduz a falha do pywhatkit em `ErroEnvioWhatsApp`).
+- **`except Exception` que RELANÇA** não é violação — o erro não é escondido. Use-o no adaptador de lib de terceiro (traduzindo a falha da lib para uma exceção do domínio).
 - **`.get()` em dado de fronteira** (`request.POST/GET/FILES/session`) é o certo: a chave é genuinamente opcional. A regra `dict-required-keys` vale para contrato interno — aí use `d[chave]` ou valide na entrada.
 
 `scripts/smoke_routes.py` roda dentro do container (o código e os dados vivem lá):
@@ -279,7 +278,7 @@ core/            settings, urls, views base, domínio (etapas/nichos), gprb/conn
 acesso/          login/logout, papéis, equipe, context processor (NAV)
 dashboard/       KPIs e partials; repositório GPRB próprio
 contatos/        membros, potências, lojas, financeiro; repositories/gprb_repository.py (camada SQL GPRB)
-funil/ tarefas/ recepcao/ gestao/ candidatos/
+funil/ tarefas/ recepcao/ candidatos/
 automacoes/ campanhas/ emails/ discador/ relatorios/
 api/             FastAPI (/api/v1)
 repositories/    repositórios de dados (SQL cru)

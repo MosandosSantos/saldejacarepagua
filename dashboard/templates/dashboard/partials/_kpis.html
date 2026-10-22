@@ -1,6 +1,6 @@
-<!-- 2 colunas no celular (4 cards em linha nao cabem em 360px e estouram a
-     largura da pagina); 4 colunas a partir de xl. -->
-<div class="mb-7 grid grid-cols-2 gap-4 xl:grid-cols-4">
+<!-- 1 coluna no celular (3 cards em linha nao cabem em 360px e estouram a
+     largura da pagina); 3 colunas a partir de sm. -->
+<div class="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-3">
   <!-- Lojas Ativas -->
   <div class="hazon-card-sm min-w-0 p-4 backdrop-blur-xl transition hover:-translate-y-1 hover:border-[#4ade80]/40">
     <div class="mb-4 flex items-center justify-between">
@@ -26,34 +26,20 @@
     </div>
     <div class="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Novos Membros em {{ ano_corrente }}</div>
     <div class="font-mono text-[30px] font-bold leading-none text-[#5b8def]" data-kpi="novos_membros" aria-live="polite">{{ kpis.novos_membros }}</div>
-    <div class="mt-2 text-[11px] text-[#a6bfc7]">congressistas vinculados</div>
+    <div class="mt-2 text-[11px] text-[#a6bfc7]">admiss&#245;es em {{ ano_corrente }}</div>
   </div>
 
-  <!-- Sess&#245;es no Ano -->
+  <!-- Membros Ativos -->
   <div class="hazon-card-sm min-w-0 p-4 backdrop-blur-xl transition hover:-translate-y-1 hover:border-[#a78bfa]/40">
     <div class="mb-4 flex items-center justify-between">
       <span class="relative flex h-14 w-14 items-center justify-center rounded-xl" style="background:linear-gradient(145deg, #a78bfa 0%, #7c3aed 100%); box-shadow: 0 4px 15px rgba(167,139,250,0.4), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2);">
-        <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span class="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border-2 border-[#0b2029]" style="background:#a78bfa; box-shadow: 0 0 8px #a78bfa;"></span>
       </span>
-      <span class="rounded-full border border-[#a78bfa]/30 bg-[#a78bfa]/15 px-2.5 py-1 font-mono text-[11px] font-bold text-[#a78bfa]" data-kpi="sessoes_ano" aria-hidden="true">{{ kpis.sessoes_ano }}</span>
+      <span class="rounded-full border border-[#a78bfa]/30 bg-[#a78bfa]/15 px-2.5 py-1 font-mono text-[11px] font-bold text-[#a78bfa]" data-kpi="membros_ativos" aria-hidden="true">{{ kpis.membros_ativos }}</span>
     </div>
-    <div class="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Sess&#245;es no Ano</div>
-    <div class="font-mono text-[30px] font-bold leading-none text-[#a78bfa]" data-kpi="sessoes_ano" aria-live="polite">{{ kpis.sessoes_ano }}</div>
-    <div class="mt-2 text-[11px] text-[#a6bfc7]">inscri&#231;&#245;es em {{ ano_corrente }}</div>
-  </div>
-
-  <!-- Caixa -->
-  <div class="hazon-card-sm min-w-0 p-4 backdrop-blur-xl transition hover:-translate-y-1 hover:border-[#fbbf24]/40">
-    <div class="mb-4 flex items-center justify-between">
-      <span class="relative flex h-14 w-14 items-center justify-center rounded-xl" style="background:linear-gradient(145deg, #fbbf24 0%, #d97706 100%); box-shadow: 0 4px 15px rgba(251,191,36,0.4), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2);">
-        <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));" aria-hidden="true"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        <span class="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border-2 border-[#0b2029]" style="background:#fbbf24; box-shadow: 0 0 8px #fbbf24;"></span>
-      </span>
-      <span class="rounded-full border border-[#fbbf24]/30 bg-[#fbbf24]/15 px-2.5 py-1 font-mono text-[11px] font-bold text-[#fbbf24] whitespace-nowrap">confirmados</span>
-    </div>
-    <div class="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Caixa</div>
-    <div class="font-mono text-[30px] font-bold leading-none text-[#fbbf24]" data-kpi="caixa" aria-live="polite">{{ kpis.caixa }}</div>
-    <div class="mt-2 text-[11px] text-[#a6bfc7]">pagamentos confirmados</div>
+    <div class="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a6bfc7]">Membros Ativos</div>
+    <div class="font-mono text-[30px] font-bold leading-none text-[#a78bfa]" data-kpi="membros_ativos" aria-live="polite">{{ kpis.membros_ativos }}</div>
+    <div class="mt-2 text-[11px] text-[#a6bfc7]">de {{ kpis.membros_total }} no cadastro</div>
   </div>
 </div>

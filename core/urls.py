@@ -37,7 +37,6 @@ from django.db import connection
 from acesso import views as acesso_views
 from contatos import views as contatos_views
 from core import views as core_views
-from gestao import views as gestao_views
 from tarefas import views as tarefas_views
 
 urlpatterns = [
@@ -77,10 +76,6 @@ urlpatterns = [
     path('emails/', include('emails.urls')),
     path('tarefas/', include('tarefas.urls')),
     path('automacoes/', include('automacoes.urls')),
-    path('gestao/', include('gestao.urls')),  # Dashboard de inscricoes (GEOD-CEOD)
     path('candidato/', include('candidatos.urls')),
-    path('comunicacao/', gestao_views.comunicacoes, name='comunicacoes'),
-    path('comunicacao/zap-status/', gestao_views.zap_status, name='zap_status'),
-    path('comunicacao/zap-qrcode/', gestao_views.zap_qrcode, name='zap_qrcode'),
     path('captura/<str:token>/', contatos_views.captura_lead, name='captura_lead'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

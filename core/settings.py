@@ -175,7 +175,6 @@ INSTALLED_APPS = [
     'emails',
     'tarefas',
     'automacoes',
-    'gestao',  # Dashboard de inscricoes (GEOD-CEOD)
     'candidatos',
     # Tailwind (gera o CSS com classes utilitarias)
     'tailwind',

@@ -4,30 +4,27 @@ import html
 import logging
 from datetime import date, datetime, time, timedelta
 
+from django.db import Error as DBError
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncDate
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-logger = logging.getLogger(__name__)
-
 from acesso.decorators import filtro_tenant, nicho_da_sessao, web_login_required
 from acesso.models import MetaVendedor, Tenant, Usuario
 from contatos.models import Movimentacao, Negocio, Nota
 from core.dominio import ORIGENS, PESOS_ETAPA, SEGS
+from core.gprb import anuidade_ano_referencia
 from core.utils import brl as _brl
 from core.utils import brl_curto as _brl_curto
 from core.utils import iniciais as _iniciais
-from gestao.models import Inscricao, Pagamento
+from dashboard.repositories.local_repository import LocalRepository
+from dashboard.services.cache_service import DashboardCache, DjangoCacheBackend
 from recepcao.models import etapa_map_do_tenant, etapas_do_tenant
 from tarefas.models import Tarefa
 
-from dashboard.repositories.local_repository import LocalRepository
-from dashboard.services.cache_service import DashboardCache, DjangoCacheBackend
-
-from core.gprb import anuidade_ano_referencia
-from django.db import Error as DBError
+logger = logging.getLogger(__name__)
 
 # _brl, _brl_curto, _iniciais → importados de core.utils
 
@@ -304,13 +301,6 @@ def _resumo(request, negocios=None):
     membros_ativos = local.get('membros_ativos', 0)
     membros_total = local.get('membros_total', 0)
     novos_membros = local.get('novos_membros_ano', 0)
-    sessoes_ano = Inscricao.objects.filter(
-        criado_em__year=ano_corrente,
-    ).count()
-    caixa_raw = (
-        Pagamento.objects.filter(status__in=['confirmado', 'sistema'])
-        .aggregate(total=Sum('valor'))['total'] or 0
-    )
 
     return {
         'ativos': ativos.count(),
@@ -332,9 +322,6 @@ def _resumo(request, negocios=None):
         'membros_ativos': membros_ativos,
         'membros_total': membros_total,
         'novos_membros': novos_membros,
-        'sessoes_ano': sessoes_ano,
-        'caixa': _brl(caixa_raw),
-        'caixa_raw': float(caixa_raw),
     }
 
 

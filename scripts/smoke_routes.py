@@ -27,7 +27,7 @@ ROTAS = [
     "/dashboard/", "/contatos/", "/membros/", "/lojas/", "/vales/",
     "/contatos/carteiras/", "/tarefas/", "/agendas/?modo=calendario",
     "/agendas/?modo=kanban", "/agendas/?modo=lista", "/emails/", "/automacoes/",
-    "/iniciacao/", "/recepcao/", "/gestao/", "/comunicacao/", "/equipe/",
+    "/iniciacao/", "/recepcao/", "/equipe/",
     "/config/", "/agenda/", "/agenda/novo/", "/login/",
 ]
 

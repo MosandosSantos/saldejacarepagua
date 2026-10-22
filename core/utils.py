@@ -1,7 +1,7 @@
 """Utilitários compartilhados por todos os módulos do projeto.
 
 Centraliza funções auxiliares que estavam duplicadas em dashboard, contatos,
-tarefas, gestao, funil, relatorios, campanhas, automacoes e orcamento.
+tarefas, funil, relatorios, campanhas, automacoes e orcamento.
 """
 from contextlib import contextmanager
 from decimal import Decimal, InvalidOperation

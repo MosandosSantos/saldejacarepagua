@@ -87,19 +87,6 @@ TROCAS: list[tuple[str, int, str, str]] = [
     ("dashboard/views.py", 689,
      "        except Exception as e:",
      "        except DBError as e:"),
-    # ---------------- gestao ----------------
-    ("gestao/comunicacao.py", 278,
-     "        except Exception:",
-     "        except (ErroEnvioWhatsApp, RuntimeError):"),
-    ("gestao/comunicacao.py", 310,
-     "    except Exception:",
-     "    except (ErroEnvioWhatsApp, RuntimeError, DBError):"),
-    ("gestao/whatsapp.py", 54,
-     "    except Exception:",
-     "    except (ImportError, OSError):"),
-    ("gestao/whatsapp.py", 164,
-     "            except Exception:",
-     "            except ErroEnvioWhatsApp:"),
     # ---------------- recepcao ----------------
     ("recepcao/views/board.py", 44,
      "    except Exception:",
@@ -157,10 +144,6 @@ IMPORTS: dict[str, list[str]] = {
     "core/urls.py": ["from django.db import Error as DBError"],
     "dashboard/services/dashboard_service.py": ["import psycopg"],
     "dashboard/views.py": ["from django.db import Error as DBError"],
-    "gestao/comunicacao.py": [
-        "from django.db import Error as DBError",
-        "from gestao.whatsapp import ErroEnvioWhatsApp",
-    ],
     "recepcao/views/board.py": ["from django.db import Error as DBError"],
     "tarefas/checkin.py": ["import psycopg"],
     "tarefas/google_sync.py": [

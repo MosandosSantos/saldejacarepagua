@@ -42,7 +42,7 @@ SKIP = {
 
 APPS = [
     "acesso", "agenda", "automacoes", "candidatos", "contatos", "dashboard",
-    "emails", "gestao", "recepcao", "tarefas", "templates", "theme",
+    "emails", "recepcao", "tarefas", "templates", "theme",
 ]
 
 # h-N -> pixels (escala Tailwind: 1rem = 16px)
