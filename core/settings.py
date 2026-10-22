@@ -138,12 +138,27 @@ if not ALLOWED_HOSTS:
 
 # Origem permitida no check de CSRF via header Origin (deploy atras de proxy
 # HTTPS no VPS). Aceita coringa de subdominio (*.) no padrao.
-CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
+# Entrada sem esquema (ex.: "saldoreaa.cloud") recebe https:// para nao
+# derrubar o boot: o Django exige scheme://host em CSRF_TRUSTED_ORIGINS.
+CSRF_TRUSTED_ORIGINS = [
+    origem if '://' in origem else f'https://{origem}'
+    for origem in (o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(','))
+    if origem
+]
+_CSRF_ORIGENS_CANONICAS = [
+    'https://saldoreaa.cloud', 'https://www.saldoreaa.cloud',
+]
 if not CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS = [
-        'https://saldoreaa.cloud', 'https://www.saldoreaa.cloud',
+        *_CSRF_ORIGENS_CANONICAS,
         'http://localhost:8111', 'http://127.0.0.1:8111',
     ]
+elif not DEBUG:
+    # .env de producao incompleto (ex.: so www) nao pode bloquear o dominio
+    # canonico no login/POST.
+    for _origem in _CSRF_ORIGENS_CANONICAS:
+        if _origem not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(_origem)
 
 # --- Password validators (aplicados via validate_password nas views) -----
 # A2 — politica minima de senha. Mensagens em pt-br (acesso.validators).
