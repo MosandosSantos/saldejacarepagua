@@ -94,9 +94,11 @@ services:
       - GPRB_TENANT_NAME=${GPRB_TENANT_NAME:-}
       - GPRB_TENANT_CODE=${GPRB_TENANT_CODE:-SCG33REAA}
       
-      # Segurança
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-*}
+      # Segurança / SEO
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-saldoreaa.cloud,www.saldoreaa.cloud}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-https://saldoreaa.cloud,https://www.saldoreaa.cloud}
+      - SEO_SITE_URL=${SEO_SITE_URL:-https://saldoreaa.cloud}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://saldoreaa.cloud,https://www.saldoreaa.cloud}
 
       # Google Calendar (auto-sync do ranking; service account do app agenda)
       - GOOGLE_SERVICE_ACCOUNT_JSON=${GOOGLE_SERVICE_ACCOUNT_JSON:-}

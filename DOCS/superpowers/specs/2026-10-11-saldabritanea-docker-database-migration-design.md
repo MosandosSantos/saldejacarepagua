@@ -63,5 +63,5 @@ O parâmetro `POSTGRES_DB` é aplicado pelo container oficial somente na inicial
 - Migrar dados ou tabelas da instância externa `saldabritanea`.
 - Corrigir as funcionalidades de produto que dependem de tabelas GPRB não presentes na cópia de `gprbr`.
 - Apagar ou renomear `gprbr`, remover volumes ou limpar dados antigos.
-- Alterar produção/Railway ou o container `esfera-postgres`.
+- Alterar produção/VPS ou o container `esfera-postgres`.
 - Renomear a marca ou outros identificadores do produto além do banco.

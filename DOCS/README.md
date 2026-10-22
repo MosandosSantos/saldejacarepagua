@@ -268,9 +268,9 @@ docker exec gprbr-app python /tmp/smoke_routes.py
 ```
 
 
-## Deploy (Railway — opcional)
+## Deploy (VPS Contabo — Docker)
 
-O repositório mantém `Dockerfile`, `Procfile` e `railway.json` para deploy Railway (Django + FastAPI no mesmo processo; release roda `migrate`; healthcheck `/healthz/`). Em produção, sem `DJANGO_DEBUG=1`: cookies Secure, HSTS, segredos obrigatórios e fail-closed.
+O repositório mantém `Dockerfile`, `docker-compose.yml` e `nginx.conf` para deploy em VPS Contabo (Django + FastAPI no mesmo processo; `entrypoint.sh` roda `migrate`; healthcheck `/healthz/`). Em produção, sem `DJANGO_DEBUG=1`: cookies Secure, HSTS, segredos obrigatórios e fail-closed.
 
 ## Estrutura do projeto
 

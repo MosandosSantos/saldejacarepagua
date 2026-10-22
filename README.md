@@ -33,32 +33,45 @@ python -m venv .venv
 
 > Requer Node.js (npm) para o Tailwind. `NPM_BIN_PATH` já está apontando para `C:\Program Files\nodejs\npm.cmd` em `core/settings.py`.
 
-## Deploy no Railway
+## Deploy em VPS (Contabo)
 
-O repositório já vem com `Dockerfile`, `Procfile`, `railway.json` e `.env.example` — o deploy
-é: conectar o repo e adicionar o Postgres.
+O repositório já vem com `Dockerfile`, `docker-compose.yml`, `entrypoint.sh`, `nginx.conf` e `.env.example`.
 
-1. **Crie o projeto** no Railway → *Deploy from GitHub repo* → escolha o repositório.
-2. **Adicione o Postgres**: *Create* → *Database* → *Add PostgreSQL*. O app lê a
-   `DATABASE_URL` automaticamente (em dev continuam valendo as variáveis `PG*` do `.env`).
-3. **Variáveis de ambiente** (aba *Variables* do serviço web) — obrigatórias em produção,
-   sem elas o app **aborta o boot** (fail-fast, por segurança):
+1. **Pré-requisitos**: Docker + Docker Compose na VPS e o domínio `saldoreaa.cloud` apontando para o IP do servidor.
+2. **Clone e configure**:
+
+   ```bash
+   git clone git@github.com:MosandosSantos/saldejacarepagua.git
+   cd saldejacarepagua
+   cp .env.example .env
+   # edite o .env com os segredos e o domínio reais
+   ```
+
+3. **Variáveis de ambiente** — obrigatórias em produção, sem elas o app **aborta o boot** (fail-fast, por segurança):
    - `DJANGO_SECRET_KEY` — gere com `python -c "import secrets; print(secrets.token_urlsafe(48))"`
    - `JWT_SECRET` — outro segredo aleatório
    - `CRYPTO_KEY` (recomendado)
-   - `DJANGO_ALLOWED_HOSTS` e `CSRF_TRUSTED_ORIGINS` — apenas se usar **domínio próprio**
-     (o `*.up.railway.app` gerado é aceito por padrão)
-4. **Deploy**: o `Dockerfile` instala as dependências, compila o Tailwind e roda
-   `collectstatic`; o `Procfile` executa `migrate` antes de subir (release) e inicia o
+   - `DATABASE_URL` — `postgresql://usuario:senha@db:5432/banco`
+   - `DJANGO_ALLOWED_HOSTS=saldoreaa.cloud,www.saldoreaa.cloud`
+   - `CSRF_TRUSTED_ORIGINS=https://saldoreaa.cloud,https://www.saldoreaa.cloud`
+   - `SEO_SITE_URL=https://saldoreaa.cloud`
+4. **Subir os containers**:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+   O `entrypoint.sh` aguarda Postgres/Redis, roda `migrate` e inicia o
    `uvicorn core.asgi` — **Django (painel web) e FastAPI (`/api/v1`, Swagger em `/docs`)**
-   no mesmo processo/porta.
-5. **Domínio público**: *Settings* → *Networking* → *Generate Domain*. O healthcheck usa
-   `/healthz/` (definido no `railway.json`).
-6. **Carga de demonstração** (opcional): `railway run python manage.py seed_dados`.
+   no mesmo processo/porta (`8111`).
+5. **HTTPS**: coloque Nginx/Caddy na frente do container (porta `8111`) e emita o
+   certificado com Certbot/Let's Encrypt. O healthcheck usa `/healthz/`.
+6. **Carga de demonstração** (opcional): `docker compose exec app python manage.py seed_dados`.
 
 > Sem `DJANGO_DEBUG=1` o app roda em modo produção: cookies Secure, HSTS,
 > segredos obrigatórios e fail-closed. O redirect http→https é opcional
-> (`DJANGO_SSL_REDIRECT=1`) — o HSTS e o edge do Railway já cobrem HTTPS.
+> (`DJANGO_SSL_REDIRECT=1`) — com Nginx/Caddy o redirecionamento pode ser
+> feito no próprio proxy.
 
 ## Usuários de seed
 

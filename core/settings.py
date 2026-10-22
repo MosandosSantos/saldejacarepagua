@@ -128,17 +128,22 @@ if not ALLOWED_HOSTS:
     if DEBUG:
         ALLOWED_HOSTS = ['*']
     else:
-        # Producao sem DJANGO_ALLOWED_HOSTS explicito: aceita os dominios gerados
-        # automaticamente pelo Railway (*.up.railway.app) + localhost/testserver.
-        # Para dominio proprio, defina DJANGO_ALLOWED_HOSTS
-        # (ex.: 'meusite.com.br,www.meusite.com.br').
-        ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver', '.up.railway.app', '.railway.app']
+        # Producao sem DJANGO_ALLOWED_HOSTS explicito: usa o dominio do VPS.
+        # Para outros dominios/IPs, defina DJANGO_ALLOWED_HOSTS
+        # (ex.: 'saldoreaa.cloud,www.saldoreaa.cloud,203.0.113.10').
+        ALLOWED_HOSTS = [
+            'localhost', '127.0.0.1', 'testserver',
+            'saldoreaa.cloud', 'www.saldoreaa.cloud',
+        ]
 
 # Origem permitida no check de CSRF via header Origin (deploy atras de proxy
-# HTTPS — Railway). Aceita coringa de subdominio (*.) no padrao.
+# HTTPS no VPS). Aceita coringa de subdominio (*.) no padrao.
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
 if not CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS = ['http://localhost:8111', 'http://127.0.0.1:8111']
+    CSRF_TRUSTED_ORIGINS = [
+        'https://saldoreaa.cloud', 'https://www.saldoreaa.cloud',
+        'http://localhost:8111', 'http://127.0.0.1:8111',
+    ]
 
 # --- Password validators (aplicados via validate_password nas views) -----
 # A2 — politica minima de senha. Mensagens em pt-br (acesso.validators).
@@ -232,22 +237,22 @@ DATABASES = {
     }
 }
 
-# Deploy (Railway/Render/Heroku): o Postgres costuma ser fornecido via
-# DATABASE_URL (inclui sslmode). DATABASE_URL tem PRIORIDADE sempre que
+# Deploy (VPS/Docker): o Postgres é fornecido via DATABASE_URL (inclui
+# sslmode quando aplicável). DATABASE_URL tem PRIORIDADE sempre que
 # estiver definida — isso evita que PGHOST local sobrescreva a config do
-# Railway. Em dev, se DATABASE_URL não existir, usa as variáveis PG*.
+# container. Em dev, se DATABASE_URL não existir, usa as variáveis PG*.
 _URL_BANCO = os.getenv('DATABASE_URL', '')
 if _URL_BANCO:
     DATABASES['default'] = dj_database_url.parse(_URL_BANCO, conn_max_age=60)
 
 # Fail-fast claro em producao: sem DATABASE_URL/PGHOST o app tentaria conectar
 # em localhost (erro confuso de "connection refused"). Exigimos a configuracao
-# do banco — no Railway: DATABASE_URL=${{Postgres.DATABASE_URL}} (ou PG*).
+# do banco — no VPS: DATABASE_URL=postgresql://usuario:senha@db:5432/banco (ou PG*).
 if not DEBUG and not _URL_BANCO and not os.getenv('PGHOST'):
     raise ImproperlyConfigured(
-        'Banco de dados nao configurado. No Railway, adicione no servico web a '
-        'variavel DATABASE_URL apontando para o Postgres '
-        '(ex.: ${{Postgres.DATABASE_URL}}) - ou defina PGHOST/PGPORT/'
+        'Banco de dados nao configurado. No VPS, defina a variavel '
+        'DATABASE_URL apontando para o Postgres '
+        '(ex.: postgresql://usuario:senha@db:5432/banco) - ou defina PGHOST/PGPORT/'
         'PGDATABASE/PGUSER/PGPASSWORD.'
     )
 
@@ -264,7 +269,7 @@ STORAGES = {
 }
 TAILWIND_APP_NAME = 'theme'
 # NPM do Tailwind: no Windows usa o caminho fixo do npm.cmd; no Linux
-# (Docker/Railway) usa o `npm` do PATH do container (override via NPM_BIN_PATH).
+# (Docker/VPS) usa o `npm` do PATH do container (override via NPM_BIN_PATH).
 if os.name == 'nt':
     NPM_BIN_PATH = os.getenv('NPM_BIN_PATH', r'C:\Program Files\nodejs\npm.cmd')
 else:
@@ -337,7 +342,7 @@ else:
         }
     }
 
-# Deploy atras de proxy que termina o TLS (Railway/nginx/caddy): o Django
+# Deploy atras de proxy que termina o TLS (nginx/caddy no VPS): o Django
 # precisa saber que a requisicao original e HTTPS (request.is_secure()). Fica
 # FORA do bloco `if not DEBUG` de proposito: no Django 5.2 o CSRF compara o
 # header Origin com scheme://host (is_secure), entao sem isto o login quebra
@@ -350,10 +355,10 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_HSTS_SECONDS', '31536000'))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    # Redirect http -> https fica OFF por padrao: o edge do Railway ja termina o
-    # TLS e o HSTS acima cobre o restante; o healthcheck interno nem sempre traz
-    # X-Forwarded-Proto, entao um 301 poderia derrubar o deploy. Para exigir o
-    # redirect, defina DJANGO_SSL_REDIRECT=1.
+    # Redirect http -> https fica OFF por padrao: o proxy do VPS (nginx/caddy)
+    # ja termina o TLS e o HSTS acima cobre o restante; o healthcheck interno
+    # nem sempre traz X-Forwarded-Proto, entao um 301 poderia derrubar o deploy.
+    # Para exigir o redirect, defina DJANGO_SSL_REDIRECT=1.
     SECURE_SSL_REDIRECT = os.getenv('DJANGO_SSL_REDIRECT', '0') == '1'
 
 # Content-Security-Policy (aplicado pelo core/middleware.SecurityHeadersMiddleware)

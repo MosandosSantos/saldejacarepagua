@@ -6,7 +6,7 @@
 
 | # | Problema | Impacto | Mitigação atual |
 |---|----------|---------|-----------------|
-| 1 | **Docker/WSL quebrados no boot** ("context deadline exceeded") | Sem Docker no dev | PostgreSQL 17 **nativo**; deploy Railway segue disponível |
+| 1 | **Docker/WSL quebrados no boot** ("context deadline exceeded") | Sem Docker no dev | PostgreSQL 17 **nativo**; deploy em VPS (Docker Compose) segue disponível |
 | 2 | **Servidor sem auto-reload** (`--noreload` na 8888) | Editar código exige restart manual | `taskkill //F //PID` + subir de novo (comando em `DOCS/README.md`) |
 | 3 | PATH do uv/specify só vale em terminal novo | `specify` não resolve em sessão aberta antes da instalação | `export PATH="$USERPROFILE/.local/bin:$PATH"` ou reabrir terminal |
 

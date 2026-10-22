@@ -2,7 +2,7 @@ Django>=5.2,<5.3
 django-tailwind>=3.7
 fastapi>=0.115
 uvicorn[standard]
-gunicorn>=23.0  # fallback se o build do Railway gerar start command com gunicorn
+gunicorn>=23.0  # servidor WSGI opcional; a aplicacao roda com uvicorn (ASGI)
 pydantic>=2.7
 psycopg[binary]>=3.2
 redis>=4.5  # RedisCache do Django quando REDIS_URL estiver definida (S2.2)

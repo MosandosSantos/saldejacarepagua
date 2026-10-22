@@ -65,7 +65,7 @@ Browser ──► /api/v1 (JWT)  ──► FastAPI Routes ──► Services ─
 
 - **Runtime atual**: serviço PostgreSQL e app Django/FastAPI em Docker Compose; o volume PostgreSQL existente é mantido durante o cutover.
 - Se executar Django nativamente no Windows, configurar `DATABASE_URL`/`PG*` para o host/porta publicados pelo Compose; não apontar para a instância PostgreSQL externa de mesmo nome.
-- **Deploy (opcional)**: Railway via `Dockerfile` + `Procfile` (release roda `migrate`; ASGI único; healthcheck `/healthz/`).
+- **Deploy (opcional)**: VPS Contabo via `Dockerfile` + `docker-compose.yml` (entrypoint roda `migrate`; ASGI único; healthcheck `/healthz/`).
 - Backups `pg_dump -Fc` em `backups/`.
 
 ## Estrutura de pastas (essencial)

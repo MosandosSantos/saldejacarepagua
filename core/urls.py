@@ -10,7 +10,7 @@ from django.urls import include, path
 
 
 def healthz(request):
-    """Endpoint de saude para o healthcheck do Railway (sem autenticacao).
+    """Endpoint de saude para o healthcheck do container/VPS (sem autenticacao).
 
     Verifica:
     - Status geral

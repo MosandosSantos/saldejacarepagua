@@ -1,14 +1,14 @@
 """ASGI — servidor unico (uvicorn) para Django + FastAPI.
 
-Em producao (Railway) o processo web e:
-    uvicorn core.asgi:application
+Em producao (VPS/Contabo) o processo web e:
+    uvicorn core.asgi:application --host 0.0.0.0 --port 8111 --workers 2
 
 Roteamento por prefixo de caminho:
     /api/*, /docs, /redoc, /openapi.json  →  FastAPI (API REST /api/v1)
     demais                                →  Django (painel web DTL)
 
 Assim o painel e a API compartilham o mesmo processo/porta/dominio, com um unico
-servico no Railway. Em dev, o `runserver` continua usando o WSGI (core.wsgi) —
+servico no container. Em dev, o `runserver` continua usando o WSGI (core.wsgi) —
 este modulo so e usado quando o servidor e o uvicorn.
 """
 import os

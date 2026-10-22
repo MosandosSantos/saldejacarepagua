@@ -136,8 +136,8 @@
 ### Configurações Atuais ✅
 - ✅ `requirements.txt` completo e versionado
 - ✅ `Dockerfile` presente
-- ✅ `Procfile` para Railway/Heroku
-- ✅ `railway.json` configurado
+- ✅ `Procfile` para VPS/Heroku-style
+- ✅ `docker-compose.yml` + `nginx.conf` para VPS Contabo
 - ✅ Whitenoise para static files
 - ✅ `dj-database-url` para PostgreSQL
 - ✅ Redis configurado para cache

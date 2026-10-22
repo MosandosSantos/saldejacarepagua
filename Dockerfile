@@ -103,11 +103,11 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Development: rodar servidor de desenvolvimento
 # docker run -p 8111:8111 -e DJANGO_DEBUG=True gprbr-app:latest
 
-# Production: rodar com Gunicorn + Uvicorn
+# Production: uvicorn (ASGI) atrás do Nginx/Caddy do VPS
 # docker run -p 8111:8111 gprbr-app:latest
 
 # ============================================
 # Default: Entrypoint com migrações e servidor
 # ============================================
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8111"]
+CMD ["uvicorn", "core.asgi:application", "--host", "0.0.0.0", "--port", "8111", "--workers", "2"]

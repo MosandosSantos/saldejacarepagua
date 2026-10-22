@@ -63,7 +63,7 @@ Distribuídas principalmente em `repositories/gprb_repository.py`, `dashboard/vi
 |----|-------|----------|
 | B608 ×7 | `core/gprb/members.py:25,55` · `core/gprb/ranking.py:99,223` · `dashboard/repositories/gprb_repository.py:98` · `repositories/gprb_repository.py:295,369` | SQL montado por f-string/concatenação. Valores de filtro parecem parametrizados, mas o padrão é frágil — padronizar com estrutura + parâmetros |
 | B703 | `core/templatetags/seguranca.py:39` | `mark_safe` de JSON — **mitigado** (pré-escape de `<>&`), manter teste de regressão |
-| B104 | `acesso/views/helpers.py:84` | Bind `0.0.0.0` — apenas dev (`runserver`); garantir que produção usa ASGI do Railway |
+| B104 | `acesso/views/helpers.py:84` | Bind `0.0.0.0` — apenas dev (`runserver`); garantir que produção usa ASGI (uvicorn) |
 
 ### Verificações OK ✅
 - Sem segredos/tokens hardcoded (grep negativo em core/acesso/api/contatos/dashboard/gestao).
