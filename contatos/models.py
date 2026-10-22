@@ -522,14 +522,12 @@ class Grau(models.Model):
 
 
 class Rito(models.Model):
-    """Rito maçônico praticado (YR, REE, RER, AASR...) — escopado por tenant."""
+    """Rito maçônico praticado (YR, REE, RER, AASR...) — global.
 
-    tenant = models.ForeignKey(
-        'acesso.Tenant',
-        on_delete=models.CASCADE,
-        db_column='tenant_id',
-        related_name='ritos',
-    )
+    Catálogo compartilhado por toda a aplicação, como o de graus: não pertence
+    a um tenant e é visível para todos.
+    """
+
     nome = models.CharField(max_length=120)
     sigla = models.CharField(max_length=20, blank=True, default='')
     descricao = models.CharField(max_length=255, blank=True, default='')
@@ -538,10 +536,7 @@ class Rito(models.Model):
         db_table = 'ritos'
         ordering = ['nome']
         constraints = [
-            models.UniqueConstraint(
-                fields=['tenant', 'nome'],
-                name='rito_tenant_nome_unico',
-            ),
+            models.UniqueConstraint(fields=['nome'], name='rito_nome_unico'),
         ]
 
     def __str__(self):
