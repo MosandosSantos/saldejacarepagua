@@ -1,94 +1,100 @@
 """Migration coverage for retiring tenant roles."""
+import importlib
 from datetime import timedelta
 
 import pytest
-from django.db import connection
-from django.db.migrations.executor import MigrationExecutor
-from django.test import Client
+from django.apps import apps as django_apps
 from django.utils import timezone
-from tarefas.models import Tarefa
+
+migrar_papeis_retirados = importlib.import_module(
+    'acesso.migrations.0019_retire_admin_company_operacional',
+).migrar_papeis_retirados
+
+
+class _SchemaEditorStub:
+    """Minimal schema_editor interface used by the data migration."""
+
+    class connection:
+        alias = 'default'
 
 
 @pytest.fixture
 def migrated_legacy_roles():
-    migration_from = [('acesso', '0018_usuario_loja_id')]
-    migration_to = [('acesso', '0019_retire_admin_company_operacional')]
-    executor = MigrationExecutor(connection)
+    """Create legacy roles and run the 0019 data migration in-place.
 
-    try:
-        executor.migrate(migration_from)
-        old_apps = executor.loader.project_state(migration_from).apps
-        Tenant = old_apps.get_model('acesso', 'Tenant')
-        Usuario = old_apps.get_model('acesso', 'Usuario')
-        Convite = old_apps.get_model('acesso', 'Convite')
+    The old fixture migrated the whole ``acesso`` app backwards to 0018 and
+    then only forward to 0019. That left the schema without columns added by
+    later migrations (for example ``tenants.google_calendar_id``), so the web
+    request below could not use the current middleware. Running just the data
+    migration keeps the schema at HEAD and tests the same role conversion.
+    """
+    Tenant = django_apps.get_model('acesso', 'Tenant')
+    Usuario = django_apps.get_model('acesso', 'Usuario')
+    Convite = django_apps.get_model('acesso', 'Convite')
 
-        tenant = Tenant.objects.create(nome='Migration tenant', slug='role-retirement-migration')
-        admin = Usuario.objects.create(
-            nome='Tenant Owner',
-            email='migration-admin-company@example.test',
-            senha='legacy-hash',
-            role='admin_company',
-            tenant_id=tenant.pk,
-        )
-        operacional = Usuario.objects.create(
-            nome='Tenant Operator',
-            email='migration-operacional@example.test',
-            senha='legacy-hash',
-            role='operacional',
-            tenant_id=tenant.pk,
-        )
-        admin_saas = Usuario.objects.create(
-            nome='Legacy SaaS Admin',
-            email='migration-admin-saas@example.test',
-            senha='legacy-hash',
-            role='admin_saas',
-            tenant_id=tenant.pk,
-        )
-        Tenant.objects.filter(pk=tenant.pk).update(dono_id=admin.pk)
+    tenant = Tenant.objects.create(nome='Migration tenant', slug='role-retirement-migration')
+    admin = Usuario.objects.create(
+        nome='Tenant Owner',
+        email='migration-admin-company@example.test',
+        senha='legacy-hash',
+        role='admin_company',
+        tenant_id=tenant.pk,
+    )
+    operacional = Usuario.objects.create(
+        nome='Tenant Operator',
+        email='migration-operacional@example.test',
+        senha='legacy-hash',
+        role='operacional',
+        tenant_id=tenant.pk,
+    )
+    admin_saas = Usuario.objects.create(
+        nome='Legacy SaaS Admin',
+        email='migration-admin-saas@example.test',
+        senha='legacy-hash',
+        role='admin_saas',
+        tenant_id=tenant.pk,
+    )
+    Tenant.objects.filter(pk=tenant.pk).update(dono_id=admin.pk)
 
-        expiracao = timezone.now() + timedelta(days=3)
-        convite_admin = Convite.objects.create(
-            token='migration-admin-company-token',
-            tenant_id=tenant.pk,
-            email='invite-admin-company@example.test',
-            papel='admin_company',
-            expira_em=expiracao,
-        )
-        convite_operacional = Convite.objects.create(
-            token='migration-operacional-token',
-            tenant_id=tenant.pk,
-            email='invite-operacional@example.test',
-            papel='operacional',
-            expira_em=expiracao,
-        )
+    expiracao = timezone.now() + timedelta(days=3)
+    convite_admin = Convite.objects.create(
+        token='migration-admin-company-token',
+        tenant_id=tenant.pk,
+        email='invite-admin-company@example.test',
+        papel='admin_company',
+        expira_em=expiracao,
+    )
+    convite_operacional = Convite.objects.create(
+        token='migration-operacional-token',
+        tenant_id=tenant.pk,
+        email='invite-operacional@example.test',
+        papel='operacional',
+        expira_em=expiracao,
+    )
 
-        executor = MigrationExecutor(connection)
-        executor.migrate(migration_to)
-        new_apps = executor.loader.project_state(migration_to).apps
-        yield {
-            'Tenant': new_apps.get_model('acesso', 'Tenant'),
-            'Usuario': new_apps.get_model('acesso', 'Usuario'),
-            'Convite': new_apps.get_model('acesso', 'Convite'),
-            'tenant_id': tenant.pk,
-            'owner_id': admin.pk,
-            'users': {
-                admin.pk: ('Tenant Owner', 'migration-admin-company@example.test', 'viewer', tenant.pk),
-                operacional.pk: ('Tenant Operator', 'migration-operacional@example.test', 'viewer', tenant.pk),
-                admin_saas.pk: ('Legacy SaaS Admin', 'migration-admin-saas@example.test', 'admin_saas', None),
-            },
-            'invites': {
-                convite_admin.pk: ('migration-admin-company-token', 'invite-admin-company@example.test'),
-                convite_operacional.pk: ('migration-operacional-token', 'invite-operacional@example.test'),
-            },
-            'admin_saas_id': admin_saas.pk,
-            'operacional_id': operacional.pk,
-        }
-    finally:
-        executor = MigrationExecutor(connection)
-        executor.migrate(executor.loader.graph.leaf_nodes())
+    migrar_papeis_retirados(django_apps, _SchemaEditorStub())
+
+    yield {
+        'Tenant': Tenant,
+        'Usuario': Usuario,
+        'Convite': Convite,
+        'tenant_id': tenant.pk,
+        'owner_id': admin.pk,
+        'users': {
+            admin.pk: ('Tenant Owner', 'migration-admin-company@example.test', 'viewer', tenant.pk),
+            operacional.pk: ('Tenant Operator', 'migration-operacional@example.test', 'viewer', tenant.pk),
+            admin_saas.pk: ('Legacy SaaS Admin', 'migration-admin-saas@example.test', 'admin_saas', None),
+        },
+        'invites': {
+            convite_admin.pk: ('migration-admin-company-token', 'invite-admin-company@example.test'),
+            convite_operacional.pk: ('migration-operacional-token', 'invite-operacional@example.test'),
+        },
+        'admin_saas_id': admin_saas.pk,
+        'operacional_id': operacional.pk,
+    }
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_migration_converts_retired_users_and_pending_invites_to_viewer(migrated_legacy_roles):
     Tenant = migrated_legacy_roles['Tenant']
     Usuario = migrated_legacy_roles['Usuario']
@@ -113,7 +119,7 @@ def test_migration_converts_retired_users_and_pending_invites_to_viewer(migrated
         assert invite.cancelado_em is None
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_existing_admin_saas_tenant_is_cleared(migrated_legacy_roles):
     Tenant = migrated_legacy_roles['Tenant']
     Usuario = migrated_legacy_roles['Usuario']
@@ -126,8 +132,11 @@ def test_existing_admin_saas_tenant_is_cleared(migrated_legacy_roles):
     assert admin_saas.tenant_id is None
 
 
-@pytest.mark.django_db(transaction=True)
+@pytest.mark.django_db
 def test_existing_browser_session_uses_migrated_viewer_role(migrated_legacy_roles):
+    from django.test import Client
+    from tarefas.models import Tarefa
+
     Usuario = migrated_legacy_roles['Usuario']
     usuario = Usuario.objects.get(pk=migrated_legacy_roles['operacional_id'])
     assert usuario.role == 'viewer'
