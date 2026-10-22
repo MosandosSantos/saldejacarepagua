@@ -69,15 +69,11 @@
     <div class="mt-5 border-t border-white/10 pt-5">
       <p class="mb-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#5b8def]">Presidente</p>
       <div class="grid gap-5 sm:grid-cols-2">
-        <div>
-          <label for="loja-deputado-mestre" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Presidente</label>
-          <select id="loja-deputado-mestre" name="deputado_mestre"
-                  class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none sm:text-[14px] transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
-            <option value="" class="bg-[#0a1e3d]">— Cargo vago —</option>
-            {% for m in membros %}
-              <option value="{{ m.id }}" {% if m.id == loja.deputado_mestre_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ m.nome }}</option>
-            {% endfor %}
-          </select>
+        <div class="sm:col-span-2">
+          <label for="presidente_nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Presidente</label>
+          <input type="text" id="presidente_nome" name="presidente_nome" autocomplete="name"
+                 value="{{ loja.presidente_nome|default:loja.deputado_mestre }}" placeholder="Nome do presidente da loja"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none sm:text-[14px] transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           <p class="mt-1.5 text-[11.5px] text-[#a6bfc7]">Recebe as comunicações enviadas para esta loja (e-mail/Zap do Presidente).</p>
         </div>
         <div>
@@ -96,15 +92,11 @@
     <div class="mt-5 border-t border-white/10 pt-5">
       <p class="mb-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#5b8def]">Secretaria</p>
       <div class="grid gap-5 sm:grid-cols-2">
-        <div>
-          <label for="secretario" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Secretário</label>
-          <select id="secretario" name="secretario"
-                  class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15 sm:text-[14px]">
-            <option value="" class="bg-[#0a1e3d]">— Cargo vago —</option>
-            {% for m in membros %}
-              <option value="{{ m.id }}" {% if m.id == loja.secretario_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ m.nome }}</option>
-            {% endfor %}
-          </select>
+        <div class="sm:col-span-2">
+          <label for="secretario_nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Secretário</label>
+          <input type="text" id="secretario_nome" name="secretario_nome" autocomplete="name"
+                 value="{{ loja.secretario_nome|default:loja.secretario }}" placeholder="Nome do secretário da loja"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15 sm:text-[14px]">
         </div>
         <div>
           <label for="secretario_email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Secretário</label>
@@ -122,15 +114,11 @@
     <div class="mt-5">
       <p class="mb-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#5b8def]">Tesouraria</p>
       <div class="grid gap-5 sm:grid-cols-2">
-        <div>
-          <label for="tesoureiro" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Tesoureiro</label>
-          <select id="tesoureiro" name="tesoureiro"
-                  class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15 sm:text-[14px]">
-            <option value="" class="bg-[#0a1e3d]">— Cargo vago —</option>
-            {% for m in membros %}
-              <option value="{{ m.id }}" {% if m.id == loja.tesoureiro_id %}selected{% endif %} class="bg-[#0a1e3d]">{{ m.nome }}</option>
-            {% endfor %}
-          </select>
+        <div class="sm:col-span-2">
+          <label for="tesoureiro_nome" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome do Tesoureiro</label>
+          <input type="text" id="tesoureiro_nome" name="tesoureiro_nome" autocomplete="name"
+                 value="{{ loja.tesoureiro_nome|default:loja.tesoureiro }}" placeholder="Nome do tesoureiro da loja"
+                 class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[16px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15 sm:text-[14px]">
         </div>
         <div>
           <label for="tesoureiro_email" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Tesoureiro</label>

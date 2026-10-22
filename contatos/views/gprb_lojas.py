@@ -23,7 +23,7 @@ from acesso.decorators import (
 )
 from acesso.models import ROLE_ADM, ROLE_ADMIN_SAAS, ROLE_DELEGADO, ROLE_PRESIDENTE_CORPO
 from contatos.importador import normalizar_valor
-from contatos.models import Loja, LojaPdf, Membro, Vale
+from contatos.models import Loja, LojaPdf, Vale
 from contatos.paginacao import urls_paginacao
 from contatos.relatorio_lojas import gerar_pdf_lojas, gerar_xlsx_lojas
 from tarefas.presencas import PresencaServico
@@ -282,46 +282,26 @@ def _dados_da_loja(request):
     return dados
 
 
-def _membro_do_tenant(tenant_id, membro_id):
-    """Devolve o Membro do tenant ou None quando vazio/inexistente."""
-    if not (membro_id or '').strip():
-        return None
-    try:
-        pk = int(membro_id)
-    except (TypeError, ValueError):
-        return None
-    return Membro.objects.filter(pk=pk, tenant_id=tenant_id).first()
+def _desvincular_cargos_renomeados(loja, dados):
+    """Mantém o vínculo com o Membro apenas quando o nome digitado não mudou.
 
-
-def _cargos_do_post(request, tenant_id, *, selecionar_membros=True):
-    """Resolve os vínculos de cargos legados quando a edição usa selects.
-
-    A criação recebe nomes de contato em texto e não deve vincular nenhum
-    Membro à Loja por esses campos. A edição mantém os vínculos existentes.
+    A edição coleta os três cargos em texto (igual à criação). Se o nome
+    digitado difere do membro atualmente vinculado, o vínculo é removido para
+    que a tela não continue exibindo o nome antigo.
     """
-    if not selecionar_membros:
-        return None, None, None, None
-
-    ids = {
-        'presidente': (request.POST.get('deputado_mestre') or '').strip(),
-        'secretario': (request.POST.get('secretario') or '').strip(),
-        'tesoureiro': (request.POST.get('tesoureiro') or '').strip(),
-    }
-    membros = {
-        cargo: _membro_do_tenant(tenant_id, membro_id)
-        for cargo, membro_id in ids.items()
-    }
-    if any(ids[cargo] and membros[cargo] is None for cargo in ids):
-        return None, None, None, 'Selecione membros válidos para os cargos.'
-    escolhidos = [m.pk for m in membros.values() if m is not None]
-    if len(escolhidos) != len(set(escolhidos)):
-        return None, None, None, 'A mesma pessoa não pode ocupar dois cargos.'
-    return (
-        membros['presidente'],
-        membros['secretario'],
-        membros['tesoureiro'],
-        None,
-    )
+    for campo_nome, campo_fk in (
+        ('presidente_nome', 'deputado_mestre'),
+        ('secretario_nome', 'secretario'),
+        ('tesoureiro_nome', 'tesoureiro'),
+    ):
+        if campo_nome not in dados:
+            continue
+        membro = getattr(loja, campo_fk)
+        if membro is None:
+            continue
+        digitado = (dados[campo_nome] or '').strip().casefold()
+        if digitado != (membro.nome or '').strip().casefold():
+            setattr(loja, campo_fk, None)
 
 
 @web_login_required
@@ -598,23 +578,11 @@ def loja_nova(request):
         elif vale_escolhido is None:
             erro = 'Selecione o Vale da loja.'
         else:
-            presidente, secretario, tesoureiro, erro = _cargos_do_post(
-                request,
-                vale_escolhido.tenant_id,
-                selecionar_membros=False,
+            Loja.objects.create(
+                tenant_id=vale_escolhido.tenant_id,
+                **dados,
             )
-            if erro is None:
-                loja = Loja.objects.create(
-                    tenant_id=vale_escolhido.tenant_id,
-                    deputado_mestre=presidente,
-                    secretario=secretario,
-                    tesoureiro=tesoureiro,
-                    **dados,
-                )
-                for membro in (presidente, secretario, tesoureiro):
-                    if membro is not None:
-                        loja.membros.add(membro)
-                return redirect('lojas')
+            return redirect('lojas')
 
     return render(request, 'contatos/loja_nova.html', {
         'erro': erro,
@@ -650,27 +618,16 @@ def loja_editar(request, pk):
         elif dados['corpo'] not in dict(Loja.CORPO_CHOICES):
             erro = 'Selecione um Corpo válido.'
         else:
-            presidente, secretario, tesoureiro, erro = _cargos_do_post(
-                request, loja.tenant_id,
-            )
-            if erro is None:
-                for campo, valor in dados.items():
-                    setattr(loja, campo, valor)
-                loja.deputado_mestre = presidente
-                loja.secretario = secretario
-                loja.tesoureiro = tesoureiro
-                loja.save()
-                for membro in (presidente, secretario, tesoureiro):
-                    if membro is not None:
-                        loja.membros.add(membro)
-                return redirect('lojas')
+            for campo, valor in dados.items():
+                setattr(loja, campo, valor)
+            _desvincular_cargos_renomeados(loja, dados)
+            loja.save()
+            return redirect('lojas')
 
-    membros = Membro.objects.filter(tenant_id=loja.tenant_id).order_by('nome', 'id')
     return render(request, 'contatos/loja_editar.html', {
         'loja': _para_contexto_loja(loja),
         'vale': loja.tenant.vales,
         'prefeituras': [loja.tenant.vales],
-        'membros': membros,
         'ufs': UFS,
         'uf_atual': loja.uf or 'RJ',
         'corpos': Loja.CORPO_CHOICES,

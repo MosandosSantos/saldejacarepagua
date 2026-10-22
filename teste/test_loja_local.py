@@ -239,6 +239,63 @@ def test_edit_loja_rejects_missing_or_invalid_corpo_without_changing_it(corpo):
     assert loja.corpo == 'perfeicao'
 
 
+def test_edit_loja_form_uses_text_inputs_for_cargos():
+    tenant, _ = _tenant_vale('LDK')
+    loja = Loja.objects.create(tenant=tenant, nome='Loja cargos texto')
+    client = _client_for(tenant, ROLE_ADM)
+
+    response = client.get(f'/contatos/loja/{loja.pk}/editar/')
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert 'type="text" id="presidente_nome" name="presidente_nome"' in html
+    assert 'type="text" id="secretario_nome" name="secretario_nome"' in html
+    assert 'type="text" id="tesoureiro_nome" name="tesoureiro_nome"' in html
+    assert 'name="deputado_mestre"' not in html
+    assert 'name="secretario"' not in html
+    assert 'name="tesoureiro"' not in html
+
+
+def test_edit_loja_saves_cargo_names_as_text_and_unlinks_renamed_member():
+    tenant, _ = _tenant_vale('LDL')
+    presidente = Membro.objects.create(tenant=tenant, nome='Presidente Antigo')
+    loja = Loja.objects.create(
+        tenant=tenant, nome='Loja cargos antigos', deputado_mestre=presidente,
+    )
+    client = _client_for(tenant, ROLE_ADM)
+
+    payload = {
+        **_loja_data('Loja cargos antigos'),
+        'presidente_nome': 'Presidente Novo',
+    }
+    response = client.post(f'/contatos/loja/{loja.pk}/editar/', payload)
+
+    assert response.status_code == 302
+    loja.refresh_from_db()
+    assert loja.presidente_nome == 'Presidente Novo'
+    assert loja.deputado_mestre_id is None
+
+
+def test_edit_loja_keeps_member_link_when_typed_name_matches():
+    tenant, _ = _tenant_vale('LDM')
+    secretario = Membro.objects.create(tenant=tenant, nome='Secretário Mantido')
+    loja = Loja.objects.create(
+        tenant=tenant, nome='Loja vínculo mantido', secretario=secretario,
+    )
+    client = _client_for(tenant, ROLE_ADM)
+
+    payload = {
+        **_loja_data('Loja vínculo mantido'),
+        'secretario_nome': 'secretário mantido',
+    }
+    response = client.post(f'/contatos/loja/{loja.pk}/editar/', payload)
+
+    assert response.status_code == 302
+    loja.refresh_from_db()
+    assert loja.secretario_id == secretario.pk
+    assert loja.secretario_nome == 'secretário mantido'
+
+
 def test_loja_create_and_edit_forms_render_corpo_choices():
     tenant, _ = _tenant_vale('LDB')
     loja = Loja.objects.create(
