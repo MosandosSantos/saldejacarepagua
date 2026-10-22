@@ -119,8 +119,11 @@ services:
       - ./media:/app/media
       - ./logs:/app/logs
     ports:
-      # O Nginx/Caddy do host acessa http://127.0.0.1:8111.
-      - "127.0.0.1:${APP_PORT:-8111}:8111"
+      # O proxy de dominio (nginx em container) acessa http://<ip-do-host>:8111.
+      # Publicar so no loopback quebra esse proxy: o container chega pelo IP
+      # publico da VPS, nao por 127.0.0.1. O firewall da VPS mantem a porta
+      # fechada para a internet.
+      - "${APP_PORT:-8111}:8111"
     depends_on:
       db:
         condition: service_healthy
