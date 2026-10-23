@@ -42,4 +42,16 @@ def verify_turnstile_token(token):
         logger.warning('Cloudflare Turnstile verification failed: %s', type(exc).__name__)
         return False
 
-    return isinstance(result, dict) and result.get('success') is True
+    if not (isinstance(result, dict) and result.get('success') is True):
+        # Sem isto o login falha com "voce e humano" e nenhum log diz por que.
+        # error-codes esperados: timeout-or-duplicate (token expirado/reusado),
+        # invalid-input-response, siteverify-key-mismatch, hostname mismatch.
+        logger.warning(
+            'Cloudflare Turnstile rejected token: codes=%s hostname=%s action=%s',
+            result.get('error-codes') if isinstance(result, dict) else 'non-dict',
+            result.get('hostname') if isinstance(result, dict) else '-',
+            result.get('action') if isinstance(result, dict) else '-',
+        )
+        return False
+
+    return True

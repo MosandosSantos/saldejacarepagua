@@ -66,6 +66,9 @@ services:
         PYTHON_VERSION: ${PYTHON_VERSION:-3.13}
     container_name: gprbr-app
     restart: unless-stopped
+    # Chaves Turnstile fora do .env (raiz e root-only): file 600 do deploy
+    env_file:
+      - .env.turnstile
     environment:
       # Django
       - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-core.settings}
@@ -93,9 +96,8 @@ services:
       - EVENTO_EMAIL_PARA_TESTE=${EVENTO_EMAIL_PARA_TESTE:-}
       - BASE_URL=${BASE_URL:-https://saldoreaa.cloud}
 
-      # Cloudflare Turnstile (em DEBUG, usa as chaves oficiais de teste se vazias)
-      - CLOUDFLARE_TURNSTILE_SITE_KEY=${CLOUDFLARE_TURNSTILE_SITE_KEY:-}
-      - CLOUDFLARE_TURNSTILE_SECRET_KEY=${CLOUDFLARE_TURNSTILE_SECRET_KEY:-}
+      # Cloudflare Turnstile: chaves vem de env_file (.env.turnstile) acima.
+      # ${VAR:-} aqui zeraria o valor do env_file (environment tem prioridade).
       
       # Tenant
       - GPRB_TENANT_ID=${GPRB_TENANT_ID:-}
