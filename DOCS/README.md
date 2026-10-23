@@ -167,26 +167,19 @@ Histórico da migração de banco: `backups/saldogprb_backup_20261002.dump` (e e
 - Tipografia: `Manrope` (sans) e `Fraunces` (display).
 - Branding Sal da Britânea: bandeira UK (`static/img/bandeira-uk.svg`) no login, header, menu mobile e favicon; logo "SAL DA / BRITÂNEA".
 
-## Secao Calendario — o "Livro de Sessoes"
+## Secao Calendario — o mes no padrao dos cards do kanban
 
-A segunda aba de `/agendas/` nao e um painel como os outros: e a **pagina do livro de sessoes** da Vale, aberta numa folha escura. A paleta vem do emblema Sal do Reaa (carmesi + ouro), nao do azul do resto do sistema.
-
-| Token | Hex | Uso |
-|-------|-----|-----|
-| `--livro-fundo` | `#12070c` | campo do livro (mais escuro que o hero azul) |
-| `--livro-celula` | `#1a0a12` | celula do dia |
-| `--livro-vazia` | `#100609` | dias fora do mes (pagina ainda nao pautada) |
-| `--livro-ouro` | `#d4af37` | titulo da secao, filetes, selo do dia, hora |
-| `--livro-tinta` | `#f0e3c6` | titulo da sessao (tinta de pergaminho) |
-| `--livro-carmim` | `#c8102e` | dia de hoje |
+A aba **Calendario** de `/agendas/` usa a mesma linguagem visual do kanban: superficie de vidro (branco 5% + `backdrop-blur`), bordas brancas de 10%, tipografia Manrope e numeros em JetBrains Mono. Nao ha paleta propria (ouro/carmesim) nem titulo em Fraunces dentro do cartao — Fraunces fica reservada aos titulos de pagina.
 
 Regras da secao:
 
-- **Titulo**: "Calendario da Vale de {{ VALE_NOME }}" — `VALE_NOME` vem de `settings.py` (env `VALE_NOME`, padrao `Jacarepagua`).
-- **O botao "Novo Evento" nao aparece no Calendario** (a sessao e aberta pelo secretario a partir do proprio dia). Ele volta em Kanban e Lista.
-- **A navegacao de mes muda de casa**: no Calendario ela faz parte do cabecalho do livro; em Lista volta para a barra de modos; em Kanban fica oculta.
-- **Selo de ouro**: dia com sessao ganha um anel em ouro em volta do numero; o dia de hoje ganha o carmesim. O tipo da sessao (grau, iniciacao, ritual) continua marcado pela regua colorida a esquerda do lancamento.
-- As classes vivem em `theme/static_src/src/styles.css` (prefixo `livro-`), junto dos demais tokens.
+- **Cabecalho compacto**: nome da Vale, legenda e o resumo do mes (`7 SESSOES EM OUTUBRO`, em mono); a navegacao de mes fica a direita, com setas quadradas.
+- **Celulas**: numeros em mono; o dia de hoje recebe a pilula de acento; dias de outro mes ficam num tom mais escuro.
+- **Lancamentos**: cada sessao e um mini-card (borda branca 10%, fundo branco 5%, ponto colorido do tipo, hora em mono e titulo truncado) — o mesmo desenho dos cards de evento do kanban. Dias com mais de 3 sessoes mostram "+N eventos", que expande a celula.
+- **Incluir no dia**: ao passar o mouse (ou focar) num dia aparece um "+" que abre o modal de evento com a data preenchida. O botao "Novo Evento" do topo tambem aparece no Calendario.
+- **Responsivo**: abaixo de 1024px a grade de 7 colunas da lugar a uma lista de dias com os mesmos cards do kanban (uma coluna no celular, duas no tablet).
+- **Navegacao de mes**: no Calendario ela vive no cabecalho do cartao; em Lista, na barra de modos; em Kanban, oculta.
+- As classes vivem em `theme/static_src/src/styles.css` (prefixo `livro-`), junto dos demais componentes.
 
 ## Acessibilidade e UI (Web Interface Guidelines)
 

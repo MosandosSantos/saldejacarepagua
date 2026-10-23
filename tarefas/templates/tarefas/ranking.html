@@ -45,13 +45,13 @@
 <div id="visao-calendario" class="hidden" role="tabpanel" aria-labelledby="modo-btn-calendario" tabindex="0">
   <section class="livro" aria-labelledby="livro-titulo">
     <header class="livro-cabecalho" id="livro-cabecalho">
-      <div>
+      <div class="min-w-0">
         <h2 id="livro-titulo" class="livro-titulo">Calendário da Vale de {{ VALE_NOME }}</h2>
         <p class="livro-sub">Sessões, iniciações e trabalhos de grau do mês</p>
         <p class="livro-resumo" id="livro-resumo" aria-live="polite"></p>
       </div>
     </header>
-    <div class="grid grid-cols-7 border-b border-[var(--livro-ouro-fraco)]">
+    <div class="hidden grid-cols-7 lg:grid">
       <div class="livro-semana">Dom</div>
       <div class="livro-semana">Seg</div>
       <div class="livro-semana">Ter</div>
@@ -60,7 +60,8 @@
       <div class="livro-semana">Sex</div>
       <div class="livro-semana">Sáb</div>
     </div>
-    <div id="calendario-grid" class="grid grid-cols-7"></div>
+    <div id="calendario-grid" class="hidden grid-cols-7 lg:grid"></div>
+    <div id="calendario-mobile" class="grid gap-3 p-3 sm:grid-cols-2 lg:hidden"></div>
   </section>
 </div>
 
@@ -420,6 +421,7 @@
   var mes = {{ mes }};
   var mesNome = '{{ mes_nome }}';
   var hojeStr = '{{ hoje|date:"Y-m-d" }}';
+  var podeCriar = {{ pode_criar_evento|yesno:"true,false" }};
   var modoSalvo = null;
   try { modoSalvo = localStorage.getItem('agenda-modo'); } catch (e) {}
   /* O modo de exibicao vive na URL (?modo=) para ser compartilhavel e
@@ -482,14 +484,8 @@
     });
     document.getElementById('nav-mes').style.display = (modo === 'kanban') ? 'none' : 'flex';
 
-    /* O Calendario e o "livro de sessoes": secao propria, mais escura que o
-       hero, com o titulo da Vale. O botao de incluir nao aparece nele - a
-       sessao e aberta pelo secretario a partir do proprio dia. */
-    var btnIncluir = document.getElementById('btn-novo-evento');
-    if (btnIncluir) btnIncluir.style.display = (modo === 'calendario') ? 'none' : '';
-
     /* A navegacao de mes muda de casa: no calendario ela faz parte do
-       cabecalho do livro; nos demais modos volta para a barra de modos. */
+       cabecalho do calendario; nos demais modos volta para a barra de modos. */
     var navMes = document.getElementById('nav-mes');
     var cabecalhoLivro = document.getElementById('livro-cabecalho');
     var barraModos = document.getElementById('barra-modos-conteudo');
@@ -520,49 +516,131 @@
     });
   })();
 
+  var DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  var diasExpandidos = {};
+  var LIMITE_LANCAMENTOS = 3;
+
+  /* Agrupa os eventos por dia (YYYY-MM-DD), ja ordenados por horario. */
+  function eventosPorDia() {
+    var mapa = {};
+    eventos.forEach(function (ev) {
+      var chave = ev.data_inicio.substring(0, 10);
+      (mapa[chave] = mapa[chave] || []).push(ev);
+    });
+    Object.keys(mapa).forEach(function (chave) {
+      mapa[chave].sort(function (a, b) { return a.data_inicio.localeCompare(b.data_inicio); });
+    });
+    return mapa;
+  }
+
   function renderCalendario() {
     var grid = document.getElementById('calendario-grid');
+    if (!grid) return;
+    var mapa = eventosPorDia();
     var primeiroDia = new Date(ano, mes - 1, 1).getDay();
     var diasNoMes = new Date(ano, mes, 0).getDate();
+    /* Quantas semanas o mes ocupa de verdade - evita a 6a linha vazia. */
+    var semanas = Math.ceil((primeiroDia + diasNoMes) / 7);
     var html = '';
     var dia = 1;
     var totalSessoes = 0;
-    /* Quantas semanas o mes ocupa de verdade - evita a 6a linha vazia. */
-    var semanas = Math.ceil((primeiroDia + diasNoMes) / 7);
+
     for (var linha = 0; linha < semanas; linha++) {
       for (var coluna = 0; coluna < 7; coluna++) {
         var idx = linha * 7 + coluna;
         if (idx < primeiroDia || dia > diasNoMes) {
           html += '<div class="livro-celula livro-celula--vazia" aria-hidden="true"></div>';
-        } else {
-          var dataStr = ano + '-' + String(mes).padStart(2,'0') + '-' + String(dia).padStart(2,'0');
-          var isHoje = (hojeStr === dataStr);
-          var eventosDoDia = eventos.filter(function(e) { return e.data_inicio.substring(0,10) === dataStr; });
-          totalSessoes += eventosDoDia.length;
-          html += '<div class="livro-celula">';
-          /* Dia com sessao recebe o selo de ouro; hoje recebe o carmesim. */
-          html += '<span class="livro-numero'
-            + (eventosDoDia.length ? ' livro-numero--sessao' : '')
-            + (isHoje ? ' livro-numero--hoje' : '') + '">' + dia + '</span>';
-          eventosDoDia.forEach(function(ev) {
-            var c = corDoTipo(ev.tipo);
-            var hora = ev.data_inicio.substring(11,16);
-            html += '<button type="button" onclick="verDetalhes(' + ev.id + ')" class="livro-lancamento" style="--livro-pino:' + c.border + '">';
-            html += '<span class="livro-lancamento-hora">' + esc(hora) + '</span>' + esc(ev.titulo);
-            html += '</button>';
-          });
-          html += '</div>';
-          dia++;
+          continue;
         }
+        var dataStr = ano + '-' + String(mes).padStart(2, '0') + '-' + String(dia).padStart(2, '0');
+        var doDia = mapa[dataStr] || [];
+        var isHoje = (hojeStr === dataStr);
+        totalSessoes += doDia.length;
+
+        html += '<div class="livro-celula">';
+        html += '<div class="livro-dia">';
+        html += '<span class="livro-numero'
+          + (doDia.length ? ' livro-numero--sessao' : '')
+          + (isHoje ? ' livro-numero--hoje' : '') + '">' + dia + '</span>';
+        if (podeCriar) {
+          html += '<button type="button" class="livro-add" onclick="abrirModalCriar(\'' + dataStr + '\')"'
+            + ' title="Nova sessão neste dia" aria-label="Nova sessão em ' + String(dia).padStart(2, '0') + '/' + String(mes).padStart(2, '0') + '">'
+            + '<svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'
+            + '</button>';
+        }
+        html += '</div>';
+
+        var expandido = !!(diasExpandidos[dataStr] && diasExpandidos[dataStr].visivel);
+        var visiveis = expandido ? doDia : doDia.slice(0, LIMITE_LANCAMENTOS);
+        visiveis.forEach(function (ev) {
+          var c = corDoTipo(ev.tipo);
+          var hora = ev.data_inicio.substring(11, 16);
+          html += '<button type="button" onclick="verDetalhes(' + ev.id + ')" class="livro-lancamento" title="' + esc(ev.titulo) + ' · ' + esc(hora) + '">';
+          html += '<span class="livro-pino" style="--livro-pino:' + c.label + '"></span>';
+          html += '<span class="livro-lancamento-hora">' + esc(hora) + '</span>';
+          html += '<span class="livro-lancamento-titulo">' + esc(ev.titulo) + '</span>';
+          html += '</button>';
+        });
+        if (doDia.length > LIMITE_LANCAMENTOS && !expandido) {
+          var restantes = doDia.length - LIMITE_LANCAMENTOS;
+          html += '<button type="button" class="livro-mais" onclick="expandirDia(\'' + dataStr + '\')">+'
+            + restantes + (restantes > 1 ? ' eventos' : ' evento') + '</button>';
+        }
+        html += '</div>';
+        dia++;
       }
     }
     grid.innerHTML = html;
+    renderCalendarioMobile(mapa);
+
     var resumo = document.getElementById('livro-resumo');
     if (resumo) {
       resumo.textContent = totalSessoes
         ? totalSessoes + (totalSessoes > 1 ? ' sessões' : ' sessão') + ' em ' + mesNome.toLowerCase()
         : 'Nenhuma sessão em ' + mesNome.toLowerCase();
     }
+  }
+
+  window.expandirDia = function (dataStr) {
+    diasExpandidos[dataStr] = { visivel: true };
+    renderCalendario();
+  };
+
+  /* No celular a grade de 7 colunas nao cabe: o mesmo mes vira uma lista
+     de dias com os cards de evento no padrao do kanban. */
+  function renderCalendarioMobile(mapa) {
+    var box = document.getElementById('calendario-mobile');
+    if (!box) return;
+    var dias = Object.keys(mapa).sort();
+    if (!dias.length) {
+      box.innerHTML = '<div class="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-[12px] text-[#6f8a93]">'
+        + 'Nenhuma sessão em ' + esc(mesNome.toLowerCase()) + '.</div>';
+      return;
+    }
+    var html = '';
+    dias.forEach(function (dataStr) {
+      var partes = dataStr.split('-');
+      var diaNum = parseInt(partes[2], 10);
+      var dow = new Date(parseInt(partes[0], 10), parseInt(partes[1], 10) - 1, diaNum).getDay();
+      var evs = mapa[dataStr];
+      html += '<div class="rounded-xl border border-white/10 bg-white/[0.02] p-3">';
+      html += '<div class="mb-2 flex items-center justify-between gap-2">';
+      html += '<p class="text-[11px] font-bold uppercase tracking-wider text-[#a6bfc7]">'
+        + DIAS_SEMANA[dow] + ', ' + diaNum + ' de ' + esc(mesNome) + '</p>';
+      html += '<span class="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[10px] font-bold text-[#a6bfc7]">' + evs.length + '</span>';
+      html += '</div><div class="space-y-2">';
+      evs.forEach(function (ev) {
+        var c = corDoTipo(ev.tipo);
+        html += '<button type="button" onclick="verDetalhes(' + ev.id + ')" class="block w-full rounded-xl border border-white/10 bg-white/5 p-3 text-left transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60">';
+        html += '<span class="block text-[13px] font-semibold text-white">' + esc(ev.titulo) + '</span>';
+        html += '<span class="mt-1 flex items-center gap-2 text-[11px] text-[#a6bfc7]">';
+        html += '<span class="inline-block h-2 w-2 rounded-full" style="background:' + c.label + '"></span>';
+        html += esc(ev.data_inicio.substring(11, 16));
+        html += '</span></button>';
+      });
+      html += '</div></div>';
+    });
+    box.innerHTML = html;
   }
 
   function renderLista() {
