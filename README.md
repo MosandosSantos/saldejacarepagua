@@ -28,8 +28,11 @@ python -m venv .venv
 .\.venv\Scripts\python manage.py tailwind start     # watch em dev (ou tailwind build)
 
 # 4. Servidor web
-.\.venv\Scripts\python manage.py runserver 8000
+.\.venv\Scripts\python manage.py runserver 8777
 ```
+
+> A porta vem de `DJANGO_PORT` no `.env` (padrão `8111`). Para trocar, ajuste
+> `DJANGO_PORT`, `APP_PORT`, `BASE_URL` e `CSRF_TRUSTED_ORIGINS`.
 
 > Requer Node.js (npm) para o Tailwind. `NPM_BIN_PATH` já está apontando para `C:\Program Files\nodejs\npm.cmd` em `core/settings.py`.
 

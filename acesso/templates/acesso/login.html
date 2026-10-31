@@ -1,464 +1,906 @@
 {% extends 'base/basic.html' %}
 {% load static %}
 
-{% block titulo %}Sistema de Administração de Lojas Maçônicas | Vale de Jacarepaguá{% endblock %}
-{% block seo_descricao %}Sistema de administração de lojas maçônicas do Vale de Jacarepaguá: membros, lojas, agenda de sessões, comunicações e relatórios. REAA Grau 33º.{% endblock %}
-{% block seo_keywords %}sistema de administração de lojas maçônicas, gestão de lojas maçônicas, CRM maçônico, sistema para loja maçônica, Vale de Jacarepaguá, REAA, Grau 33, agenda de sessões maçônicas{% endblock %}
-{% block seo_og_titulo %}Sistema de Administração de Lojas Maçônicas — Vale de Jacarepaguá{% endblock %}
-{% block seo_og_descricao %}Sistema de administração de lojas maçônicas do Vale de Jacarepaguá: membros, lojas, agenda de sessões, comunicações e relatórios. REAA Grau 33º.{% endblock %}
-{% block seo_twitter_titulo %}Sistema de Administração de Lojas Maçônicas — Vale de Jacarepaguá{% endblock %}
-{% block seo_twitter_descricao %}Sistema de administração de lojas maçônicas do Vale de Jacarepaguá: membros, lojas, agenda de sessões, comunicações e relatórios. REAA Grau 33º.{% endblock %}
+{% block titulo %}Sistema de Administração de Lojas Maçônicas | Sal da Baixada{% endblock %}
+{% block seo_descricao %}Sistema de administração de lojas maçônicas. Gestão de membros, lojas, agenda de sessões, comunicações e relatórios.{% endblock %}
+{% block seo_keywords %}sistema de administração de lojas maçônicas, gestão de lojas maçônicas, CRM maçônico, sistema para loja maçônica, REAA, Grau 33{% endblock %}
+{% block seo_og_titulo %}Sistema de Administração de Lojas Maçônicas — Sal da Baixada{% endblock %}
+{% block seo_og_descricao %}Sistema de administração de lojas maçônicas. Gestão de membros, lojas, agenda de sessões, comunicações e relatórios.{% endblock %}
+{% block seo_twitter_titulo %}Sistema de Administração de Lojas Maçônicas — Sal da Baixada{% endblock %}
+{% block seo_twitter_descricao %}Sistema de administração de lojas maçônicas. Gestão de membros, lojas, agenda de sessões, comunicações e relatórios.{% endblock %}
 
 {% block cabecalho %}{% endblock %}
 
 {% block extra_head %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --vinho: #730A40;
-    --gelo: #ECEEEE;
-    --texto: #F4EEF1;
-    --fonte-titulo: "Anton", "Bebas Neue", Impact, "Arial Narrow", sans-serif;
-    --fonte-texto: "Poppins", "Helvetica Neue", Arial, sans-serif;
+    /* ===== PALETA AZUL ===== */
+    --alvorada: #2a55c0;   /* azul de destaque, claro */
+    --profundo: #12296b;   /* azul real, meio */
+    --abissal:  #07122f;   /* azul quase preto, card */
+    --noite:    #0a1735;   /* azul noturno, navegação */
+    --nevoa:    #9fb4dd;   /* azul acinzentado, texto secundário */
+    --marfim:   #f2f5fc;   /* texto principal sobre azul */
+    --ouro:     #c9a86a;   /* latão, constante patrimonial */
+    --sangue:   #e08a8a;   /* vermelho templário, uso raro em alertas */
+    --gelo:     #3e6fd8;   /* azul vivo do painel lateral */
+    --fonte-titulo: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    --fonte-texto: "Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --largura-conteudo: 1180px;
+    --gutter: 24px;
   }
+
   html { min-height: 100%; scroll-behavior: smooth; }
-  body { min-height: 100svh; overflow-x: hidden; overflow-y: visible; background: var(--vinho); }
-  /* Fundo azul do layout base não pode aparecer atrás do hero: tudo em vinho */
-  body.bg-\[\#0a1e3d\], #bg-fundo { background: var(--vinho) !important; }
-
-  /* ===== HERO (slide Vale de Jacarepaguá) ===== */
-  .hero {
-    position: relative;
-    isolation: isolate;
-    display: flex; align-items: center; justify-content: center;
-    width: 100%;
-    height: 100vh;
-    height: 100svh;
-    background: var(--vinho);
-    overflow: hidden;
-  }
-  /* Luz e sombra: foco de luz rosado atrás do brasão e vinheta escura nas laterais */
-  .hero::before {
-    content: "";
-    position: absolute; inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background:
-      radial-gradient(ellipse 45% 55% at 74% 46%, rgba(244,114,182,.30), transparent 70%),
-      radial-gradient(ellipse 60% 80% at 50% 50%, transparent 55%, rgba(20,0,10,.55) 100%),
-      linear-gradient(90deg, rgba(20,0,10,.35), transparent 40%);
-  }
-  /* Aurora lenta: dá vida ao fundo mesmo depois da entrada do hero. */
-  .hero::after {
-    content: "";
-    position: absolute;
-    inset: -18%;
-    z-index: 0;
-    pointer-events: none;
-    background:
-      radial-gradient(circle at 72% 42%, rgba(244,114,182,.22), transparent 42%),
-      radial-gradient(circle at 22% 76%, rgba(201,162,39,.12), transparent 40%);
-    animation: auroraHero 18s ease-in-out infinite alternate;
-    will-change: transform, opacity;
-  }
-  @keyframes auroraHero {
-    0%   { transform: translate3d(-2%, 1%, 0) scale(1); opacity: .65; }
-    50%  { transform: translate3d(2%, -2%, 0) scale(1.08); opacity: 1; }
-    100% { transform: translate3d(3%, 2%, 0) scale(1.03); opacity: .8; }
-  }
-  /* Palco 16:9 que cabe inteiro na altura da tela: nada exige scroll no hero */
-  .hero__inner {
-    position: relative;
-    z-index: 1;
-    container-type: inline-size;
-    width: min(100%, calc(100vh * 16 / 9));
-    width: min(100%, calc(100svh * 16 / 9));
-    aspect-ratio: 16 / 9;
-  }
-  .hero__title {
-    position: absolute;
-    left: 3.9cqw; top: 14%;
-    font-family: var(--fonte-titulo);
-    font-weight: 400;
-    font-size: 8.2cqw;
-    line-height: 1.28;
-    color: var(--gelo);
-    text-transform: uppercase;
-    letter-spacing: 0;
-    white-space: nowrap;
-  }
-  /* Entrada das letras: cada uma sobe de dentro da própria linha, em cascata */
-  .hero__title-linha {
-    display: block;
-    overflow: hidden;
-    /* respiro para o acento do "á" e para os descendentes do "g" e do "p" */
-    padding: .02em .06em .07em;
-    margin: -.02em -.06em -.07em;
-  }
-  .hero__letra {
-    display: inline-block;
-    transform: translate3d(0, 118%, 0);
-    animation: letraSobe 1.05s cubic-bezier(.19, 1, .22, 1) forwards;
-    animation-delay: calc(180ms + var(--i) * 75ms);
-  }
-  .hero__letra[data-espaco] { min-width: .22em; }
-  @keyframes letraSobe {
-    from { transform: translate3d(0, 118%, 0); }
-    to   { transform: translate3d(0, 0, 0); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .hero__letra { animation: none; transform: none; }
-  }
-  .hero__text {
-    position: absolute;
-    left: 3.9cqw; top: 69%;
-    width: 43.3cqw;
+  body {
+    min-height: 100svh;
+    overflow-x: hidden;
+    overflow-y: visible;
+    background: linear-gradient(155deg, #2a50b8 0%, #14296b 46%, #07122f 100%) fixed;
     font-family: var(--fonte-texto);
-    font-weight: 300;
-    font-size: 1.88cqw;
-    line-height: 1.33;
-    letter-spacing: .03em;
-    color: var(--texto);
-    text-align: justify;
+    color: var(--marfim);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  /* Contador do Vale: lojas e membros ativos vindos do banco */
-  .hero__contagem {
-    position: absolute;
-    left: 3.9cqw; top: 53%;
-    display: flex; gap: 2.2cqw;
-    font-family: var(--fonte-texto);
-  }
-  .hero__contagem-item {
-    min-width: 9.5cqw;
-    padding: 1.1cqw 1.6cqw;
-    border: 1px solid rgba(255,255,255,.35);
-    border-radius: 1.2cqw;
-    background: rgba(45,8,22,.45);
-    backdrop-filter: blur(8px);
-    transition: transform .35s cubic-bezier(.16,1,.3,1), border-color .35s, background .35s;
-  }
-  .hero__contagem-item:hover {
-    transform: translateY(-4px);
-    border-color: rgba(255,255,255,.62);
-    background: rgba(45,8,22,.62);
-  }
-  .hero__contagem-num {
-    display: block;
-    font-family: var(--fonte-titulo);
-    font-size: 3.4cqw;
-    line-height: 1;
-    color: var(--gelo);
-  }
-  .hero__contagem-rotulo {
-    display: block;
-    margin-top: .5cqw;
-    font-size: .95cqw;
-    font-weight: 600;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--texto);
-    opacity: .85;
-  }
-  .hero__brasao {
-    position: absolute;
-    left: 57.2cqw; top: 7.5%;
-    width: 38.3cqw; height: auto;
-    filter: drop-shadow(0 .6cqw 1.2cqw rgba(0,0,0,.18));
-    opacity: 0;
-    animation:
-      eagleFade 1.8s cubic-bezier(.19, 1, .22, 1) .45s forwards,
-      eagleFloat 7s ease-in-out 2.4s infinite;
-    will-change: opacity, transform;
-  }
-  @keyframes eagleFade {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-  /* Flutuação contínua e discreta: o brasão respira sobre o fundo. */
-  @keyframes eagleFloat {
-    0%, 100% { transform: translate3d(0, 0, 0); }
-    50%      { transform: translate3d(0, -10px, 0); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .hero__brasao {
-      animation: none;
-      opacity: 1;
-    }
-  }
-  /* Pontilhados decorativos (5 colunas x 6 linhas) */
-  .dots {
-    position: absolute;
-    width: 2.5cqw; height: 3cqw;
-    background-image: radial-gradient(circle, #fff 0 .14cqw, transparent .16cqw);
-    background-size: .625cqw .6cqw;
-    opacity: .9;
-  }
-  .dots--top    { left: 56.7cqw; top: 10%; }
-  .dots--bottom { left: 93.6cqw; top: 85.2%; }
-  .dots { animation: dotsTwinkle 3.8s ease-in-out infinite; }
-  .dots--bottom { animation-delay: 1.4s; }
-  @keyframes dotsTwinkle {
-    0%, 100% { opacity: .35; transform: scale(.96); }
-    50%      { opacity: .95; transform: scale(1); }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(rgba(242, 245, 252, 0.07) 1px, transparent 1px);
+    background-size: 72px 72px;
+    opacity: 0.35;
+    pointer-events: none;
   }
 
-  /* 4ª sessão: Supremo Conselho */
-  /* Página de login: conteúdo de ponta a ponta, sem moldura do layout base */
   main#conteudo-principal { max-width: none !important; padding: 0 !important; }
-  .sessao-supremo { background: #46072A; color: var(--texto); overflow: hidden; }
-  .sessao-supremo__inner { display: flex; flex-wrap: wrap; align-items: center; gap: 48px; max-width: 1100px; margin: 0 auto; padding: 80px 24px; }
-  .sessao-supremo__media, .sessao-supremo__info { flex: 1 1 380px; }
-  .sessao-supremo__media { overflow: hidden; }
-  .sessao-supremo__img {
-    width: 100%;
-    height: auto;
-    filter: drop-shadow(0 18px 30px rgba(0,0,0,.45));
-    transform: scale(0.7);
-    transform-origin: center center;
-    transition: transform 0.1s linear;
-    will-change: transform;
-  }
-  .sessao-supremo__img--scale {
-    transform: scale(var(--supremo-scale, 1));
-  }
-  .sessao-supremo__info h2 { font-family: var(--fonte-titulo); font-size: 2.2rem; line-height: 1.15; color: var(--gelo); text-transform: uppercase; margin: 14px 0; }
-  .sessao-supremo__info p { font-family: var(--fonte-texto); font-size: 15px; color: rgba(244,238,241,.75); }
-  .sessao-supremo__info ul { list-style: none; padding: 0; margin-top: 24px; display: grid; gap: 14px; font-family: var(--fonte-texto); font-size: 15px; color: rgba(244,238,241,.85); }
-  .sessao-supremo__info a { color: var(--gelo); text-decoration: underline; text-decoration-color: rgba(255,255,255,.35); text-underline-offset: 4px; }
-  .sessao-supremo__info a:hover { text-decoration-color: var(--gelo); }
-  .login-wrap { position: relative; z-index: 3; width: 100%; max-width: 1260px; margin: auto; padding: 90px 16px 60px; }
-  .login-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 48px; padding: 0 24px; background: #5E0A35; }
-  @media (min-width: 900px) { .login-row { flex-wrap: nowrap; } .login-row > .login-wrap { padding: 90px 16px 60px; } }
-  .login-row > .login-wrap { flex: 0 1 560px; width: 560px; max-width: 100%; min-width: 0; margin: 0; }
-  .galeria-medalhas { flex: 0 0 420px; width: 420px; max-width: 100%; }
-  .galeria-medalhas img { width: 100%; height: auto; border-radius: 18px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6); }
-  /* Entrada coreografada: o cartão desfoca e sobe; a galeria se revela por máscara, logo depois.
-     Anima o wrapper e a galeria, não o cartão (que usa transform no arraste). Sem JS; conteúdo visível sem animação. */
-  @keyframes loginEntra {
-    from { opacity: 0; transform: translateY(28px) scale(.98); filter: blur(12px); }
-    to   { opacity: 1; transform: none; filter: none; }
-  }
-  @keyframes galeriaRevela {
-    from { clip-path: inset(0 0 100% 0 round 18px); opacity: 0; }
-    to   { clip-path: inset(0 0 0 0 round 18px); opacity: 1; }
-  }
-  .login-row > .login-wrap { animation: loginEntra .9s cubic-bezier(0.16, 1, 0.3, 1) both; }
-  .galeria-medalhas {
-    transform-origin: center center;
-    animation:
-      galeriaRevela 1.1s cubic-bezier(0.16, 1, 0.3, 1) .25s both,
-      galeriaFloat 8s ease-in-out 1.5s infinite;
-  }
-  @keyframes galeriaFloat {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-8px); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .login-row > .login-wrap, .galeria-medalhas { animation: none; }
-  }
-  .login-card {
+
+  /* ===== HERO — IMAGEM INTEIRA, SEM CORTES ===== */
+  .sessao-acesso {
     position: relative;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px var(--gutter);
+    background: #07122f;
+    isolation: isolate;
+    overflow: clip;
+  }
+  .hero-palco {
+    position: relative;
+    width: min(var(--largura-conteudo), 100%, calc((100svh - 24px) * 16 / 9));
+    aspect-ratio: 16 / 9;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(242, 245, 252, 0.18);
+    box-shadow: 0 24px 60px rgba(2, 8, 32, 0.45);
+    background: #0a1735;
+    isolation: isolate;
+  }
+  .hero-palco__img {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    cursor: grab;
-    touch-action: none;
-    will-change: transform;
-    border-radius: 24px;
-    padding: 44px 40px 36px;
-    background: rgba(45,8,22,0.42);
-    border: 1px solid rgba(255,255,255,0.4);
-    backdrop-filter: blur(22px) saturate(160%);
-    -webkit-backdrop-filter: blur(22px) saturate(160%);
-    box-shadow: 0 30px 60px -20px rgba(40,0,10,0.65), inset 0 1px 0 rgba(255,255,255,0.3);
-    color: #f4fafb;
-    animation: loginCardGlow 6s ease-in-out 1.2s infinite;
+    height: 100%;
+    object-fit: fill;
+    display: block;
   }
-  @keyframes loginCardGlow {
-    0%, 100% {
-      box-shadow: 0 30px 60px -20px rgba(40,0,10,0.65), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 0 rgba(244,114,182,0);
-    }
-    50% {
-      box-shadow: 0 34px 72px -18px rgba(40,0,10,0.72), inset 0 1px 0 rgba(255,255,255,0.35), 0 0 40px rgba(244,114,182,0.18);
-    }
-  }
-  .login-card.dragging { cursor: grabbing; user-select: none; }
-  .login-card input, .login-card button, .login-card label, .login-card a, .login-card .footer { cursor: auto; }
-  /* Brilho que atravessa o botão de login no hover. */
-  .login-card button[type="submit"] { position: relative; overflow: hidden; }
-  .login-card button[type="submit"]::after {
+  .hero-palco::after {
     content: "";
     position: absolute;
     inset: 0;
+    z-index: 0;
     pointer-events: none;
-    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.28) 50%, transparent 70%);
-    transform: translateX(-140%) skewX(-16deg);
-    transition: transform .65s cubic-bezier(.16,1,.3,1);
+    background: linear-gradient(180deg, rgba(5, 12, 28, 0.18), rgba(5, 12, 28, 0.42));
   }
-  .login-card button[type="submit"]:hover::after { transform: translateX(140%) skewX(-16deg); }
+  .hero-palco .movel { position: absolute; z-index: 2; }
+  .portal-card {
+    width: min(360px, calc(100% - 32px));
+    left: 50%;
+    top: 38%;
+    --px: 0px;
+    --py: 0px;
+    transform: translate(calc(-50% + var(--px)), calc(-50% + var(--py)));
+    border-radius: 18px;
+    background: rgba(8, 18, 38, 0.42);
+    border: 1px solid rgba(242, 245, 252, 0.2);
+    box-shadow: 0 24px 60px rgba(2, 8, 32, 0.45), inset 0 1px 0 rgba(255,255,255,0.14);
+    backdrop-filter: blur(14px) saturate(115%);
+    -webkit-backdrop-filter: blur(14px) saturate(115%);
+    padding: 14px 20px 12px;
+    overflow: hidden;
+    animation: cardEntrada 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .portal-card.arrastando,
+  .sessao-acesso__resumo.arrastando {
+    animation: none;
+    transition: box-shadow 0.2s ease;
+    box-shadow: 0 32px 80px rgba(2, 8, 32, 0.6), inset 0 1px 0 rgba(255,255,255,0.14);
+    z-index: 5;
+  }
+  .portal-card__alca {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    padding: 8px 6px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    border-bottom: 1px dashed rgba(242, 245, 252, 0.16);
+    color: var(--nevoa);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+  .portal-card__alca::before {
+    content: "";
+    width: 44px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(201, 168, 106, 0.7);
+  }
+  .portal-card__alca:active { cursor: grabbing; }
+  .portal-card__alca:focus-visible {
+    outline: 2px solid rgba(201, 168, 106, 0.9);
+    outline-offset: -2px;
+  }
+  .portal-card__dica { display: none; }
+  .login-form__recentrar {
+    background: none;
+    border: 1px solid rgba(242, 245, 252, 0.25);
+    border-radius: 8px;
+    margin-top: 8px;
+    padding: 8px 14px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--marfim);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .login-form__recentrar:hover { border-color: rgba(201, 168, 106, 0.7); }
+  .login-form__recentrar:focus-visible {
+    outline: 2px solid rgba(201, 168, 106, 0.9);
+    outline-offset: 2px;
+  }
+  .portal-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,106,0.9), transparent);
+    pointer-events: none;
+  }
+  @keyframes cardEntrada {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .portal-card__grade {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: center;
+    align-items: center;
+  }
+  .portal-card__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #e4c78f;
+  }
+  .portal-card__eyebrow::before {
+    content: "";
+    width: 22px;
+    height: 1px;
+    background: rgba(201, 168, 106, 0.8);
+  }
+  .portal-card__sigla {
+    font-family: var(--fonte-titulo);
+    font-size: clamp(1.6rem, 2.5vw, 2rem);
+    font-weight: 600;
+    line-height: 1;
+    margin: 0 0 4px;
+    color: var(--marfim);
+    text-wrap: balance;
+  }
+  .portal-card__sub {
+    margin: 0 0 12px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--nevoa);
+  }
 
-  /* ---- Menu ponta a ponta, centralizado, translúcido ---- */
-  .floating-menu {
-    position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
-    z-index: 40;
-    display: flex; align-items: center; justify-content: center; gap: 2px;
-    width: calc(100% - 28px);
-    max-width: none;
-    padding: 6px;
-    border-radius: 9999px;
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.35);
-    backdrop-filter: blur(16px) saturate(150%);
-    -webkit-backdrop-filter: blur(16px) saturate(150%);
-    box-shadow: 0 12px 32px -12px rgba(40,0,10,0.55);
+  /* ===== FORMULÁRIO ===== */
+  .login-form {
+    position: relative;
+    z-index: 1;
+    padding: 12px 14px;
+    border: 1px solid rgba(242, 245, 252, 0.28);
+    border-radius: 12px;
+    background: rgba(242, 245, 252, 0.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(18px) saturate(130%);
+    -webkit-backdrop-filter: blur(18px) saturate(130%);
   }
-  .floating-menu a {
-    flex: 1 1 auto;
-    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-    padding: 9px 10px;
-    border-radius: 9999px;
-    font-family: var(--fonte-texto);
-    font-size: 13.5px; font-weight: 600;
-    color: rgba(255,255,255,0.92);
-    text-decoration: none;
-    white-space: nowrap;
-    transition: background .15s ease, color .15s ease;
+  .login-form .msg {
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    border: 1px solid rgba(224, 138, 138, 0.45);
+    background: rgba(150, 40, 40, 0.18);
+    font-size: 13px;
+    color: var(--sangue);
   }
-  .floating-menu a:hover, .floating-menu a:focus-visible {
-    background: rgba(255,255,255,0.18);
-    color: #fff;
-    outline: none;
-  }
-  .floating-menu svg { width: 15px; height: 15px; flex: none; }
-  .fm-toggle { display: none; }
-  .fm-fechar-mobile { display: none; }
-
-  /* ===== 2ª sessão: Calendário (fundo mais escuro) ===== */
-  .sessao-calendario {
-    position: relative; z-index: 2;
-    background: #8C1A4F;
-    border-top: 1px solid rgba(255,255,255,0.08);
-  }
-  .fm-badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 6px 14px; border-radius: 9999px;
-    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.22);
-    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3em;
-    color: rgba(255,255,255,0.9);
-  }
-  .cal-cabecalho { display: flex; justify-content: center; margin-bottom: 14px; }
-  .cal-mes-ano {
-    font-size: 15px; font-weight: 700; letter-spacing: 0.06em;
-    color: #e9c85a; text-transform: uppercase;
-  }
-  .cal-grade {
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 14px; overflow: hidden;
-    background: rgba(255,255,255,0.03);
-  }
-  .cal-dow {
-    display: grid; grid-template-columns: repeat(7, 1fr);
-    background: rgba(255,255,255,0.06);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-  }
-  .cal-dow span {
-    padding: 10px 6px; text-align: center;
-    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em;
-    color: rgba(255,255,255,0.55);
-  }
-  .cal-semana {
-    display: grid; grid-template-columns: repeat(7, 1fr);
-  }
-  .cal-semana + .cal-semana { border-top: 1px solid rgba(255,255,255,0.08); }
-  .cal-dia {
-    min-height: 92px;
-    padding: 6px;
-    border-right: 1px solid rgba(255,255,255,0.06);
-    display: flex; flex-direction: column; gap: 3px;
-  }
-  .cal-dia:nth-child(7) { border-right: none; }
-  .cal-num {
-    font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.75);
-    width: 24px; height: 24px;
-    display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 9999px;
-    font-variant-numeric: tabular-nums;
-  }
-  .cal-dia.hoje .cal-num { background: #c9a227; color: #2b0716; font-weight: 800; }
-  .cal-dia.outro { opacity: 0.35; }
-  .cal-evt {
+  .login-form label {
     display: block;
-    padding: 2px 6px;
+    font-size: 9px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--nevoa);
+    margin-bottom: 5px;
+  }
+  .login-form > div[style] { margin-bottom: 8px !important; }
+  .login-form > div[style*="justify-content"] { margin: 6px 0 !important; }
+  .login-form input {
+    width: 100%;
+    padding: 7px 12px;
+    border-radius: 2px;
+    border: 1px solid rgba(159, 180, 221, 0.28);
+    background: rgba(242, 245, 252, 0.06);
+    font-family: var(--fonte-texto);
+    font-size: 14px;
+    color: var(--marfim);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  }
+  .login-form input::placeholder { color: rgba(159, 180, 221, 0.5); }
+  .login-form input:focus {
+    background: rgba(242, 245, 252, 0.1);
+    border-color: rgba(201, 168, 106, 0.9);
+  }
+  .login-form input:focus-visible {
+    outline: 2px solid rgba(201, 168, 106, 0.9);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(201, 168, 106, 0.18);
+  }
+  .login-form button[type="submit"] {
+    width: 100%;
+    margin-top: 6px;
+    padding: 9px 20px;
+    border-radius: 2px;
+    border: 1px solid rgba(201, 168, 106, 0.8);
+    background: linear-gradient(90deg, rgba(201, 168, 106, 0.16) 0%, rgba(201, 168, 106, 0.05) 100%);
+    color: var(--marfim);
+    font-family: var(--fonte-texto);
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .login-form button[type="submit"] {
+    touch-action: manipulation;
+  }
+  .login-form button[type="submit"]:hover:not(:disabled) {
+    background: linear-gradient(90deg, rgba(201, 168, 106, 0.28) 0%, rgba(201, 168, 106, 0.12) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 30px 60px -40px rgba(201, 168, 106, 0.6);
+  }
+  .login-form button[type="submit"]:focus-visible {
+    outline: 2px solid rgba(201, 168, 106, 0.9);
+    outline-offset: 2px;
+  }
+  .login-form button[type="submit"]:not(:disabled)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.22) 50%, transparent 70%);
+    transform: translateX(-130%) skewX(-16deg);
+    animation: brilhoBotao 3.2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .login-form button[type="submit"] { position: relative; overflow: hidden; }
+  @keyframes brilhoBotao {
+    0%, 55% { transform: translateX(-130%) skewX(-16deg); }
+    85%, 100% { transform: translateX(130%) skewX(-16deg); }
+  }
+  .login-form button[type="submit"]:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .login-form__rodape {
+    margin-top: 6px;
+    text-align: center;
+  }
+  .login-form__esqueci {
+    background: none; border: none;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--nevoa);
+    cursor: pointer;
+  }
+  .login-form__esqueci:hover { color: var(--marfim); }
+  .login-form__esqueci:focus-visible {
+    outline: 2px solid rgba(201, 168, 106, 0.9);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  .login-form__aviso {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--nevoa);
+    line-height: 1.8;
+  }
+
+  .resumo-alca {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
     border-radius: 6px;
-    background: rgba(91,141,239,0.18);
-    border: 1px solid rgba(91,141,239,0.35);
-    color: #cfe0ff;
-    font-size: 10.5px; font-weight: 600;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    color: var(--nevoa);
   }
-  .cal-evt-hora { font-variant-numeric: tabular-nums; color: #7aa8f5; }
-  .cal-vazio {
-    margin-top: 16px; text-align: center;
-    font-size: 13.5px; color: rgba(255,255,255,0.55);
+  .resumo-alca::before {
+    content: "";
+    width: 44px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(201, 168, 106, 0.7);
   }
-  @media (max-width: 640px) {
-    .cal-dia { min-height: 56px; padding: 4px; }
-    .cal-evt { display: none; } /* no mobile, o ponto de agenda: */
-    .cal-dia.tem-evt { position: relative; }
-    .cal-dia.tem-evt::after {
-      content: ''; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
-      width: 5px; height: 5px; border-radius: 9999px; background: #5b8def;
+  .resumo-alca:active { cursor: grabbing; }
+  .resumo-alca:focus-visible {
+    outline: 2px solid rgba(201, 168, 106, 0.9);
+    outline-offset: 2px;
+  }
+  /* ===== RESUMO DA JURISDIÇÃO EM VIDRO FOSCO ===== */
+  .sessao-acesso__resumo {
+    width: min(600px, calc(100% - 32px));
+    left: 50%;
+    bottom: 2%;
+    --px: 0px;
+    --py: 0px;
+    transform: translate(calc(-50% + var(--px)), var(--py));
+  animation: cardEntrada 0.7s 0.12s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    padding: 8px 16px;
+    border: 1px solid rgba(242, 245, 252, 0.32);
+    border-radius: 14px;
+    background: rgba(242, 245, 252, 0.035);
+    color: var(--marfim);
+    backdrop-filter: blur(24px) saturate(110%);
+    -webkit-backdrop-filter: blur(24px) saturate(110%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  }
+  .conte-dados { margin: 0; }
+  .conte-dados__cabecalho,
+  .grafico-efetivos__cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .conte-dados__rotulo,
+  .grafico-efetivos__rotulo {
+    font-size: 9px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: rgba(242, 245, 252, 0.8);
+  }
+  .conte-dados__grade {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    margin-top: 8px;
+  }
+  .conte-dados__cel {
+    padding: 3px 16px 5px;
+    border-left: 1px solid rgba(242, 245, 252, 0.2);
+  }
+  .conte-dados__cel:first-child { padding-left: 0; border-left: 0; }
+  .conte-dados__num {
+    display: block;
+    font-family: var(--fonte-titulo);
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1;
+    color: #fff;
+  }
+  .conte-dados__nome {
+    display: block;
+    margin-top: 4px;
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(242, 245, 252, 0.78);
+  }
+  .conte-dados__barra { display: none; }
+  .grafico-efetivos {
+    display: grid;
+    grid-template-columns: minmax(130px, 0.72fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(242, 245, 252, 0.2);
+  }
+  .grafico-efetivos__cabecalho { align-items: flex-start; flex-direction: column; gap: 4px; margin: 0; }
+  .grafico-efetivos__legenda {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 8px;
+    letter-spacing: 0.08em;
+    color: rgba(242, 245, 252, 0.72);
+  }
+  .grafico-efetivos__container { display: flex; gap: 9px; align-items: stretch; min-height: 36px; }
+  .grafico-efetivos__y { width: 1px; background: rgba(242, 245, 252, 0.28); }
+  .grafico-efetivos__barras { display: flex; align-items: flex-end; gap: 18px; flex: 1; padding: 0; }
+  .grafico-efetivos__coluna { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 0 0 50px; }
+  .grafico-efetivos__barra-wrap { height: 22px; display: flex; align-items: flex-end; }
+  .grafico-efetivos__barra {
+    width: 22px;
+    background: rgba(242, 245, 252, 0.7);
+    border-radius: 2px 2px 0 0;
+    min-height: 5px;
+  }
+  .grafico-efetivos__valor { font-size: 10px; color: #fff; }
+  .grafico-efetivos__label { font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 245, 252, 0.78); text-align: center; }
+
+  /* ===== CITAÇÕES ===== */
+  .sessao-elogios {
+    position: relative;
+    padding: 72px var(--gutter) 86px;
+    background: linear-gradient(180deg, rgba(8, 21, 55, 0.92), rgba(7, 18, 47, 0.82));
+  }
+  .sessao-elogios__header {
+    max-width: 900px;
+    margin: 0 auto 34px;
+    text-align: center;
+  }
+  .sessao-elogios__titulo {
+    font-family: var(--fonte-titulo);
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 500;
+    line-height: 1.08;
+    color: var(--marfim);
+    margin-bottom: 12px;
+  }
+  .sessao-elogios__subtitulo {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--nevoa);
+    max-width: 690px;
+    margin: 0 auto;
+  }
+  .sessao-elogios__grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 16px;
+    max-width: var(--largura-conteudo);
+    margin: 0 auto;
+  }
+  .elogio-card {
+    grid-column: span 4;
+    min-height: 210px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 22px;
+    border-radius: 14px;
+    background: rgba(242, 245, 252, 0.055);
+    border: 1px solid rgba(242, 245, 252, 0.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
+  }
+  .elogio-card:hover {
+    transform: translateY(-3px);
+    background: rgba(242, 245, 252, 0.085);
+    border-color: rgba(201, 168, 106, 0.42);
+  }
+  .elogio-card__simbolo {
+    display: inline-flex;
+    min-height: 32px;
+    align-items: center;
+    padding: 0 10px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(201, 168, 106, 0.42);
+    border-radius: 999px;
+    color: #f0d7a3;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .elogio-card__nome {
+    margin: 0 0 8px;
+    color: var(--marfim);
+    font-family: var(--fonte-titulo);
+    font-size: 1.42rem;
+    font-weight: 600;
+    line-height: 1.15;
+  }
+  .elogio-card__texto {
+    margin: 0 0 16px;
+    color: rgba(242, 245, 252, 0.9);
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .elogio-card__cargo {
+    margin-top: auto;
+    color: #c7d5f0;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .elogio-card__fonte {
+    margin-top: 10px;
+    color: #e4c78f;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ===== DIAGRAMA DAS ORDENS INGLESAS ===== */
+  .sessao-diagrama {
+    padding: 0 var(--gutter);
+    background: #0a1735;
+    border-top: 1px solid rgba(201, 168, 106, 0.35);
+    border-bottom: 1px solid rgba(201, 168, 106, 0.35);
+    scroll-margin-top: 95px;
+  }
+  .sessao-diagrama__figura { max-width: var(--largura-conteudo); margin: 0 auto; }
+  .sessao-diagrama__figura img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* ===== CALENDÁRIO ===== */
+  .sessao-calendario {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: 74px var(--gutter) 86px;
+    color: var(--marfim);
+    background: #091630;
+  }
+  .sessao-calendario::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background: url("https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/John_Rocque%27s_map_of_London_and_Westminster%2C_1746%2C_all_sheets.jpg/1920px-John_Rocque%27s_map_of_London_and_Westminster%2C_1746%2C_all_sheets.jpg") center 45% / cover no-repeat;
+    opacity: 0.3;
+    filter: sepia(0.55) saturate(0.65);
+  }
+  .sessao-calendario::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(180deg, rgba(5, 12, 28, 0.82), rgba(5, 12, 28, 0.72));
+  }
+  .sessao-calendario__inner { max-width: var(--largura-conteudo); margin: 0 auto; }
+  .sessao-calendario__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 22px;
+  }
+  .sessao-calendario__titulo {
+    margin: 0;
+    font-family: var(--fonte-titulo);
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 500;
+  }
+  .sessao-calendario__nota {
+    margin: 8px 0 0;
+    color: rgba(242, 245, 252, 0.78);
+    font-size: 12px;
+  }
+  .agenda-controles {
+    display: grid;
+    grid-template-columns: minmax(150px, auto) minmax(180px, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 12px;
+    border: 1px solid rgba(242, 245, 252, 0.16);
+    border-radius: 14px;
+    background: rgba(8, 18, 38, 0.58);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+  .agenda-modos { display: flex; flex-wrap: wrap; gap: 4px; }
+  .agenda-modo {
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    color: rgba(242, 245, 252, 0.78);
+    background: transparent;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .agenda-modo[aria-pressed="true"] {
+    color: #fff;
+    background: rgba(91, 141, 239, 0.25);
+    border-color: rgba(91, 141, 239, 0.5);
+  }
+  .agenda-filtros { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+  .agenda-filtros select {
+    min-height: 38px;
+    min-width: 150px;
+    padding: 7px 10px;
+    border: 1px solid rgba(242, 245, 252, 0.22);
+    border-radius: 9px;
+    color: #fff;
+    background: rgba(242, 245, 252, 0.08);
+    font: inherit;
+    font-size: 12px;
+    color-scheme: dark;
+  }
+  .agenda-mesnav { display: flex; align-items: center; gap: 8px; justify-content: center; }
+  .agenda-mesnav button, .agenda-exportar {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid rgba(242, 245, 252, 0.2);
+    border-radius: 9px;
+    color: #fff;
+    background: rgba(242, 245, 252, 0.08);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .agenda-exportar { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
+  .agenda-superficie {
+    border: 1px solid rgba(242, 245, 252, 0.19);
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(8, 18, 38, 0.66);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+  .agenda-cal-grade { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .agenda-dia-nome {
+    padding: 12px 6px;
+    color: rgba(242, 245, 252, 0.76);
+    border-bottom: 1px solid rgba(242, 245, 252, 0.15);
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .agenda-celula {
+    min-height: 112px;
+    padding: 8px;
+    border-right: 1px solid rgba(242, 245, 252, 0.1);
+    border-bottom: 1px solid rgba(242, 245, 252, 0.1);
+  }
+  .agenda-celula--vazia { background: rgba(242, 245, 252, 0.018); }
+  .agenda-dia-num {
+    display: inline-grid;
+    min-width: 26px;
+    height: 26px;
+    place-items: center;
+    margin-bottom: 5px;
+    border-radius: 50%;
+    color: rgba(242, 245, 252, 0.9);
+    font-size: 12px;
+  }
+  .agenda-dia-num--hoje { background: rgba(201, 168, 106, 0.86); color: #101827; font-weight: 700; }
+  .agenda-evento {
+    display: block;
+    width: 100%;
+    margin: 3px 0;
+    padding: 6px 7px;
+    border: 1px solid rgba(242, 245, 252, 0.12);
+    border-radius: 7px;
+    color: #fff;
+    background: rgba(242, 245, 252, 0.085);
+    text-align: left;
+    font: inherit;
+    font-size: 10px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  .agenda-evento-hora { display: block; color: #e4c78f; font-size: 9px; }
+  .agenda-kanban { display: grid; grid-template-columns: repeat(12, minmax(152px, 1fr)); gap: 8px; padding: 12px; overflow-x: auto; }
+  .agenda-kanban[hidden], .agenda-lista[hidden] { display: none; }
+  .agenda-kanban-mes {
+    min-height: 180px;
+    padding: 10px;
+    border: 1px solid rgba(242, 245, 252, 0.12);
+    border-radius: 11px;
+    background: rgba(242, 245, 252, 0.035);
+  }
+  .agenda-kanban-mes--atual {
+    border-color: rgba(201, 168, 106, 0.55);
+    background: rgba(201, 168, 106, 0.08);
+  }
+  .agenda-kanban-mes--atual .agenda-kanban-titulo { color: var(--ouro); }
+  .agenda-kanban-titulo { margin: 0 0 9px; color: #fff; font-size: 11px; font-weight: 700; }
+  .agenda-kanban-data { display: block; color: rgba(242, 245, 252, 0.85); font-size: 12px; font-weight: 700; }
+  .agenda-kanban-evento {
+    display: block;
+    width: 100%;
+    margin: 0 0 7px;
+    padding: 9px;
+    border: 1px solid rgba(242, 245, 252, 0.14);
+    border-radius: 9px;
+    color: #fff;
+    background: rgba(242, 245, 252, 0.075);
+    text-align: left;
+    font: inherit;
+    font-size: 11px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  .agenda-demo-badge { display: inline-block; margin: 0 0 5px; color: #e4c78f; font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .agenda-lista { display: grid; gap: 8px; padding: 12px; }
+  .agenda-lista-dia { margin: 12px 0 3px; color: #e4c78f; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .agenda-lista-evento { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; padding: 12px; border: 1px solid rgba(242, 245, 252, 0.12); border-radius: 10px; background: rgba(242, 245, 252, 0.045); }
+  .agenda-vazio { padding: 30px 14px; color: rgba(242, 245, 252, 0.75); text-align: center; font-size: 13px; }
+  .agenda-credito { margin-top: 12px; color: rgba(242, 245, 252, 0.72); font-size: 10px; text-align: right; }
+  .agenda-credito a { color: #e4c78f; }
+  @media (max-width: 760px) {
+    .sessao-elogios { padding: 54px 16px 60px; }
+    .elogio-card { grid-column: span 12; }
+    .sessao-calendario { padding: 58px 16px 60px; }
+    .sessao-calendario__header { align-items: flex-start; flex-direction: column; gap: 10px; }
+    .agenda-controles { grid-template-columns: 1fr; }
+    .agenda-filtros { justify-content: stretch; }
+    .agenda-filtros select { flex: 1 1 145px; }
+    .agenda-mesnav { justify-content: flex-start; }
+    .agenda-cal-grade { grid-template-columns: repeat(7, minmax(92px, 1fr)); overflow-x: auto; }
+    .agenda-kanban { grid-template-columns: repeat(12, minmax(145px, 1fr)); }
+  }
+  /* ===== Movimento de rolagem: revelação suave das seções ===== */
+  @media (prefers-reduced-motion: no-preference) {
+    .js-motion .elogio-card,
+    .js-motion .sessao-calendario__header,
+    .js-motion .agenda-controles,
+    .js-motion .agenda-superficie,
+    .js-motion .monte__inner {
+      opacity: 0;
+      transform: translate3d(0, 22px, 0);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      transition-delay: var(--reveal-delay, 0s);
+    }
+    .js-motion .elogio-card.is-visible,
+    .js-motion .sessao-calendario__header.is-visible,
+    .js-motion .agenda-controles.is-visible,
+    .js-motion .agenda-superficie.is-visible,
+    .js-motion .monte__inner.is-visible {
+      opacity: 1;
+      transform: none;
+    }
+    .agenda-modo, .agenda-mesnav button, .agenda-exportar {
+      touch-action: manipulation;
+      transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+    .agenda-modo:hover, .agenda-mesnav button:hover, .agenda-exportar:hover { transform: translateY(-1px); }
+    .agenda-modo:focus-visible, .agenda-mesnav button:focus-visible, .agenda-exportar:focus-visible,
+    .elogio-card__fonte:focus-visible, .agenda-credito a:focus-visible, .monte__link:focus-visible {
+      outline: 2px solid rgba(201, 168, 106, 0.9);
+      outline-offset: 2px;
     }
   }
-
-  /* Mobile: hero empilha */
-  @media (max-width: 760px) {
-    .hero { height: auto; aspect-ratio: auto; min-height: 100svh; container-type: normal; padding: 8vw 6vw 10vw; display: flex; flex-direction: column; gap: 8vw; }
-    .hero__inner { position: static; display: contents; }
-    .hero__title, .hero__text, .hero__brasao, .hero__contagem, .dots { position: static; }
-    .hero__contagem { order: 1; justify-content: center; gap: 4vw; }
-    .hero__contagem-item { min-width: 34vw; padding: 3vw 4vw; }
-    .hero__contagem-num { font-size: 9vw; }
-    .hero__contagem-rotulo { font-size: 2.8vw; }
-    .hero__title { font-size: 13vw; white-space: normal; }
-    .hero__text { width: 100%; font-size: 4.4vw; order: 3; }
-    .hero__brasao { width: 80vw; margin: 0 auto; order: 2; }
-    .dots { display: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .elogio-card { transition: none; }
   }
 
-  /* Abaixo de 900px a sessão de login empilha: o cartão fica estático e com respiro lateral */
-  @media (max-width: 899px) {
-    .login-wrap { position: static; padding: 8vw 6vw 10vw; }
-  }
+  /* ===== LOCALIZAÇÃO MONTE LÍBANO — FACHADA + COMO CHEGAR ===== */
+  .monte { padding: 90px var(--gutter) 110px; scroll-margin-top: 95px; }
+  .monte__inner { max-width: var(--largura-conteudo); margin: auto; }
+  .monte h2 { font-family: var(--fonte-titulo); font-size: clamp(2.3rem, 5vw, 4rem); color: var(--marfim); line-height: 1.1; }
+  .monte__endereco { margin: 18px 0 28px; color: var(--marfim); font-size: 16px; line-height: 1.7; font-style: normal; }
+  .monte__mapa { display: block; width: 100%; height: clamp(360px, 55vw, 580px); margin-bottom: 0; }
+  .monte__mapa + .monte__mapa { margin-top: 18px; }
+  .monte__rota { position: relative; top: -4px; display: inline-flex; align-items: center; gap: 8px; margin-top: 18px; padding: 10px 20px; border: 1px solid rgba(159, 180, 221, 0.5); background: rgba(159, 180, 221, 0.08); color: var(--marfim); text-decoration: none; font-weight: 500; font-size: 14px; letter-spacing: 0.04em; }
+  .monte__rota:hover { border-color: var(--ouro); color: var(--ouro); background: rgba(201, 168, 106, 0.12); }
+  .monte__rota:focus-visible { outline: 2px solid var(--ouro); outline-offset: 3px; border-color: var(--ouro); color: var(--ouro); }
+  .monte__rota svg { flex: none; width: 15px; height: 15px; fill: currentColor; opacity: 0.8; }
+  .monte__link { display: inline-block; margin-top: 12px; margin-left: 14px; color: var(--nevoa); text-decoration: underline; text-underline-offset: 4px; }
+  .monte__link:focus-visible { outline: 2px solid var(--ouro); outline-offset: 5px; }
+  @media (max-width: 760px) { .monte { padding: 60px 16px 80px; } }
 
-  /* Mobile: menu ponta a ponta vira painel suspenso (sem botão Fechar) */
+  @media (max-width: 1080px) {
+    .elogio-card { grid-column: span 6; }
+    .elogio-card--destaque { grid-column: span 12; }
+  }
+  @media (min-width: 761px) and (max-height: 820px) {
+    .sessao-acesso { padding: 16px; }
+    .hero-palco { width: min(var(--largura-conteudo), 100%, calc((100svh - 32px) * 16 / 9)); }
+    .portal-card { padding: 10px 24px; }
+    .portal-card__sigla { font-size: clamp(2rem, 3vw, 2.6rem); margin-bottom: 5px; }
+    .login-form { padding: 9px 14px; }
+    .login-form label { margin-bottom: 4px; }
+    .login-form > div[style] { margin-bottom: 5px !important; }
+    .login-form > div[style*="justify-content"] { margin: 3px 0 !important; }
+    .login-form input { padding: 7px 12px; }
+    .login-form button[type="submit"] { padding: 8px 16px; margin-top: 4px; }
+    .login-form__rodape { margin-top: 5px; }
+    .sessao-acesso__resumo { margin-top: 52px; padding: 9px 16px; }
+    .conte-dados__grade { margin-top: 5px; }
+    .conte-dados__num { font-size: 1.3rem; }
+    .grafico-efetivos { gap: 12px; margin-top: 8px; padding-top: 7px; }
+    .grafico-efetivos__container { min-height: 40px; }
+    .grafico-efetivos__barra-wrap { height: 28px; }
+  }
   @media (max-width: 760px) {
-    .floating-menu {
+    .sessao-acesso { padding: 12px 16px; }
+    .hero-palco {
+      width: 100%;
+      aspect-ratio: auto;
+      display: flex;
       flex-direction: column;
-      align-items: stretch;
-      padding: 4px;
-      border-radius: 18px;
-      display: none;
+      overflow: visible;
+      background: #0a1735;
     }
-    .floating-menu.aberto { display: flex; }
-    .floating-menu a { padding: 13px 16px; font-size: 14.5px; justify-content: flex-start; }
-    .fm-toggle {
-      display: inline-flex; align-items: center; gap: 8px;
-      position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 41;
-      width: calc(100% - 20px);
-      justify-content: center;
-      padding: 11px 16px;
-      border-radius: 9999px;
-      background: rgba(255,255,255,0.14);
-      border: 1px solid rgba(255,255,255,0.35);
-      backdrop-filter: blur(16px) saturate(150%);
-      -webkit-backdrop-filter: blur(16px) saturate(150%);
-      color: rgba(255,255,255,0.95);
-      font-family: var(--fonte-texto);
-      font-size: 13px; font-weight: 700;
-      letter-spacing: .08em;
-      cursor: pointer;
+    .hero-palco__img {
+      position: relative;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      border-radius: 16px 16px 0 0;
     }
+    .hero-palco::after { display: none; }
+    .hero-palco .movel {
+      position: relative;
+      left: auto;
+      top: auto;
+      bottom: auto;
+      transform: none !important;
+      width: 100%;
+    }
+    .portal-card { padding: 14px 16px; }
+    .portal-card__grade { grid-template-columns: minmax(0, 1fr); }
+    .portal-card__sigla { font-size: clamp(2rem, 8vw, 2.6rem); margin-bottom: 6px; }
+    .login-form { padding: 12px; }
+    .login-form label { margin-bottom: 6px; }
+    .login-form input { padding: 8px 12px; }
+    .login-form > div[style] { margin-bottom: 6px !important; }
+    .login-form > div[style*="justify-content"] { margin: 4px 0 !important; }
+    .login-form button[type="submit"] { padding: 8px 16px; margin-top: 4px; }
+    .login-form__rodape { margin-top: 8px; }
+    .login-form__aviso { margin-top: 6px; font-size: 11px; }
+    .sessao-acesso__resumo { margin-top: 52px; padding: 9px 11px; }
+    .conte-dados__grade { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .conte-dados__cel { padding: 3px 8px; }
+    .conte-dados__num { font-size: 1.2rem; }
+    .conte-dados__nome { font-size: 7px; letter-spacing: 0.06em; }
+    .grafico-efetivos { grid-template-columns: 1fr; gap: 5px; margin-top: 6px; padding-top: 6px; }
+    .grafico-efetivos__cabecalho { flex-direction: row; align-items: center; }
+    .grafico-efetivos__container { min-height: 40px; }
+    .grafico-efetivos__barra-wrap { height: 30px; }
+    .escala-rito__grade { gap: 20px; justify-content: space-between; width: 100%; }
+    .elogio-card { grid-column: span 12; padding: 30px 26px; }
+    .sessao-supremo div[style] { grid-column: span 12 !important; }
+    .sessao-calendario__inner { padding: 0; }
+    .sessao-diagrama { padding: 0 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .portal-card, .sessao-acesso__resumo { animation: none; }
   }
 </style>
 {% if turnstile_configured %}
@@ -467,455 +909,429 @@
 {% endblock %}
 
 {% block conteudo %}
-<h1 class="sr-only">Sistema de Administração de Lojas Maçônicas — Vale de Jacarepaguá, REAA Grau 33º</h1>
-<!-- Menu ponta a ponta (mobile: painel suspenso) -->
-<button type="button" id="fmToggle" class="fm-toggle" aria-controls="menuFlutuante" aria-expanded="false">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
-  Menu
-</button>
-<nav id="menuFlutuante" class="floating-menu" aria-label="Navegação principal">
-  <a href="#sessao-login" data-fm="login">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-    Login
-  </a>
-  <a href="/agendas/?modo=calendario" data-fm="calendario">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-    Calendário
-  </a>
-  <a href="#sessao-galeria" data-fm="galeria">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-    Galeria
-  </a>
-  <a href="#sessao-supremo" data-fm="supremo">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
-    Supremo
-  </a>
-  <a href="#sessao-supremo" data-fm="contato">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-    Contato
-  </a>
-</nav>
+<h1 class="sr-only">Sistema de Administração de Lojas Maçônicas — Sal da Baixada</h1>
 
-<!-- HERO: slide Vale de Jacarepaguá -->
-<section class="hero" aria-label="Vale de Jacarepaguá">
-  <div class="hero__inner">
-    <span class="dots dots--top" aria-hidden="true"></span>
-    <span class="dots dots--bottom" aria-hidden="true"></span>
+<!-- CARD PRINCIPAL: ACESSO -->
+<section id="sessao-acesso" class="sessao-acesso">
+  <span id="sessao-login" class="sr-only"></span>
+  <div class="hero-palco" id="heroPalco">
+  <img class="hero-palco__img" src="{% static 'img/FUNDO_HERO.png' %}" alt="Arte do sistema das ordens colaterais" width="1448" height="814" fetchpriority="high">
+  <div class="portal-card movel" id="cartaoAcesso">
+    <div class="portal-card__alca" id="cartaoAlca" tabindex="0" role="button" title="Arrastar para mover" aria-label="Mover o cartão de acesso. Arraste com o mouse ou use as setas do teclado."></div>
+    <div class="portal-card__grade">
+      <!-- Coluna esquerda: identificação -->
+      <div>
+        <span class="portal-card__eyebrow">Acesso restrito</span>
+        <p class="sr-only" aria-live="polite" id="cartaoStatus"></p>
+        <h2 class="portal-card__sigla">Sal da Baixada</h2>
+        <p class="portal-card__sub">Sistema das ordens colaterais</p>
 
-    <div class="hero__title" role="img" aria-label="Vale de Jacarepaguá">
-      <span class="hero__title-linha" aria-hidden="true"><span class="hero__letra" style="--i:0">V</span><span class="hero__letra" style="--i:1">a</span><span class="hero__letra" style="--i:2">l</span><span class="hero__letra" style="--i:3">e</span><span class="hero__letra" data-espaco style="--i:4">&nbsp;</span><span class="hero__letra" style="--i:5">d</span><span class="hero__letra" style="--i:6">e</span></span><span class="hero__title-linha" aria-hidden="true"><span class="hero__letra" style="--i:7">J</span><span class="hero__letra" style="--i:8">a</span><span class="hero__letra" style="--i:9">c</span><span class="hero__letra" style="--i:10">a</span><span class="hero__letra" style="--i:11">r</span><span class="hero__letra" style="--i:12">e</span><span class="hero__letra" style="--i:13">p</span><span class="hero__letra" style="--i:14">a</span><span class="hero__letra" style="--i:15">g</span><span class="hero__letra" style="--i:16">u</span><span class="hero__letra" style="--i:17">á</span></span>
-    </div>
+        <form class="login-form" method="post" action="{% url 'acesso:login' %}" novalidate>
+          {% csrf_token %}
+          {% for message in messages %}
+            <div class="msg" role="alert" aria-live="polite">{{ message }}</div>
+          {% endfor %}
+          {% if erro %}
+            <div class="msg" role="alert" aria-live="polite">{{ erro }}</div>
+          {% endif %}
 
-    <p class="hero__text">
-      Jurisdicionada a 1ª Inspetoria Litúrgica do Estado do Rio de Janeiro do
-      Supremo Conselho do Grau 33º. Rito Escocês Antigo e Aceito da Maçonaria
-      para a República Federativa do Brasil.
-    </p>
+          <div style="margin-bottom:18px;">
+            <label for="identifier">Cadastro ou celular</label>
+            <input id="identifier" name="identifier" type="text" inputmode="numeric" spellcheck="false" placeholder="Ex.: 1234… ou celular" autocomplete="username" required>
+          </div>
+          <div style="margin-bottom:18px;">
+            <label for="senha">Senha</label>
+            <input id="senha" name="senha" type="password" spellcheck="false" placeholder="Digite sua senha…" autocomplete="current-password" required>
+          </div>
+          {% if turnstile_configured %}
+            <div style="margin:24px 0;display:flex;justify-content:flex-start;">
+              <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark" data-action="login" data-size="invisible"></div>
+            </div>
+          {% endif %}
+          <button type="submit" {% if not turnstile_configured %}disabled aria-disabled="true"{% endif %}>Entrar</button>
+          <div class="login-form__rodape">
+            <button type="button" id="forgotPassword" class="login-form__esqueci">Esqueci a senha</button><br>
+            <button type="button" id="recentrarCartao" class="login-form__recentrar" hidden>Recentralizar cartão</button>
+            <p id="forgotPasswordNotice" class="login-form__aviso" hidden>Recuperação indisponível. Entre em contato com a Secretaria.</p>
+          </div>
+        </form>
 
-    <div class="hero__contagem" aria-label="Contagem do Vale">
-      <div class="hero__contagem-item">
-        <span class="hero__contagem-num" data-valor="{{ contagem.lojas }}">{{ contagem.lojas }}</span>
-        <span class="hero__contagem-rotulo">Lojas ativas</span>
-      </div>
-      <div class="hero__contagem-item">
-        <span class="hero__contagem-num" data-valor="{{ contagem.membros }}">{{ contagem.membros }}</span>
-        <span class="hero__contagem-rotulo">Membros ativos</span>
       </div>
     </div>
+  </div>
 
-    <img class="hero__brasao" src="{% static 'img/brasao_3d.webp' %}"
-         alt="Brasão do Grau 33º: águia bicéfala com coroa, espada e lema Deus Meumque Jus"
-         width="1131" height="1391" fetchpriority="high" decoding="async">
+  <section class="sessao-acesso__resumo movel" id="cartaoResumo" aria-label="Resumo da jurisdição">
+    <div class="resumo-alca" id="resumoAlca" tabindex="0" role="button" aria-label="Alça para mover o cartão de resumo. Arraste ou use as setas do teclado."></div>
+    <div class="conte-dados" aria-label="Dados da jurisdição">
+      <div class="conte-dados__cabecalho"><span class="conte-dados__rotulo">Jurisdição</span></div>
+          <div class="conte-dados__grade">
+            <div class="conte-dados__cel">
+              <span class="conte-dados__num">{{ contagem.lojas }}</span>
+              <span class="conte-dados__nome">Loja</span>
+              <span class="conte-dados__barra"></span>
+            </div>
+            <div class="conte-dados__cel">
+              <span class="conte-dados__num">{{ contagem.membros }}</span>
+              <span class="conte-dados__nome">Irmãos Ativos</span>
+              <span class="conte-dados__barra"></span>
+            </div>
+            <div class="conte-dados__cel">
+              <span class="conte-dados__num">1ª</span>
+              <span class="conte-dados__nome">Potências</span>
+              <span class="conte-dados__barra"></span>
+            </div>
+            <div class="conte-dados__cel">
+              <span class="conte-dados__num">{{ sessoes_ano }}</span>
+              <span class="conte-dados__nome">Sessões no ano</span>
+              <span class="conte-dados__barra"></span>
+            </div>
+          </div>
+        </div>
+
+    <div class="grafico-efetivos" aria-label="Efetivos por loja">
+          <div class="grafico-efetivos__cabecalho">
+            <span class="grafico-efetivos__rotulo">Efetivos</span>
+            <div class="grafico-efetivos__legenda">
+              <span>Eixo X: Abreviatura da Loja</span>
+              <span>Eixo Y: Nº de Membros</span>
+            </div>
+          </div>
+          <div class="grafico-efetivos__container">
+            <div class="grafico-efetivos__y" aria-hidden="true"></div>
+            <div class="grafico-efetivos__barras">
+              {% for item in grafico_lojas %}
+              <div class="grafico-efetivos__coluna">
+                <div class="grafico-efetivos__barra-wrap">
+                  <div class="grafico-efetivos__barra" style="height: {{ item.count|add:0 }}px; max-height: 90px;" title="{{ item.label }}: {{ item.count }} membros"></div>
+                </div>
+                <span class="grafico-efetivos__valor">{{ item.count }}</span>
+                <span class="grafico-efetivos__label">{{ item.label }}</span>
+              </div>
+              {% empty %}
+              <div style="color: var(--nevoa); font-size: 12px; padding: 20px 0;">Sem dados</div>
+              {% endfor %}
+            </div>
+          </div>
+    </div>
+  </section>
+  </div>
+</section>
+
+<!-- ORDENS -->
+<section id="sessao-elogios" class="sessao-elogios" aria-labelledby="ordens-titulo">
+  <header class="sessao-elogios__header">
+    <h2 id="ordens-titulo" class="sessao-elogios__titulo">Ordens e caminhos da tradição</h2>
+    <p class="sessao-elogios__subtitulo">Breves apresentações informativas de ordens maçônicas relacionadas. Seus nomes, graus e requisitos variam conforme a jurisdição.</p>
+  </header>
+  <div class="sessao-elogios__grid">
+    <article class="elogio-card">
+      <span class="elogio-card__simbolo">Trabalho · Integridade</span>
+      <h3 class="elogio-card__nome">Mestre Maçom da Marca</h3>
+      <p class="elogio-card__texto">A Marca remete ao sinal escolhido pelo obreiro para identificar seu trabalho. A tradição da ordem usa a construção do Templo para refletir sobre diligência, responsabilidade e reconhecimento do mérito.</p>
+      <span class="elogio-card__cargo">Também chamada Ordem dos Mestres Maçons da Marca</span>
+      <a class="elogio-card__fonte" href="https://en.wikipedia.org/wiki/Order_of_Mark_Master_Masons" target="_blank" rel="noopener noreferrer">Referência: Wikipédia</a>
+    </article>
+    <article class="elogio-card">
+      <span class="elogio-card__simbolo">Travessia · Esperança</span>
+      <h3 class="elogio-card__nome">Nautas da Arca Real</h3>
+      <p class="elogio-card__texto">A Ordem dos Nautas da Arca Real, ou Royal Ark Mariner, utiliza a narrativa da Arca de Noé e do Dilúvio como alegoria de perseverança, prudência e busca por um porto seguro.</p>
+      <span class="elogio-card__cargo">Na tradição inglesa, ligada à Marca</span>
+      <a class="elogio-card__fonte" href="https://www.markmasonshall.org/orders/ram" target="_blank" rel="noopener noreferrer">Referência: Mark Masons’ Hall</a>
+    </article>
+    <article class="elogio-card">
+      <span class="elogio-card__simbolo">Memória · Busca</span>
+      <h3 class="elogio-card__nome">Sagrado Arco Real</h3>
+      <p class="elogio-card__texto">O Arco Real é um grau adicional em muitas tradições maçônicas. Sua alegoria trata do retorno a Jerusalém e da reconstrução, propondo uma reflexão sobre memória, descoberta e continuidade.</p>
+      <span class="elogio-card__cargo">Estrutura e relação com os graus variam por rito</span>
+      <a class="elogio-card__fonte" href="https://en.wikipedia.org/wiki/Holy_Royal_Arch" target="_blank" rel="noopener noreferrer">Referência: Wikipédia</a>
+    </article>
+    <article class="elogio-card">
+      <span class="elogio-card__simbolo">Serviço · Dever</span>
+      <h3 class="elogio-card__nome">Cavaleiros Templários</h3>
+      <p class="elogio-card__texto">Na tradição maçônica inglesa, a ordem usa referências históricas e lendárias aos Templários em cerimônias de caráter cavaleiresco e cristão. Não reivindica descendência histórica direta dos Templários medievais.</p>
+      <span class="elogio-card__cargo">Ordem adicional com requisitos próprios</span>
+      <a class="elogio-card__fonte" href="https://en.wikipedia.org/wiki/Knights_Templar_(Freemasonry)" target="_blank" rel="noopener noreferrer">Referência: Wikipédia</a>
+    </article>
+    <article class="elogio-card">
+      <span class="elogio-card__simbolo">Caridade · Hospitalidade</span>
+      <h3 class="elogio-card__nome">Ordem de Malta</h3>
+      <p class="elogio-card__texto">Associada, na estrutura maçônica inglesa, às ordens unidas dos Templários e de São João. Sua narrativa acompanha a tradição hospitalária e a jornada histórica evocada entre a Terra Santa, Rodes e Malta.</p>
+      <span class="elogio-card__cargo">Grau maçônico distinto da entidade soberana de Malta</span>
+      <a class="elogio-card__fonte" href="https://www.markmasonshall.org/orders/malta" target="_blank" rel="noopener noreferrer">Referência: Mark Masons’ Hall</a>
+    </article>
+    <article class="elogio-card">
+      <span class="elogio-card__simbolo">História · Estudo</span>
+      <h3 class="elogio-card__nome">Ordem de Athelstan</h3>
+      <p class="elogio-card__texto">Ordem maçônica moderna inspirada na figura do rei Athelstan e na lendária Assembleia de York de 926. Emprega lenda e alegoria como convite ao estudo da história, da conduta e das tradições maçônicas.</p>
+      <span class="elogio-card__cargo">Nome correto: Athelstan</span>
+      <a class="elogio-card__fonte" href="https://athelstan.org.uk/about-the-order/history-of-this-order" target="_blank" rel="noopener noreferrer">Referência: site oficial da Ordem</a>
+    </article>
+  </div>
+</section>
+
+{% include 'acesso/_diagrama_ordens.html' %}
+
+<!-- AGENDA PÚBLICA -->
+<section id="sessao-calendario" class="sessao-calendario" aria-labelledby="agenda-titulo">
+  <div class="sessao-calendario__inner">
+    <header class="sessao-calendario__header">
+      <div>
+        <h2 id="agenda-titulo" class="sessao-calendario__titulo">Agenda de Sessões</h2>
+        <p class="sessao-calendario__nota">John Rocque · Londres, Westminster e Southwark · 1746</p>
+      </div>
+    </header>
+    <div class="agenda-controles">
+      <div class="agenda-modos" role="group" aria-label="Modo da agenda">
+        <button type="button" class="agenda-modo" data-agenda-modo="calendario" aria-pressed="true">Calendário</button>
+        <button type="button" class="agenda-modo" data-agenda-modo="kanban" aria-pressed="false">Kanban</button>
+        <button type="button" class="agenda-modo" data-agenda-modo="lista" aria-pressed="false">Lista</button>
+      </div>
+      <div class="agenda-mesnav" aria-label="Navegação mensal">
+        <button type="button" data-agenda-mes="-1" aria-label="Mês anterior">‹</button>
+        <strong id="agenda-mes-label" aria-live="polite">{{ agenda.mes_nome }} {{ agenda.ano }}</strong>
+        <button type="button" data-agenda-mes="1" aria-label="Próximo mês">›</button>
+      </div>
+      <div class="agenda-filtros">
+        <label class="sr-only" for="agenda-loja">Filtrar por loja</label>
+        <select id="agenda-loja"><option value="">Todas as lojas</option>
+          {% for loja in agenda.lojas %}<option value="{{ loja.id }}">Loja {{ forloop.counter }}</option>{% endfor %}
+        </select>
+        <a id="agenda-exportar" class="agenda-exportar" href="{{ agenda_export_url }}?ano={{ agenda.ano }}&amp;mes={{ agenda.mes }}{% if request.GET.loja %}&amp;loja={{ request.GET.loja|urlencode }}{% endif %}" rel="nofollow">Exportar .ics</a>
+      </div>
+    </div>
+    <div class="agenda-superficie">
+      <div id="agenda-visao-calendario" class="agenda-cal-grade" role="grid" aria-label="Calendário mensal">
+        {% for nome_dia in agenda.dias_semana %}<div class="agenda-dia-nome" role="columnheader">{{ nome_dia }}</div>{% endfor %}
+        {% for semana in agenda.semanas %}{% for dia in semana %}
+        <div class="agenda-celula{% if dia.outro_mes %} agenda-celula--vazia{% endif %}" role="gridcell" aria-label="{{ dia.dia }} de {{ agenda.mes_nome }}">
+          <span class="agenda-dia-num{% if dia.hoje %} agenda-dia-num--hoje{% endif %}">{{ dia.dia }}</span>
+          {% for evento in dia.eventos %}<div class="agenda-evento" data-loja="{{ evento.loja_id }}"><span class="agenda-evento-hora">{{ evento.hora }} · {{ evento.tipo }}</span>{{ evento.titulo }}</div>{% endfor %}
+        </div>
+        {% endfor %}{% endfor %}
+      </div>
+      <div id="agenda-visao-kanban" class="agenda-kanban" hidden aria-label="Sessões agrupadas por mês, uma coluna por mês">
+        {% for mes_col in agenda.meses_kanban %}
+        <section class="agenda-kanban-mes{% if mes_col.atual %} agenda-kanban-mes--atual{% endif %}">
+          <h3 class="agenda-kanban-titulo">{{ mes_col.nome }} · {{ mes_col.total }}</h3>
+          {% for evento in mes_col.eventos %}<article class="agenda-kanban-evento" data-loja="{{ evento.loja_id }}"><span class="agenda-kanban-data">{{ evento.data_curta }}</span><span class="agenda-evento-hora">{{ evento.hora }} · {{ evento.tipo }}</span>{{ evento.titulo }}</article>{% empty %}{% if mes_col.atual and not agenda.tem_eventos %}<article class="agenda-kanban-evento agenda-kanban-evento--demo" data-demo="true"><span class="agenda-demo-badge">Exemplo demonstrativo</span><span class="agenda-kanban-data">10/10</span><span class="agenda-evento-hora">19:00 · Sessão</span>Demonstração — sessão fictícia</article>{% endif %}{% endfor %}
+        </section>
+        {% endfor %}
+      </div>
+      <div id="agenda-visao-lista" class="agenda-lista" hidden>
+        {% if agenda.tem_eventos %}
+          {% for dia in agenda.dias_kanban %}
+            {% if dia.eventos %}<h3 class="agenda-lista-dia">{{ dia.nome_semana }}, {{ dia.dia }} de {{ agenda.mes_nome }}</h3>
+              {% for evento in dia.eventos %}<article class="agenda-lista-evento" data-loja="{{ evento.loja_id }}"><strong>{{ evento.titulo }}</strong><span>{{ evento.hora }}</span><span>{{ evento.tipo }}</span></article>{% endfor %}
+            {% endif %}
+          {% endfor %}
+        {% else %}<h3 class="agenda-lista-dia">Terça, 10 de {{ agenda.mes_nome }}</h3><article class="agenda-lista-evento agenda-lista-evento--demo" data-demo="true"><span class="agenda-demo-badge">Exemplo demonstrativo — não representa evento confirmado</span><strong>Demonstração — sessão fictícia</strong><span>19:00</span><span>Sessão</span></article>{% endif %}
+      </div>
+    </div>
+    <p id="agenda-vazio" class="agenda-vazio" hidden>Nenhuma sessão para os filtros selecionados.</p>
+    <p class="agenda-demo-aviso" style="margin-top:10px;color:#e4c78f;font-size:11px;text-align:center;">Exemplos marcados como demonstração são fictícios e não representam eventos confirmados.</p>
+    <p class="agenda-credito">Mapa: <a href="https://commons.wikimedia.org/wiki/File:John_Rocque%27s_map_of_London_and_Westminster,_1746,_all_sheets.jpg" target="_blank" rel="noopener noreferrer">John Rocque, 1746 · Wikimedia Commons · domínio público</a></p>
   </div>
 </section>
 <script>
 (function () {
-  var nums = document.querySelectorAll('.hero__contagem-num[data-valor]');
-  if (!nums.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var duracao = 3200;
-  nums.forEach(function (el) {
-    var alvo = parseInt(el.getAttribute('data-valor'), 10) || 0;
-    if (!alvo) return;
-    var inicio = null;
-    el.textContent = '0';
-    function passo(t) {
-      if (inicio === null) inicio = t;
-      var p = Math.min((t - inicio) / duracao, 1);
-      var eased = 1 - Math.pow(1 - p, 3);
-      el.textContent = Math.round(alvo * eased).toLocaleString('pt-BR');
-      if (p < 1) requestAnimationFrame(passo);
-    }
-    requestAnimationFrame(passo);
+  var modos = Array.prototype.slice.call(document.querySelectorAll('[data-agenda-modo]'));
+  var views = {
+    calendario: document.getElementById('agenda-visao-calendario'),
+    kanban: document.getElementById('agenda-visao-kanban'),
+    lista: document.getElementById('agenda-visao-lista')
+  };
+  var loja = document.getElementById('agenda-loja');
+  var vazio = document.getElementById('agenda-vazio');
+  var mesLabel = document.getElementById('agenda-mes-label');
+  var exportar = document.getElementById('agenda-exportar');
+  var data = {ano: {{ agenda.ano }}, mes: {{ agenda.mes }}, loja: '{{ request.GET.loja|default:""|escapejs }}'};
+  var meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var modoInicial = new URLSearchParams(location.search).get('modo');
+
+  function setModo(modo) {
+    if (!views[modo]) return;
+    Object.keys(views).forEach(function (key) {
+      views[key].hidden = key !== modo;
+      views[key].style.display = key === modo ? (key === 'kanban' ? 'grid' : 'grid') : 'none';
+    });
+    modos.forEach(function (button) { button.setAttribute('aria-pressed', String(button.dataset.agendaModo === modo)); });
+    try { localStorage.setItem('agenda-publica-modo', modo); } catch (e) {}
+  }
+
+  function aplicarFiltro() {
+    var selecionada = loja.value;
+    var eventosVisiveis = document.querySelectorAll('.agenda-evento[data-loja], .agenda-kanban-evento[data-loja], .agenda-lista-evento[data-loja]');
+    var visiveis = 0;
+    eventosVisiveis.forEach(function (el) {
+      var mostrar = !selecionada || el.dataset.loja === selecionada;
+      el.hidden = !mostrar;
+      var coluna = el.closest('.agenda-kanban-mes');
+      if (coluna) {
+        var total = coluna.querySelectorAll('.agenda-kanban-evento[data-loja]:not([hidden])').length;
+        var titulo = coluna.querySelector('.agenda-kanban-titulo');
+        if (titulo) titulo.textContent = titulo.dataset.rotulo + ' · ' + total;
+      }
+      if (mostrar) visiveis++;
+    });
+    vazio.hidden = visiveis !== 0;
+    document.querySelectorAll('.agenda-kanban-evento--vazio').forEach(function (el) {
+      var coluna = el.closest('.agenda-kanban-mes');
+      var temEventos = coluna.querySelectorAll('.agenda-kanban-evento[data-loja]:not([hidden])').length > 0;
+      el.hidden = temEventos;
+    });
+    var url = new URL(exportar.href, location.href);
+    url.searchParams.set('ano', data.ano);
+    url.searchParams.set('mes', data.mes);
+    if (selecionada) url.searchParams.set('loja', selecionada); else url.searchParams.delete('loja');
+    exportar.href = url.toString();
+  }
+
+  modos.forEach(function (button) { button.addEventListener('click', function () { setModo(button.dataset.agendaModo); }); });
+  document.querySelectorAll('.agenda-kanban-titulo').forEach(function (titulo) {
+    titulo.dataset.rotulo = titulo.textContent.split(' · ')[0];
   });
+  document.querySelectorAll('[data-agenda-mes]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        data.mes += Number(button.dataset.agendaMes);
+        if (data.mes < 1) { data.mes = 12; data.ano--; }
+        if (data.mes > 12) { data.mes = 1; data.ano++; }
+        var url = new URL(location.href);
+        url.searchParams.set('ano', data.ano); url.searchParams.set('mes', data.mes);
+        if (loja.value) url.searchParams.set('loja', loja.value);
+        location.assign(url.toString());
+      });
+    });
+
+  loja.addEventListener('change', function () { aplicarFiltro(); });
+  mesLabel.textContent = meses[data.mes - 1] + ' ' + data.ano;
+  loja.value = data.loja;
+  aplicarFiltro();
+  setModo(views[modoInicial] ? modoInicial : 'calendario');
 })();
 </script>
-<div class="login-row">
-<div id="sessao-login" class="login-wrap">
-    <section class="login-card" id="loginCard" title="Arraste para posicionar · duplo-clique para centralizar">
-      <div class="mb-7 flex items-center gap-3">
-        <img src="{% static 'img/logo.png' %}" alt="Águia bicéfala — Sistema de Administração de Lojas Maçônicas" class="h-11 w-11 rounded-[13px] object-contain shadow-lg shadow-[#4a0e1f]/70">
-        <span class="font-display text-[1.35rem] font-semibold tracking-tight"><span class="text-[#ef4444]">SAL DO REAA</span></span>
-      </div>
 
-      <div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.3em] text-white/90">
-        <span class="h-1.5 w-1.5 rounded-full bg-[#4ade80] shadow-[0_0_8px_#4ade80]"></span>
-        Acesso restrito
-      </div>
 
-      <h2 class="font-display mb-2.5 text-[2.1rem] font-medium leading-[1.12] tracking-tight text-white">Bem-vindo(a) de volta</h2>
-
-      {% for message in messages %}
-        <div role="status" aria-live="polite" class="mb-4 rounded-xl border border-[#4ade80]/30 bg-[#4ade80]/10 px-4 py-3 text-[13px] font-semibold text-[#b9f6ce]">{{ message }}</div>
-      {% endfor %}
-      {% if erro %}
-        <div class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13px] font-semibold text-[#ffd9d9]">{{ erro }}</div>
-      {% endif %}
-
-      
-      
-
-      <form method="post" action="{% url 'acesso:login' %}" novalidate>
-        {% csrf_token %}
-        <div class="mb-[18px]">
-          <label for="identifier" class="mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-white/60">Cadastro</label>
-          <div class="relative">
-            <svg viewBox="0 0 24 24" fill="none" stroke="rgba(244,250,251,0.5)" stroke-width="2" class="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/>
-            </svg>
-            <input id="identifier" name="identifier" type="text" inputmode="numeric" placeholder="1234567" autocomplete="username" required
-                   class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-4 text-[16px] text-white md:text-[15px] outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#5b8def]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#5b8def]/20">
-          </div>
-        </div>
-
-        <div class="mb-[18px]">
-          <label for="senha" class="mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-white/60">Senha</label>
-          <div class="relative">
-            <svg viewBox="0 0 24 24" fill="none" stroke="rgba(244,250,251,0.5)" stroke-width="2" class="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>
-            </svg>
-            <input id="senha" name="senha" type="password" placeholder="••••••••" autocomplete="current-password" required
-                   class="w-full rounded-2xl border border-white/25 bg-white/10 py-3.5 pl-12 pr-12 text-[16px] text-white md:text-[15px] outline-none backdrop-blur transition placeholder:text-white/40 focus:border-[#5b8def]/90 focus:bg-white/15 focus:ring-4 focus:ring-[#5b8def]/20">
-            <button type="button" id="toggleSenha" class="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 transition hover:text-white/80" aria-label="Mostrar senha">
-              <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-[18px] w-[18px]" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              <svg id="eyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-[18px] w-[18px] hidden" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-            </button>
-          </div>
-        </div>
-
-        
-          {% if turnstile_configured %}
-          <div class="my-5 flex justify-center" aria-label="Verificação de segurança">
-            <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark" data-action="login"></div>
-          </div>
-        {% else %}
-          <p class="my-4 rounded-xl border border-amber-200/30 bg-amber-100/10 px-4 py-3 text-center text-[13px] leading-relaxed text-amber-100" role="status">
-            Verificação humana indisponível. Tente novamente mais tarde.
-          </p>
-        {% endif %}
-        
-
-        <button type="submit" {% if not turnstile_configured %}disabled aria-disabled="true"{% endif %}
-                class="mt-1.5 flex w-full items-center justify-center gap-2.5 rounded-2xl border border-red-200/25 bg-[#991b1b] py-4 text-[15px] font-bold tracking-wide text-white shadow-[0_10px_24px_-9px_rgba(40,0,0,0.65)] transition hover:bg-[#7f1d1d] focus:outline-none focus:ring-4 focus:ring-red-200/30 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/15 disabled:text-white/50 disabled:shadow-none">
-          LOGIN
-        </button>
-        <div class="mt-4 text-center">
-          <button type="button" id="forgotPassword" aria-controls="forgotPasswordNotice" aria-expanded="false" class="rounded px-2 py-1 text-[13px] font-medium text-red-100 underline decoration-red-200/50 underline-offset-4 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-red-200/50">
-            Esqueci a senha
-          </button>
-          <p id="forgotPasswordNotice" class="mt-2 rounded-xl bg-white/10 px-3 py-2 text-[13px] leading-relaxed text-white/85" role="status" tabindex="-1" hidden>
-            A recuperação de senha ainda não está disponível. Entre em contato com o administrador da sua unidade.
-          </p>
-        </div>
-      </form>
-
-      <p class="footer mt-6 text-center text-[13px] leading-relaxed text-white/50">
-      </p>
-    </section>
-</div>
-
-<section id="sessao-galeria" class="galeria-medalhas" aria-label="Medalhas do Grau 33">
-  <img class="galeria-medalhas__img galeria-medalhas__img--hidden" src="{% static 'img/medalhas_grau33.webp' %}" alt="Medalhas e comenda do Supremo Conselho Grau 33" width="1254" height="1254" loading="lazy" decoding="async">
-</section>
-<style>
-  .galeria-medalhas__img--hidden {
-    opacity: 0 !important;
-    transform: translateY(10px);
-    will-change: opacity, transform;
-  }
-  .galeria-medalhas__img--visible {
-    opacity: 1 !important;
-    transform: translateY(0);
-    transition: opacity 1.6s ease-out, transform 1.6s ease-out;
-    transition-delay: 0.4s;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .galeria-medalhas__img--hidden,
-    .galeria-medalhas__img--visible {
-      opacity: 1 !important;
-      transform: none !important;
-      transition: none !important;
-    }
-  }
-</style>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    var img = document.querySelector('.galeria-medalhas__img');
-    if (img) {
-      requestAnimationFrame(function () {
-        img.classList.remove('galeria-medalhas__img--hidden');
-        img.classList.add('galeria-medalhas__img--visible');
-      });
-    }
-  });
-</script>
-</div>
-
-<!-- ===== 2ª sessão: Calendário do Vale (fundo mais escuro) ===== -->
-<section id="sessao-calendario" class="sessao-calendario" aria-labelledby="titulo-calendario">
-  <div class="mx-auto w-full max-w-[960px] px-6 py-20">
-    <div class="mb-8 text-center" data-reveal>
-      <span class="fm-badge">Calendário</span>
-      <h2 id="titulo-calendario" class="font-display mt-3 text-[1.8rem] font-semibold tracking-tight text-white">Agenda de sessões do Vale</h2>
-      <p class="mt-2 text-[14.5px] text-white/60">Próximas sessões e reuniões agendadas.</p>
-    </div>
-
-    <div class="cal-cabecalho">
-      <span class="cal-mes-ano">{{ agenda.mes_nome }} {{ agenda.ano }}</span>
-    </div>
-    <div class="cal-grade" role="grid" aria-label="Calendário do mês" data-reveal style="--reveal-delay:.08s">
-      <div class="cal-dow" role="row">
-        <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span>
-        <span>Qui</span><span>Sex</span><span>Sáb</span>
-      </div>
-      {% for semana in agenda.semanas %}
-        <div class="cal-semana" role="row">
-          {% for dia in semana %}
-            <div class="cal-dia{% if dia.hoje %} hoje{% endif %}{% if dia.outro_mes %} outro{% endif %}" role="gridcell">
-              <span class="cal-num">{{ dia.dia }}</span>
-              {% for ev in dia.eventos %}
-                <span class="cal-evt" title="{{ ev.tipo_display }} — {{ ev.titulo }} {{ ev.hora }}">
-                  <span class="cal-evt-hora">{{ ev.hora }}</span> {{ ev.titulo }}
-                </span>
-              {% endfor %}
-            </div>
-          {% endfor %}
-        </div>
-      {% endfor %}
-    </div>
-    {% if not agenda.tem_eventos %}
-      <p class="cal-vazio" data-reveal style="--reveal-delay:.14s">Nenhuma sessão agendada neste mês.</p>
-    {% endif %}
-  </div>
-</section>
-
-<!-- ===== 4ª sessão: Supremo Conselho ===== -->
-<section id="sessao-supremo" class="sessao-supremo" aria-labelledby="titulo-supremo">
-  <div class="sessao-supremo__inner">
-    <div class="sessao-supremo__media" data-reveal="left">
-      <img class="sessao-supremo__img" src="{% static 'img/templo_maconico.webp' %}" alt="Templo Maçônico com o brasão do Grau 33" width="1536" height="1024" loading="lazy" decoding="async">
-    </div>
-    <div class="sessao-supremo__info" data-reveal="right" style="--reveal-delay:.12s">
-      <span class="fm-badge">Supremo</span>
-      <h2 id="titulo-supremo">Supremo Conselho do Brasil do Grau 33</h2>
-      <p>Rito Escocês Antigo e Aceito para a República Federativa do Brasil.</p>
-      <ul>
-        <li>Telefone: <a href="tel:+552133698000">(21) 3369-8000</a></li>
-        <li>E-mail: <a href="mailto:secretaria@sc33.org.br">secretaria@sc33.org.br</a></li>
-        <li>Endereço: Rua Barão, 1317 · Jacarepaguá · Rio de Janeiro – RJ · CEP 21321-624</li>
-        <li>Atendimento: segunda a sexta, das 9h às 18h</li>
-      </ul>
-    </div>
+<!-- SUPREMO CONSELHO: seção substituída pela localização Monte Líbano -->
+<section id="sessao-monte-libano" class="monte" aria-labelledby="monte-titulo">
+  <div class="monte__inner">
+    <h2 id="monte-titulo">Loja Maçônica Monte Líbano</h2>
+    <address class="monte__endereco">Rua Alexandre Rodrigues, 451<br>Vila Nova · Nova Iguaçu · Rio de Janeiro · Brasil</address>
+    <iframe class="monte__mapa" title="Mapa de como chegar à Loja Maçônica Monte Líbano no Google Maps" src="https://www.google.com/maps/embed?origin=mfe&amp;pb=!1m7!4m6!4m1!2sCurrent+Location!4m3!3m2!1d-22.762325!2d-43.42937" loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    <a class="monte__rota" href="https://www.google.com/maps/dir/?api=1&destination=-22.762325%2C-43.42937" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.6 19.3c-.15-.76-.24-1.95.05-2.8.26-.75 1.66-4.8 1.66-4.8s-.42-.84-.42-2.1c0-1.96 1.14-3.43 2.56-3.43 1.2 0 1.78.9 1.78 2 0 1.21-.77 3.02-1.17 4.7-.33 1.4.7 2.54 2.1 2.54 2.5 0 4.2-3.23 4.2-7.05C19.1 6.7 16.87 4.88 13.94 4.88c-3.15 0-5.12 2.36-5.12 4.8 0 .95.36 1.94.8 2.5.09.1.1.2.07.3l-.3 1.22c-.05.2-.16.25-.37.15-1.4-.65-2.27-2.7-2.27-4.33 0-3.54 2.57-6.8 7.4-6.8 3.88 0 6.9 2.77 6.9 6.47 0 3.87-2.44 6.98-5.82 6.98-1.14 0-2.2-.6-2.57-1.3l-.7 2.66c-.25.97-.93 2.19-1.38 2.93A10 10 0 1 0 12 2z"/></svg>
+      Como chegar · abrir rota no Google Maps
+    </a>
+    <a class="monte__link" href="https://maps.app.goo.gl/sobsdnCdHCDzSp1L7" target="_blank" rel="noopener noreferrer">Abrir a página da Monte Líbano no Google Maps</a>
   </div>
 </section>
 {% endblock %}
 
 {% block js %}
 <script>
-(function () {
-  var menu = document.getElementById('menuFlutuante');
-  var toggle = document.getElementById('fmToggle');
-  if (!menu || !toggle) return;
-
-  function fechar() {
-    menu.classList.remove('aberto');
-    toggle.setAttribute('aria-expanded', 'false');
-  }
-  toggle.addEventListener('click', function () {
-    var aberto = menu.classList.toggle('aberto');
-    toggle.setAttribute('aria-expanded', String(aberto));
-  });
-
-  // Fechar por clique fora ou por Esc (sem botão Fechar dedicado).
-  document.addEventListener('click', function (e) {
-    if (!abertoEmMobile() || menu.contains(e.target) || toggle.contains(e.target)) return;
-    fechar();
-  });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') fechar();
-  });
-  function abertoEmMobile() {
-    return window.matchMedia('(max-width: 760px)').matches && menu.classList.contains('aberto');
-  }
-
-  // Item 'Login' rola até o card; Calendário navega (padrão original).
-  menu.querySelectorAll('a[data-fm]').forEach(function (a) {
-    a.addEventListener('click', function () {
-      fechar();
-      if (a.dataset.fm === 'login') {
-        var alvo = document.getElementById('sessao-login') || document.getElementById('loginCard');
-        if (alvo) alvo.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      // Calendário navega para a agenda completa do sistema (padrão original)
-      if (a.dataset.fm === 'calendario') return;
-    });
-  });
-})();
-
-(function () {
-  var card = document.getElementById('loginCard');
-  if (!card) return;
-
-  var STORE = 'gprbr_card_pos';
-  var tx = 0, ty = 0;
-  try {
-    var saved = JSON.parse(localStorage.getItem(STORE) || 'null');
-    if (saved && typeof saved.x === 'number') { tx = saved.x; ty = saved.y; }
-  } catch (e) {}
-  apply(tx, ty);
-
-  var dragging = false, sx = 0, sy = 0, ox = 0, oy = 0, pid = null;
-
-  card.addEventListener('pointerdown', function (e) {
-    if (e.target.closest('input, button, a, .footer, label')) return;
-    dragging = true;
-    pid = e.pointerId;
-    card.setPointerCapture(pid);
-    card.classList.add('dragging');
-    sx = e.clientX; sy = e.clientY;
-    ox = tx; oy = ty;
-  });
-
-  card.addEventListener('pointermove', function (e) {
-    if (!dragging) return;
-    var nx = ox + (e.clientX - sx);
-    var ny = oy + (e.clientY - sy);
-    nx = clamp(nx, -window.innerWidth / 2 + 60, window.innerWidth / 2 - 60);
-    ny = clamp(ny, -window.innerHeight / 2 + 60, window.innerHeight / 2 - 60);
-    apply(nx, ny);
-  });
-
-  function endDrag(e) {
-    if (!dragging) return;
-    dragging = false;
-    try { card.releasePointerCapture(pid); } catch (err) {}
-    pid = null;
-    card.classList.remove('dragging');
-    try { localStorage.setItem(STORE, JSON.stringify({ x: tx, y: ty })); } catch (err) {}
-  }
-  card.addEventListener('pointerup', endDrag);
-  card.addEventListener('pointercancel', endDrag);
-
-  card.addEventListener('dblclick', function () {
-    apply(0, 0);
-    try { localStorage.setItem(STORE, JSON.stringify({ x: 0, y: 0 })); } catch (err) {}
-  });
-
-  function apply(x, y) { tx = x; ty = y; card.style.transform = 'translate(' + x + 'px,' + y + 'px)'; }
-  function clamp(v, min, max) { return v < min ? min : (v > max ? max : v); }
-})();
-
-// Explica o estado do recurso de recuperação ainda não disponível.
-(function () {
-  var button = document.getElementById('forgotPassword');
+(function(){
+  var btn = document.getElementById('forgotPassword');
   var notice = document.getElementById('forgotPasswordNotice');
-  if (!button || !notice) return;
-  button.addEventListener('click', function () {
-    notice.hidden = false;
-    button.setAttribute('aria-expanded', 'true');
-    notice.focus();
-  });
-})();
-
-// Toggle mostrar/ocultar senha
-(function () {
-  var btn = document.getElementById('toggleSenha');
-  var input = document.getElementById('senha');
-  var eyeOpen = document.getElementById('eyeOpen');
-  var eyeClosed = document.getElementById('eyeClosed');
-  if (!btn || !input) return;
-  btn.addEventListener('click', function () {
-    var isPassword = input.type === 'password';
-    input.type = isPassword ? 'text' : 'password';
-    eyeOpen.classList.toggle('hidden', !isPassword);
-    eyeClosed.classList.toggle('hidden', isPassword);
-  });
-})();
-
-// Animação da imagem da sessão Supremo Conselho no scroll
-(function () {
-  var secaoSupremo = document.getElementById('sessao-supremo');
-  var imgSupremo = document.querySelector('.sessao-supremo__img');
-  if (!secaoSupremo || !imgSupremo) return;
-
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    imgSupremo.style.transform = 'scale(1)';
-    return;
+  if(btn && notice){
+    btn.addEventListener('click', function(){
+      notice.hidden = false;
+    });
   }
-
-  function atualizarEscala() {
-    var rect = secaoSupremo.getBoundingClientRect();
-    var alturaJanela = window.innerHeight || document.documentElement.clientHeight;
-    
-    // Quando a seção começa a entrar na viewport
-    if (rect.bottom < 0 || rect.top > alturaJanela) {
-      // Fora da viewport - mantém em escala reduzida ou normaliza conforme posição
-      if (rect.bottom < 0) {
-        imgSupremo.style.transform = 'scale(0.7)';
-      } else if (rect.top > alturaJanela) {
-        imgSupremo.style.transform = 'scale(0.7)';
-      }
-      return;
+  try {
+    if (window.matchMedia && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.classList.add('js-motion');
     }
-    
-    // Calcula o progresso: 0 quando começa a entrar, 1 quando está centralizada/visível
-    var inicio = alturaJanela;
-    var fim = 0;
-    var progresso = (inicio - rect.top) / (inicio - fim);
-    progresso = Math.max(0, Math.min(1, progresso));
-    
-    // Escala de 0.7 até 1.0
-    var escala = 0.7 + (progresso * 0.3);
-    imgSupremo.style.transform = 'scale(' + escala + ')';
+  } catch (e) {}
+  var alvos = document.querySelectorAll('.elogio-card, .sessao-calendario__header, .agenda-controles, .agenda-superficie, .monte__inner');
+  alvos.forEach(function (el, i) { el.style.setProperty('--reveal-delay', Math.min(i % 6, 5) * 0.06 + 's'); });
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) { entry.target.classList.add('is-visible'); io.unobserve(entry.target); }
+      });
+    }, { threshold: 0.12 });
+    alvos.forEach(function (el) { io.observe(el); });
+  } else {
+    alvos.forEach(function (el) { el.classList.add('is-visible'); });
   }
-
-  window.addEventListener('scroll', atualizarEscala, { passive: true });
-  window.addEventListener('resize', atualizarEscala);
-  atualizarEscala();
-})();
-
-// Paralaxe sutil do brasão com o ponteiro (apenas mouse/trackpad).
-(function () {
-  var hero = document.querySelector('.hero');
-  var brasao = document.querySelector('.hero__brasao');
-  if (!hero || !brasao) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  if (!window.matchMedia('(pointer: fine)').matches) return;
-
-  var raf = null, px = 0, py = 0;
-  function aplicar() {
-    raf = null;
-    brasao.style.translate = px.toFixed(2) + 'px ' + py.toFixed(2) + 'px';
+  var palco = document.getElementById('heroPalco');
+  function tornarMovel(idCartao, idAlca, chave, idStatus, idRecentrar) {
+    var cartao = document.getElementById(idCartao);
+    var alca = document.getElementById(idAlca);
+    if (!cartao || !alca) return;
+    var recentrar = idRecentrar ? document.getElementById(idRecentrar) : null;
+    var status = idStatus ? document.getElementById(idStatus) : null;
+    var pos = { x: 0, y: 0 };
+    try {
+      var salva = JSON.parse(sessionStorage.getItem(chave) || 'null');
+      if (salva && typeof salva.x === 'number' && typeof salva.y === 'number') pos = salva;
+    } catch (e) {}
+    function pintar() {
+      cartao.style.setProperty('--px', pos.x + 'px');
+      cartao.style.setProperty('--py', pos.y + 'px');
+      if (recentrar) recentrar.hidden = (pos.x === 0 && pos.y === 0);
+    }
+    function aplicar() {
+      pintar();
+      try { sessionStorage.setItem(chave, JSON.stringify(pos)); } catch (e) {}
+    }
+    function limitar() {
+      if (!palco) return;
+      var pr = palco.getBoundingClientRect();
+      var r = cartao.getBoundingClientRect();
+      var margem = 70;
+      if (r.left > pr.right - margem) pos.x -= r.left - (pr.right - margem);
+      if (r.right < pr.left + margem) pos.x += (pr.left + margem) - r.right;
+      if (r.top > pr.bottom - margem) pos.y -= r.top - (pr.bottom - margem);
+      if (r.bottom < pr.top + margem) pos.y += (pr.top + margem) - r.bottom;
+    }
+    if (pos.x !== 0 || pos.y !== 0) pintar();
+    var arrastando = false, inicioX = 0, inicioY = 0, baseX = 0, baseY = 0;
+    alca.addEventListener('pointerdown', function (ev) {
+      if (window.innerWidth <= 760) return;
+      arrastando = true;
+      inicioX = ev.clientX; inicioY = ev.clientY;
+      baseX = pos.x; baseY = pos.y;
+      cartao.classList.add('arrastando');
+      try { alca.setPointerCapture(ev.pointerId); } catch (e) {}
+      ev.preventDefault();
+    });
+    alca.addEventListener('pointermove', function (ev) {
+      if (!arrastando) return;
+      pos.x = Math.round(baseX + (ev.clientX - inicioX));
+      pos.y = Math.round(baseY + (ev.clientY - inicioY));
+      limitar();
+      pintar();
+    });
+    function soltar() {
+      if (!arrastando) return;
+      arrastando = false;
+      cartao.classList.remove('arrastando');
+      aplicar();
+      if (status) status.textContent = 'Cartão movido. Arraste de novo ou recentralize para ver outra parte do desenho.';
+    }
+    alca.addEventListener('pointerup', soltar);
+    alca.addEventListener('pointercancel', soltar);
+    alca.addEventListener('keydown', function (ev) {
+      var passo = ev.shiftKey ? 48 : 12;
+      var moveu = true;
+      if (ev.key === 'ArrowLeft') pos.x -= passo;
+      else if (ev.key === 'ArrowRight') pos.x += passo;
+      else if (ev.key === 'ArrowUp') pos.y -= passo;
+      else if (ev.key === 'ArrowDown') pos.y += passo;
+      else moveu = false;
+      if (moveu) { ev.preventDefault(); limitar(); aplicar(); }
+    });
+    if (recentrar) recentrar.addEventListener('click', function () {
+      pos = { x: 0, y: 0 };
+      pintar();
+      recentrar.hidden = true;
+      try { sessionStorage.removeItem(chave); } catch (e) {}
+      if (status) status.textContent = 'Cartão de volta à posição inicial.';
+      alca.focus();
+    });
   }
-  hero.addEventListener('pointermove', function (e) {
-    var r = hero.getBoundingClientRect();
-    px = ((e.clientX - r.left) / r.width - .5) * 16;
-    py = ((e.clientY - r.top) / r.height - .5) * 12;
-    if (!raf) raf = window.requestAnimationFrame(aplicar);
-  }, { passive: true });
-  hero.addEventListener('pointerleave', function () {
-    px = 0; py = 0;
-    if (!raf) raf = window.requestAnimationFrame(aplicar);
-  });
+  tornarMovel('cartaoAcesso', 'cartaoAlca', 'cartao-acesso-pos', 'cartaoStatus', 'recentrarCartao');
+  tornarMovel('cartaoResumo', 'resumoAlca', 'cartao-resumo-pos', null, null);
 })();
 </script>
 {% endblock %}

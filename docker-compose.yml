@@ -7,7 +7,7 @@ services:
     container_name: gprbr-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME:-saldabritanea}
+      POSTGRES_DB: ${DB_NAME:-saldabaixada}
       POSTGRES_USER: ${DB_USER:-gprbr}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-securepassword123}
       PGDATA: /var/lib/postgresql/data/pgdata
@@ -17,7 +17,7 @@ services:
       # Publica apenas no loopback: o app acessa o banco pela rede interna.
       - "127.0.0.1:${DB_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-gprbr} -d ${DB_NAME:-saldabritanea}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-gprbr} -d ${DB_NAME:-saldabaixada}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -80,7 +80,7 @@ services:
       - TOKEN_TTL_DIAS=${TOKEN_TTL_DIAS:-7}
       
       # Database
-      - DATABASE_URL=postgresql://${DB_USER:-gprbr}:${DB_PASSWORD:-securepassword123}@db:5432/${DB_NAME:-saldabritanea}
+      - DATABASE_URL=postgresql://${DB_USER:-gprbr}:${DB_PASSWORD:-securepassword123}@db:5432/${DB_NAME:-saldabaixada}
       
       # Redis
       - REDIS_URL=redis://redis:6379/0
@@ -160,7 +160,7 @@ services:
       - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
       - JWT_SECRET=${JWT_SECRET:-}
       - CRYPTO_KEY=${CRYPTO_KEY:-}
-      - DATABASE_URL=postgresql://${DB_USER:-gprbr}:${DB_PASSWORD:-securepassword123}@db:5432/${DB_NAME:-saldabritanea}
+      - DATABASE_URL=postgresql://${DB_USER:-gprbr}:${DB_PASSWORD:-securepassword123}@db:5432/${DB_NAME:-saldabaixada}
       - REDIS_URL=redis://redis:6379/0
       - EMAIL_HOST=${EMAIL_HOST:-}
       - EMAIL_PORT=${EMAIL_PORT:-587}

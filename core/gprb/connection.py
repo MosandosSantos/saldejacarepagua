@@ -1,4 +1,4 @@
-"""Conexão ao banco de dados Sal da Britanea (PostgreSQL).
+"""Conexão ao banco de dados Salda Baixada (PostgreSQL).
 
 Fornece a conexão thread-local via psycopg3 com reuso por thread (cada handshake
 TCP custa ~120ms — reutilizar corta ~1,5s do dashboard, que faz ~15 consultas
@@ -107,7 +107,7 @@ def _nova_conexao():
     return psycopg.connect(
         host=host,
         port=int(os.environ.get('GPRB_DB_PORT', '5432')),
-        dbname=os.environ.get('GPRB_DB_NAME', 'saldabritanea'),
+        dbname=os.environ.get('GPRB_DB_NAME', 'saldabaixada'),
         user=os.environ.get('GPRB_DB_USER', 'postgres'),
         password=password,
         sslmode=os.environ.get('GPRB_DB_SSLMODE', 'prefer'),

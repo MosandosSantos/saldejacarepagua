@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}SAL DO REAA CRM — Funil{% endblock %}
+{% block titulo %}SALDA BAIXADA CRM — Funil{% endblock %}
 
 {% block conteudo %}
 {% if web_pode_editar %}
@@ -22,10 +22,10 @@
         </div>
       </label>
       <label class="block min-w-0">
-        <span for="filtro-prefeitura" class="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Vale</span>
+        <span for="filtro-prefeitura" class="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Potência</span>
         <select id="filtro-prefeitura" name="prefeitura"
                 class="mt-1.5 h-10 w-full rounded-xl border border-white/15 bg-hazon-night/70 px-3 text-[13px] text-hazon-text transition-colors focus:border-hazon-accent/60 focus:outline-none focus:ring-2 focus:ring-hazon-accent/25">
-          <option value="">Todos os Vales</option>
+          <option value="">Todas as Potências</option>
           {% for pf in prefeituras %}
           <option value="{{ pf.id }}" {% if pf.id|stringformat:"s" == prefeitura_filtro|stringformat:"s" %}selected{% endif %}>{{ pf.nome }}</option>
           {% endfor %}
@@ -147,7 +147,7 @@
             </div>
           </div>
           <div class="mb-2 text-[11px] text-[#a6bfc7]">
-            {% if card.prefeitura and card.prefeitura.nome %}Vale: {{ card.prefeitura.nome }}{% else %}Vale: —{% endif %}
+            {% if card.prefeitura and card.prefeitura.nome %}Potência: {{ card.prefeitura.nome }}{% else %}Potência: —{% endif %}
             {% if card.loja %} · Loja: {{ card.loja }}{% else %} · Loja: —{% endif %}
           </div>
           <div class="flex items-center justify-between gap-2 border-t border-white/10 pt-2">
@@ -225,7 +225,7 @@
       </div>
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label for="candidato-prefeitura" class="mb-1 block text-[13px] font-semibold uppercase tracking-wider text-[#bcd3da]">Vale *</label>
+          <label for="candidato-prefeitura" class="mb-1 block text-[13px] font-semibold uppercase tracking-wider text-[#bcd3da]">Potência *</label>
           <select id="candidato-prefeitura" name="prefeitura" required
                   class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13px] text-white outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
             <option value="">Selecione…</option>
@@ -235,7 +235,7 @@
           <label for="candidato-loja" class="mb-1 block text-[13px] font-semibold uppercase tracking-wider text-[#bcd3da]">Loja *</label>
           <select id="candidato-loja" name="loja" required disabled
                   class="w-full rounded-xl border border-white/12 bg-[#0a1e3d] px-4 py-3 text-[13px] text-white outline-none transition focus:border-[#5b8def]/50 focus:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
-            <option value="">Selecione o vale…</option>
+            <option value="">Selecione a Potência…</option>
           </select>
         </div>
       </div>
@@ -554,7 +554,7 @@ function abrirCandidato() {
     if (el) el.value = '';
   });
   if (selPrefeitura) selPrefeitura.value = '';
-   if (selLoja) { selLoja.value = ''; selLoja.disabled = true; selLoja.innerHTML = '<option value="">Selecione o vale…</option>'; }
+   if (selLoja) { selLoja.value = ''; selLoja.disabled = true; selLoja.innerHTML = '<option value="">Selecione a Potência…</option>'; }
   modalCandidato.classList.remove('hidden');
   modalCandidato.classList.add('flex');
   // Gerenciador acessivel: focus trap, Escape e devolucao de foco
@@ -597,7 +597,7 @@ function fecharCandidato() {
 if (selPrefeitura) selPrefeitura.addEventListener('change', function() {
   var optSelecionada = selPrefeitura.options[selPrefeitura.selectedIndex];
   var pf = optSelecionada ? optSelecionada.dataset.valeId : '';
-  if (!pf) { selLoja.disabled = true; selLoja.innerHTML = '<option value="">Selecione o vale…</option>'; return; }
+  if (!pf) { selLoja.disabled = true; selLoja.innerHTML = '<option value="">Selecione a Potência…</option>'; return; }
   selLoja.disabled = true;
   selLoja.innerHTML = '<option value="">Carregando…</option>';
   fetch('{% url "candidatos:api_lojas_por_prefeitura" %}?prefeitura_id=' + encodeURIComponent(pf), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })

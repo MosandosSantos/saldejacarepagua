@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / '.env')
 
-APP_BRAND_NAME = 'SAL DO REAA'
+APP_BRAND_NAME = 'SALDA BAIXADA'
 
 # Nome da Vale (subordinada) que aparece nos titulos de secao - ex.:
 # "Calendario da Vale de Jacarepagua". Configuravel por env (VALE_NOME).
@@ -81,6 +81,15 @@ def resolve_turnstile_keys(debug, site_key, secret_key):
     if debug and not site_key and not secret_key:
         return TURNSTILE_TEST_SITE_KEY, TURNSTILE_TEST_SECRET_KEY
 
+    # Chaves reais em DEBUG local travam todo o login: o widget Turnstile é
+    # restrito aos hostnames cadastrados na Cloudflare e em 127.0.0.1 nunca
+    # emite token, o que faz o POST cair no "Confirme que você é humano".
+    # Em localhost passe a usar as chaves oficials always-pass; para testar
+    # contra o domínio real mesmo em DEBUG (ex.: hosts apontando pro domínio),
+    # defina CLOUDFLARE_TURNSTILE_REAL_LOCAL=1.
+    if debug and (site_key or secret_key) and not _env_bool('CLOUDFLARE_TURNSTILE_REAL_LOCAL'):
+        return TURNSTILE_TEST_SITE_KEY, TURNSTILE_TEST_SECRET_KEY
+
     # Do not let accidentally copied Cloudflare test credentials enable a
     # production login form without a real human-verification challenge.
     if not debug and (
@@ -136,6 +145,10 @@ if not ALLOWED_HOSTS:
             'saldoreaa.cloud', 'www.saldoreaa.cloud',
         ]
 
+# Porta padrao do web server Django/uvicorn. Configuravel por DJANGO_PORT e
+# usada tambem nas origens de CSRF e no BASE_URL quando nao definidos.
+DEFAULT_PORT = os.getenv('DJANGO_PORT', '8111')
+
 # Origem permitida no check de CSRF via header Origin (deploy atras de proxy
 # HTTPS no VPS). Aceita coringa de subdominio (*.) no padrao.
 # Entrada sem esquema (ex.: "saldoreaa.cloud") recebe https:// para nao
@@ -151,7 +164,8 @@ _CSRF_ORIGENS_CANONICAS = [
 if not CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS = [
         *_CSRF_ORIGENS_CANONICAS,
-        'http://localhost:8111', 'http://127.0.0.1:8111',
+        f'http://localhost:{DEFAULT_PORT}',
+        f'http://127.0.0.1:{DEFAULT_PORT}',
     ]
 elif not DEBUG:
     # .env de producao incompleto (ex.: so www) nao pode bloquear o dominio
@@ -243,7 +257,7 @@ ASGI_APPLICATION = 'core.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('PGDATABASE', 'saldabritanea'),
+        'NAME': os.getenv('PGDATABASE', 'saldabaixada'),
         'USER': os.getenv('PGUSER', 'postgres'),
         'PASSWORD': os.getenv('PGPASSWORD', ''),
         'HOST': os.getenv('PGHOST', 'localhost'),
@@ -295,9 +309,6 @@ USE_I18N = True
 USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
-
-# Porta padrao do web server Django (evita conflito com o FastAPI em 8000)
-DEFAULT_PORT = os.getenv('DJANGO_PORT', '8111')
 
 # Autenticacao JWT (camada REST/FastAPI)
 JWT_SECRET = os.getenv('JWT_SECRET', 'jwt-dev-secret-nao-usar-em-producao')  # nosec B105 - guarded by DEBUG check below
@@ -398,7 +409,7 @@ CSP_DIRETIVAS = {
     'font-src': "'self' https://fonts.gstatic.com",
     'img-src': "'self' data:",
     'connect-src': "'self' https://brasilapi.com.br https://fonts.googleapis.com https://fonts.gstatic.com https://challenges.cloudflare.com",
-    'frame-src': 'https://challenges.cloudflare.com',
+    'frame-src': 'https://challenges.cloudflare.com https://www.google.com',
     'object-src': "'none'",
     'base-uri': "'self'",
     'frame-ancestors': "'none'",
@@ -434,7 +445,7 @@ EVENTO_EMAIL_PARA_TESTE = [
 
 # Base pública do app — usada nos links de confirmação (RSVP) dos e-mails.
 # Em produção, defina BASE_URL com o domínio real (ex.: https://app.dominio.com).
-BASE_URL = (os.getenv('BASE_URL', '') or 'http://localhost:8111').rstrip('/')
+BASE_URL = (os.getenv('BASE_URL', '') or f'http://localhost:{DEFAULT_PORT}').rstrip('/')
 
 # ---------------------------------------------------------------------------
 # Sprint 5 — Discador (Nation Dialer): integração com o softphone

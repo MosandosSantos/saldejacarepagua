@@ -8,7 +8,7 @@
 COMPOSE := docker compose
 COMPOSE_FILE := docker-compose.yml
 ENV_FILE := .env
-DB_NAME ?= saldabritanea
+DB_NAME ?= saldabaixada
 DB_USER ?= gprbr
 
 # ============================================

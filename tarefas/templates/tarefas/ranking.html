@@ -46,7 +46,7 @@
   <section class="livro" aria-labelledby="livro-titulo">
     <header class="livro-cabecalho" id="livro-cabecalho">
       <div class="min-w-0">
-        <h2 id="livro-titulo" class="livro-titulo">Calendário da Vale de {{ VALE_NOME }}</h2>
+        <h2 id="livro-titulo" class="livro-titulo">Calendário da Potência de {{ VALE_NOME }}</h2>
         <p class="livro-sub">Sessões, iniciações e trabalhos de grau do mês</p>
         <p class="livro-resumo" id="livro-resumo" aria-live="polite"></p>
       </div>
@@ -129,12 +129,12 @@
 
         <div class="grid gap-5 sm:grid-cols-2">
           <div>
-            <label for="evento-vale" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Vale *</label>
+            <label for="evento-vale" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Potência *</label>
             {% if vale_fixado %}
             <input type="hidden" id="evento-vale" value="">
             <div class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-[#a6bfc7]">
               <span id="evento-vale-nome">—</span>
-              <span class="ml-1 text-[11px] font-semibold text-[#6f8a93]">— fixado ao seu Vale</span>
+              <span class="ml-1 text-[11px] font-semibold text-[#6f8a93]">— fixado à sua Potência</span>
             </div>
             {% else %}
             <select id="evento-vale"

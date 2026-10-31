@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>{% block titulo %}{{ SEO_SITE_NAME }} | Vale de {{ VALE_NOME }}{% endblock %}</title>
+  <title>{% block titulo %}{{ SEO_SITE_NAME }} | Potência de {{ VALE_NOME }}{% endblock %}</title>
   <meta name="description" content="{% block seo_descricao %}{{ SEO_SITE_DESCRIPTION }}{% endblock %}">
   <meta name="keywords" content="{% block seo_keywords %}{{ SEO_SITE_KEYWORDS }}{% endblock %}">
   <meta name="author" content="VPS Consultoria — Mosán dos Santos">
@@ -473,8 +473,8 @@
                 Sair
               </button>
             </form>
-          </div>
-        </div>          <button type="button" id="hazon-menu-btn" class="hazon-menu-btn"
+          </div>        </div>
+        <button type="button" id="hazon-menu-btn" class="hazon-menu-btn"
                 aria-label="Abrir menu" aria-expanded="false" aria-controls="hazon-menu-drawer">
           <svg class="menu-h" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           <svg class="menu-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -482,7 +482,6 @@
       </div>
     </div>
   </header>
-
   
   <div id="hazon-menu-overlay" class="hazon-menu-overlay" aria-hidden="true"></div>
   <aside id="hazon-menu-drawer" class="hazon-menu-drawer" role="dialog"
@@ -519,8 +518,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
-
-    <nav class="flex-1 space-y-1 p-3">
+    <nav class="flex-1 space-y-1 p-3" aria-label="Navegação principal">
       {% for item in NAV_ITENS %}
         {% if item.subitens %}
         <div class="hazon-menu-grupo {% if item.ativa %}aberto{% endif %}">
@@ -532,8 +530,9 @@
             <svg class="hazon-menu-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div id="hazon-sub-{{ forloop.counter }}" class="hazon-menu-subs">
-            {% for sub in item.subitens %}                <a href="{{ sub.url }}" class="hazon-menu-item hazon-menu-sub {% if sub.ativa %}ativo{% endif %}"
-                   {% if sub.ativa %}aria-current="page"{% endif %}>
+            {% for sub in item.subitens %}
+              <a href="{{ sub.url }}" class="hazon-menu-item hazon-menu-sub {% if sub.ativa %}ativo{% endif %}"
+                 {% if sub.ativa %}aria-current="page"{% endif %}>
                 {% if sub.icone %}{{ sub.icone|safe }}{% endif %}
                 <span class="flex-1">{{ sub.label }}</span>
                 {% if sub.ativa %}<span aria-hidden="true" class="h-1.5 w-1.5 shrink-0 rounded-full bg-[#5b8def]"></span>{% endif %}
@@ -547,7 +546,7 @@
           {{ item.icone|safe }}
           <span class="flex-1">{{ item.label }}</span>
           {% if item.badge %}
-          <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-400/90 px-1.5 font-mono text-[10px] font-bold text-white"><span class="sr-only">{{ item.badge }} tarefa(s) atrasada(s) — </span><span aria-hidden="true">{{ item.badge }}</span></span>
+            <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-400/90 px-1.5 font-mono text-[10px] font-bold text-white"><span class="sr-only">{{ item.badge }} tarefa(s) atrasada(s) — </span><span aria-hidden="true">{{ item.badge }}</span></span>
           {% endif %}
         </a>
         {% endif %}
@@ -578,7 +577,7 @@
             <span class="h-1.5 w-1.5 rounded-full bg-[#ef4444] shadow-[0_0_12px_rgba(239,68,68,0.8)]"></span>
             <span class="text-[11px] font-bold uppercase tracking-[0.4em] text-white/50">Direitos Reservados</span>
           </div>
-          <p class="max-w-xs text-[13px] leading-relaxed text-[#bcd3da]">Todos os direitos do aplicativo pertencem ao <span class="font-semibold text-white">Vale da Jacarepaguá</span>.</p>
+          <p class="max-w-xs text-[13px] leading-relaxed text-[#bcd3da]">Todos os direitos do aplicativo pertencem à <span class="font-semibold text-white">VPS Consultoria e Mentoria</span>.</p>
         </div>
 
         <div class="flex flex-col gap-3">
@@ -618,7 +617,7 @@
       </div>
 
       <div class="mt-8 flex flex-col items-center justify-between gap-3 border-t border-white/5 pt-6 text-center md:flex-row">
-        <p class="text-[12px] text-white/40">© {% now "Y" %} SAL DO REAA CRM · Todos os direitos reservados</p>
+        <p class="text-[12px] text-white/40">© {% now "Y" %} SALDA BAIXADA CRM · Todos os direitos reservados</p>
         <p class="text-[12px] text-white/40">Feito com precisão por <span class="text-white/60">VPS Consultoria</span></p>
       </div>
     </div>

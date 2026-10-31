@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}SAL DO REAA CRM — Acompanhamento{% endblock %}
+{% block titulo %}SALDA BAIXADA CRM — Acompanhamento{% endblock %}
 
 {% block conteudo %}
 <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -20,9 +20,9 @@
   {% for numero in graus_selecionados %}<input type="hidden" name="grau" value="{{ numero }}">{% endfor %}
   <div data-filter-row="primary" class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
     <div class="min-w-0">
-      <label for="filtro-vale" class="hazon-label">Vale</label>
+      <label for="filtro-vale" class="hazon-label">Potência</label>
       <select name="vale" id="filtro-vale" class="mt-1.5 h-10 w-full rounded-xl border border-white/15 bg-hazon-night/70 px-3 text-[13px] text-hazon-text transition-colors focus:border-hazon-accent/60 focus:outline-none focus:ring-2 focus:ring-hazon-accent/25">
-        <option value="">Todos os Vales</option>
+        <option value="">Todas as Potências</option>
         {% for vale in vales %}
         <option value="{{ vale.pk }}" {% if vale_selecionado == vale.pk|stringformat:"s" %}selected{% endif %}>{{ vale.nome }}</option>
         {% endfor %}

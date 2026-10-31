@@ -4,15 +4,46 @@ Cobre: login Django local, login inválido, usuário inexistente,
 rate limit (5 falhas → 6ª bloqueada mesmo com senha correta) e
 espelho local `usuarios` criado no primeiro login GPRB (mockado).
 """
+from datetime import datetime, timedelta
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.test import Client, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from acesso.models import Usuario
+
+def test_monte_libano_substitui_supremo_com_google_street_view():
+    from django.template.loader import render_to_string
+    from django.test import RequestFactory
+
+    html = render_to_string('acesso/login.html', {
+        'request': RequestFactory().get('/login/'),
+        'agenda': {'ano': 2026, 'mes': 11, 'mes_nome': 'Novembro'},
+    })
+    assert 'id="sessao-monte-libano"' in html
+    assert 'Loja Maçônica Monte Líbano' in html
+    assert 'Rua Alexandre Rodrigues, 451' in html
+    assert 'Vila Nova · Nova Iguaçu · Rio de Janeiro · Brasil' in html
+    assert 'output=svembed' not in html
+    assert 'monte-fachada' not in html
+    # Mapa de como chegar: embed de rotas + botão oficial de direções.
+    assert 'title="Mapa de como chegar à Loja Maçônica Monte Líbano no Google Maps"' in html
+    assert 'maps/embed' in html
+    assert 'https://www.google.com/maps/dir/?api=1&destination=-22.762325%2C-43.42937' in html
+    assert 'Como chegar' in html
+    assert 'id="monte-pausar"' not in html
+    assert 'maps/api/js' not in html
+    from django.conf import settings
+    assert 'https://www.google.com' in settings.CSP_DIRETIVAS['frame-src']
+    assert 'Supremo Conselho do Brasil do Grau 33º' not in html
+    assert 'secretaria@sc33.org.br' not in html
+    assert 'href="#sessao-monte-libano"' not in html  # menu flutuante removido da tela de login
+
 
 SENHA = 'senha123'
 CADASTRO_NUMERO = 777
@@ -368,4 +399,104 @@ def test_login_disables_submit_when_turnstile_is_unconfigured():
     assert 'Verificação humana indisponível' in html
     assert 'type="submit"' in html
     assert 'disabled' in html
+
+
+@pytest.mark.django_db
+def test_login_agenda_tem_tres_vistas_filtro_exportacao_e_mapa_historico():
+    response = Client().get('/login/')
+    html = response.content.decode('utf-8')
+    agenda_html = html[html.index('<section id="sessao-calendario"'):]
+
+    assert response.status_code == 200
+    assert 'data-agenda-modo="calendario"' in agenda_html
+    assert 'data-agenda-modo="kanban"' in agenda_html
+    assert 'data-agenda-modo="lista"' in agenda_html
+    assert 'id="agenda-loja"' in agenda_html
+    assert 'data-data=' in agenda_html
+    assert 'John Rocque' in agenda_html and '1746' in agenda_html
+    assert 'agenda/exportar/' in agenda_html
+    assert '<script>' in agenda_html[agenda_html.index('data-agenda-modo="calendario"'):agenda_html.index('<!-- SUPREMO')]
+
+
+@pytest.mark.django_db
+def test_agenda_sem_eventos_mostra_exemplos_identificados_no_kanban_e_lista():
+    response = Client().get('/login/?ano=2026&mes=11')
+    html = response.content.decode('utf-8')
+    agenda_html = html[html.index('<section id="sessao-calendario"'):html.index('<!-- SUPREMO')]
+    kanban = agenda_html[agenda_html.index('id="agenda-visao-kanban"'):agenda_html.index('id="agenda-visao-lista"')]
+    lista = agenda_html[agenda_html.index('id="agenda-visao-lista"'):agenda_html.index('id="agenda-vazio"')]
+
+    assert response.status_code == 200
+    assert 'Demonstração — sessão fictícia' in kanban
+    assert 'Demonstração — sessão fictícia' in lista
+    assert 'não representa evento confirmado' in agenda_html
+    assert 'data-demo="true"' in kanban
+    assert 'data-demo="true"' in lista
+    assert 'Demonstração — sessão fictícia' not in agenda_html[agenda_html.index('id="agenda-visao-calendario"'):agenda_html.index('id="agenda-visao-kanban"')]
+
+
+@pytest.mark.django_db
+def test_agenda_publica_exibe_calendario_e_kanban_diario_com_loja_oculta(tenant_aurora):
+    from contatos.models import Loja, Vale
+    from tarefas.models import Evento
+
+    Vale.objects.get_or_create(tenant=tenant_aurora, defaults={'nome': 'Vale Teste', 'sigla': f'T{uuid4().hex[:8]}'})
+    loja = Loja.objects.create(tenant=tenant_aurora, nome='Loja Confidencial')
+    inicio = timezone.make_aware(datetime(2026, 11, 10, 19, 0))
+    Evento.objects.create(
+        titulo='Sessão Pública', descricao='Descrição reservada', tipo='sessao',
+        data_inicio=inicio, data_fim=inicio + timedelta(hours=2), loja_id=str(loja.pk),
+    )
+
+    response = Client().get('/login/?ano=2026&mes=11')
+    html = response.content.decode('utf-8')
+    agenda_html = html[html.index('<section id="sessao-calendario"'):]
+
+    assert response.status_code == 200
+    assert agenda_html.count('Sessão Pública') == 3
+    assert 'Sessão' in agenda_html
+    assert 'Loja 1' in agenda_html
+    assert 'Loja Confidencial' not in agenda_html
+    assert 'Descrição reservada' not in agenda_html
+    assert agenda_html.count('data-loja="loja-1"') == 3
+    assert 'data-data="2026-11-10"' in agenda_html
+
+
+@pytest.mark.django_db
+def test_exportacao_agenda_publica_filtra_mes_e_loja_sem_dados_privados(tenant_aurora):
+    from contatos.models import Loja, Vale
+    from tarefas.models import Evento
+
+    Vale.objects.get_or_create(tenant=tenant_aurora, defaults={'nome': 'Vale Teste', 'sigla': f'E{uuid4().hex[:8]}'})
+    loja = Loja.objects.create(tenant=tenant_aurora, nome='Loja Confidencial')
+    inicio = timezone.make_aware(datetime(2026, 11, 10, 19, 0))
+    Evento.objects.create(
+        titulo='Evento a Exportar', descricao='Não exportar descrição', tipo='sessao',
+        data_inicio=inicio, data_fim=inicio + timedelta(hours=2), loja_id=str(loja.pk),
+    )
+    Evento.objects.create(
+        titulo='Outro Mês', descricao='', tipo='sessao',
+        data_inicio=timezone.make_aware(datetime(2026, 12, 10, 19, 0)),
+        data_fim=timezone.make_aware(datetime(2026, 12, 10, 21, 0)), loja_id=str(loja.pk),
+    )
+
+    page = Client().get('/login/?ano=2026&mes=11').content.decode('utf-8')
+    agenda_html = page[page.index('<section id="sessao-calendario"'):page.index('<!-- SUPREMO')]
+    import re
+    loja_publica = re.search(
+        r'data-loja="(loja-\d+)"><span class="agenda-evento-hora">[^<]*</span>Evento a Exportar',
+        agenda_html,
+    ).group(1)
+    assert loja_publica != str(loja.pk)
+    response = Client().get(f'/login/agenda/exportar/?ano=2026&mes=11&loja={loja_publica}')
+    ics = response.content.decode('utf-8')
+
+    assert response.status_code == 200
+    assert response['Content-Type'].startswith('text/calendar')
+    assert 'SUMMARY:Evento a Exportar' in ics
+    assert 'Outro Mês' not in ics
+    assert 'Loja Confidencial' not in ics
+    assert 'Não exportar descrição' not in ics
+    assert 'DTSTART:20261110T190000' in ics
+    assert 'DTEND:20261110T210000' in ics
 

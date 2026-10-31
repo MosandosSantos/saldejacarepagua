@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}SAL DO REAA CRM — Relatório de Iniciação{% endblock %}
+{% block titulo %}SALDA BAIXADA CRM — Relatório de Iniciação{% endblock %}
 
 {% block conteudo %}
 <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -24,7 +24,7 @@
 <div class="hazon-card mb-5 p-4">
   <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Seleção do relatório</p>
   <p class="mt-1 text-[14px] font-semibold text-hazon-text">
-    {% if descritor.corpos %}{{ descritor.corpos|join:", " }}{% else %}Todos os corpos do Rito{% endif %}{% if descritor.loja %} · Loja: {{ descritor.loja }}{% endif %}{% if descritor.vale %} · Vale: {{ descritor.vale }}{% endif %}
+    {% if descritor.corpos %}{{ descritor.corpos|join:", " }}{% else %}Todos os corpos do Rito{% endif %}{% if descritor.loja %} · Loja: {{ descritor.loja }}{% endif %}{% if descritor.vale %} · Potência: {{ descritor.vale }}{% endif %}
   </p>
 </div>
 

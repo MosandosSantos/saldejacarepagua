@@ -44,12 +44,15 @@ def _credencial_por_numero(numero, senha):
     """
     from contatos.models import Membro
 
-    numero = int(numero)
+    numero = numero.lstrip('0')
+    digits = numero.isdigit()
+    numero_int = int(numero) if digits else None
     usuario = None
     membro = (
         Membro.objects.select_related('tenant')
-        .filter(cadastro_numero=numero)
+        .filter(cadastro_numero=numero_int)
         .first()
+        if numero_int is not None else None
     )
     if membro is not None:
         usuario = Usuario.objects.filter(membro_id=membro.pk).first()
@@ -61,7 +64,27 @@ def _credencial_por_numero(numero, senha):
             ).first()
     if usuario is None:
         # Conta administrativa sem membro: cadastro_numero próprio da conta.
-        usuario = Usuario.objects.filter(cadastro_numero=numero).first()
+        usuario = (
+            Usuario.objects.filter(cadastro_numero=numero_int).first()
+            if numero_int is not None else None
+        )
+    if usuario is None and digits:
+        # Conta pelo celular cadastrado (contas administrativas sem membro).
+        # Aceita com e sem DDI/formato: tentamos o '21999417097' cru e as
+        # formas salvas com máscara, pois o campo celular é texto livre.
+        celular_variacoes = [numero, numero if numero.startswith('9') else '9' + numero]
+        for variacao in celular_variacoes:
+            usuario = Usuario.objects.filter(
+                membro_id__isnull=True, celular=variacao
+            ).first()
+            if usuario is not None:
+                break
+        if usuario is None:
+            usuario = (
+                Usuario.objects.filter(
+                    membro_id__isnull=True, celular__endswith=numero
+                ).first()
+            )
     if usuario is None:
         check_password(senha, _HASH_DUMMY)
         return None, False
@@ -85,7 +108,7 @@ def login_web(request):
     if request.method == 'POST':
         if not settings.CLOUDFLARE_TURNSTILE_CONFIGURED:
             erro = 'Verificação humana indisponível. Tente novamente mais tarde.'
-            return render(request, 'acesso/login.html', _login_context(erro, eh_saldorer))
+            return render(request, 'acesso/login.html', _login_context(erro, eh_saldorer, request))
 
         identifier = request.POST.get('identifier', '').strip()
         email = request.POST.get('email', '').strip().lower()  # compat: form antigo
@@ -166,66 +189,180 @@ def login_web(request):
             login_registrar_falha(ip, login_id)
             erro = 'Login ou senha inválidos.'
 
-    return render(request, 'acesso/login.html', _login_context(erro, eh_saldorer))
+    return render(request, 'acesso/login.html', _login_context(erro, eh_saldorer, request))
 
 
-def _agenda_publica():
-    """Grade mensal das sessões para a dobra 'Calendário' da home (pública).
-
-    Devolve {'mes_nome', 'ano', 'semanas': [...]}, onde cada semana é uma
-    lista de 7 dias (domingo a sábado) e cada dia leva {'dia', 'hoje',
-    'outro_mes', 'eventos': [{titulo, tipo_display, hora}]}. Dados mínimos:
-    título, tipo e hora — sem loja_id nem descrição pública. O mês exibido
-    é o corrente (a navegação de meses fica na agenda interna).
-    """
+def _agenda_publica(ano=None, mes=None, loja_id=''):
+    """Dados públicos e limitados da agenda por mês, sem dados identificáveis de loja."""
     from calendar import Calendar, monthrange
     from datetime import date
     from django.utils import timezone
     from tarefas.models import Evento
+    from contatos.models import Loja
 
     hoje_dt = timezone.localdate()
-    cal = Calendar(firstweekday=6)  # semana começa no domingo (Google Calendar)
-
-    dias = list(cal.itermonthdates(hoje_dt.year, hoje_dt.month))
-    inicio = date(hoje_dt.year, hoje_dt.month, 1)
-    fim = date(hoje_dt.year, hoje_dt.month, monthrange(hoje_dt.year, hoje_dt.month)[1])
-
-    eventos = (
-        Evento.objects.filter(data_inicio__date__gte=inicio, data_inicio__date__lte=fim)
-        .order_by('data_inicio')
+    ano = int(ano or hoje_dt.year)
+    mes = int(mes or hoje_dt.month)
+    if not 1 <= mes <= 12 or not 1900 <= ano <= 2200:
+        ano, mes = hoje_dt.year, hoje_dt.month
+    inicio = date(ano, mes, 1)
+    fim = date(ano, mes, monthrange(ano, mes)[1])
+    identificadores_loja = [
+        str(loja_id)
+        for loja_id in Loja.objects.filter(situacao='ATIVA').order_by('id').values_list('pk', flat=True)
+    ]
+    identificadores_eventos = (
+        Evento.objects.values_list('loja_id', flat=True).distinct().order_by('loja_id')
     )
+    for evento_loja_id in identificadores_eventos:
+        evento_loja_id = str(evento_loja_id)
+        if evento_loja_id not in identificadores_loja:
+            identificadores_loja.append(evento_loja_id)
+
+    lojas_publicas = []
+    loja_id_por_filtro = {}
+    filtro_por_loja = {}
+    for identificador in identificadores_loja:
+        filtro = f'loja-{len(lojas_publicas) + 1}'
+        lojas_publicas.append({'id': filtro, 'rotulo': f'Loja {len(lojas_publicas) + 1}'})
+        loja_id_por_filtro[filtro] = identificador
+        filtro_por_loja[identificador] = filtro
+
+    eventos_qs = Evento.objects.filter(
+        data_inicio__date__lte=fim,
+        data_fim__date__gte=inicio,
+    ).order_by('data_inicio')
+    if loja_id and loja_id in loja_id_por_filtro:
+        eventos_qs = eventos_qs.filter(loja_id=loja_id_por_filtro[loja_id])
+    elif loja_id:
+        eventos_qs = eventos_qs.none()
+
+    eventos = []
     por_dia = {}
-    for ev in eventos:
-        d = timezone.localdate(ev.data_inicio)
-        por_dia.setdefault(d, []).append({
+    tz = timezone.get_current_timezone()
+
+    def _registro(ev):
+        inicio_local = timezone.localtime(ev.data_inicio, tz)
+        fim_local = timezone.localtime(ev.data_fim, tz)
+        return {
             'titulo': ev.titulo,
-            'tipo_display': ev.get_tipo_display(),
-            'hora': ev.data_inicio.astimezone(timezone.get_current_timezone()).strftime('%H:%M'),
-        })
+            'tipo': ev.get_tipo_display(),
+            'hora': inicio_local.strftime('%H:%M'),
+            'inicio': inicio_local,
+            'fim': fim_local,
+            'loja_id': filtro_por_loja.get(str(ev.loja_id), ''),
+        }
+
+    for ev in eventos_qs:
+        registro = _registro(ev)
+        eventos.append(registro)
+        d = timezone.localdate(ev.data_inicio)
+        por_dia.setdefault(d, []).append(registro)
+
+    # Kanban por mês: colunas do ano inteiro, agrupando os eventos por mês.
+    eventos_ano_qs = Evento.objects.filter(
+        data_inicio__date__lte=date(ano, 12, 31),
+        data_fim__date__gte=date(ano, 1, 1),
+    ).order_by('data_inicio')
+    if loja_id and loja_id in loja_id_por_filtro:
+        eventos_ano_qs = eventos_ano_qs.filter(loja_id=loja_id_por_filtro[loja_id])
+    elif loja_id:
+        eventos_ano_qs = eventos_ano_qs.none()
+    por_mes = {}
+    for ev in eventos_ano_qs:
+        local = timezone.localtime(ev.data_inicio, tz)
+        registro = _registro(ev)
+        registro['data_curta'] = local.strftime('%d/%m')
+        por_mes.setdefault(local.month, []).append(registro)
 
     MESES_PT = [
         '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
         'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
     ]
-
+    DIAS_PT = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+    cal = Calendar(firstweekday=6)
     semanas = []
-    for i in range(0, len(dias), 7):
-        semana = []
-        for d in dias[i:i + 7]:
-            semana.append({
-                'dia': d.day,
-                'hoje': d == hoje_dt,
-                'outro_mes': d.month != hoje_dt.month,
-                'eventos': por_dia.get(d, []),
-            })
-        semanas.append(semana)
+    for i in range(0, len(list(cal.itermonthdates(ano, mes))), 7):
+        datas = list(cal.itermonthdates(ano, mes))[i:i + 7]
+        semanas.append([{
+            'dia': d.day,
+            'data': d,
+            'hoje': d == hoje_dt,
+            'outro_mes': d.month != mes,
+            'eventos': por_dia.get(d, []),
+        } for d in datas])
+
+    meses_kanban = []
+    for numero in range(1, 13):
+        eventos_do_mes = por_mes.get(numero, [])
+        meses_kanban.append({
+            'numero': numero,
+            'nome': MESES_PT[numero],
+            'atual': numero == mes,
+            'total': len(eventos_do_mes),
+            'eventos': eventos_do_mes,
+        })
+
+    dias_kanban = []
+    for numero in range(1, fim.day + 1):
+        d = date(ano, mes, numero)
+        dias_kanban.append({
+            'data': d,
+            'dia': numero,
+            'nome_semana': DIAS_PT[d.weekday() + 1 if d.weekday() < 6 else 0],
+            'total': len(por_dia.get(d, [])),
+            'eventos': por_dia.get(d, []),
+        })
 
     return {
-        'mes_nome': MESES_PT[hoje_dt.month],
-        'ano': hoje_dt.year,
+        'mes_nome': MESES_PT[mes],
+        'ano': ano,
+        'mes': mes,
         'semanas': semanas,
-        'tem_eventos': bool(por_dia),
+        'meses_kanban': meses_kanban,
+        'dias_semana': ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+        'dias_kanban': dias_kanban,
+        'lojas': lojas_publicas,
+        'eventos': eventos,
+        'tem_eventos': bool(eventos),
     }
+
+
+def exportar_agenda_publica(request):
+    """Exporta eventos do mês/filtro selecionado em iCalendar, sem expor a loja."""
+    from django.http import HttpResponse
+    from django.utils import timezone
+    from tarefas.ical import _fold_line, _ical_escape
+
+    try:
+        ano, mes = int(request.GET.get('ano', '')), int(request.GET.get('mes', ''))
+    except (TypeError, ValueError):
+        agenda = _agenda_publica()
+    else:
+        agenda = _agenda_publica(ano=ano, mes=mes, loja_id=request.GET.get('loja', ''))
+    linhas = [
+        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Sal da Baixada//Agenda Publica//PT',
+        f"X-WR-CALNAME:Agenda {agenda['mes_nome']} {agenda['ano']}", 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    ]
+    inicio_mes = f"{agenda['ano']}-{agenda['mes']:02d}-01"
+    fim_mes = f"{agenda['ano']}-{agenda['mes']:02d}-01"
+    for indice, ev in enumerate(agenda['eventos']):
+        linhas.extend([
+            'BEGIN:VEVENT',
+            f"UID:agenda-publica-{agenda['ano']}-{agenda['mes']}-{indice}@saldabaixada",
+            f"DTSTAMP:{timezone.now().strftime('%Y%m%dT%H%M%SZ')}",
+            f"DTSTART:{ev['inicio'].strftime('%Y%m%dT%H%M%S')}",
+            f"DTEND:{ev['fim'].strftime('%Y%m%dT%H%M%S')}",
+            _fold_line(f"SUMMARY:{_ical_escape(ev['titulo'])}"),
+            _fold_line(f"CATEGORIES:{_ical_escape(ev['tipo'])}"),
+            'END:VEVENT',
+        ])
+    linhas.extend(['END:VCALENDAR', ''])
+    response = HttpResponse('\r\n'.join(linhas), content_type='text/calendar; charset=utf-8')
+    response['Content-Disposition'] = (
+        f'attachment; filename="agenda-{agenda["ano"]}-{agenda["mes"]:02d}.ics"'
+    )
+    return response
 
 
 def _contagem_vales():
@@ -245,10 +382,62 @@ def _contagem_vales():
     }
 
 
-def _login_context(erro, eh_saldorer):
+def _grafico_lojas_efetivos():
+    """Efetivos por loja para o mini-gráfico da home de login."""
+    from contatos.models import Loja, Membro, Vale, Filiacao
+
+    tenant_ids = list(
+        Vale.objects.filter(status='ATIVA').values_list('tenant_id', flat=True)
+    )
+    lojas = Loja.objects.filter(tenant_id__in=tenant_ids, situacao='ATIVA').order_by(
+        'numero', 'nome'
+    )
+    dados = []
+    for loja in lojas:
+        qtd = (
+            Filiacao.objects.filter(loja=loja, membro__situacao='ATIVO')
+            .values('membro_id')
+            .distinct()
+            .count()
+        )
+        if not qtd:
+            qtd = Membro.objects.filter(lojas=loja, situacao='ATIVO').count()
+        label = (loja.numero or '').strip()
+        if not label:
+            nome = (loja.nome or '').strip()
+            # pegar abreviatura
+            if nome:
+                # tentar pegar siglas/palavras
+                partes = nome.replace('.', ' ').split()
+                if len(partes) >= 2:
+                    label = (partes[0][:3] + partes[-1][:3]).upper()
+                else:
+                    label = nome[:4].upper()
+            else:
+                label = 'LOJA'
+        dados.append({'label': label.upper(), 'count': int(qtd)})
+    return dados
+
+
+def _sessoes_no_ano():
+    """Quantidade de sessões/eventos no ano corrente para exibição pública."""
+    try:
+        from tarefas.models import Evento
+        from django.utils import timezone
+
+        hoje = timezone.localdate()
+        return Evento.objects.filter(data_inicio__year=hoje.year).count()
+    except Exception:
+        return 0
+
+
+def _login_context(erro, eh_saldorer, request=None):
     """Build a public-only widget context; never pass the secret to templates."""
     try:
-        agenda = _agenda_publica()
+        params = request.GET if request is not None else {}
+        agenda = _agenda_publica(
+            ano=params.get('ano'), mes=params.get('mes'), loja_id=params.get('loja', ''),
+        )
     except DBError:
         logger.warning('Agenda pública indisponível na home do login', exc_info=True)
         agenda = []
@@ -257,10 +446,21 @@ def _login_context(erro, eh_saldorer):
     except DBError:
         logger.warning('Contagem do Vale indisponível na home do login', exc_info=True)
         contagem = {'lojas': 0, 'membros': 0}
+    try:
+        grafico_lojas = _grafico_lojas_efetivos()
+    except DBError:
+        grafico_lojas = []
+    try:
+        sessoes_ano = _sessoes_no_ano()
+    except Exception:
+        sessoes_ano = 0
     return {
         'erro': erro,
         'agenda': agenda,
+        'agenda_export_url': '/login/agenda/exportar/',
         'contagem': contagem,
+        'grafico_lojas': grafico_lojas,
+        'sessoes_ano': sessoes_ano,
         'eh_saldorer': eh_saldorer,
         'turnstile_configured': settings.CLOUDFLARE_TURNSTILE_CONFIGURED,
         'turnstile_site_key': settings.CLOUDFLARE_TURNSTILE_SITE_KEY,

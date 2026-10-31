@@ -227,7 +227,7 @@ def test_delete_confirmation_lists_complete_contact_details_without_external_gua
         assert value in html
     assert 'possui lojas vinculadas' not in html
     assert 'nao pode ser excluido' not in html
-    assert 'Arquivar Vale' in html
+    assert 'Arquivar Potência' in html
     avatar = re.search(
         r'<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full[^"]*">\s*(.*?)\s*</span>',
         html,

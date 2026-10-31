@@ -101,7 +101,7 @@ def test_delegado_form_trava_o_vale_dele():
 
     assert response.status_code == 200
     assert f'name="vale_id" value="{vale.pk}"' in html  # input fixado
-    assert 'fixado ao seu Vale' in html
+    assert 'fixado à sua Potência' in html
 
 
 def test_delegado_sem_vinculo_de_vale_nao_cria():
@@ -124,7 +124,7 @@ def test_delegado_com_vale_inexistente_nao_cria():
 
 
 def test_delegado_usa_o_botao_da_lista_mas_nao_o_de_vale():
-    """Delegado vê "Incluir Loja", mas "Incluir Vale" é só de admin."""
+    """Delegado vê "Incluir Loja", mas "Incluir Potência" é só de admin."""
     tenant, vale = _tenant_vale('PVF')
     delegado = _usuario(tenant, ROLE_DELEGADO, prefeitura_id=vale.pk)
     client = _cliente(delegado)
@@ -217,7 +217,7 @@ def test_admin_e_admin_saas_veem_botao_incluir_vale(role):
     response = client.get('/contatos/prefeituras/')
 
     assert response.status_code == 200
-    assert 'Incluir Vale' in response.content.decode()
+    assert 'Incluir Potência' in response.content.decode()
 
 
 def test_delegado_nao_cria_vale():

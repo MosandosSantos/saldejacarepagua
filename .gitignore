@@ -59,8 +59,27 @@ Thumbs.db
 # Cache / testes
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
+
+# Build local (pip/curtação; o dist do Tailwind tem regra específica acima)
+build/
+dist/
+
+# SQLite no modo WAL/SHM (fallback local)
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Temporarios de editores / Office
+~$*
+*.sw[po]
+*.bak
+!pg_hba.conf.bak
 
 # Arquivos auxiliares
 cookie.txt

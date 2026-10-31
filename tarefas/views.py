@@ -1285,7 +1285,7 @@ def _url_google_calendar(evento):
         local = ' — '.join([p for p in (loja.cidade, loja.uf) if p])
     parametros = {
         'action': 'TEMPLATE',
-        'text': f'{evento.titulo} (SAL DO REAA)',
+        'text': f'{evento.titulo} (SALDA BAIXADA)',
         'dates': f'{inicio}/{fim}',
         'details': f'{detalhes}\nAgenda de Sessões — Sal do REAA',
     }
@@ -1325,7 +1325,7 @@ def _corpo_email_novo_evento(evento, urls_conf=None):
     }
     html = render_to_string('tarefas/emails/evento_novo.html', contexto)
     texto = (
-        f'SAL DO REAA — Agenda de Sessões\n\n'
+        f'SALDA BAIXADA — Agenda de Sessões\n\n'
         f'{evento.get_tipo_display()}: {evento.titulo}\n'
         f'Loja: {contexto["loja_nome"]}\n'
         f'Início: {contexto["inicio_display"]}\n'
@@ -1333,7 +1333,7 @@ def _corpo_email_novo_evento(evento, urls_conf=None):
         f'Adicionar ao Google Agenda: {contexto["url_google"]}\n'
         + (f'Observações: {evento.descricao}\n' if evento.descricao else '')
     )
-    assunto = f'SAL DO REAA — Nova sessão agendada: {evento.titulo}'
+    assunto = f'SALDA BAIXADA — Nova sessão agendada: {evento.titulo}'
     if urls_conf:
         texto += (
             f'\nConfirme sua presença:\n'

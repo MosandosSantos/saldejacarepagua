@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}SAL DO REAA CRM — Nova Loja{% endblock %}
+{% block titulo %}SALDA BAIXADA CRM — Nova Loja{% endblock %}
 
 {% block conteudo %}
 <div class="mb-6">
@@ -42,18 +42,18 @@
                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           </div>
           <div>
-            <label for="vale_id" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Vale *</label>
+            <label for="vale_id" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Potência *</label>
             {% if vale_travado %}
             {# Delegado: Vale fixado no dele (prefeitura_id) — não pode escolher outro #}
             <input type="hidden" name="vale_id" value="{{ vale.id }}">
             <div class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-[#a6bfc7]">
               {{ vale.nome }}{% if vale.sigla %} ({{ vale.sigla }}){% endif %}{% spaceless %}{% endspaceless %}
-              <span class="ml-1 text-[11px] font-semibold text-[#6f8a93]">— fixado ao seu Vale</span>
+              <span class="ml-1 text-[11px] font-semibold text-[#6f8a93]">— fixado à sua Potência</span>
             </div>
             {% else %}
             <select id="vale_id" name="vale_id" required
                     class="w-full appearance-none rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
-              <option value="" class="bg-[#0a1e3d]">Selecione o Vale</option>
+              <option value="" class="bg-[#0a1e3d]">Selecione a Potência</option>
               {% for v in vales %}
                 <option value="{{ v.id }}" {% if v.id == vale.id %}selected{% endif %} class="bg-[#0a1e3d]">{{ v.nome }}{% if v.sigla %} ({{ v.sigla }}){% endif %}</option>
               {% endfor %}

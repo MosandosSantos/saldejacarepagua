@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}SAL DO REAA CRM — Novo Vale{% endblock %}
+{% block titulo %}SALDA BAIXADA CRM — Nova Potência{% endblock %}
 
 {% block conteudo %}
 <div class="mb-6">
@@ -17,7 +17,7 @@
         <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </span>
       <div>
-        <h1 class="font-display text-lg font-semibold text-white">Novo Vale</h1>
+        <h1 class="font-display text-lg font-semibold text-white">Nova Potência</h1>
         <p class="text-[13px] text-[#a6bfc7]">Preencha os dados abaixo</p>
       </div>
     </div>
@@ -26,12 +26,12 @@
       <div id="form-erro" class="mb-4 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-[13.5px] font-semibold text-[#ffd9d9]" role="alert">{{ erro }}</div>
     {% endif %}
 
-    <form method="post" action="{% url 'contatos:prefeitura_nova' %}" aria-label="Cadastrar novo Vale" {% if erro %}aria-describedby="form-erro"{% endif %} data-unsaved-guard>
+    <form method="post" action="{% url 'contatos:prefeitura_nova' %}" aria-label="Cadastrar nova Potência" {% if erro %}aria-describedby="form-erro"{% endif %} data-unsaved-guard>
       {% csrf_token %}
       <div class="grid gap-5">
         <div>
           <label for="nome" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Nome *</label>
-          <input type="text" id="nome" autocomplete="organization" name="nome" required placeholder="Ex: Vale Centro-Oeste"
+          <input type="text" id="nome" autocomplete="organization" name="nome" required placeholder="Ex: Potência Centro-Oeste"
                  class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
         </div>
 
@@ -42,8 +42,8 @@
                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           </div>
           <div>
-            <label for="prefeito" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Delegado</label>
-            <input type="text" id="prefeito" name="prefeito" placeholder="Nome do delegado" autocomplete="name"
+            <label for="prefeito" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Grão Mestre</label>
+            <input type="text" id="prefeito" name="prefeito" placeholder="Nome do grão mestre" autocomplete="name"
                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           </div>
         </div>
@@ -55,7 +55,7 @@
                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           </div>
           <div>
-            <label for="email" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Delegado</label>
+            <label for="email" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">E-mail do Grão Mestre</label>
             <input type="email" id="email" autocomplete="email" spellcheck="false" name="email" placeholder="graomestre@potencia.com"
                    class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#5b8def]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#5b8def]/15">
           </div>
@@ -104,10 +104,10 @@
         </div>
 
         <div class="col-span-full border-t border-white/10 pt-5">
-          <p class="mb-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[#4ade80]">Mensalidade</p>
+          <p class="mb-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[#4ade80]">Anuidade</p>
           <div class="grid gap-5 sm:grid-cols-2">
             <div>
-              <label for="valor_anuidade" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Valor da Mensalidade (R$)</label>
+              <label for="valor_anuidade" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Valor da Anuidade (R$)</label>
               <input type="text" id="valor_anuidade" autocomplete="off" inputmode="decimal" name="valor_anuidade" placeholder="Ex: 1.500,00" inputmode="decimal"
                      class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#4ade80]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#4ade80]/15">
             </div>
@@ -120,8 +120,8 @@
         </div>
 
         <div class="col-span-full">
-          <label for="pix" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">PIX do Vale</label>
-          <input type="text" id="pix" autocomplete="off" spellcheck="false" name="pix" placeholder="Chave PIX para pagamento da mensalidade"
+          <label for="pix" class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">PIX da Potência</label>
+          <input type="text" id="pix" autocomplete="off" spellcheck="false" name="pix" placeholder="Chave PIX para pagamento da anuidade"
                  class="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-[14px] text-white outline-none transition placeholder:text-white/40 focus:border-[#4ade80]/60 focus:bg-white/10 focus:ring-4 focus:ring-[#4ade80]/15">
         </div>
       </div>

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8777/ --max-time 5)",
+      "Shell(agent-browser:*)",
+      "powershell",
+      "Shell(netstat:*)",
+      "Shell(findstr:*)",
+      "Shell(.venvScriptspython.exe:*)",
+      "Shell(if:*)",
+      "Shell(dir:*)",
+      "Shell(ls contatos/models 2>nul || dir /b contatos\\models 2>nul || echo \"no models dir\"; echo \"---\"; findstr /i /S \"class Loja\" contatos\\*.py 2>nul)",
+      "Shell(.venv\\Scripts\\python.exe:*)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

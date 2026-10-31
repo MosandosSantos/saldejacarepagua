@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}SAL DO REAA CRM — Lojas{% endblock %}
+{% block titulo %}SALDA BAIXADA CRM — Lojas{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7 flex items-end justify-between">
@@ -27,7 +27,7 @@
     </div>
 
     <div>
-      <label for="filtro-vale" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Vale</label>
+      <label for="filtro-vale" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Potência</label>
       <select id="filtro-vale" name="vale" onchange="this.form.submit()" class="h-9 max-w-[200px] rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
         <option value="">Todos</option>
         {% for v in opcoes_vales %}<option value="{{ v.id }}" {% if vale_filtro == v.id %}selected{% endif %}>{{ v.nome }}</option>{% endfor %}
@@ -113,7 +113,7 @@
         <th class="w-10 px-3 py-4" scope="col"></th>
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Nome</th>
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Corpo</th>
-        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Vale</th>
+        <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Potência</th>
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Presidente</th>
         <th class="px-5 py-4 text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Celular do presidente</th>
         <th class="px-5 py-4 text-center text-[10.5px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Membros</th>

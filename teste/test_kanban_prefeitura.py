@@ -149,5 +149,5 @@ def test_kanban_view_select_prefeitura_inclui_opcoes(usuario_operacional, tenant
     assert response.status_code == 200
     # Verifica que o select de prefeituras está presente
     assert b'filtro-prefeitura' in response.content
-    # Placeholder do filtro de Vale (kanban.html) — caixa atual do produto
-    assert b'Todos os Vales' in response.content
+    # Placeholder do filtro de Potência (kanban.html) — caixa atual do produto
+    assert b'Todas as Potências' in response.content

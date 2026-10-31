@@ -48,7 +48,7 @@ _ICONE_CARTEIRA = ('<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke=
 #   carteiras ficam com 'Carteiras' ativo, não 'Contatos')
 _ROTAS = [
     ('Dashboard', 'dashboard', 'dashboard:index', _ICONE_DASH, None, set()),
-    ('Vale', 'contatos', 'vales', _ICONE_CARTEIRA, {'vales', 'prefeituras'}, set()),
+    ('Potência', 'contatos', 'vales', _ICONE_CARTEIRA, {'vales', 'prefeituras'}, set()),
     ('Lojas', 'contatos', 'lojas', _ICONE_CARTEIRA, {'lojas', 'loja_detalhe'}, set()),
     ('Membros', 'membros', 'membros:lista', _ICONE_CONTATOS, None, set()),
     ('Acompanhamento', 'membros', 'membros:acompanhamento', _ICONE_CONTATOS,

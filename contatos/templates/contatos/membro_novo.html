@@ -1,6 +1,6 @@
 {% extends 'base/basic.html' %}
 
-{% block titulo %}SAL DO REAA CRM — Incluir Membro{% endblock %}
+{% block titulo %}SALDA BAIXADA CRM — Incluir Membro{% endblock %}
 
 {% block conteudo %}
 <div class="mb-6">
@@ -17,7 +17,7 @@
     </span>
     <div>
       <h1 class="font-display text-lg font-semibold text-white">Incluir Membro</h1>
-      <p class="text-[13px] text-[#a6bfc7]">{% if global_admin %}Escolha o Vale de destino e preencha a ficha completa.{% else %}Ficha completa do novo membro do Vale {{ vale.nome }}.{% endif %}</p>
+      <p class="text-[13px] text-[#a6bfc7]">{% if global_admin %}Escolha a Potência de destino e preencha a ficha completa.{% else %}Ficha completa do novo membro da Potência {{ vale.nome }}.{% endif %}</p>
     </div>
   </div>
 
@@ -41,10 +41,10 @@
         <div class="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
           {% if global_admin %}
           <div class="sm:col-span-2 lg:col-span-1">
-            <label for="vale_id" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Vale de destino *</label>
+            <label for="vale_id" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Potência de destino *</label>
             <select id="vale_id" name="vale_id" required
                     class="{{ select_class }}">
-              <option value="" class="bg-[#0a1e3d]">— Selecione o Vale —</option>
+              <option value="" class="bg-[#0a1e3d]">— Selecione a Potência —</option>
               {% for v in vales_opcoes %}
                 <option value="{{ v.id }}" {% if vale and v.id == vale.id %}selected{% endif %} class="bg-[#0a1e3d]">{{ v.nome }}{% if v.sigla %} · {{ v.sigla }}{% endif %}</option>
               {% endfor %}
@@ -331,7 +331,7 @@
           opcoes += '<option value="' + l.id + '" data-graus=\'' + JSON.stringify(l.graus).replace(/'/g, '&#39;') + '\' class="bg-[#0a1e3d]">'
             + l.nome + (l.corpo_display ? ' · ' + l.corpo_display : '') + '</option>';
         });
-        selLoja.innerHTML = opcoes || '<option value="" class="bg-[#0a1e3d]">— Sem lojas neste Vale —</option>';
+        selLoja.innerHTML = opcoes || '<option value="" class="bg-[#0a1e3d]">— Sem lojas nesta Potência —</option>';
         selLoja.disabled = !opcoes;
         atualizarGraus();
       })

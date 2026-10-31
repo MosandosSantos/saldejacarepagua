@@ -207,7 +207,7 @@ class CandidatoLocalOptionsTests(SimpleTestCase):
         })
 
         self.assertIn('Mariana Silva', html)
-        self.assertIn('Vale: Vale Centro', html)
+        self.assertIn('Potência: Vale Centro', html)
         self.assertIn('Loja: Loja Centro', html)
         self.assertNotIn('CPF:', html)
         self.assertNotIn('MX Mariana Silva', html)
