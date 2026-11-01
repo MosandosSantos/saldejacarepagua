@@ -51,17 +51,14 @@ class PresencaServico:
         cpf = (irmao.get('cpf') or '').strip()
         email = (irmao.get('email') or '').strip().lower()
         if cpf:
-            espelho = Membro.objects.filter(tenant_id=tenant_id, cpf=cpf).first()
+            espelho = Membro.objects.filter(cpf=cpf).first()
             if espelho is not None:
                 return espelho
         if email:
-            espelho = Membro.objects.filter(
-                tenant_id=tenant_id, email__iexact=email,
-            ).first()
+            espelho = Membro.objects.filter(email__iexact=email).first()
             if espelho is not None:
                 return espelho
         return Membro.objects.create(
-            tenant_id=tenant_id,
             nome=irmao.get('nome') or 'Irmão',
             cpf=cpf,
             email=irmao.get('email') or '',
@@ -223,7 +220,6 @@ class PresencaServico:
             return {}
         agrupado = PresencaEvento.objects.filter(
             membro_id__in=pks,
-            membro__tenant_id=loja.tenant_id,
             evento__loja_id=str(loja.pk),
         ).values(
             'membro_id',

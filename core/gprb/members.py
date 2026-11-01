@@ -152,7 +152,7 @@ def emails_membros_da_loja(loja_id, tenant_code=None):
         return []
     return list(
         Membro.objects
-        .filter(lojas__pk=loja.pk, tenant_id=loja.tenant_id, situacao='ATIVO')
+        .filter(lojas__pk=loja.pk, situacao='ATIVO')
         .exclude(email='')
         .order_by('nome', 'id')
         .values_list('id', 'nome', 'email')

@@ -132,7 +132,7 @@ def lista(request):
     seleção de cabeçalho); ADM e demais papéis ficam escopados ao tenant da
     conta e exigem Vale ativa.
     """
-    from django.db.models import F, Q
+    from django.db.models import Q
 
     from acesso.models import ROLE_ADMIN_SAAS
 
@@ -147,9 +147,7 @@ def lista(request):
     role = getattr(usuario, 'role', None) or (
         snapshot.get('role') if isinstance(snapshot, dict) else None
     )
-    if role == ROLE_ADMIN_SAAS:
-        tenant_ids = None
-    else:
+    if role != ROLE_ADMIN_SAAS:
         tid = tenant_id_da_sessao(request)
         vale_ativo = (
             Vale.objects.filter(tenant_id=tid, status='ATIVA').first()
@@ -159,11 +157,8 @@ def lista(request):
             return HttpResponseForbidden(
                 'Selecione um tenant ativo com Vale para consultar membros.',
             )
-        tenant_ids = [tid]
 
     qs = Membro.objects.order_by('nome', 'id')
-    if tenant_ids is not None:
-        qs = qs.filter(tenant_id__in=tenant_ids)
     if filtros['termo']:
         termo = filtros['termo']
         qs = qs.filter(
@@ -172,12 +167,6 @@ def lista(request):
         )
     if filtros['situacao']:
         qs = qs.filter(situacao=filtros['situacao'])
-    if filtros['prefeitura_id']:
-        try:
-            vale = Vale.objects.get(pk=int(filtros['prefeitura_id']))
-        except (Vale.DoesNotExist, TypeError, ValueError):
-            vale = None
-        qs = qs.filter(tenant_id=vale.tenant_id) if vale else qs.none()
     loja_pk = None
     if filtros['loja_id']:
         try:
@@ -190,7 +179,6 @@ def lista(request):
     elif corpos:
         filtros_loja = {
             'lojas__corpo__in': corpos,
-            'lojas__tenant_id': F('tenant_id'),
         }
         if loja_pk is not None:
             filtros_loja['lojas__pk'] = loja_pk
@@ -215,19 +203,13 @@ def lista(request):
     membros = [
         _formatar_membro_local(membro, ano_corrente, em_q1, percentuais_presenca)
         for membro in page_obj.object_list.prefetch_related(
-            'lojas__tenant', 'graus__grau',
+            'lojas', 'graus__grau',
         )
     ]
 
-    base_opcoes = Membro.objects
-    if tenant_ids is not None:
-        base_opcoes = base_opcoes.filter(tenant_id__in=tenant_ids)
+    base_opcoes = Membro.objects.all()
     vales_opcoes = Vale.objects.filter(status='ATIVA')
-    if tenant_ids is not None:
-        vales_opcoes = vales_opcoes.filter(tenant_id__in=tenant_ids)
-    lojas_opcoes = Loja.objects
-    if tenant_ids is not None:
-        lojas_opcoes = lojas_opcoes.filter(tenant_id__in=tenant_ids)
+    lojas_opcoes = Loja.objects.all()
 
     return render(request, 'contatos/lista.html', {
         'itens': membros, 'q': filtros['termo'],
@@ -266,11 +248,8 @@ def _formatar_membro_local(membro, ano_corrente, em_q1, percentuais_presenca):
     cor, label = _cor_anuidade(None, ano_corrente, em_q1)
     lojas = []
     for loja in membro.lojas.all().order_by('nome', 'id'):
-        try:
-            vale = loja.tenant.vales
-            vale_nome, vale_sigla = vale.nome, vale.sigla
-        except Vale.DoesNotExist:
-            vale_nome, vale_sigla = '', ''
+        # Loja não tem mais vínculo com Vale (tenant removido).
+        vale_nome, vale_sigla = '', ''
         lojas.append({
             'loja': loja.nome, 'sigla': vale_sigla, 'potencia': vale_nome,
             'anuidade_loja': None, 'presencas_loja': 0,

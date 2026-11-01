@@ -53,7 +53,7 @@ _ROTAS = [
     ('Membros', 'membros', 'membros:lista', _ICONE_CONTATOS, None, set()),
     ('Acompanhamento', 'membros', 'membros:acompanhamento', _ICONE_CONTATOS,
      {'acompanhamento', 'acompanhamento_exportar'}, set()),
-    ('Agenda', 'tarefas', 'agendas', _ICONE_TAREFAS, {'agendas', 'ranking'}, set()),
+    ('Ordens Inglesas', 'tarefas', 'agendas', _ICONE_TAREFAS, {'agendas', 'ranking'}, set()),
     ('Iniciação', 'recepcao', 'recepcao:kanban', _ICONE_FUNIL, None, set()),
     # Equipe/Usuários: gestão — oficialato (ADM, Delegado, ...) + admin da plataforma.
     ('Usuários', 'acesso', 'equipe', _ICONE_EQUIPE, {'equipe', 'equipe_novo'}, set(), None, ROLES_GESTORES_USUARIOS),

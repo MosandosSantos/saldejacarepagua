@@ -51,13 +51,24 @@
             </select>
           </div>
           {% endif %}
-          <div class="sm:col-span-2 lg:col-span-2">
-            <label for="lojas" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Loja</label>
-            <select id="lojas" name="lojas" size="1" class="{{ select_class }}" data-url-lojas="{% url 'membros:lojas_por_vale' %}" aria-live="polite" aria-busy="false" {% if not lojas %}disabled{% endif %}>
-              {% for l in lojas %}
-                <option value="{{ l.id }}" class="bg-[#0a1e3d]">{{ l.nome }}{% if l.corpo %} · {{ l.get_corpo_display }}{% endif %}</option>
-              {% endfor %}
-            </select>
+          <div class="sm:col-span-2 lg:col-span-3">
+            <span class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]" id="membro-lojas-rotulo">Lojas vinculadas</span>
+            <fieldset aria-labelledby="membro-lojas-rotulo" aria-describedby="membro-lojas-ajuda">
+              <legend class="sr-only">Selecione uma ou mais lojas do membro</legend>
+              <div class="max-h-64 space-y-1.5 overflow-y-auto rounded-xl border border-white/15 bg-white/5 p-3">
+                {% for l in lojas %}
+                  <label class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1 py-1 text-[13px] text-white transition hover:bg-white/5">
+                    <input type="checkbox" name="lojas" value="{{ l.id }}" id="membro-loja-{{ l.id }}"
+                           class="h-4 w-4 rounded border-white/20 bg-white/10 accent-[#5b8def]"
+                           {% if l.id in lojas_selecionadas %}checked{% endif %}>
+                    <span class="min-w-0 truncate">{{ l.nome }}{% if l.potencia %} · {{ l.potencia }}{% endif %}{% if l.corpo %} · {{ l.corpo }}{% endif %}</span>
+                  </label>
+                {% empty %}
+                  <p class="text-[12.5px] text-[#a6bfc7]">Nenhuma loja disponível.</p>
+                {% endfor %}
+              </div>
+            </fieldset>
+            <p class="mt-1.5 text-[11.5px] text-[#a6bfc7]" id="membro-lojas-ajuda">Marque uma ou mais lojas — o membro pode ser vinculado a lojas de qualquer Potência.</p>
           </div>
           <div>
             <label for="potencia" class="mb-2 block text-[11.5px] font-bold uppercase tracking-[0.16em] text-[#a6bfc7]">Potência do Simbolismo</label>
@@ -311,50 +322,37 @@
   </form>
 </div>
 
+{{ graus_por_loja|json_script:"graus-por-loja" }}
 <script>
 (function () {
-  var selVale = document.getElementById('vale_id');
-  var selLoja = document.getElementById('lojas');
   var selGrau = document.getElementById('grau');
-  if (!selVale || !selLoja || !selGrau) return;
+  var checkboxes = document.querySelectorAll('input[name="lojas"]');
+  if (!selGrau || !checkboxes.length) return;
 
-  function carregarLojas() {
-    var valeVal = selVale ? selVale.value : '';
-    if (!valeVal) return; // usuário local: lista já veio do servidor
-    var base = selLoja.dataset.urlLojas;
-    selLoja.setAttribute('aria-busy', 'true');
-    fetch(base + '?vale=' + encodeURIComponent(valeVal), {credentials: 'same-origin'})
-      .then(function (r) { return r.json(); })
-      .then(function (dados) {
-        var opcoes = '';
-        (dados.lojas || []).forEach(function (l, i) {
-          opcoes += '<option value="' + l.id + '" data-graus=\'' + JSON.stringify(l.graus).replace(/'/g, '&#39;') + '\' class="bg-[#0a1e3d]">'
-            + l.nome + (l.corpo_display ? ' · ' + l.corpo_display : '') + '</option>';
-        });
-        selLoja.innerHTML = opcoes || '<option value="" class="bg-[#0a1e3d]">— Sem lojas nesta Potência —</option>';
-        selLoja.disabled = !opcoes;
-        atualizarGraus();
-      })
-      .catch(function () { selLoja.disabled = true; })
-      .finally(function () { selLoja.setAttribute('aria-busy', 'false'); });
-  }
+  var grausPorLoja = {};
+  try {
+    grausPorLoja = JSON.parse(document.getElementById('graus-por-loja').textContent || '{}');
+  } catch (e) { grausPorLoja = {}; }
 
   function atualizarGraus() {
-    var opt = selLoja.selectedOptions[0];
-    var graus = [];
-    if (opt && opt.dataset.graus) {
-      try { graus = JSON.parse(opt.dataset.graus); } catch (e) { graus = []; }
-    }
-    var opcoes = '<option value="" class="bg-[#0a1e3d]">— Selecione o grau —</option>';
-    (graus || []).forEach(function (g) {
+    var primeira = null;
+    checkboxes.forEach(function (cb) {
+      if (!primeira && cb.checked) primeira = cb;
+    });
+    var graus = primeira ? (grausPorLoja[primeira.value] || []) : [];
+    var opcoes = '<option value="" class="bg-[#0a1e3d]">'
+      + (graus.length ? '— Selecione o grau —' : '— Selecione uma loja primeiro —')
+      + '</option>';
+    graus.forEach(function (g) {
       opcoes += '<option value="' + g.id + '" class="bg-[#0a1e3d]">' + g.label + '</option>';
     });
     selGrau.innerHTML = opcoes;
+    selGrau.disabled = !graus.length;
   }
 
-  if (selLoja.dataset.urlLojas) { selVale.addEventListener('change', carregarLojas); }
-  selLoja.addEventListener('change', atualizarGraus);
-  // Se já vier com loja selecionada (form re-renderizado), povoar graus
+  checkboxes.forEach(function (cb) {
+    cb.addEventListener('change', atualizarGraus);
+  });
   atualizarGraus();
 })();
 </script>

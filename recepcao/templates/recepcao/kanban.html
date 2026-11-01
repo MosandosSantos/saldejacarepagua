@@ -57,7 +57,6 @@
           <span class="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-2 text-xs text-[#bcd3da] transition-colors hover:border-[#5b8def]/40 hover:bg-white/10 peer-checked:border-[#4ade80]/60 peer-checked:bg-[#4ade80]/15 peer-checked:text-[#4ade80] peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-[#5b8def]/70">
             <span class="h-2 w-2 shrink-0 rounded-full bg-white/25"></span>
             <span class="font-semibold">{{ corpo.nome }}</span>
-            <span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[11px] text-[#a6bfc7]">{{ corpo.faixa }}</span>
           </span>
         </label>
         {% endfor %}
@@ -117,9 +116,9 @@
        data-stage="{{ col.key }}" data-grau="{{ col.grau|default:'' }}" data-corpo="{{ col.corpo|default:'' }}">
     <div class="flex items-center gap-2.5 border-b border-white/10 px-4 py-3.5">
       <span class="h-2.5 w-2.5 shrink-0 rounded" style="background:{{ col.color }};box-shadow:0 0 8px {{ col.color }}70"></span>
-      <span class="flex-1 truncate text-[13px] font-semibold text-[#bcd3da]">{{ col.name }}</span>
+      <span class="flex-1 truncate text-[13px] font-semibold text-[#bcd3da]" title="{{ col.name }}">{{ col.name }}</span>
       <span data-contador="{{ col.key }}" class="rounded-full bg-white/5 px-2.5 py-0.5 font-mono text-xs font-bold text-white">{{ col.count }}</span>
-      {% if web_pode_editar %}
+      {% if web_pode_editar and not colunas_por_corpo %}
       <button type="button" data-etapa="{{ col.key }}" aria-label="Nova recepção em {{ col.name }}" title="Nova recepção nesta etapa"
               class="btn-lead-coluna flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#bcd3da] transition hover:border-[#5b8def]/40 hover:bg-[#5b8def]/15 hover:text-[#5b8def]">
         <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>

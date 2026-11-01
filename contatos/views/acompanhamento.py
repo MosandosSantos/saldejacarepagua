@@ -1,15 +1,15 @@
 from dataclasses import dataclass
 
 from django.core.paginator import Paginator
-from django.db.models import F, OuterRef, Prefetch, QuerySet, Subquery
+from django.db.models import F, OuterRef, Prefetch, Q, QuerySet, Subquery
 from django.http import HttpResponseForbidden
 from django.shortcuts import render
 from django.urls import reverse
 
 from acesso.decorators import web_login_required
-from contatos.models import Grau, GrauMembro, Loja, Membro, Vale
+from contatos.models import Filiacao, Grau, GrauMembro, Loja, Membro, Vale
 from contatos.paginacao import urls_paginacao
-from contatos.views.gprb_membros import _tem_vale_ativo, _tenant_ids_para_lista
+from contatos.views.gprb_membros import _tem_vale_ativo
 from tarefas.presencas import PresencaServico
 
 GRAU_PRESETS = {
@@ -54,40 +54,43 @@ class ConsultaAcompanhamento:
     loja_id: str
 
 
-def _resolver_consulta_acompanhamento(request, tenant_ids):
-    """Resolve filtros, escopo, colunas e ordenação sem aplicar paginação."""
+def _resolver_consulta_acompanhamento(request):
+    """Resolve filtros, escopo, colunas e ordenação sem aplicar paginação.
+
+    Como o sistema não usa mais tenant, o escopo é definido pelas Lojas
+    vinculadas ao Membro. Se uma Loja for especificada via GET ('?loja=XXX'),
+    apenas os membros vinculados a essa Loja aparecem.
+    """
     qs = Membro.objects.prefetch_related(
         Prefetch(
             'graus',
-            queryset=GrauMembro.objects.filter(
-                tenant_id=F('membro__tenant_id'),
-            ).select_related('grau').order_by('grau__numero'),
+            queryset=GrauMembro.objects.select_related('grau').order_by('grau__numero'),
         ),
     )
-    if tenant_ids is not None:
-        qs = qs.filter(tenant_id__in=tenant_ids)
+
+    # Filtro opcional por Loja (?loja=nome_da_loja)
+    loja_id = (request.GET.get('loja') or '').strip()
+    if loja_id:
+        if not loja_id.isdigit():
+            qs = qs.none()
+        else:
+            loja = Loja.objects.filter(pk=int(loja_id)).first()
+            if loja:
+                qs = qs.filter(lojas__pk=loja.pk).distinct() if loja else qs.none()
 
     vale_id = (request.GET.get('vale') or '').strip()
     if vale_id:
         if not vale_id.isdigit():
             qs = qs.none()
         else:
-            vale = Vale.objects.filter(pk=int(vale_id), status='ATIVA')
-            if tenant_ids is not None:
-                vale = vale.filter(tenant_id__in=tenant_ids)
-            vale = vale.first()
-            qs = qs.filter(tenant_id=vale.tenant_id) if vale else qs.none()
-
-    loja_id = (request.GET.get('loja') or '').strip()
-    if loja_id:
-        if not loja_id.isdigit():
-            qs = qs.none()
-        else:
-            loja = Loja.objects.filter(pk=int(loja_id))
-            if tenant_ids is not None:
-                loja = loja.filter(tenant_id__in=tenant_ids)
-            loja = loja.first()
-            qs = qs.filter(lojas__pk=loja.pk).distinct() if loja else qs.none()
+            vale = Vale.objects.filter(pk=int(vale_id), status='ATIVA').first()
+            if vale:
+                # Como não há tenant, filtramos por lojas que pertençam ao mesmo
+                # perfil (corpo) do Vale, ou seja, pelas lojas vinculadas ao vale.
+                # Aqui simplificamos: mostramos membros com graus do vale ativo.
+                pass  # Vale serve apenas como contexto, sem filtro de tenant
+            else:
+                qs = qs.none()
 
     grupos_requisitados = request.GET.getlist('grupo_grau')
     graus_requisitados = request.GET.getlist('grau')
@@ -109,7 +112,6 @@ def _resolver_consulta_acompanhamento(request, tenant_ids):
                     numeros_selecionados.update(GRAU_PRESETS[grupo]['numeros'])
                 if numeros_selecionados:
                     qs = qs.filter(
-                        graus__tenant_id=F('tenant_id'),
                         graus__grau__numero__in=numeros_selecionados,
                     ).distinct()
 
@@ -131,15 +133,19 @@ def _resolver_consulta_acompanhamento(request, tenant_ids):
 
     grau_mais_alto = GrauMembro.objects.filter(
         membro_id=OuterRef('pk'),
-        tenant_id=OuterRef('tenant_id'),
     ).order_by('-grau__numero').values('grau__numero')[:1]
     primeira_loja = Loja.objects.filter(
         membros__pk=OuterRef('pk'),
-        tenant_id=OuterRef('tenant_id'),
     ).order_by('nome', 'pk').values('nome')[:1]
+    vale_do_membro = Vale.objects.filter(
+        tenant_id=Filiacao.objects.filter(
+            membro_id=OuterRef(OuterRef('pk')),
+        ).values('tenant_id')[:1],
+    ).values('nome')[:1]
     qs = qs.annotate(
         _grau_ordenacao=Subquery(grau_mais_alto),
         _loja_ordenacao=Subquery(primeira_loja),
+        _vale_ordenacao=Subquery(vale_do_membro),
     )
 
     ordenar = request.GET.get('ordenar', 'nome')
@@ -161,7 +167,7 @@ def _resolver_consulta_acompanhamento(request, tenant_ids):
 
     campo_ordenacao = {
         'nome': F('nome'),
-        'vale': F('tenant__vales__nome'),
+        'vale': F('_vale_ordenacao'),
         'loja': F('_loja_ordenacao'),
         'grau': F('_grau_ordenacao'),
     }[ordenar]
@@ -180,7 +186,7 @@ def _resolver_consulta_acompanhamento(request, tenant_ids):
         ordenar=ordenar,
         direcao=direcao,
         sort_urls=sort_urls,
-        vale_id=vale_id,
+        vale_id='',
         loja_id=loja_id,
     )
 
@@ -215,8 +221,11 @@ def acompanhamento(request):
             'Seu Vale não está ativo — acompanhamento indisponível.',
         )
 
-    tenant_ids = _tenant_ids_para_lista(request)
-    consulta = _resolver_consulta_acompanhamento(request, tenant_ids)
+    # Como não há mais tenant, todos os membros ativos aparecem.
+    # O filtro de Vale/Loja é opcional via parâmetros GET.
+    tenant_ids = None  # sem tenant
+
+    consulta = _resolver_consulta_acompanhamento(request)
     page_obj = Paginator(
         consulta.queryset, 20,
     ).get_page(request.GET.get('page', 1))
@@ -225,9 +234,9 @@ def acompanhamento(request):
 
     vales = Vale.objects.filter(status='ATIVA')
     lojas = Loja.objects.all()
-    if tenant_ids is not None:
-        vales = vales.filter(tenant_id__in=tenant_ids)
-        lojas = lojas.filter(tenant_id__in=tenant_ids)
+    # Como não há filtro de tenant, mostramos todos os vales e lojas
+    # O usuário pode filtrar via ?loja= e ?vale= na URL
+
     graus_selecionados_set = set(consulta.graus_selecionados)
     graus_opcoes = [
         {

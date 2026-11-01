@@ -35,9 +35,17 @@ class GrauMembroForm(forms.ModelForm):
         return cleaned_data
 
 
+def _tenant_do_membro(membro):
+    # O campo tenant foi removido; o "profile" do membro agora é definido
+    # pelas Lojas às quais ele está vinculado via M2M.
+    # Retornamos None para indicar que não há tenant associado.
+    return None
+
+
 class BaseGrauMembroFormSet(BaseInlineFormSet):
     def get_queryset(self):
-        return super().get_queryset().filter(tenant_id=self.instance.tenant_id)
+        # Sem filtragem por tenant — todos os graus da base estão disponíveis.
+        return super().get_queryset()
 
     def add_fields(self, form, index):
         super().add_fields(form, index)
@@ -63,7 +71,8 @@ class BaseGrauMembroFormSet(BaseInlineFormSet):
             graus.add(grau.pk)
 
     def save_new(self, form, commit=True):
-        form.instance.tenant_id = self.instance.tenant_id
+        # O campo tenant foi removido do modelo GrauMembro.
+        # Apenas salvamos o grau e a data, deixando o tenant de lado.
         return super().save_new(form, commit=commit)
 
 

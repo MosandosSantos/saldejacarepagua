@@ -97,10 +97,7 @@
       <tr class="border-b border-white/10 text-left">
         <th class="px-5 py-4 text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Nome</th>
         <th class="px-5 py-4 text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Cadastro</th>
-        <th class="px-5 py-4 text-center text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Tempo de Supremo</th>
-        <th class="px-5 py-4 text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Loja</th>
-        <th class="px-5 py-4 text-center text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Grau</th>
-        <th class="px-5 py-4 text-center text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Presença</th>
+        <th class="px-5 py-4 text-center text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">Lojas</th>
         <th class="px-5 py-4 text-right text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]" scope="col">A&ccedil;&otilde;es</th>
       </tr>
     </thead>
@@ -109,35 +106,15 @@
       <tr class="border-b border-white/5 transition hover:bg-white/5">
         <td class="px-5 py-3.5">
           <div class="flex items-center gap-3">
-            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#5b8def]/15 font-display text-[13px] font-semibold text-[#5b8def]">
-              {{ m.nome|truncatechars:1 }}
-            </span>
+            <button type="button" title="Expandir lojas do membro" aria-label="Expandir lojas do membro" aria-expanded="false" aria-controls="detalhe-{{ m.id }}"
+              class="btn-expand-membro flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def]">
+              <span class="expand-icon inline-block text-[22px] font-bold leading-none" aria-hidden="true">+</span>
+            </button>
             <span class="truncate text-[13px] font-medium text-white">{{ m.nome }}</span>
           </div>
         </td>
         <td class="px-5 py-3.5 font-mono text-[13px] text-[#bcd3da]">{{ m.cadastro|default:"—" }}</td>
-        <td class="px-5 py-3.5 text-center">
-          {% if m.tempo_mestre != None %}
-            <span class="inline-flex items-center justify-center rounded-lg border border-[#5b8def]/30 bg-[#5b8def]/10 px-2 py-1 font-mono text-[13px] font-bold tabular-nums text-[#5b8def]" title="Anos e meses desde a iniciação no grau 4° (Mestre)">{{ m.tempo_mestre.anos }} a {{ m.tempo_mestre.meses }} m</span>
-          {% else %}
-            <span class="text-[13px] text-[#a6bfc7]">—</span>
-          {% endif %}
-        </td>
-        <td class="px-5 py-3.5 text-[13px] text-[#bcd3da]"><span class="block truncate">{{ m.loja_nome|default:"—" }}</span></td>
-        <td class="px-5 py-3.5 text-center">
-          {% if m.grau_atual %}
-            <span class="inline-flex min-w-[2.75rem] items-center justify-center rounded-lg border border-[#5b8def]/30 bg-[#5b8def]/10 px-2 py-1 font-display text-[13px] font-bold text-[#5b8def]" title="{{ m.grau_atual.nome }}">{{ m.grau_atual.numero }}&#176;</span>
-          {% else %}
-            <span class="text-[13px] text-[#a6bfc7]">—</span>
-          {% endif %}
-        </td>
-        <td class="px-5 py-3.5 text-center">
-          {% if m.presenca_percentual != None %}
-            <span data-presenca="{{ m.presenca_percentual }}" class="inline-flex min-w-[2.75rem] items-center justify-center rounded-lg border border-[#4ade80]/30 bg-[#4ade80]/10 px-2 py-1 font-display text-[13px] font-bold tabular-nums text-[#4ade80]" title="Percentual de presença — lista de chamada">{{ m.presenca_percentual }}%</span>
-          {% else %}
-            <span data-presenca="-" class="text-[13px] text-[#a6bfc7]">—</span>
-          {% endif %}
-        </td>
+        <td class="px-5 py-3.5 text-center font-mono text-[13px] font-bold tabular-nums text-white">{{ m.qtd_lojas }}</td>
         <td class="px-5 py-3.5">
           <div class="flex items-center justify-end gap-2">
             <a href="{% url 'membros:detalhe' m.id %}" title="Consultar" class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def]" aria-label="Consultar">
@@ -156,54 +133,47 @@
           </div>
         </td>
       </tr>
-      {% if m.lojas %}
-      <tr id="lojas-{{ m.id }}" class="hidden border-b border-white/5 bg-white/[0.03]">
-        <td colspan="7" class="px-5 py-4">
-          <div class="mb-2 text-[11px] font-bold uppercase tracking-[0.09em] text-[#a6bfc7]">Lojas do membro e suas Potências</div>
-          <table class="w-full border-collapse">
-            <thead>
-              <tr class="border-b border-white/10 text-left text-[11px] uppercase tracking-[0.09em] text-[#a6bfc7]">
-                <th class="px-3 py-2" scope="col">Loja e Potência</th>
-                <th class="px-3 py-2 text-center" scope="col">Ativo</th>
-                <th class="px-3 py-2 text-center" scope="col">Anuidade</th>
-                <th class="px-3 py-2 text-center" scope="col">Presenças</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for l in m.lojas %}
-              <tr class="border-b border-white/5">
-                <td class="px-3 py-2">
-                  <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                      <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-[#fbbf24]/25 bg-[#fbbf24]/10 font-display text-[11px] font-bold text-[#fbbf24]">{{ l.sigla|default:"GP"|truncatechars:3|upper }}</span>
-                      <div>
-                        <div class="text-[13px] font-medium text-white">{{ l.loja }}</div>
-                        {% if l.potencia %}<div class="text-[11px] text-[#6f8a93]">{{ l.potencia }}</div>{% endif %}
-                      </div>
-                    </div>
-                    <button type="button" onclick="alternarLojas('{{ m.id|escapejs }}')" title="Fechar" aria-label="Fechar detalhes das lojas"
-                      class="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#ef4444]/15 hover:text-[#ef4444]">
-                      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    </button>
-                  </div>
-                </td>
-                <td class="px-3 py-2 text-center">
-                  {% if m.ativo %}<span class="rounded-full border border-[#4ade80]/30 bg-[#4ade80]/10 px-2.5 py-1 text-[11px] font-bold text-[#4ade80]">Ativo</span>{% else %}<span class="rounded-full border border-[#6f8a93]/30 bg-[#6f8a93]/10 px-2.5 py-1 text-[11px] font-bold text-[#a6bfc7]">Inativo</span>{% endif %}
-                </td>
-                <td class="px-3 py-2 text-center">
-                  {% if l.anuidade_loja %}<span class="rounded-full border border-[#4ade80]/30 bg-[#4ade80]/10 px-2.5 py-1 text-[11px] font-bold text-[#4ade80]">Paga {{ l.anuidade_loja }}</span>{% else %}<span class="text-[13px] text-[#6f8a93]">—</span>{% endif %}
-                </td>
-                <td class="px-3 py-2 text-center font-mono text-[13px] tabular-nums text-[#5b8def]">{{ l.presencas_loja|default:0 }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+      <tr id="detalhe-{{ m.id }}" style="display:none;" class="border-b border-white/5 bg-white/[0.03]">
+        <td colspan="4" class="px-5 py-4">
+          <div class="overflow-x-auto rounded-xl border border-white/10 bg-[#0a1e3d]/50">
+            <table class="w-full border-collapse" aria-label="Lojas de {{ m.nome }}">
+              <thead>
+                <tr class="border-b border-white/10 text-left">
+                  <th scope="col" class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Loja</th>
+                  <th scope="col" class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Cargo</th>
+                  <th scope="col" class="px-4 py-2.5 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Iniciação</th>
+                  <th scope="col" class="px-4 py-2.5 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Situação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for vinculo in m.lojas_expandir %}
+                <tr class="border-b border-white/[0.03] hover:bg-white/[0.03]">
+                  <td class="px-4 py-2 text-[12px] text-[#bcd3da]">{{ vinculo.loja }}</td>
+                  <td class="px-4 py-2 text-[12px] text-[#bcd3da]"></td>
+                  <td class="px-4 py-2 text-center text-[12px] text-[#bcd3da]">
+                    {% if vinculo.iniciado == True %}Iniciado{% elif vinculo.iniciado == False %}Não iniciado{% else %}Não informado{% endif %}
+                  </td>
+                  <td class="px-4 py-2 text-center">
+                    {% if vinculo.ativo == True %}
+                    <span class="inline-block rounded-full bg-[#4ade80]/15 px-2 py-0.5 text-[10px] font-bold text-[#4ade80]">Ativo</span>
+                    {% elif vinculo.ativo == False %}
+                    <span class="inline-block rounded-full bg-[#ef4444]/15 px-2 py-0.5 text-[10px] font-bold text-[#ef4444]">Inativo</span>
+                    {% else %}
+                    <span class="text-[12px] text-[#a6bfc7]">Não informado</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="py-4 text-center text-[12px] text-[#6f8a93]">Nenhuma loja ativa vinculada a este membro.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </td>
       </tr>
-      {% endif %}
       {% empty %}
       <tr>
-        <td colspan="7" class="px-5 py-12 text-center text-[13px] text-[#a6bfc7]">Nenhum membro encontrado.</td>
+        <td colspan="4" class="px-5 py-12 text-center text-[13px] text-[#a6bfc7]">Nenhum membro encontrado.</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -242,10 +212,22 @@
 <p class="mt-2 text-center text-[13px] text-[#a6bfc7]">P&aacute;gina {{ page_obj.number }} de {{ paginator.num_pages }}</p>
 {% endif %}
 
+{% endblock %}
+
+{% block js %}
 <script>
-  function alternarLojas(id) {
-    var linha = document.getElementById('lojas-' + id);
-    if (linha) linha.classList.toggle('hidden');
-  }
+  document.querySelectorAll('.btn-expand-membro').forEach(function (botao) {
+    botao.addEventListener('click', function () {
+      var linha = document.getElementById(botao.getAttribute('aria-controls'));
+      if (!linha) return;
+      var aberto = botao.getAttribute('aria-expanded') === 'true';
+      linha.style.display = aberto ? 'none' : '';
+      botao.setAttribute('aria-expanded', String(!aberto));
+      var rotulo = aberto ? 'Expandir lojas do membro' : 'Recolher lojas do membro';
+      botao.setAttribute('aria-label', rotulo);
+      botao.title = rotulo;
+      botao.querySelector('.expand-icon').textContent = aberto ? '+' : '−';
+    });
+  });
 </script>
 {% endblock %}

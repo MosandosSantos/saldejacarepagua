@@ -422,21 +422,19 @@ class Vale(models.Model):
 
 
 class Loja(models.Model):
-    """Loja local pertencente ao tenant de um Vale."""
+    """Loja local com Profile (corpo) York Rite."""
 
     CORPO_CHOICES = (
-        ('perfeicao', 'Perfeição'),
-        ('capitulo', 'Capítulo'),
-        ('kadosh', 'Kadosh'),
-        ('consistorio', 'Consistório'),
-        ('sc33', 'SC33'),
+        ('perfeicao', 'Mestre Maçom da Marca - MMM'),
+        ('capitulo', 'Náuta da Arca Real - NAR'),
+        ('consistorio', 'Templário - KT'),
+        ('sc33', 'Malta - KM'),
     )
 
-    tenant = models.ForeignKey(
-        'acesso.Tenant',
-        on_delete=models.CASCADE,
-        db_column='tenant_id',
-        related_name='lojas',
+    corpo = models.CharField(
+        max_length=20,
+        choices=CORPO_CHOICES,
+        default='perfeicao',
     )
     nome = models.CharField(max_length=200)
     numero = models.CharField(max_length=20, blank=True, default='')
@@ -544,7 +542,12 @@ class Rito(models.Model):
 
 
 class Membro(models.Model):
-    """Registro local de uma pessoa vinculada ao tenant de um Vale."""
+    """Pessoa global do sistema, vinculada a uma ou várias Lojas.
+
+    O ``tenant`` é a Potência de cadastro (origem), não um limite de
+    participação: o membro pode ser vinculado a Lojas de qualquer Potência
+    pela relação M2M ``lojas``.
+    """
 
     POTENCIA_CHOICES = (
         ('COMAB', 'COMAB'),
@@ -552,12 +555,6 @@ class Membro(models.Model):
         ('GOB', 'GOB'),
     )
 
-    tenant = models.ForeignKey(
-        'acesso.Tenant',
-        on_delete=models.CASCADE,
-        db_column='tenant_id',
-        related_name='membros',
-    )
     nome = models.CharField(max_length=200)
     nome_historico = models.CharField(
         max_length=120,
@@ -633,13 +630,6 @@ class Membro(models.Model):
     class Meta:
         db_table = 'membros'
         ordering = ['nome', 'id']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['tenant', 'cpf'],
-                condition=models.Q(cpf__gt=''),
-                name='membro_tenant_cpf_unico',
-            ),
-        ]
 
     def __str__(self):
         return self.nome
@@ -648,12 +638,6 @@ class Membro(models.Model):
 class GrauMembro(models.Model):
     """Histórico do(s) grau(s) conquistado(s) por um membro (MemberDegree)."""
 
-    tenant = models.ForeignKey(
-        'acesso.Tenant',
-        on_delete=models.CASCADE,
-        db_column='tenant_id',
-        related_name='graus_membros',
-    )
     membro = models.ForeignKey(
         'contatos.Membro',
         on_delete=models.CASCADE,
@@ -755,6 +739,14 @@ class Filiacao(models.Model):
         blank=True,
     )
     data_inicio = models.DateField(null=True, blank=True)
+    iniciado = models.BooleanField(
+        null=True, blank=True, default=None,
+        help_text='Se o membro possui iniciação nesta loja; vazio quando não informado.',
+    )
+    ativo = models.BooleanField(
+        null=True, blank=True, default=None,
+        help_text='Situação do membro nesta loja; vazio quando não informado.',
+    )
     diploma = models.BooleanField(default=False)
     cargo = models.CharField(max_length=120, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)

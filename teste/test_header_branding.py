@@ -26,7 +26,7 @@ def test_header_exibe_vales_marca_amorio_e_logo(tenant_aurora, usuario_operacion
         r'<a href="/vales/"[^>]*>(.*?)</a>', html, re.DOTALL,
     )
     assert link_vales is not None
-    assert 'Vale' in link_vales.group(1)
+    assert 'Potência' in link_vales.group(1)
     assert 'AMORIO' in html
     assert 'src="/static/img/logow.webp"' in html
     assert 'href="/static/img/logow.webp"' in html

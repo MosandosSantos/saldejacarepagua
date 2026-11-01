@@ -49,9 +49,7 @@ def _credencial_por_numero(numero, senha):
     numero_int = int(numero) if digits else None
     usuario = None
     membro = (
-        Membro.objects.select_related('tenant')
-        .filter(cadastro_numero=numero_int)
-        .first()
+        Membro.objects.filter(cadastro_numero=numero_int).first()
         if numero_int is not None else None
     )
     if membro is not None:
@@ -59,7 +57,6 @@ def _credencial_por_numero(numero, senha):
         if usuario is None and (membro.email or '').strip():
             # Fallback do piloto: espelho criado antes da migração de backfill.
             usuario = Usuario.objects.filter(
-                tenant_id=membro.tenant_id,
                 email__iexact=membro.email.strip(),
             ).first()
     if usuario is None:
@@ -370,15 +367,36 @@ def _contagem_vales():
 
     Devolve {'lojas': n, 'membros': n}; zeros quando não há dados.
     Só números agregados — nenhum nome ou identificador é exposto.
+
+    Como não há mais tenant, conta todos os registros ativos do sistema.
     """
+    from django.db.models import Count
+
     from contatos.models import Loja, Membro, Vale
 
-    tenant_ids = list(
-        Vale.objects.filter(status='ATIVA').values_list('tenant_id', flat=True)
-    )
+    # Como não há mais tenant, conta todos os vales ativos
+    total_vales = Vale.objects.filter(status='ATIVA').count()
+
+    # Conta todas as lojas ativas (sem filtro de tenant)
+    total_lojas = Loja.objects.filter(situacao='ATIVA').count()
+
+    # Conta membros ativos
+    total_membros = Membro.objects.filter(situacao='ATIVO').count()
+
+    # Distribui lojas por profile (corpo)
+    # Como não há tenant, conta todas as lojas e agrupa por perfil
+    perfil_counts = {}
+    for loja in Loja.objects.filter(situacao='ATIVA'):
+        perfil = loja.corpo
+        if perfil not in perfil_counts:
+            perfil_counts[perfil] = 0
+        perfil_counts[perfil] += 1
+
     return {
-        'lojas': Loja.objects.filter(tenant_id__in=tenant_ids, situacao='ATIVA').count(),
-        'membros': Membro.objects.filter(tenant_id__in=tenant_ids, situacao='ATIVO').count(),
+        'total_vales': total_vales,
+        'total_lojas': total_lojas,
+        'total_membros': total_membros,
+        'perfil_counts': perfil_counts,
     }
 
 
@@ -386,12 +404,8 @@ def _grafico_lojas_efetivos():
     """Efetivos por loja para o mini-gráfico da home de login."""
     from contatos.models import Loja, Membro, Vale, Filiacao
 
-    tenant_ids = list(
-        Vale.objects.filter(status='ATIVA').values_list('tenant_id', flat=True)
-    )
-    lojas = Loja.objects.filter(tenant_id__in=tenant_ids, situacao='ATIVA').order_by(
-        'numero', 'nome'
-    )
+    # Como não há mais tenant, conta todas as lojas ativas ativas
+    lojas = Loja.objects.filter(situacao='ATIVA').order_by('numero', 'nome')
     dados = []
     for loja in lojas:
         qtd = (

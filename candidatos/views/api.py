@@ -57,7 +57,7 @@ def api_lojas_por_prefeitura(request):
         return JsonResponse({'lojas': []})
 
     lojas = list(
-        Loja.objects.filter(tenant_id=vale.tenant_id, situacao='ATIVA')
+        Loja.objects.filter(situacao='ATIVA')
         .order_by('nome', 'id')
         .values('id', 'nome')
     )

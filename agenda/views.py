@@ -23,11 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def _lojas_do_tenant(request):
-    tid = tenant_id_da_sessao(request)
-    lojas = Loja.objects.all()
-    if tid is not None:
-        lojas = lojas.filter(tenant_id=tid)
-    return lojas.order_by('nome', 'id')
+    return Loja.objects.order_by('nome', 'id')
 
 
 def _evento_valido(request, tenant_id):
@@ -39,9 +35,7 @@ def _evento_valido(request, tenant_id):
         return None, 'Informe a data e hora.'
     if not dados['loja_id'].isdigit() or not dados['tipo_id'].isdigit():
         return None, 'Escolha a loja e o tipo do evento.'
-    loja = Loja.objects.filter(
-        id=int(dados['loja_id']), tenant_id=tenant_id,
-    ).first()
+    loja = Loja.objects.filter(id=int(dados['loja_id'])).first()
     tipo = TipoEvento.objects.filter(id=int(dados['tipo_id'])).first()
     if loja is None or tipo is None:
         return None, 'Loja ou tipo inválido para este tenant.'

@@ -35,6 +35,7 @@ from recepcao.relatorio_iniciacao import (
     gerar_pdf_iniciacao,
     gerar_xlsx_iniciacao,
 )
+from core.utils import brl_curto as _brl_curto
 from recepcao.views.board import dados_board
 from recepcao.views.helpers import (
     cards_candidatos,
@@ -89,26 +90,13 @@ ANCORA_TEMPO_DA_ETAPA = {
 }
 
 
-def _corpo_do_grau(numero):
-    """Corpo do Rito responsável pelo grau (Perfeição 4º-14º, Capítulo 15º-18º etc.)."""
-    if numero is None:
-        return ''
-    if numero <= 14:
-        return 'perfeicao'
-    if numero <= 18:
-        return 'capitulo'
-    if numero <= 30:
-        return 'kadosh'
-    if numero <= 32:
-        return 'consistorio'
-    return 'sc33'
-
-
-CORPOS_RITO = [    {'valor': 'perfeicao',   'nome': 'Perfeição',  'faixa': '4º-14º',   'numeros': tuple(range(4, 15))},
-    {'valor': 'capitulo',    'nome': 'Capítulo',   'faixa': '15º-18º',  'numeros': tuple(range(15, 19))},
-    {'valor': 'kadosh',      'nome': 'Kadosh',     'faixa': '19º · 22º · 28º · 30º',  'numeros': (19, 22, 28, 30)},
-    {'valor': 'consistorio', 'nome': 'Consistório', 'faixa': '31º-32º', 'numeros': (31, 32)},
-    {'valor': 'sc33',        'nome': 'SC33',       'faixa': '33º',      'numeros': (33,)},
+# Tipos de Loja (Corpos do Rito). Neste fork não existe relação entre o grau
+# do membro e o tipo da Loja: o chip só restringe a listagem às Lojas do tipo
+# marcado. Os nomes vêm do catálogo de Lojas (Loja.CORPO_CHOICES) — os mesmos
+# dos filtros de Membros e Lojas.
+CORPOS_RITO = [
+    {'valor': valor, 'nome': rotulo}
+    for valor, rotulo in Loja.CORPO_CHOICES
 ]
 
 
@@ -130,7 +118,6 @@ def _montar_contexto_kanban(request):
     loja_filtro = request.GET.get('loja', '').strip() or None
     vale_selecionado = _vale_do_filtro(prefeitura_filtro)
     corpos_escolhidos = _corpos_escolhidos(request)
-    numeros_corpos = _numeros_de_corpos(corpos_escolhidos)
 
     negocios = _buscar_negocios(request)
     # Remove a coluna 'perdido' das stages antes de montar as colunas
@@ -138,7 +125,6 @@ def _montar_contexto_kanban(request):
     colunas, _ = cards_do_kanban(negocios, stages)
     for col in colunas:
         col['grau'] = GRAU_DA_ETAPA.get(col['key'])
-        col['corpo'] = _corpo_do_grau(col['grau'])
         col['grau_origem'] = GRAU_ORIGEM_DA_ETAPA.get(col['key'])
 
     # Passa Vale/Loja para filtrar candidatos
@@ -151,54 +137,18 @@ def _montar_contexto_kanban(request):
     )
     papel = (request.session.get('usuario') or {}).get('role', '')
     qtd_cand = _mesclar_candidatos(colunas, cards_cand, papel)
-    # Colunas de grau listam automaticamente os membros do grau anterior;
-    # com Corpos do Rito marcados (ou Loja com corpo definido), listam
-    # apenas os marcos da faixa — sem depender de Vale e Loja
-    corpo_da_loja = None if numeros_corpos else _corpo_da_loja_filtro(
-        loja_filtro, vale_selecionado,
-    )
-    numeros_corpo_loja = None
-    if corpo_da_loja is not None:
-        numeros_corpo_loja = next(
-            (
-                c['numeros'] for c in CORPOS_RITO
-                if c['valor'] == corpo_da_loja
-            ),
-            None,
-        )
+    # As colunas são os graus: o tipo da Loja não define graus (fork sem
+    # relação grau ↔ Corpo do Rito). Os chips de Corpos filtram apenas quem
+    # aparece, pelas Lojas às quais o membro está vinculado.
     cards_membros = _cards_membros_pela_etapa(
         request, prefeitura=prefeitura_filtro, loja=loja_filtro,
-        numeros_marco=numeros_corpos or numeros_corpo_loja or None,
+        corpos=corpos_escolhidos,
     )
     _mesclar_membros(colunas, cards_membros)
     qtd_lista = len(cards_membros)
-    # Corpos marcados: o quadro fica restrito às colunas do corpo
     aviso_corpos = ''
-    if corpos_escolhidos:
-        restritas = [
-            col for col in colunas
-            if col.get('grau') is not None and col['grau'] in numeros_corpos
-        ]
-        if restritas:
-            colunas = restritas
-        else:
-            aviso_corpos = 'Nenhuma coluna de grau pertence ao corpo selecionado.'
-    # Filtro de Loja: só colunas do Corpo da Loja (Perfeição 4º-14º →
-    # Grau 4/9/14; Capítulo 15º-18º → 15/18; Kadosh → 19/22/28/30; etc.)
-    if corpo_da_loja is not None and numeros_corpo_loja:
-        # As colunas da faixa do corpo ficam FIXAS, mesmo sem card
-        # (Capítulo tem Grau 15 e 18; o 15 fica com 0 quando ninguém
-        # do grau 14 está na loja)
-        colunas = [
-            col for col in colunas
-            if col.get('grau') is not None
-            and col['grau'] in numeros_corpo_loja
-        ]
-    # Com filtro de Vale/corpos ativo (sem Loja definindo a faixa), colunas
-    # sem nenhum card somem do quadro
-    if prefeitura_filtro or corpos_escolhidos or (
-        loja_filtro and corpo_da_loja is None
-    ):
+    # Com filtro ativo, colunas sem nenhum card somem do quadro
+    if prefeitura_filtro or corpos_escolhidos or loja_filtro:
         com_conteudo = [col for col in colunas if col['count'] > 0]
         if com_conteudo:  # segurança: nunca desaparecer o quadro inteiro
             colunas = com_conteudo
@@ -209,6 +159,8 @@ def _montar_contexto_kanban(request):
 
     return {
         'colunas': colunas,
+        'colunas_por_corpo': True,
+        # (colunas_por_corpo segue True: cards não são arrastáveis aqui)
         'stages': stages,
         'stage_map': stage_map,
         'total_candidatos': len(ativos) + qtd_cand,
@@ -239,32 +191,6 @@ def _corpos_escolhidos(request):
     """Corpos do Rito marcados nos chips (GET `corpo`, múltiplos)."""
     validos = {corpo['valor'] for corpo in CORPOS_RITO}
     return [valor for valor in request.GET.getlist('corpo') if valor in validos]
-
-
-def _numeros_de_corpos(corpos_escolhidos):
-    """Graus de todas as colunas pertencentes aos corpos marcados."""
-    numeros = set()
-    for valor in corpos_escolhidos:
-        for corpo in CORPOS_RITO:
-            if corpo['valor'] == valor:
-                numeros.update(corpo['numeros'])
-                break
-    return numeros
-
-
-def _corpo_da_loja_filtro(loja_filtro, vale_selecionado=None):
-    """Corpo do Rito da Loja selecionada no filtro (nome no GET).
-
-    None quando não há loja escolhida ou o nome não existe; com um Vale
-    selecionado, a busca fica restrita às Lojas daquele Vale.
-    """
-
-    if not loja_filtro:
-        return None
-    lojas = Loja.objects.filter(nome=loja_filtro)
-    if vale_selecionado is not None:
-        lojas = lojas.filter(tenant_id=vale_selecionado.tenant_id)
-    return lojas.values_list('corpo', flat=True).first()
 
 
 def _padroes_prefeitura_candidato(vale, prefeitura_filtro):
@@ -317,19 +243,14 @@ def _lojas_filtro(request, tid, vale_tenant_id=None):
     """Lojas locais para o filtro, agrupadas pelo Corpo do Rito.
 
     Com um Vale selecionado (vale_tenant_id), lista apenas as Lojas daquele
-    Vale — ainda dentro do escopo do papel. Cada grupo traz o rótulo do
-    corpo com a sua faixa de graus (Perfeição 4º-14º, Capítulo 15º-18º,
-    Kadosh 19º/22º/28º/30º, Consistório 31º-32º, SC33 33º).
+    Vale — ainda dentro do escopo do papel. Cada grupo traz o rótulo do tipo
+    de Loja (MMM, NAR, KT, KM).
     """
 
     papel = (request.session.get('usuario') or {}).get('role', '')
     lojas = Loja.objects.filter(situacao='ATIVA')
-    if papel not in ('admin_saas', 'ADM'):
-        if tid is None:
-            return []
-        lojas = lojas.filter(tenant_id=tid)
-    if vale_tenant_id is not None:
-        lojas = lojas.filter(tenant_id=vale_tenant_id)
+    if papel not in ('admin_saas', 'ADM') and tid is None:
+        return []
 
     vistos = set()
     por_corpo = {corpo['valor']: [] for corpo in CORPOS_RITO}
@@ -342,7 +263,7 @@ def _lojas_filtro(request, tid, vale_tenant_id=None):
 
     return [
         {
-            'rotulo': f"{corpo['nome']} · {corpo['faixa']}",
+            'rotulo': corpo['nome'],
             'lojas': itens,
         }
         for corpo in CORPOS_RITO
@@ -401,7 +322,7 @@ def _vale_do_filtro(prefeitura_filtro):
 
 
 def _cards_membros_pela_etapa(request, prefeitura=None, loja=None,
-                              numeros_marco=None):
+                              corpos=None):
     """Cards de membro pelas colunas de grau (detentores do grau anterior).
 
     Regra de entrada na listagem (marco M):
@@ -415,9 +336,9 @@ def _cards_membros_pela_etapa(request, prefeitura=None, loja=None,
     apenas o tenant efetivo da sessão.
     Filtros do card (GET): `prefeitura` (id do Vale → membro do tenant do
     Vale) e `loja` (nome da Loja → membro vinculado à Loja; quando um Vale
-    está selecionado, só Lojas daquele Vale entram). `numeros_marco`: quando
-    informado (chips de Corpos do Rito), só entram membros cujo marco de
-    destino pertence aos corpos marcados — sem depender de Vale ou Loja.
+    está selecionado, só Lojas daquele Vale entram). `corpos`: quando
+    informado (chips de Corpos do Rito), só entram membros vinculados a
+    Lojas desses tipos — o tipo da Loja não interfere no grau.
     """
     from dateutil.relativedelta import relativedelta
 
@@ -432,29 +353,24 @@ def _cards_membros_pela_etapa(request, prefeitura=None, loja=None,
     etapa_por_grau = {
         grau: etapa for etapa, grau in GRAU_ORIGEM_DA_ETAPA.items()
     }
-    # Marco de destino de cada grau de origem (ex.: 8 → 9, 31 → 32)
-    marco_por_grau = {
-        grau: GRAU_DA_ETAPA[etapa] for grau, etapa in etapa_por_grau.items()
-    }
-
-    tenants = _tenant_ids_para_lista(request)
+    # Como não há mais tenant, o filtro é baseado nas Lojas vinculadas ao Membro.
     qs = Membro.objects.all()
-    if tenants:
-        qs = qs.filter(tenant_id__in=tenants)
-    # Filtros do card: Vale (→ tenant) e Loja (nome, restrita ao Vale)
-    vale = _vale_do_filtro(prefeitura)
-    if prefeitura and vale is None:
-        return []  # id de Vale inválido → nada entra no quadro
-    if vale is not None:
-        qs = qs.filter(tenant_id=vale.tenant_id)
+    # Filtro por Loja (se especificada)
+    loja = request.GET.get('loja')
     if loja:
-        lojas_da_escolha = Loja.objects.filter(nome=loja)
-        if vale is not None:
-            lojas_da_escolha = lojas_da_escolha.filter(tenant_id=vale.tenant_id)
-        ids_loja = list(lojas_da_escolha.values_list('pk', flat=True))
-        if not ids_loja:
-            return []
-        qs = qs.filter(lojas__pk__in=ids_loja).distinct()
+        qs = qs.filter(lojas__nome=loja)
+    # Filtro por Vale (se especificado) — usa o Vale apenas para contexto,
+    # o filtro real é pelas lojas vinculadas ao membro.
+    prefeitura = request.GET.get('prefeitura')
+    if prefeitura:
+        # Apenas removes membros sem nenhuma loja vinculada, não filtra por tenant
+        qs = qs.filter(lojas__isnull=False)
+    # Se houver filtro de Loja no card, refina a lista
+    if loja:
+        qs = qs.filter(lojas__nome=loja)
+    # Chips de Corpos do Rito: restringe às Lojas do tipo marcado
+    if corpos:
+        qs = qs.filter(lojas__corpo__in=corpos).distinct()
     membros = list(
         qs.annotate(grau_atual=Max('graus__grau__numero'))
         .filter(grau_atual__in=set(GRAU_ORIGEM_DA_ETAPA.values()))
@@ -476,10 +392,6 @@ def _cards_membros_pela_etapa(request, prefeitura=None, loja=None,
 
     cards = []
     for m in membros:
-        marco = marco_por_grau[m.grau_atual]
-        # Corpos do Rito marcados: só membros cujo marco pertence ao corpo
-        if numeros_marco and marco not in numeros_marco:
-            continue
         datas_do_membro = datas_graus.get(m.pk, {})
         ancora = ANCORA_TEMPO_DA_ETAPA[etapa_por_grau[m.grau_atual]][0]
         data_ancora = datas_do_membro.get(ancora)
@@ -623,28 +535,15 @@ def _dados_do_relatorio(request):
     """Listagem dos irmãos selecionados pelos filtros do Flow de Iniciação.
 
     Mesmos filtros e mesmas regras do quadro (cadeia + tempo mínimo; corpos
-    do Rito independem de Vale/Loja; Loja restringe aos seus vinculados e
-    fixa a faixa do seu corpo).
+    do Rito restringem pelas Lojas do membro; Loja restringe aos vinculados).
     """
     prefeitura_filtro = request.GET.get('prefeitura', '').strip() or None
     loja_filtro = request.GET.get('loja', '').strip() or None
     vale_selecionado = _vale_do_filtro(prefeitura_filtro)
     corpos_escolhidos = _corpos_escolhidos(request)
-    numeros_marco = _numeros_de_corpos(corpos_escolhidos) or None
-    if not numeros_marco:
-        corpo_loja = _corpo_da_loja_filtro(loja_filtro, vale_selecionado)
-        if corpo_loja is not None:
-            numeros = next(
-                (
-                    c['numeros'] for c in CORPOS_RITO
-                    if c['valor'] == corpo_loja
-                ),
-                None,
-            )
-            numeros_marco = set(numeros) if numeros else None
     cards = _cards_membros_pela_etapa(
         request, prefeitura=prefeitura_filtro, loja=loja_filtro,
-        numeros_marco=numeros_marco,
+        corpos=corpos_escolhidos,
     )
     linhas = sorted(
         (

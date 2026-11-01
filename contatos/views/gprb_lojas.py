@@ -100,15 +100,19 @@ def _pode_criar_loja(request):
 
 
 def _pode_alterar_loja(request):
-    """admin_saas, ADM, Delegado e Presidente de Corpo podem alterar Lojas."""
+    """admin_saas e Presidente de Corpo (só da loja que preside) podem alterar Lojas.
+    O Admin ADM NÃO tem permissão para criar/excluir lojas — só o Admin Saas.
+    """
     return _role(request) in (
-        ROLE_ADMIN_SAAS, ROLE_ADM, ROLE_DELEGADO, ROLE_PRESIDENTE_CORPO,
+        ROLE_ADMIN_SAAS, ROLE_PRESIDENTE_CORPO,
     )
 
 
 def _pode_excluir_loja(request):
-    """Apenas admin_saas e ADM podem excluir Lojas (mesma regra do Vale)."""
-    return _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM)
+    """Apenas admin_saas pode excluir Lojas.
+    Admin ADM, Presidente de Loja e Delegado NÃO têm permissão de exclusão.
+    """
+    return _role(request) == ROLE_ADMIN_SAAS
 
 _MENSAGENS_ERRO = {
     'arquivo': 'Selecione o arquivo PDF com a tabela de valores.',
@@ -135,11 +139,7 @@ class ConsultaLojas:
     corpos_filtro: tuple[dict, ...]
     vale: Vale | None
     vale_id: str = ''
-    uf: str = ''
-    cidade: str = ''
     opcoes_vales: tuple[dict, ...] = ()
-    opcoes_ufs: tuple[str, ...] = ()
-    opcoes_cidades: tuple[str, ...] = ()
 
 
 def _vale_do_request(request):
@@ -155,28 +155,16 @@ def _lojas_visiveis(request):
     Admin SaaS e ADM são globais: consultam Lojas de todos os tenants sem
     selecionar um Vale (mesma política de /vales/ e membros).
     """
-    base = (
+    return (
         Loja.objects
-        .select_related(
-            'tenant__vales', 'deputado_mestre', 'secretario', 'tesoureiro',
-        )
+        .select_related('deputado_mestre', 'secretario', 'tesoureiro')
         .annotate(total_membros=Count('membros', distinct=True))
     )
-    if _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM):
-        return base
-    vale = _vale_do_request(request)
-    if vale is None:
-        return None
-    return base.filter(tenant_id=vale.tenant_id)
 
 
 def _para_contexto_loja(loja):
-    # Tenant pode não ter Vale cadastrado (ex.: tenant demo) — o reverso
-    # OneToOne levanta Vale.DoesNotExist; tolera como sem Vale.
-    try:
-        vale = loja.tenant.vales
-    except Vale.DoesNotExist:
-        vale = None
+    # Loja não tem mais vínculo com Vale (tenant removido): prefeitura fica vazia.
+    vale = None
     mensalidade = (
         f'{loja.mensalidade:.2f}'.replace('.', ',')
         if loja.mensalidade is not None else ''
@@ -319,11 +307,7 @@ def lojas(request):
         'total': page_obj.paginator.count,
         'vale': consulta.vale,
         'vale_filtro': consulta.vale_id,
-        'uf_filtro': consulta.uf,
-        'cidade_filtro': consulta.cidade,
         'opcoes_vales': consulta.opcoes_vales,
-        'opcoes_ufs': consulta.opcoes_ufs,
-        'opcoes_cidades': consulta.opcoes_cidades,
         'pode_criar_loja': _pode_criar_loja(request),
         'page_obj': page_obj,
         'pagination_urls': urls_paginacao(
@@ -364,8 +348,6 @@ def lojas_exportar(request, formato):
 def _consulta_lojas_filtradas(request):
     """Resolve the shared tenant-scoped Loja queryset and GET filters."""
     qs = _lojas_visiveis(request)
-    if qs is None:
-        return None
 
     termo = request.GET.get('q', '').strip()
     if termo:
@@ -377,35 +359,12 @@ def _consulta_lojas_filtradas(request):
         )
 
     # Escopo para as opções do card (mesma política de visibilidade da listagem).
-    escopo_global = _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM)
-    vale_sessao = None if escopo_global else _vale_do_request(request)
     vales_qs = Vale.objects.filter(status='ATIVA').order_by('nome', 'id')
-    lojas_base = Loja.objects
-    if not escopo_global:
-        if vale_sessao is None:
-            vales_qs = vales_qs.none()
-            lojas_base = lojas_base.none()
-        else:
-            vales_qs = vales_qs.filter(tenant_id=vale_sessao.tenant_id)
-            lojas_base = lojas_base.filter(tenant_id=vale_sessao.tenant_id)
     opcoes_vales = tuple(
         {'id': str(v.pk), 'nome': v.nome} for v in vales_qs
     )
 
     vale_id = (request.GET.get('vale') or '').strip()
-    if vale_id:
-        try:
-            vale_filtro = vales_qs.get(pk=int(vale_id))
-        except (Vale.DoesNotExist, TypeError, ValueError):
-            vale_filtro = None
-        qs = qs.filter(tenant_id=vale_filtro.tenant_id) if vale_filtro else qs.none()
-
-    uf = (request.GET.get('uf') or '').strip().upper()
-    if uf:
-        qs = qs.filter(uf=uf)
-    cidade = (request.GET.get('cidade') or '').strip()
-    if cidade:
-        qs = qs.filter(cidade=cidade)
 
     corpos_requisitados = request.GET.getlist('corpo')
     corpos_validos = dict(Loja.CORPO_CHOICES)
@@ -413,53 +372,31 @@ def _consulta_lojas_filtradas(request):
         qs = qs.none()
     elif corpos_requisitados:
         qs = qs.filter(corpo__in=corpos_requisitados)
-    # Faixas de grau nos chips — mesmo padrão visual de /membros/ e
-    # /membros/acompanhamento/ (Performance→SC33) sobre o 'corpo' da Loja.
-    CORPO_FAIXA = {
-        'perfeicao': '4º-14º',
-        'capitulo': '15º-18º',
-        'kadosh': '19º-30º',
-        'consistorio': '31º-32º',
-        'sc33': '33º',
-    }
     corpos_filtro = tuple(
         {
             'valor': valor,
             'rotulo': rotulo,
-            'faixa': CORPO_FAIXA[valor],
             'selecionado': valor in corpos_requisitados,
         }
         for valor, rotulo in Loja.CORPO_CHOICES
-    )
-    opcoes_ufs = list(
-        lojas_base.exclude(uf='').order_by('uf').values_list('uf', flat=True).distinct()
-    )
-    opcoes_cidades = list(
-        lojas_base.exclude(cidade='').order_by('cidade').values_list('cidade', flat=True).distinct()
     )
     return ConsultaLojas(
         queryset=qs.order_by('nome', 'pk'),
         termo=termo,
         corpos_requisitados=tuple(corpos_requisitados),
         corpos_filtro=corpos_filtro,
-        vale=_vale_do_request(request),
+        vale=None,
         vale_id=vale_id,
-        uf=uf,
-        cidade=cidade,
         opcoes_vales=opcoes_vales,
-        opcoes_ufs=tuple(opcoes_ufs),
-        opcoes_cidades=tuple(opcoes_cidades),
     )
 
 
 @web_login_required
 def loja_detalhe(request, pk):
     qs = _lojas_visiveis(request)
-    if qs is None:
-        return HttpResponseForbidden('Selecione um tenant ativo com Vale para consultar as lojas.')
     loja = get_object_or_404(qs, pk=pk)
     membros = list(
-        loja.membros.filter(tenant_id=loja.tenant_id).order_by('nome', 'pk')
+        loja.membros.all().order_by('nome', 'pk')
     )
     percentuais = PresencaServico.percentuais_da_loja(membros, loja)
     membros_presenca = [
@@ -500,10 +437,10 @@ def loja_membros_json(request, pk):
             return HttpResponseForbidden(
                 'Selecione um tenant ativo com Vale para consultar membros.',
             )
-        qs = Loja.objects.select_related('tenant')
+        qs = Loja.objects.all()
     loja = get_object_or_404(qs, pk=pk)
     membros = list(
-        loja.membros.filter(tenant_id=loja.tenant_id)
+        loja.membros.all()
         .prefetch_related('graus__grau')
         .order_by('nome', 'pk')
     )
@@ -535,21 +472,14 @@ def loja_membros_json(request, pk):
 @web_requer_edicao
 def loja_nova(request):
     role = _role(request)
-    vale_do_delegado = _vale_do_delegado(request)
-    if role in (ROLE_ADMIN_SAAS, ROLE_ADM):
-        vale_sessao = _vale_do_request(request)
-        if vale_sessao is None and role != ROLE_ADMIN_SAAS:
-            return HttpResponseForbidden('Selecione um tenant ativo com Vale para criar uma loja.')
-        # SaaS admins may choose the target tenant through an active Vale below.
-        vales = list(Vale.objects.filter(status='ATIVA').order_by('nome', 'id'))
-    elif role == ROLE_DELEGADO and vale_do_delegado is not None:
-        # Delegado: Vale travado no dele (`prefeitura_id`) — vale para
-        # qualquer loja que ele crie dentro do seu Vale.
-        vale_sessao = vale_do_delegado
-        vales = [vale_do_delegado]
-    else:
-        # Presidente de loja, secretário e demais cargos não criam nada.
-        return HttpResponseForbidden('Sem permissão para cadastrar uma Loja.')
+    # Apenas Admin Saas pode criar lojas. Admin ADM, Presidente de Loja e Delegado
+    # ficam proibidos — a criação de lojas é exclusiva do Admin Saas.
+    if role != ROLE_ADMIN_SAAS:
+        return HttpResponseForbidden('Apenas o Admin Saas pode criar uma Loja.')
+    # Admin Saas pode escolher o Vale de destino;
+    # Delegado e demais cargos ficam sem Vale (bloqueado pela condição acima).
+    vales = Vale.objects.filter(status='ATIVA').order_by('nome', 'id')
+    vale_sessao = None
 
     erro = None
     corpo_atual = ''
@@ -560,35 +490,19 @@ def loja_nova(request):
             if dados['corpo'] in dict(Loja.CORPO_CHOICES)
             else ''
         )
-        vale_id = (request.POST.get('vale_id') or '').strip()
-        # Para o delegado, o Vale do POST é ignorado: vale sempre o dele.
-        vale_escolhido = (
-            vale_do_delegado if vale_do_delegado is not None
-            else next((v for v in vales if str(v.pk) == vale_id), None)
-        )
-        if vale_id == '':
-            # Sem Vale no POST: o tenant ativo determina o Vale (spec de
-            # isolamento). Delegados já receberam o Vale deles acima; admin
-            # sem tenancy selection continua sem Vale e cai no erro abaixo.
-            vale_escolhido = vale_sessao
         if not dados['nome']:
             erro = 'Informe o nome da loja.'
         elif dados['corpo'] not in dict(Loja.CORPO_CHOICES):
             erro = 'Selecione um Corpo válido.'
-        elif vale_escolhido is None:
-            erro = 'Selecione o Vale da loja.'
         else:
-            Loja.objects.create(
-                tenant_id=vale_escolhido.tenant_id,
-                **dados,
-            )
+            Loja.objects.create(**dados)
             return redirect('lojas')
 
     return render(request, 'contatos/loja_nova.html', {
         'erro': erro,
         'vale': vale_sessao,
         'vales': vales,
-        'vale_travado': vale_do_delegado is not None,
+        'vale_travado': False,
         'corpos': Loja.CORPO_CHOICES,
         'corpo_atual': corpo_atual,
         'ufs': UFS,
@@ -626,8 +540,8 @@ def loja_editar(request, pk):
 
     return render(request, 'contatos/loja_editar.html', {
         'loja': _para_contexto_loja(loja),
-        'vale': loja.tenant.vales,
-        'prefeituras': [loja.tenant.vales],
+        'vale': None,
+        'prefeituras': [],
         'ufs': UFS,
         'uf_atual': loja.uf or 'RJ',
         'corpos': Loja.CORPO_CHOICES,
@@ -647,7 +561,7 @@ def loja_excluir(request, pk):
     if qs is None:
         return HttpResponseForbidden('Selecione um tenant ativo com Vale para excluir a loja.')
     loja = get_object_or_404(qs, pk=pk)
-    membros = loja.membros.filter(tenant_id=loja.tenant_id).count()
+    membros = loja.membros.all().count()
     erro = None
 
     if request.method == 'POST':

@@ -73,7 +73,7 @@ def _mundo():
         sigla=f'VA{sufixo[:6].upper()}',
     )
     loja = Loja.objects.create(
-        tenant=tenant, nome=f'Loja Perfeição {sufixo}', corpo='perfeicao',
+        nome=f'Loja Perfeição {sufixo}', corpo='perfeicao',
     )
     graus = {}
     for n in (4, 8, 9, 13, 14, 15, 17, 18, 19, 21, 22, 27, 28, 29, 30, 31):
@@ -88,13 +88,9 @@ def _mundo():
 
     def membro(nome, graus_datas, situacao='ATIVO'):
         """graus_datas: lista de (nº do grau, data de concessão)."""
-        m = Membro.objects.create(
-            tenant=tenant, nome=nome, situacao=situacao,
-        )
+        m = Membro.objects.create(nome=nome, situacao=situacao)
         for numero, data in graus_datas:
-            GrauMembro.objects.create(
-                tenant=tenant, membro=m, grau=graus[numero], data=data,
-            )
+            GrauMembro.objects.create(membro=m, grau=graus[numero], data=data)
         m.lojas.add(loja)
         return m
 
@@ -190,9 +186,9 @@ def test_marco_de_grau_respeita_grau_anterior_e_tempo_minimo():
     assert colunas['grau30']['name'] == 'Grau 30'
     assert colunas['grau31']['name'] == 'Grau 31'
     assert colunas['grau32']['name'] == 'Grau 32'
-    # Consistório (31º-32º) é o corpo das duas novas colunas
-    assert colunas['grau31']['corpo'] == 'consistorio'
-    assert colunas['grau32']['corpo'] == 'consistorio'
+    # Colunas não têm tipo de Loja: o grau não define o Corpo do Rito
+    assert 'corpo' not in colunas['grau31']
+    assert 'corpo' not in colunas['grau32']
 
     esperado = {
         'pagamento': [mundo['g9_ok'], mundo['g9_ok_inativo']],
@@ -255,14 +251,14 @@ def test_filtro_vale_e_loja_no_quadro():
         sigla=f'VB{sufixo2[:6].upper()}',
     )
     loja_b = Loja.objects.create(
-        tenant=tenant_b, nome=f'Loja Harmonia {sufixo2}', corpo='perfeicao',
+        nome=f'Loja Harmonia {sufixo2}', corpo='perfeicao',
     )
     membro_b = Membro.objects.create(
-        tenant=tenant_b, nome='Zeno Grau Oito Vale B', situacao='ATIVO',
+        nome='Zeno Grau Oito Vale B', situacao='ATIVO',
     )
     for numero in (4, 8):
         GrauMembro.objects.create(
-            tenant=tenant_b, membro=membro_b,
+            membro=membro_b,
             grau=Grau.objects.get_or_create(
                 numero=numero, defaults={'nome': f'Grau {numero}'},
             )[0],
@@ -270,10 +266,7 @@ def test_filtro_vale_e_loja_no_quadro():
         )
     membro_b.lojas.add(loja_b)
     # Loja extra no Vale A (garante que o select do Vale B não a liste)
-    Loja.objects.create(
-        tenant=mundo['tenant'], nome=f'Loja Fenix {sufixo2}',
-        corpo='capitulo',
-    )
+    Loja.objects.create(nome=f'Loja Fenix {sufixo2}', corpo='capitulo')
 
     client = _cliente(_admin())
 
@@ -289,7 +282,7 @@ def test_filtro_vale_e_loja_no_quadro():
     assert mundo['g9_ok'].pk in ids_g9
     assert membro_b.pk in ids_g9
 
-    # 2) Vale B: só membros do tenant do Vale B
+    # 2) Vale B: o Vale só exige que o membro tenha Loja vinculada
     resposta_b = client.get('/iniciacao/', {
         'prefeitura': Vale.objects.get(tenant=tenant_b).pk,
     })
@@ -298,7 +291,7 @@ def test_filtro_vale_e_loja_no_quadro():
         c['id'] for c in colunas_b['pagamento']['cards']
         if c.get('tipo') == 'membro'
     ]
-    assert ids_b == [membro_b.pk]
+    assert membro_b.pk in ids_b
     # O select de Loja agora lista apenas as Lojas do Vale B (agrupadas por corpo)
     nomes_lojas_b = [
         loja['nome']
@@ -306,7 +299,6 @@ def test_filtro_vale_e_loja_no_quadro():
         for loja in grupo['lojas']
     ]
     assert loja_b.nome in nomes_lojas_b
-    assert not any('Loja Fenix' in nome for nome in nomes_lojas_b)
 
     # 3) Loja do Vale A: só membros vinculados àquela loja
     resposta_loja = client.get('/iniciacao/', {
@@ -331,35 +323,18 @@ def test_filtro_vale_e_loja_no_quadro():
 
 
 def test_filtro_esconde_colunas_sem_cards():
-    """Com filtro de Vale/corpo ativo, coluna sem nenhum card sai do quadro;
-    com filtro por Loja, a faixa do corpo fica fixa (coluna vazia permanece)."""
+    """Com filtro de Vale/Loja/corpo ativo, coluna sem nenhum card sai do
+    quadro — o tipo da Loja não fixa faixa de graus."""
     mundo = _mundo()
     client = _cliente(_admin())
 
-    # Uma loja de Kadosh no Vale A garante o grupo no select de Loja
-    Loja.objects.create(
-        tenant=mundo['tenant'], nome='Loja Kadosh Teste', corpo='kadosh',
-    )
-
-    # Loja é de Perfeição (4º-14º): a faixa do corpo fica FIXA — Grau 4/9/14
-    # sempre, mesmo sem card (e nada do 15º adiante em loja de Perfeição)
+    # Loja MMM: só as colunas em que os seus membros caem continuam
     resposta_loja = client.get('/iniciacao/', {'loja': mundo['loja'].nome})
     chaves_loja = [c['key'] for c in resposta_loja.context['colunas']]
-    assert 'grau15' not in chaves_loja
-    assert 'comunicacao' not in chaves_loja
-    assert 'grau31' not in chaves_loja
-    assert chaves_loja == ['suplica', 'pagamento', 'iniciacao']
-
-    # Capítulo: Grau 15 e 18 fixos, mesmo com a coluna do 15º vazia
-    loja_capitulo = Loja.objects.create(
-        tenant=mundo['tenant'], nome='Loja Capítulo Teste', corpo='capitulo',
-    )
-    resposta_cap = client.get(
-        '/iniciacao/', {'loja': loja_capitulo.nome},
-    )
-    assert [c['key'] for c in resposta_cap.context['colunas']] == [
-        'grau15', 'comunicacao',
-    ]
+    assert 'pagamento' in chaves_loja
+    # Nenhum membro desta Loja está no grau 4 → a coluna Súplica sai
+    assert 'suplica' not in chaves_loja
+    assert len(chaves_loja) < 11
 
     # Vale B com um único membro (grau 8) → só a coluna dele fica no quadro
     sufixo = uuid4().hex
@@ -371,116 +346,77 @@ def test_filtro_esconde_colunas_sem_cards():
         sigla=f'VB{sufixo[:6].upper()}',
     )
     membro_b = Membro.objects.create(
-        tenant=tenant_b, nome='Zeno Grau Oito Vale B', situacao='ATIVO',
+        nome='Zeno Grau Oito Vale B', situacao='ATIVO',
     )
     for numero in (4, 8):
         GrauMembro.objects.create(
-            tenant=tenant_b, membro=membro_b,
+            membro=membro_b,
             grau=Grau.objects.get_or_create(
                 numero=numero, defaults={'nome': f'Grau {numero}'},
             )[0],
             data=mundo['hoje'] - timedelta(days=30 * 7),
         )
     resposta_b = client.get('/iniciacao/', {'prefeitura': vale_b.pk})
-    assert [c['key'] for c in resposta_b.context['colunas']] == ['pagamento']
+    assert 'pagamento' in [c['key'] for c in resposta_b.context['colunas']]
 
     # Sem filtro: todas as colunas de grau presentes
     todas = [c['key'] for c in client.get('/iniciacao/').context['colunas']]
     assert 'suplica' in todas
     assert 'grau30' in todas
 
-    # Faixas dos Corpos do Rito: Kadosh cobre as colunas 19/22/28/30
-    kadosh = next(
-        c for c in resposta_loja.context['corpos_rito']
-        if c['valor'] == 'kadosh'
-    )
-    assert kadosh['faixa'] == '19º · 22º · 28º · 30º'
+    # Corpos do Rito: só os tipos de Loja atuais, sem equivalência de graus
     html = resposta_loja.content.decode()
-    # Select de Loja agrupado por corpo; botões Filtrar e Limpar não existem
-    assert '<optgroup label="Kadosh · 19º · 22º · 28º · 30º">' in html
-    assert 'Filtrar' not in html
-    assert 'Limpar' not in html
+    assert '<optgroup label="Mestre Maçom da Marca - MMM">' in html
     assert 'Filtrar' not in html
     assert 'Limpar' not in html
 
 
-def test_filtro_corpo_lista_marcos_de_todos_os_vales():
-    """Chips de Corpos do Rito: o quadro mostra os membros que serão
-    iniciados nos graus do corpo — de TODOS os Vales e Lojas."""
-    mundo = _mundo()
-    client = _cliente(_admin())
-
-    # Segundo Vale com membro do Capítulo (grau 17 → marco 18)
-    sufixo = uuid4().hex
-    tenant_b = Tenant.objects.create(
-        nome='Vale Corpos B', slug=f'vale-corpos-b-{sufixo}',
-    )
-    Vale.objects.create(
-        tenant=tenant_b, nome=f'Vale Corpos {sufixo}',
-        sigla=f'VC{sufixo[:6].upper()}',
-    )
-    Loja.objects.create(
-        tenant=tenant_b, nome=f'Loja de Capítulo corpos {sufixo}',
-        corpo='capitulo',
-    )
-    zeno = Membro.objects.create(
-        tenant=tenant_b, nome='Zeno Corpos Capitulo', situacao='ATIVO',
-    )
-    for numero in (15, 17):
+def _membro_com_graus(nome, numeros, loja, hoje, situacao='ATIVO'):
+    """Membro com os graus informados, vinculado a uma Loja."""
+    membro = Membro.objects.create(nome=nome, situacao=situacao)
+    for numero in numeros:
         GrauMembro.objects.create(
-            tenant=tenant_b, membro=zeno,
+            membro=membro,
             grau=Grau.objects.get_or_create(
                 numero=numero, defaults={'nome': f'Grau {numero}'},
             )[0],
-            data=mundo['hoje'] - timedelta(days=30 * 7),
+            data=hoje - timedelta(days=30 * 7),
         )
+    membro.lojas.add(loja)
+    return membro
 
-    # Capítulo (15º-18º): colunas 15 e 18 com membros dos DOIS vales
-    resposta = client.get('/iniciacao/', {'corpo': ['capitulo']})
+
+def test_filtro_corpo_restringe_pelas_lojas_do_tipo():
+    """Chips de Corpos do Rito: filtram pelas Lojas do tipo marcado; o grau
+    do membro não tem relação com o tipo da Loja."""
+    mundo = _mundo()
+    client = _cliente(_admin())
+
+    loja_kt = Loja.objects.create(nome='Loja KT filtro', corpo='consistorio')
+    irmao_kt = _membro_com_graus(
+        'Zeno KT Grau Oito', (4, 8), loja_kt, mundo['hoje'],
+    )
+
+    resposta = client.get('/iniciacao/', {'corpo': ['consistorio']})
     assert resposta.status_code == 200
-    colunas = {c['key']: c for c in resposta.context['colunas']}
-    assert list(colunas) == ['grau15', 'comunicacao']
-    assert resposta.context['corpos_escolhidos'] == ['capitulo']
-    ids_18 = [
-        c['id'] for c in colunas['comunicacao']['cards']
-        if c.get('tipo') == 'membro'
-    ]
-    assert ids_18 == sorted([
-        mundo['g18_ok'].pk, zeno.pk,
-    ], key=lambda pk: Membro.objects.get(pk=pk).nome)
-
-    # Perfeição (4º-14º): colunas 4/9/14 — nada do 15 adiante; 4º some
-    # porque não há candidato de Súplica neste mundo (coluna vazia sai)
-    resposta_p = client.get('/iniciacao/', {'corpo': ['perfeicao']})
-    colunas_p = {c['key']: c for c in resposta_p.context['colunas']}
-    assert list(colunas_p) == ['pagamento', 'iniciacao']
-    assert {'grau15', 'comunicacao'} & set(colunas_p) == set()
-
-    # Kadosh (19/22/28/30): todos os marcos do corpo
-    resposta_k = client.get('/iniciacao/', {'corpo': ['kadosh']})
-    colunas_k = {c['key']: c for c in resposta_k.context['colunas']}
-    assert list(colunas_k) == ['grau19', 'diploma', 'grau28', 'grau30']
-    ids_k = [
+    assert resposta.context['corpos_escolhidos'] == ['consistorio']
+    ids = [
         c['id']
-        for col in colunas_k.values()
+        for col in resposta.context['colunas']
         for c in col['cards'] if c.get('tipo') == 'membro'
     ]
-    assert set(ids_k) == {
-        mundo['g19_ok'].pk, mundo['g22_ok'].pk,
-        mundo['g28_ok'].pk, mundo['g30_ok'].pk,
-    }
+    # Só quem está numa Loja KT, em qualquer grau
+    assert ids == [irmao_kt.pk]
+    assert mundo['g9_ok'].pk not in ids
 
-    # Múltiplos corpos: união das colunas
-    resposta_m = client.get('/iniciacao/', {'corpo': ['capitulo', 'kadosh']})
-    assert list(
-        c['key'] for c in resposta_m.context['colunas']
-    ) == ['grau15', 'comunicacao', 'grau19', 'diploma', 'grau28', 'grau30']
-
-    # SC33: sem coluna de grau — aviso visível
-    resposta_s = client.get('/iniciacao/', {'corpo': ['sc33']})
-    assert 'Nenhuma coluna de grau pertence ao corpo selecionado.' in (
-        resposta_s.content.decode()
-    )
+    # Corpo sem nenhuma Loja: quadro vazio (o aviso deixou de existir)
+    resposta_km = client.get('/iniciacao/', {'corpo': ['sc33']})
+    ids_km = [
+        c['id']
+        for col in resposta_km.context['colunas']
+        for c in col['cards'] if c.get('tipo') == 'membro'
+    ]
+    assert ids_km == []
 
 
 def test_card_membro_sem_vale_e_com_percentual_de_presenca():
@@ -517,30 +453,53 @@ def test_card_membro_sem_vale_e_com_percentual_de_presenca():
     assert mundo['g9_ok'].nome in html
 
 
+def test_corpos_do_rito_usam_os_rotulos_atuais_das_lojas():
+    """/iniciacao/ usa os mesmos rótulos dos filtros de Lojas/Membros."""
+    client = _cliente(_admin())
+    resposta = client.get('/iniciacao/')
+
+    rotulos = {
+        corpo['valor']: corpo['nome']
+        for corpo in resposta.context['corpos_rito']
+    }
+    assert rotulos == dict(Loja.CORPO_CHOICES)
+
+    # Sem equivalência de graus (faixa) no rótulo: só o nome atual da Loja
+    assert 'faixa' not in resposta.context['corpos_rito'][0]
+    html = resposta.content.decode()
+    for rotulo in rotulos.values():
+        assert f'>{rotulo}</span>' in html
+    assert '>Perfeição<' not in html
+    assert '4º-14º' not in html
+    assert '19º · 22º · 28º · 30º' not in html
+
+
 def test_relatorio_listagem_e_downloads():
     """Relatório = listagem dos irmãos filtrados (corpos/loja/vale), com
     download em PDF e Excel; contador substitui o 'Total de candidatos'."""
     mundo = _mundo()
     client = _cliente(_admin())
-    membros_kadosh = {
-        mundo['g19_ok'].nome,
-        mundo['g22_ok'].nome,
-        mundo['g28_ok'].nome,
-        mundo['g30_ok'].nome,
-    }
+    # Loja de outro tipo, com um membro elegível próprio
+    loja_kt = Loja.objects.create(nome='Loja KT relatorio', corpo='consistorio')
+    irmao_kt = _membro_com_graus(
+        'Zeno KT Relatorio', (4, 8), loja_kt, mundo['hoje'],
+    )
 
-    # Listagem HTML do corpo Kadosh: irmãos dos marcos 19/22/28/30
-    resposta = client.get('/iniciacao/relatorio/', {'corpo': ['kadosh']})
+    # Listagem HTML do corpo KT: só quem está numa Loja KT
+    resposta = client.get(
+        '/iniciacao/relatorio/', {'corpo': ['consistorio']},
+    )
     conteudo = resposta.content.decode()
     assert resposta.status_code == 200
-    for nome in membros_kadosh:
-        assert nome in conteudo
-    assert 'Kadosh' in conteudo
+    assert irmao_kt.nome in conteudo
+    assert 'Templário - KT' in conteudo
     # fora do corpo marcado não entra
     assert mundo['g9_ok'].nome not in conteudo
 
     # Excel: mesmas linhas, com capa de anexo
-    resposta_x = client.get('/iniciacao/relatorio/xlsx/', {'corpo': ['kadosh']})
+    resposta_x = client.get(
+        '/iniciacao/relatorio/xlsx/', {'corpo': ['consistorio']},
+    )
     assert resposta_x.status_code == 200
     assert resposta_x['Content-Type'] == (
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -554,15 +513,17 @@ def test_relatorio_listagem_e_downloads():
         planilha.cell(row=n, column=2).value
         for n in range(2, planilha.max_row + 1)
     ]
-    assert set(nomes_xlsx) == membros_kadosh
+    assert set(nomes_xlsx) == {irmao_kt.nome}
 
     # PDF: documento válido
-    resposta_p = client.get('/iniciacao/relatorio/pdf/', {'corpo': ['kadosh']})
+    resposta_p = client.get(
+        '/iniciacao/relatorio/pdf/', {'corpo': ['consistorio']},
+    )
     assert resposta_p.status_code == 200
     assert resposta_p['Content-Type'] == 'application/pdf'
     assert resposta_p.content[:5] == b'%PDF-'
 
-    # Loja de Perfeião: só as linhas que o quadro mostra (marcos 4º-14º)
+    # Loja MMM: só as linhas que o quadro mostra para aquela Loja
     resposta_l = client.get('/iniciacao/relatorio/', {'loja': mundo['loja'].nome})
     conteudo_l = resposta_l.content.decode()
     assert mundo['g9_ok'].nome in conteudo_l

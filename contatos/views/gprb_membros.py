@@ -4,7 +4,7 @@ from datetime import date as _date, datetime
 
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
-from django.db.models import F, Q
+from django.db.models import Q
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -16,7 +16,7 @@ from acesso.decorators import (
 from acesso.models import ROLE_ADM, ROLE_ADMIN_SAAS, ROLES_QUE_EDITAM
 from acesso.tenant_context import resolve_tenant_id
 from contatos.forms_graus import GrauMembroFormSet
-from contatos.models import Grau, Loja, Membro, Vale
+from contatos.models import Filiacao, Grau, Loja, Membro, Vale
 
 _CAMPOS_DATA = (
     'data_admissao',
@@ -49,16 +49,21 @@ def _formatar_membro_lista(membro, ano_corrente, em_q1, percentuais_presenca):
     from contatos.views.crud import _cor_anuidade
     cor, label = _cor_anuidade(None, ano_corrente, em_q1)
     lojas = []
+    lojas_expandir = []
+    filiacoes = {filiacao.loja_id: filiacao for filiacao in membro.filiacoes.all()}
     for loja in membro.lojas.all().order_by('nome', 'id'):
-        try:
-            vale = loja.tenant.vales
-            vale_nome, vale_sigla = vale.nome, vale.sigla
-        except Vale.DoesNotExist:
-            vale_nome, vale_sigla = '', ''
+        # Loja não tem mais vínculo com Vale (tenant removido).
         lojas.append({
-            'loja': loja.nome, 'sigla': vale_sigla, 'potencia': vale_nome,
+            'loja': loja.nome, 'sigla': '', 'potencia': '',
             'anuidade_loja': None, 'presencas_loja': 0,
         })
+        if loja.situacao == 'ATIVA':
+            filiacao = filiacoes.get(loja.pk)
+            lojas_expandir.append({
+                'loja': loja.nome,
+                'iniciado': filiacao.iniciado if filiacao else None,
+                'ativo': filiacao.ativo if filiacao else None,
+            })
     grau_atual = (
         membro.graus.select_related('grau').order_by('-grau__numero').first()
     )
@@ -90,15 +95,20 @@ def _formatar_membro_lista(membro, ano_corrente, em_q1, percentuais_presenca):
         'cadastro': cadastro_exibicao,
         'tempo_mestre': tempo_mestre,
         'cpf': membro.cpf or '',
+        'celular': membro.celular or '',
         'cidade': membro.cidade or '', 'uf': membro.uf or '',
         'situacao': membro.situacao or '',
         'ativo': (membro.situacao or '') == 'ATIVO',
         'lojas': lojas,
+        'lojas_expandir': lojas_expandir,
         'grau_atual': (
             {'numero': grau_atual.grau.numero, 'nome': grau_atual.grau.nome}
             if grau_atual else None
         ),
         'loja_nome': loja_principal,
+        'loja_simbolica': loja_principal,
+        'qtd_lojas': len(lojas),
+        'data_admissao': membro.data_admissao,
         'presencas_ano': 0,
         'presenca_percentual': percentuais_presenca.get(membro.pk),
         'nascimento': membro.data_nascimento,
@@ -197,12 +207,9 @@ def membro_lista(request):
         for grupo in grupos_pedidos:
             numeros_grau.update(GRAU_PRESETS[grupo]['numeros'])
 
-    tenant_ids = _tenant_ids_para_lista(request)
-    qs = Membro.objects.select_related('tenant').prefetch_related('lojas__tenant', 'graus__grau')
+    qs = Membro.objects.prefetch_related('lojas', 'graus__grau', 'filiacoes')
     if corpos_invalidos or grupos_invalidos:
         qs = qs.none()
-    if tenant_ids is not None:
-        qs = qs.filter(tenant_id__in=tenant_ids)
     if termo:
         qs = qs.filter(
             Q(nome__icontains=termo) | Q(email__icontains=termo)
@@ -215,11 +222,12 @@ def membro_lista(request):
             vale = Vale.objects.get(pk=int(prefeitura_id))
         except (Vale.DoesNotExist, TypeError, ValueError):
             vale = None
-        qs = qs.filter(tenant_id=vale.tenant_id) if vale else qs.none()
+        # Membro não tem mais vínculo com Vale: filtro por Potência não se aplica.
+        if vale is None:
+            qs = qs.none()
     if corpos_escolhidos:
         filtros_loja = {
             'lojas__corpo__in': corpos_escolhidos,
-            'lojas__tenant_id': F('tenant_id'),
         }
         if loja_id:
             try:
@@ -241,7 +249,6 @@ def membro_lista(request):
         qs = qs.none()
     if numeros_grau:
         qs = qs.filter(
-            graus__tenant_id=F('tenant_id'),
             graus__grau__numero__in=numeros_grau,
         ).distinct()
 
@@ -258,15 +265,9 @@ def membro_lista(request):
         for membro in page_obj.object_list
     ]
 
-    base_opcoes = Membro.objects
-    if tenant_ids is not None:
-        base_opcoes = base_opcoes.filter(tenant_id__in=tenant_ids)
+    base_opcoes = Membro.objects.all()
     vales_opcoes = _todas_vales_ativas()
-    if tenant_ids is not None:
-        vales_opcoes = vales_opcoes.filter(tenant_id__in=tenant_ids)
-    lojas_opcoes = Loja.objects
-    if tenant_ids is not None:
-        lojas_opcoes = lojas_opcoes.filter(tenant_id__in=tenant_ids)
+    lojas_opcoes = Loja.objects.all()
 
     qs_paginacao = request.GET.copy()
     qs_paginacao.pop('page', None)
@@ -324,25 +325,19 @@ def _membro_do_papel(request, pk):
     Demais papéis exigem tenant efetivo com Vale ATIVA e ficam nele escopados.
     Retorna (None, None) quando o papel não tem contexto de tenant válido.
     """
+    vale = _vale_do_request(request)
     if _e_admin_saas(request):
         membro = get_object_or_404(
-            Membro.objects.select_related('tenant').prefetch_related('lojas'), pk=pk,
+            Membro.objects.prefetch_related('lojas'), pk=pk,
         )
-        vale = Vale.objects.filter(
-            tenant_id=membro.tenant_id, status='ATIVA',
-        ).first()
+        if vale is None:
+            vale = _todas_vales_ativas().first()
         return membro, vale
 
-    tenant_id = resolve_tenant_id(request)
-    vale = (
-        Vale.objects.filter(tenant_id=tenant_id, status='ATIVA').first()
-        if tenant_id else None
-    )
-    if tenant_id is None or vale is None:
+    if vale is None:
         return None, None
     membro = get_object_or_404(
-        Membro.objects.filter(tenant_id=tenant_id).select_related('tenant').prefetch_related('lojas'),
-        pk=pk,
+        Membro.objects.prefetch_related('lojas'), pk=pk,
     )
     return membro, vale
 
@@ -376,13 +371,73 @@ def _parse_campos_data(request):
 
 
 def _lojas_do_tenant(tenant_id):
-    return Loja.objects.filter(tenant_id=tenant_id).order_by('nome', 'id')
+    return Loja.objects.order_by('nome', 'id')
+
+
+def _e_admin_global(request):
+    """True para papéis que enxergam todas as Potências (admin_saas/ADM)."""
+    return _tenant_ids_para_lista(request) is None
+
+
+def _lojas_disponiveis(request, membro=None):
+    """Lojas que o usuário pode associar a um membro.
+
+    Admins globais veem todas as Lojas do sistema. Os demais veem as Lojas da
+    própria Potência e, ao editar, também as Lojas de outras Potências que já
+    estejam vinculadas ao membro (para não perder vínculos existentes).
+    """
+    # Loja não tem mais vínculo com tenant: todas as Lojas são globais.
+    return Loja.objects.order_by('nome', 'id')
+
+
+def _opcoes_lojas(lojas):
+    """Serializa Lojas para o formulário, incluindo a Potência de cada uma."""
+    lojas = list(lojas)
+    catalogo_graus = list(
+        Grau.objects.filter(numero__range=(4, 33)).order_by('numero'),
+    )
+    opcoes = []
+    for loja in lojas:
+        opcoes.append({
+            'id': loja.pk,
+            'nome': loja.nome,
+            'corpo': loja.get_corpo_display(),
+            'potencia': '',
+            'sigla': '',
+            'graus': [
+                {
+                    'id': grau.pk,
+                    'label': (
+                        f'{grau.numero}º — {grau.nome}'
+                        if grau.nome else f'{grau.numero}º'
+                    ),
+                }
+                for grau in _graus_da_loja(loja, catalogo_graus)
+            ],
+        })
+    return sorted(
+        opcoes,
+        key=lambda item: (
+            item['potencia'].casefold(), item['nome'].casefold(), item['id'],
+        ),
+    )
+
+
+def _sincronizar_filiacoes(membro, lojas, tenant_id):
+    """Garante uma Filiacao por Loja vinculada, no tenant da Potência de trabalho."""
+    if tenant_id is None:
+        return
+    for loja in lojas:
+        Filiacao.objects.update_or_create(
+            membro=membro,
+            loja=loja,
+            defaults={'tenant_id': tenant_id},
+        )
 
 
 FAIXA_GRAUS_CORPO = {
     'perfeicao': (4, 14),
     'rosa_cruz': (15, 18),
-    'kadosh': (19, 30),
     'consistorio': (31, 32),
     'sc33': (33, 33),
 }
@@ -390,22 +445,23 @@ FAIXA_GRAUS_CORPO = {
 CORPO_FAIXA = {
     'perfeicao': '4º-14º',
     'capitulo': '15º-18º',
-    'kadosh': '19º-30º',
     'consistorio': '31º-32º',
     'sc33': '33º',
 }
 
 
-def _graus_da_loja(loja):
+def _graus_da_loja(loja, catalogo=None):
     """Catálogo de graus do corpo da loja (Perfeição 4-14, Capítulo 15-18 etc.)."""
     corpo = loja.corpo if loja else 'perfeicao'
     faixa = FAIXA_GRAUS_CORPO.get(corpo)
     if faixa is None:
         return []
-    return list(
-        Grau.objects.filter(numero__gte=faixa[0], numero__lte=faixa[1])
-        .order_by('numero')
-    )
+    if catalogo is None:
+        catalogo = Grau.objects.filter(numero__range=(4, 33)).order_by('numero')
+    return [
+        grau for grau in catalogo
+        if faixa[0] <= grau.numero <= faixa[1]
+    ]
 
 
 def _aplicar_grau_do_post(membro, request, lojas):
@@ -430,24 +486,26 @@ def _aplicar_grau_do_post(membro, request, lojas):
     if ja_tem:
         return
     membro.graus.model.objects.create(
-        tenant_id=membro.tenant_id, membro=membro, grau=grau, data=_date.today(),
+        membro=membro,
+        grau=grau,
+        data=_date.today(),
     )
 
 
-def _lojas_selecionadas(request, tenant_id):
-    """Lojas do POST devem pertencer ao tenant do Vale (M2M — várias permitidas).
+def _lojas_selecionadas(request, membro=None):
+    """Lojas do POST que o usuário pode associar (uma ou várias, sem limite).
 
-    Spec 008-filtros-corpo-listas: um Membro pode estar vinculado a várias Lojas
-    do mesmo tenant; toda Loja enviada precisa pertencer a ele.
+    Admins globais podem vincular qualquer Loja do sistema. Os demais ficam
+    restritos às Lojas da própria Potência e às que já estavam vinculadas.
     """
     raw_ids = [value for value in request.POST.getlist('lojas') if value]
     try:
         ids = {int(value) for value in raw_ids}
     except (TypeError, ValueError):
-        return None, 'Selecione somente lojas deste Vale.'
-    lojas = list(_lojas_do_tenant(tenant_id).filter(pk__in=ids))
+        return None, 'Selecione somente lojas válidas.'
+    lojas = list(_lojas_disponiveis(request, membro=membro).filter(pk__in=ids))
     if len(lojas) != len(ids):
-        return None, 'Uma ou mais lojas não pertencem a este Vale.'
+        return None, 'Uma ou mais lojas não estão disponíveis para este cadastro.'
     return lojas, None
 
 
@@ -472,8 +530,8 @@ def _dados_do_post(request):
     return dados, None
 
 
-def _sugestoes(tenant_id):
-    qs = Membro.objects.filter(tenant_id=tenant_id)
+def _sugestoes():
+    qs = Membro.objects.all()
 
     def distintas(campo):
         return list(
@@ -494,15 +552,14 @@ def _sugestoes(tenant_id):
 
 
 def _para_contexto_membro(membro, vale, para_form=False):
-    lojas = [
-        {
+    lojas = []
+    for loja in membro.lojas.all().order_by('nome', 'id'):
+        lojas.append({
             'id': loja.pk,
             'nome': loja.nome,
             'prefeitura': vale.nome if vale else '—',
             'sigla': vale.sigla if vale else '—',
-        }
-        for loja in membro.lojas.all().order_by('nome', 'id')
-    ]
+        })
     dados = {
         campo.name: getattr(membro, campo.name)
         for campo in Membro._meta.concrete_fields
@@ -548,7 +605,7 @@ def _salvar_membro(request, vale, membro=None):
     if erro:
         return None, erro, graus_formset
 
-    lojas, erro = _lojas_selecionadas(request, vale.tenant_id)
+    lojas, erro = _lojas_selecionadas(request, membro=membro)
     if erro:
         return None, erro, graus_formset
 
@@ -562,17 +619,19 @@ def _salvar_membro(request, vale, membro=None):
         erros.extend(str(erro) for erro in graus_formset.non_form_errors())
         return None, ' '.join(erros) or 'Revise os graus e suas datas.', graus_formset
 
+    tenant_cadastro = vale.tenant_id if vale is not None else None
+
     cpf = dados['cpf']
-    duplicado = Membro.objects.filter(tenant_id=vale.tenant_id, cpf=cpf)
+    duplicado = Membro.objects.filter(cpf=cpf) if cpf else Membro.objects.none()
     if membro is not None:
         duplicado = duplicado.exclude(pk=membro.pk)
     if cpf and duplicado.exists():
-        return None, 'Já existe um membro com este CPF neste Vale.', graus_formset
+        return None, 'Já existe um membro com este CPF.', graus_formset
 
     try:
         with transaction.atomic():
             if membro is None:
-                membro = Membro.objects.create(tenant_id=vale.tenant_id, **dados)
+                membro = Membro.objects.create(**dados)
                 _atribuir_cadastro_numero(membro)
             else:
                 for campo, valor in dados.items():
@@ -581,13 +640,14 @@ def _salvar_membro(request, vale, membro=None):
                 if membro.cadastro_numero is None:
                     _atribuir_cadastro_numero(membro)
             membro.lojas.set(lojas)
+            _sincronizar_filiacoes(membro, lojas, tenant_cadastro)
             # Grau do POST (select novo) — valida que o grau pertence ao corpo da loja.
             _aplicar_grau_do_post(membro, request, lojas)
             if graus_formset is not None:
                 graus_formset.save()
     except IntegrityError:
         if cpf and duplicado.exists():
-            return None, 'Já existe um membro com este CPF neste Vale.', graus_formset
+            return None, 'Já existe um membro com este CPF.', graus_formset
         return None, 'Conflito ao salvar lojas ou graus duplicados.', graus_formset
     return membro, None, graus_formset
 
@@ -673,26 +733,37 @@ def membro_novo(request):
         return _vale_do_request(request)
 
     vale = _resolver_vale()
-    lojas = _lojas_do_tenant(vale.tenant_id) if vale else []
-    erro = None
+    lojas = _opcoes_lojas(_lojas_disponiveis(request))
+    lojas_selecionadas = []
     if request.method == 'POST':
+        lojas_selecionadas = [
+            int(valor) for valor in request.POST.getlist('lojas')
+            if str(valor).isdigit()
+        ]
         if vale is None:
-            erro = 'Selecione o Vale em que o membro será cadastrado.'
+            erro = 'Selecione a Potência de cadastro do membro.'
         else:
             membro, erro, _ = _salvar_membro(request, vale)
             if membro is not None:
                 return redirect('membros:detalhe', pk=membro.pk)
+
+    if global_admin or vale is not None:
+        sugestoes = _sugestoes()
+    else:
+        sugestoes = {
+            'potencias': [v for v, _ in Membro.POTENCIA_CHOICES],
+            'cargos': [], 'ritos': [], 'tipos_admissao': [],
+            'escolaridades': [], 'estados_civis': [],
+        }
 
     return render(request, 'contatos/membro_novo.html', {
         'vale': vale,
         'vales_opcoes': vales_opcoes,
         'global_admin': global_admin,
         'lojas': lojas,
-        'sugestoes': _sugestoes(vale.tenant_id) if vale else {
-            'potencias': [v for v, _ in Membro.POTENCIA_CHOICES],
-            'cargos': [], 'ritos': [], 'tipos_admissao': [],
-            'escolaridades': [], 'estados_civis': [],
-        },
+        'lojas_selecionadas': lojas_selecionadas,
+        'graus_por_loja': {item['id']: item['graus'] for item in lojas},
+        'sugestoes': sugestoes,
         'erro': erro,
     })
 
@@ -722,8 +793,8 @@ def membro_editar(request, pk):
         'membro': membro_contexto,
         'erro': erro,
         'sucesso': sucesso,
-        'lojas': _lojas_do_tenant(vale.tenant_id),
-        'sugestoes': _sugestoes(vale.tenant_id),
+        'lojas': _opcoes_lojas(_lojas_disponiveis(request, membro=membro)),
+        'sugestoes': _sugestoes(),
         'graus_formset': graus_formset,
     })
 

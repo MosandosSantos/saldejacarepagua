@@ -1,20 +1,47 @@
-# Python / Django
+# ==========================================================================
+# SALDA BAIXADA — o que NÃO vai para o repositório
+# Regra geral: só entram no git código-fonte, templates, migrações, testes
+# do produto, configuração de deploy e documentação. Todo o resto é local.
+# ==========================================================================
+
+# ---------- Configurações de ferramentas de IA / agentes ----------
+# Cada pessoa usa a sua; não são necessárias para rodar o projeto.
+.agents/
+.claude/
+.codex/
+.commandcode/
+.freebuff/
+.impeccable/
+.opencode/
+.specify/
+.superpowers/
+.playwright-mcp/
+skills-lock.json
+
+# ---------- Python / Django ----------
 .venv/
+venv/
+env/
 __pycache__/
 *.py[cod]
-.pytest_cache/
 *.egg-info/
+.pyre/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
 
-# Node (front antigo + Tailwind)
+# ---------- Node (Tailwind / front antigo) ----------
 node_modules/
 theme/static_src/node_modules/
-*.log
 
-# Artefatos de build / coletados
+# ---------- Artefatos de build / coletados ----------
 staticfiles/
 theme/static/css/dist/
+build/
+dist/
 
-# Ambiente
+# ---------- Ambiente e segredos ----------
 .env
 .env.txt
 .env.*
@@ -22,81 +49,76 @@ theme/static/css/dist/
 !.env.production.example
 .env-seed
 pg_hba.conf.bak
-
-# Virtualenvs
-venv/
-env/
-.venv/
-
-# Banco de dados local
-*.sqlite3
-db.sqlite3
-
-# Segredos / chaves / credenciais
 *.pem
 *.key
 *.ppk
-id_rsa*
 *.p12
 *.pfx
-.env
+id_rsa*
+cookie.txt
 
 # Senhas em documentos
 *enha*.pdf
 *enha*.docx
 *enha*.txt
 
-# Logs
-runserver.log
-*.log
+# ---------- Banco de dados local ----------
+*.sqlite3
+db.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+backups/
 
-# Editores / SO
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-
-# Cache / testes
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.tox/
-.nox/
+# ---------- Cobertura / logs ----------
 .coverage
 .coverage.*
 coverage.xml
 htmlcov/
+*.log
+runserver.log
 
-# Build local (pip/curtação; o dist do Tailwind tem regra específica acima)
-build/
-dist/
+# ---------- Artefatos soltos (não são código do produto) ----------
+bandit_report.json
+collect-list.txt
+pids.txt
+diag2.log
+dashboard_completo.tar.gz
+probe_*.py
+vales_test.txt
+clear_cache.py
+AUDITORIA_QUALIDADE.md
+RELATORIO_IMC.md
+RELATORIO_MATURIDADE.md
 
-# SQLite no modo WAL/SHM (fallback local)
-*.sqlite3-wal
-*.sqlite3-shm
+# Dumps e scripts SQL de apoio local
+aula4.sql
+schema_member.sql
+export_potencia_rito.json
 
-# Temporarios de editores / Office
+# ---------- Testes legados (usam tenant= e corpo 'kadosh', removidos) ----------
+teste/test_loja_local.py
+teste/test_membro_local.py
+teste/test_lojas_paginacao_exportacao.py
+teste/test_loja_membro_models.py
+
+# ---------- Validação visual / temporários ----------
+tmp_*.png
+tmp/
 ~$*
 *.sw[po]
 *.bak
 !pg_hba.conf.bak
 
-# Arquivos auxiliares
-cookie.txt
+# ---------- Editores / SO ----------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---------- Legado ----------
 _legacy/
 
-# Semgrep artifacts
+# ---------- Semgrep ----------
 .semgrep/
 *.semgrep.json
 semgrep-results.json
-
-
-# Dumps de banco - DOCS/README.md: "fica fora do repositorio"
-backups/
-
-# Screenshots temporarios de validacao visual
-tmp_*.png
-tmp/
-
-# Snapshots do navegador (automatizacao)
-.playwright-mcp/

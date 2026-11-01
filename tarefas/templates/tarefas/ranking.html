@@ -1,12 +1,12 @@
 {% extends 'base/basic.html' %}
 {% load seguranca %}
 
-{% block titulo %}Agenda de Sessoes{% endblock %}
+{% block titulo %}Ordens Inglesas{% endblock %}
 
 {% block conteudo %}
 <div class="mb-7 flex flex-wrap items-end justify-between gap-3">
   <div>
-    <h1 class="hazon-titulo">Agenda de Sessões</h1>
+    <h1 class="hazon-titulo">Ordens Inglesas</h1>
     <p class="hazon-sub mt-2">Calendário de sessões e reuniões da loja maçônica.</p>
   </div>
   <div class="flex items-center gap-3">
@@ -46,7 +46,7 @@
   <section class="livro" aria-labelledby="livro-titulo">
     <header class="livro-cabecalho" id="livro-cabecalho">
       <div class="min-w-0">
-        <h2 id="livro-titulo" class="livro-titulo">Calendário da Potência de {{ VALE_NOME }}</h2>
+        <h2 id="livro-titulo" class="livro-titulo">Calendário</h2>
         <p class="livro-sub">Sessões, iniciações e trabalhos de grau do mês</p>
         <p class="livro-resumo" id="livro-resumo" aria-live="polite"></p>
       </div>
@@ -361,10 +361,9 @@
     } else if (valesData.length) {
       valeSel = valesData[0];
     }
-    var tenantId = valeSel ? String(valeSel.tenant_id) : '';
     var atual = preferida || selLoja.value || '';
     selLoja.innerHTML = '';
-    lojasData.filter(function (l) { return String(l.tenant_id) === tenantId; }).forEach(function (l) {
+    lojasData.forEach(function (l) {
       var op = document.createElement('option');
       op.value = l.id;
       op.textContent = l.nome;
@@ -787,9 +786,6 @@
     document.getElementById('evento-inicio').value = ev.data_inicio;
     var lojaDoEvento = lojasData.find(function (l) { return String(l.id) === String(ev.loja_id); });
     if (lojaDoEvento) {
-      var valeDoEvento = valesData.find(function (v) { return String(v.tenant_id) === String(lojaDoEvento.tenant_id); });
-      var selVale = document.getElementById('evento-vale');
-      if (valeDoEvento && selVale && selVale.tagName && selVale.tagName.toLowerCase() === 'select') selVale.value = String(valeDoEvento.id);
       povoarLojas(ev.loja_id);
     }
     atualizarTipos(ev.tipo, ev.tipo_display);

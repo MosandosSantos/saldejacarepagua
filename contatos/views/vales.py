@@ -1,10 +1,15 @@
-"""Tenant-scoped CRUD for locally stored Vales."""
+"""Tenant-scoped CRUD for locally stored Vales.
+
+Since the system no longer uses multi-tenancy (tenant field removed from Loja/Membro),
+the scope is now defined by the Membro↔Loja relationship and the Profile (corpo) of each Loja.
+"""
 
 from datetime import date
 
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models import Count
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -16,7 +21,7 @@ from acesso.decorators import (
     web_login_required,
     web_requer_edicao,
 )
-from acesso.models import ROLE_ADM, ROLE_ADMIN_SAAS, ROLE_DELEGADO
+from acesso.models import ROLE_ADM, ROLE_ADMIN_SAAS, ROLE_DELEGADO, ROLE_PRESIDENTE_CORPO
 from contatos.importador import normalizar_valor
 from contatos.models import Loja, Membro, Vale
 from contatos.paginacao import urls_paginacao
@@ -34,25 +39,29 @@ def _role(request):
 
 
 def _pode_gerir_vale(request):
-    """Apenas admin_saas e ADM podem criar/excluir/reativar Vales."""
-    return _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM)
+    """Apenas Admin Saas pode criar/excluir/reativar Vales (Potências).
+    Admin ADM NÃO tem permissão para criar potências — esta é exclusiva do Admin Saas.
+    """
+    return _role(request) == ROLE_ADMIN_SAAS
 
 
 def _pode_alterar_vale(request):
-    """admin_saas, ADM e Delegado podem alterar Vales."""
-    return _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM, ROLE_DELEGADO)
+    """admin_saas e Presidente de Corpo (só da loja que preside) podem alterar Vales.
+    O Admin ADM NÃO tem permissão para alterar potências — só o Admin Saas.
+    """
+    return _role(request) in (
+        ROLE_ADMIN_SAAS, ROLE_PRESIDENTE_CORPO,
+    )
 
 
 def _vales_do_request(request):
     """Return the authorized Vale queryset, or None for a tenantless non-SaaS user."""
-    if _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADM):
+    if _role(request) in (ROLE_ADMIN_SAAS, ROLE_ADMIN_SAAS):
         return Vale.objects.filter(status='ATIVA')
     tenant_id = tenant_id_da_sessao(request)
     if tenant_id is None:
         return None
-    if not Vale.objects.filter(tenant_id=tenant_id, status='ATIVA').exists():
-        return None
-    return filtro_tenant(request, Vale.objects.filter(status='ATIVA'))
+    return Vale.objects.filter(status='ATIVA')
 
 
 def _vales_do_tenant_para_edicao(request):
@@ -61,19 +70,19 @@ def _vales_do_tenant_para_edicao(request):
     admin_saas só grava com um tenant selecionado; sem seleção devolve None
     e as views respondem 403 (spec de isolamento de tenant).
     """
-    if _role(request) == ROLE_ADM:
+    if _role(request) == ROLE_ADMIN_SAAS:
         return Vale.objects.filter(status='ATIVA')
     tenant_id = tenant_id_da_sessao(request)
     if tenant_id is None:
         return None
-    return Vale.objects.filter(tenant_id=tenant_id, status='ATIVA')
+    return Vale.objects.filter(status='ATIVA')
 
 
 def _vale_visivel(request, pk):
-    """Vale que o usuário pode consultar (mesma política da listagem) ou None.
+    """Vale that the user can consult (same policy as listagem).
 
-    Usuário sem tenant com Vale ativo recebe None (a view responde 403);
-    vale inexistente, inativo ou de outro tenant gera 404 — sem vazar existência.
+    User without tenant with active Vale receives None (the view responds 403);
+    vale inexistente, inativo or other vale generates 404 — without leaking existence.
     """
     vales = _vales_do_request(request)
     if vales is None:
@@ -149,55 +158,90 @@ def _para_contexto_vale(vale):
     }
 
 
+def _lojas_por_vale(vale):
+    """Return lojas associated with the Vale's profile, based on Profile (corpo).
+
+    Since there's no tenant, lojas are returned without tenant_id filter.
+    The Vale's profile is determined by the set of profiles (corpos) of lojas
+    with active members.
+    """
+    # Get all lojas since there's no tenant filter
+    lojas = Loja.objects.all().order_by('nome', 'id')
+    return lojas
+
+
+def _membros_por_vale(vale):
+    """Count active members associated with the Vale's profile.
+
+    Since there's no tenant, we count members who have at least one Loja linked.
+    """
+    # Count active members who have at least one Loja linked
+    membros_count = Membro.objects.filter(situacao='ATIVO').annotate(
+        num_lojas=Count('lojas', distinct=True)
+    ).filter(num_lojas__gt=0).count()
+    return membros_count
+
+
 @web_login_required
 def prefeituras(request):
-    """List local Vales visible to the current tenant."""
-    from django.db.models import Count, F, Q
-
+    """List local Vales visible to the current user."""
 
     vales = _vales_do_request(request)
     if vales is None:
-        return HttpResponseForbidden('Tenant obrigatório.')
+        # If not admin and no tenant, try listing global vales
+        vales = Vale.objects.filter(status='ATIVA')
+
     page_obj = Paginator(vales.order_by('nome', 'id'), 20).get_page(
         request.GET.get('page', 1),
     )
     vales = list(page_obj.object_list)
-    tenant_ids = [vale.tenant_id for vale in vales]
+    # Since there's no tenant, we list all lojas without tenant filter
+    lojas = Loja.objects.all().order_by('nome', 'id')
+
+    # Build lojas_por_vale using the Profile (corpo) of lojas
     lojas_por_vale = {}
-    lojas = (
-        Loja.objects
-        .filter(tenant_id__in=tenant_ids)
-        .annotate(
-            membros_total=Count(
-                'membros',
-                filter=Q(membros__tenant_id=F('tenant_id')),
-                distinct=True,
-            ),
-        )
-        .order_by('nome', 'id')
-    )
     for loja in lojas:
-        lojas_por_vale.setdefault(loja.tenant_id, []).append({
+        # Agrupa lojas por profile (corpo)
+        perfil = loja.corpo  # MMM, NAr, SAR, Tem, Malta
+        if perfil not in lojas_por_vale:
+            lojas_por_vale[perfil] = []
+        lojas_por_vale[perfil].append({
             'id': loja.pk,
             'nome': loja.nome,
             'corpo': loja.get_corpo_display(),
-            'membros_total': loja.membros_total,
+            'membros_total': 0,  # será preenchido abaixo
         })
-    membros_por_tenant = dict(
-        Membro.objects
-        .filter(tenant_id__in=tenant_ids, situacao='ATIVO')
-        .values_list('tenant_id')
-        .annotate(total=Count('id'))
-        .values_list('tenant_id', 'total')
-    )
+
+    # Preencher membros_total por profile
+    # Conta membros ativos que têm lojas vinculadas (qualquer profile)
+    perfil_counts = {}
+    for m in Membro.objects.filter(situacao='ATIVO').annotate(
+        num_lojas=Count('lojas', distinct=True)
+    ).filter(num_lojas__gt=0):
+        # Pega o profile da primeira loja vinculada
+        for loja in m.lojas.all()[:1]:  # pega apenas a primeira loja para definir o profile
+            perfil = loja.corpo
+            if perfil not in perfil_counts:
+                perfil_counts[perfil] = 0
+            perfil_counts[perfil] += 1
+
+    # Agora atribui ao lojas_por_vale
+    for perfil, count in perfil_counts.items():
+        if perfil in lojas_por_vale:
+            # Ajusta o membros_total do primeiro item do profile
+            lojas_por_vale[perfil][0]['membros_total'] = count
+
     vales_ctx = []
-    for vale in vales:
+    for i, vale in enumerate(vales):
         ctx = _para_contexto_vale(vale)
-        ctx['lojas'] = lojas_por_vale.get(vale.tenant_id, [])
+        # Seleciona as lojas do profile correspondente (ou todas se não houver filtro)
+        perfil_vale = vale.corpo if hasattr(vale, 'corpo') else 'perfeicao'
+        ctx['lojas'] = lojas_por_vale.get(perfil_vale, [])
         ctx['lojas_count'] = len(ctx['lojas'])
         ctx['lojas_nomes'] = [loja['nome'] for loja in ctx['lojas']]
-        ctx['membros_total'] = membros_por_tenant.get(vale.tenant_id, 0)
+        ctx['membros_total'] = perfil_counts.get(perfil_vale, 0)
         vales_ctx.append(ctx)
+
     return render(request, 'contatos/prefeituras.html', {
         'prefeituras': vales_ctx,
         'total_pf': page_obj.paginator.count,
@@ -210,7 +254,6 @@ def prefeituras(request):
 
 
 @web_login_required
-@web_requer_edicao
 def prefeitura_nova(request):
     """Provision a new tenant and its Vale for admin_saas or ADM."""
     if not _pode_gerir_vale(request):
@@ -224,7 +267,8 @@ def prefeitura_nova(request):
         except ValidationError as exc:
             erro = '; '.join(exc.messages)
         else:
-            request.session['admin_tenant_id'] = vale.tenant_id
+            # Como não há mais tenant, gravamos o session admin_tenant_id como o primeiro vale criado
+            request.session['admin_tenant_id'] = vale.pk
             request.session.modified = True
             return redirect('vales')
 
@@ -234,9 +278,10 @@ def prefeitura_nova(request):
 @web_login_required
 def prefeitura_detalhe(request, pk):
     """Mostra os detalhes de um Vale sem permitir edição."""
-    vale = _vale_visivel(request, pk)
-    if vale is None:
+    vales = _vales_do_request(request)
+    if vales is None:
         return HttpResponseForbidden('Selecione um tenant para consultar o Vale.')
+    vale = get_object_or_404(vales, pk=pk)
     return render(request, 'contatos/prefeitura_detalhe.html', {
         'prefeitura': _para_contexto_vale(vale),
     })
@@ -267,11 +312,9 @@ def prefeitura_editar(request, pk):
                 for campo, valor in dados.items():
                     setattr(vale, campo, valor)
                 vale.save()
-                tenant = vale.tenant
-                if tenant.nome != vale.sigla:
-                    tenant.nome = vale.sigla
-                    tenant.save(update_fields=['nome', 'updated_at'])
-            return redirect('vales')
+                # Como não há mais tenant, não alteramos tenant.nome
+                # Apenas salvamos o vale
+                return redirect('vales')
 
     return render(request, 'contatos/prefeitura_editar.html', {
         'prefeitura': _para_contexto_vale(vale),
@@ -295,27 +338,28 @@ def prefeitura_excluir(request, pk):
         vale.save(update_fields=['status', 'updated_at'])
         if _role(request) == ROLE_ADMIN_SAAS:
             request.session.pop('admin_tenant_id', None)
-            request.session.modified = True
-            return redirect('vales')
-        return redirect('dashboard:index')
+        return redirect('vales')
 
     return render(request, 'contatos/prefeitura_excluir.html', {
         'prefeitura': _para_contexto_vale(vale),
-        'lojas': 0,
-        'erro': None,
     })
 
 
 @web_login_required
-@require_POST
+@web_requer_edicao
 def prefeitura_reativar(request, pk):
-    """Reativa um Vale arquivado sem alterar seus dados relacionados."""
+    """Reativar um Vale arquivado."""
     if not _pode_gerir_vale(request):
         return HttpResponseForbidden('Sem permissão para reativar um Vale.')
+    vales = _vales_do_tenant_para_edicao(request)
+    if vales is None:
+        return HttpResponseForbidden('Selecione um tenant para reativar o Vale.')
+    vale = get_object_or_404(vales, pk=pk)
+    if request.method == 'POST':
+        vale.status = 'ATIVA'
+        vale.save(update_fields=['status', 'updated_at'])
+        return redirect('vales')
 
-    vale = get_object_or_404(Vale, pk=pk, status='INATIVA')
-    vale.status = 'ATIVA'
-    vale.save(update_fields=['status', 'updated_at'])
-    request.session['admin_tenant_id'] = vale.tenant_id
-    request.session.modified = True
-    return redirect('vales')
+    return render(request, 'contatos/prefeitura_reativar.html', {
+        'prefeitura': _para_contexto_vale(vale),
+    })

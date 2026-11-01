@@ -29,14 +29,14 @@
     </thead>
     <tbody>
       {% for p in prefeituras %}
-      <!-- Vale row -->
+      <!-- Potência row -->
       <tr class="border-b border-white/5 transition hover:bg-white/5" data-pf-id="{{ p.id }}">
         <td class="px-5 py-3.5">
           <div class="flex items-center gap-2">
             <button type="button"
-                    class="btn-expand-vale inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5b8def]/70"
-                    data-vale-id="{{ p.id }}" aria-expanded="false"
-                    aria-controls="lojas-vale-{{ p.id }}"
+                    class="btn-expand-potencia inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#a6bfc7] transition hover:bg-[#5b8def]/15 hover:text-[#5b8def] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5b8def]/70"
+                    data-potencia-id="{{ p.id }}" aria-expanded="false"
+                    aria-controls="lojas-potencia-{{ p.id }}"
                     aria-label="Expandir lojas de {{ p.nome }}" title="Expandir lojas">
               <svg class="expand-icon h-3.5 w-3.5 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
@@ -98,7 +98,7 @@
           </div>
         </td>
       </tr>
-      <tr id="lojas-vale-{{ p.id }}" class="drill-lojas-vale" data-vale-id="{{ p.id }}" style="display:none;">
+      <tr id="lojas-potencia-{{ p.id }}" class="drill-potencia-lojas" data-potencia-id="{{ p.id }}" style="display:none;">
         <td colspan="7" class="px-0 py-0">
           <div class="bg-white/[0.02] px-5 py-3 sm:px-12">
             {% if p.lojas %}
@@ -162,10 +162,10 @@
 {% block js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  document.querySelectorAll('.btn-expand-vale').forEach(function (btn) {
+  document.querySelectorAll('.btn-expand-potencia').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      var valeId = this.getAttribute('data-vale-id');
-      var drillRow = document.querySelector('.drill-lojas-vale[data-vale-id="' + valeId + '"]');
+      var valeId = this.getAttribute('data-potencia-id');
+      var drillRow = document.querySelector('.drill-potencia-lojas[data-potencia-id="' + valeId + '"]');
       var icon = this.querySelector('.expand-icon');
       var isOpen = this.getAttribute('aria-expanded') === 'true';
 

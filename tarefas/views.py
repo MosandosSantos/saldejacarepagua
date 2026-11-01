@@ -528,7 +528,7 @@ def ranking(request):
             for v in vales
         ],
         'lojas_evento': [
-            {'id': str(l.pk), 'nome': l.nome, 'tenant_id': l.tenant_id, 'corpo': l.corpo}
+            {'id': str(l.pk), 'nome': l.nome, 'corpo': l.corpo}
             for l in lojas
         ],
         'vale_fixado': vale_fixado, 'loja_do_usuario_pk': loja_do_usuario_pk,
@@ -558,6 +558,14 @@ def _cargo_da_sessao(request):
 def _eh_usuario_global(request):
     """admin_saas e ADM operam em todos os Vales/Lojas."""
     return _cargo_da_sessao(request) in (ROLE_ADMIN_SAAS, ROLE_ADM)
+
+
+def _vale_da_sessao(request):
+    """Vale ATIVA do tenant da sessão (Loja não tem mais vínculo com Vale)."""
+    tenant_id = resolve_tenant_id(request)
+    if tenant_id is None:
+        return None
+    return Vale.objects.filter(tenant_id=tenant_id, status='ATIVA').first()
 
 
 def _vale_do_delegado(request):
@@ -594,7 +602,7 @@ def _escopo_evento(request):
         vale = _vale_do_delegado(request)
         if vale is None:
             return [], [], False, None
-        lojas = list(Loja.objects.filter(tenant_id=vale.tenant_id).order_by('nome', 'id'))
+        lojas = list(Loja.objects.order_by('nome', 'id'))
         return [vale], lojas, True, None
     if role in (ROLE_PRESIDENTE_CORPO, ROLE_SECRETARIO):
         usuario = getattr(request, 'usuario_logado', None)
@@ -605,7 +613,7 @@ def _escopo_evento(request):
         loja_id_sessao = _obter_loja_usuario(request)
         if loja_id_sessao and str(loja_id_sessao).isdigit():
             loja_do_usuario = Loja.objects.filter(
-                pk=int(str(loja_id_sessao)), tenant_id=tenant_id,
+                pk=int(str(loja_id_sessao)),
             ).first()
         if tenant_id is None or loja_do_usuario is None:
             return [], [], False, None
@@ -691,7 +699,7 @@ def _pode_gerir_evento(request, evento):
     if role == ROLE_DELEGADO:
         vale = _vale_do_delegado(request)
         if vale is not None and valor_loja.isdigit():
-            loja = Loja.objects.filter(pk=int(valor_loja), tenant_id=vale.tenant_id).first()
+            loja = Loja.objects.filter(pk=int(valor_loja)).first()
             if loja is not None:
                 return True
     return False
@@ -1028,14 +1036,8 @@ def evento_presenca(request, evento_id):
 def _tenant_para_chamada(request, evento):
     """Tenant para espelhar irmãos do GPRB na lista de chamada.
 
-    Loja local → tenant da loja; loja GPRB (UUID) → tenant da sessão com
-    fallback para o tenant canônico GPRB (admin_saas não tem tenant).
+    Tenant da sessão com fallback para o tenant canônico GPRB (admin_saas não tem tenant).
     """
-    valor = str(evento.loja_id or '').strip()
-    if valor.isdigit():
-        loja = Loja.objects.filter(pk=int(valor)).first()
-        if loja is not None:
-            return loja.tenant_id
     tid = (request.session.get('usuario') or {}).get('tenant_id')
     if tid:
         return tid
@@ -1067,11 +1069,13 @@ def evento_relatorio_presenca(request, evento_id):
     valor = str(evento.loja_id or '').strip()
     if valor.isdigit():
         loja = Loja.objects.filter(pk=int(valor)).first()
-    vale = loja.tenant.vales if loja is not None else None
+    vale = _vale_da_sessao(request) if loja is not None else None
 
     # Membros ATIVOS da loja local, ordenados por nome.
     linhas = []
     membros = []
+
+
     if valor.isdigit():
         membros = list(
             Membro.objects.filter(lojas__pk=int(valor), situacao='ATIVO')
@@ -1141,7 +1145,7 @@ def _credencial_checkin(login_id, senha):
     if not login_id or not senha:
         return None
     if login_id.isdigit():
-        membro = Membro.objects.select_related('tenant').filter(
+        membro = Membro.objects.filter(
             cadastro_numero=int(login_id),
         ).first()
         usuario = (
@@ -1305,10 +1309,7 @@ def _corpo_email_novo_evento(evento, urls_conf=None):
     )
     vale = None
     if loja is not None:
-        try:
-            vale = loja.tenant.vales
-        except Vale.DoesNotExist:
-            vale = None
+        vale = _vale_da_sessao(request)
 
     contexto = {
         'evento': evento,
@@ -1465,10 +1466,7 @@ def _enfileirar_email_novo_evento(evento):
     )
     vale = None
     if loja is not None:
-        try:
-            vale = loja.tenant.vales
-        except Vale.DoesNotExist:
-            vale = None
+        vale = _vale_da_sessao(request)
     if vale is not None and (vale.email or '').strip():
         destinatarios.append((None, vale.prefeito or 'Delegado do Vale', vale.email.strip()))
 

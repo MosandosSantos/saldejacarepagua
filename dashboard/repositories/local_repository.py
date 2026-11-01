@@ -14,7 +14,7 @@ restringe ao tenant da sessão.
 
 from datetime import date
 
-from django.db.models import Count, F, Max, Q
+from django.db.models import Count, Max, Q
 from django.utils import timezone
 
 from contatos.models import Loja, Membro, Vale
@@ -27,29 +27,25 @@ class LocalRepository:
         self.tenant_id = tenant_id
 
     def _tenants(self):
-        if self.tenant_id is None:
-            return None
-        return [self.tenant_id]
+        # Sistema sem tenant — retorna None para que todos os dados sejam exibidos
+        return None
 
     def _vales(self):
         qs = Vale.objects.filter(status='ATIVA').order_by('nome', 'id')
-        tenants = self._tenants()
-        if tenants is not None:
-            qs = qs.filter(tenant_id__in=tenants)
         return qs
 
     def _lojas(self):
-        qs = Loja.objects.order_by('nome', 'id')
-        tenants = self._tenants()
-        if tenants is not None:
-            qs = qs.filter(tenant_id__in=tenants)
+        # Como não há mais tenant, retorna todas as lojas ativas
+        # Filtrado opcional pode ser feito pelo profile (corpo) se necessário
+        qs = Loja.objects.filter(situacao='ATIVA').order_by('nome', 'id')
         return qs
 
     def _membros_ativos(self):
-        qs = Membro.objects.filter(situacao='ATIVO')
-        tenants = self._tenants()
-        if tenants is not None:
-            qs = qs.filter(tenant_id__in=tenants)
+        # Como não há mais tenant, retorna todos os membros ativos
+        # que têm lojas vinculadas
+        qs = Membro.objects.filter(situacao='ATIVO').annotate(
+            num_lojas=Count('lojas', distinct=True)
+        ).filter(num_lojas__gt=0)
         return qs
 
     def membros_ativos_por_faixa_de_graus(self):
@@ -63,12 +59,14 @@ class LocalRepository:
         ]
         maiores_graus = (
             self._membros_ativos()
-            .filter(graus__tenant_id=F('tenant_id'))
             .annotate(grau_atual=Max('graus__grau__numero'))
             .order_by()
             .values_list('grau_atual', flat=True)
         )
         for grau in maiores_graus:
+            if grau is None:
+                # Membro sem grau registrado não entra em nenhuma faixa.
+                continue
             for faixa in faixas:
                 if faixa['minimo'] <= grau <= faixa['maximo']:
                     faixa['total'] += 1
@@ -113,7 +111,7 @@ class LocalRepository:
             _conta(ev.loja.nome, ev.data_hora)
 
         nomes_de_loja = {}
-        for loja in Loja.objects.only('pk', 'nome', 'tenant_id'):
+        for loja in Loja.objects.only('pk', 'nome'):
             nomes_de_loja[loja.pk] = loja
         for ev in Evento.objects.only('loja_id', 'data_inicio'):
             valor = str(ev.loja_id or '').strip()
@@ -121,8 +119,6 @@ class LocalRepository:
                 continue
             if valor.isdigit() and int(valor) in nomes_de_loja:
                 loja = nomes_de_loja[int(valor)]
-                if tenants is not None and loja.tenant_id not in tenants:
-                    continue
                 _conta(loja.nome, ev.data_inicio)
             elif not valor.isdigit():
                 # Código legado do banco externo (UUID): agrupado por código.
@@ -169,12 +165,7 @@ class LocalRepository:
             vales = vales.filter(pk=prefeitura_id)
         resultado = []
         for vale in vales:
-            total = (
-                self._membros_ativos()
-                .filter(lojas__tenant_id=vale.tenant_id)
-                .distinct()
-                .count()
-            )
+            total = self._membros_ativos().distinct().count()
             if total:
                 resultado.append({'id': vale.pk, 'name': vale.nome, 'total': total})
         resultado.sort(key=lambda r: (-r['total'], r['name']))
@@ -187,17 +178,12 @@ class LocalRepository:
             vale = Vale.objects.filter(pk=prefeitura_id).first()
             if vale is None:
                 return []
-            lojas = lojas.filter(tenant_id=vale.tenant_id)
         resultado = []
-        for loja in lojas.select_related('tenant'):
-            try:
-                vale_pk = loja.tenant.vales.pk
-            except Vale.DoesNotExist:
-                vale_pk = None
+        for loja in lojas:
             resultado.append({
                 'id': loja.pk,
                 'name': loja.nome,
-                'prefeitura_id': vale_pk,
+                'prefeitura_id': prefeitura_id or None,
                 'total': loja.membros.filter(situacao='ATIVO').count(),
             })
         return resultado

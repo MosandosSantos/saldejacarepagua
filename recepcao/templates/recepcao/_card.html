@@ -1,5 +1,5 @@
 <div class="kanban-card group relative hazon-card-sm p-3.5 transition hover:border-[#5b8def]/40 hover:bg-white/10"
-     {% if web_pode_editar %}draggable="true"{% endif %} data-id="{{ card.id }}">
+     {% if web_pode_editar and not colunas_por_corpo %}draggable="true"{% endif %} data-id="{{ card.id }}">
   <div class="mb-1.5 flex items-start justify-between gap-2">
     <a href="{% url 'contatos:detalhe' card.contato_id %}" class="text-[13.5px] font-semibold text-white hover:text-[#5b8def]">{{ card.nome }}</a>
     {% if web_pode_editar %}

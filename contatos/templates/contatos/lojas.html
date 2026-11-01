@@ -34,22 +34,6 @@
       </select>
     </div>
 
-    <div>
-      <label for="filtro-uf" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">UF</label>
-      <select id="filtro-uf" name="uf" onchange="this.form.submit()" class="h-9 rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
-        <option value="">Todas</option>
-        {% for u in opcoes_ufs %}<option value="{{ u }}" {% if uf_filtro == u %}selected{% endif %}>{{ u }}</option>{% endfor %}
-      </select>
-    </div>
-
-    <div>
-      <label for="filtro-cidade" class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[#a6bfc7]">Cidade</label>
-      <select id="filtro-cidade" name="cidade" onchange="this.form.submit()" class="h-9 max-w-[200px] rounded-lg border border-white/10 bg-[#0a1e3d] px-2.5 text-[12px] text-[#bcd3da] outline-none transition hover:border-white/25 focus:border-[#5b8def]/60 focus-visible:ring-2 focus-visible:ring-[#5b8def]/60 focus-visible:ring-offset-0">
-        <option value="">Todas</option>
-        {% for c in opcoes_cidades %}<option value="{{ c }}" {% if cidade_filtro == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
-      </select>
-    </div>
-
     <div class="ml-auto">
       <details class="group relative">
       <summary class="hazon-btn hazon-btn-ghost min-h-10 cursor-pointer list-none justify-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hazon-accent/70 [&::-webkit-details-marker]:hidden">
@@ -71,10 +55,10 @@
     </div>
   </div>
 
-  <!-- Linha 2 — graus (mesma para os chips de /membros/) -->
+  <!-- Linha 2 — tipo/corpo da Loja -->
   <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-white/[0.07] pt-4">
     <fieldset class="border-0 p-0">
-      <legend class="sr-only">Graus</legend>
+      <legend class="sr-only">Corpo</legend>
       <div class="flex flex-wrap gap-2">
         {% for corpo in corpos_filtro %}
         <label class="cursor-pointer">
@@ -83,7 +67,6 @@
           <span class="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-2 text-xs text-[#bcd3da] transition-colors hover:border-[#5b8def]/40 hover:bg-white/10 peer-checked:border-[#4ade80]/60 peer-checked:bg-[#4ade80]/15 peer-checked:text-[#4ade80]">
             <span class="h-2 w-2 shrink-0 rounded-full bg-white/25"></span>
             <span class="font-semibold">{{ corpo.rotulo }}</span>
-            <span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[10px] text-[#a6bfc7]">{{ corpo.faixa }}</span>
           </span>
         </label>
         {% endfor %}
